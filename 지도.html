@@ -135,7 +135,7 @@
     <!-- 관서 선택 + 시계 (묶음) — 관서 기준으로 현재실황·시간대별·하천·관서카드 표출 -->
     <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap; min-width:0;">
       <div style="position:relative; z-index:60;">
-        <button onClick="{{toggleStationPicker}}" style="display:inline-flex; align-items:center; gap:8px; height:38px; padding:0 16px; border-radius:11px; border:1px solid var(--brand2); background:var(--brandSoft); color:var(--brand); font-size:13.5px; font-weight:800; font-family:inherit; cursor:pointer; white-space:nowrap; box-shadow:var(--sh1);" style-hover="filter:brightness(.97)">📍 {{myStation}} <span style="font-size:9px; opacity:.8;">▼</span></button>
+        <button onClick="{{toggleStationPicker}}" style="display:inline-flex; align-items:center; gap:8px; height:38px; padding:0 16px; border-radius:11px; border:1px solid var(--brand2); background:var(--brandSoft); color:var(--brand); font-size:13.5px; font-weight:800; font-family:inherit; cursor:pointer; white-space:nowrap; box-shadow:var(--sh1);" style-hover="filter:brightness(.97)">📍 {{pickLabel}} <span style="font-size:9px; opacity:.8;">▼</span></button>
         <sc-if value="{{stationPickerOpen}}" hint-placeholder-val="{{false}}">
           <div onClick="{{toggleStationPicker}}" style="position:fixed; inset:0; z-index:59;"></div>
           <div style="position:absolute; top:calc(100% + 7px); left:0; z-index:61; background:var(--surface); border:1px solid var(--border); border-radius:13px; box-shadow:var(--sh3); padding:7px; min-width:{{pickerMinW}}; max-height:70vh; overflow:auto;">
@@ -230,7 +230,7 @@
     </div>
     <!-- 내 관서 한 줄 (2026-09-19 디자인 손질): 스크롤 없이 내 관할만 바로 판단. 누르면 그 관서 상세로 -->
     <div onClick="{{mineOpen}}" style="display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-top:8px; padding:9px 16px; border-radius:12px; background:var(--surface); border:1px solid {{mineBorder}}; box-shadow:var(--sh1); cursor:pointer;" style-hover="border-color:var(--brand2)">
-      <span style="font-size:13px; font-weight:800; color:var(--brand); white-space:nowrap;">📍 {{myStation}}</span>
+      <span style="font-size:13px; font-weight:800; color:var(--brand); white-space:nowrap;">📍 {{pickLabel}}</span>
       <sc-for list="{{mineItems}}" as="mi" hint-placeholder-count="5">
         <span style="display:inline-flex; align-items:baseline; gap:5px; white-space:nowrap;"><span style="font-size:12px; color:var(--ink3);">{{mi.k}}</span><span style="font-size:13.5px; font-weight:800; color:{{mi.c}};">{{mi.v}}</span></span>
       </sc-for>
@@ -398,7 +398,7 @@
       <sc-if value="{{noFocus}}" hint-placeholder-val="{{true}}">
       <div data-dash="msg" style="background:var(--surface); border:1px solid var(--border); border-radius:18px; box-shadow:var(--sh2); display:flex; flex-direction:column; overflow:hidden; flex:0 0 auto;">
         <div style="display:flex; align-items:center; justify-content:space-between; padding:14px 16px 11px; border-bottom:1px solid var(--border);">
-          <div style="display:flex; align-items:center; gap:8px;"><span style="width:9px; height:9px; border-radius:3px; background:{{warnDot}};"></span><span style="font-size:14px; font-weight:800; color:var(--ink);">재난문자</span></div>
+          <div style="display:flex; align-items:center; gap:8px;"><span style="width:9px; height:9px; border-radius:3px; background:{{warnDot}};"></span><span style="font-size:14px; font-weight:800; color:var(--ink);">재난문자</span><span style="font-size:12px; font-weight:700; color:var(--ink3);">{{msgScope}}</span></div>
           <span style="font-size:11px; font-weight:700; color:var(--ink2); background:var(--surface2); border:1px solid var(--border); padding:3px 9px; border-radius:999px;">{{msgCount}}건</span>
         </div>
         <div style="padding:11px 14px; display:flex; flex-direction:column; gap:9px; max-height:230px; overflow:auto;">
@@ -528,7 +528,7 @@
       <div style="display:flex; align-items:center; justify-content:space-between; padding:15px 18px 8px; flex-wrap:wrap; gap:8px;">
         <div style="display:flex; align-items:center; gap:9px;">
           <div style="width:4px; height:18px; border-radius:2px; background:var(--brand);"></div>
-          <h2 style="font-size:15.5px; font-weight:800; color:var(--ink); letter-spacing:-.3px;">{{myStation}} 날씨</h2>
+          <h2 style="font-size:15.5px; font-weight:800; color:var(--ink); letter-spacing:-.3px;">{{wxTitle}}</h2>
           <span style="font-size:11px; color:var(--ink3); font-weight:600;">실황 + 시간대별 예보</span>
         </div>
         <span style="display:flex; align-items:center; gap:9px; font-variant-numeric:tabular-nums;"><span style="font-size:12.5px; font-weight:800; color:var(--warn);">↑ {{fcMax}}°</span><span style="font-size:12.5px; font-weight:800; color:var(--brand);">↓ {{fcMin}}°</span></span>
@@ -715,7 +715,8 @@ class Component extends DCLogic {
         try{ h=(RC.hostHome||{})[location.hostname.split('.')[0]]; }catch(e){}
         h=h||RC.home||'동두천'; try{ var sv=(typeof localStorage!=='undefined' && localStorage.getItem('ggMyStation')) || h;
           /* 전국판: 다른 시도에서 고른 관서 이름이 남아 있으면 이 시도 기본 관서로 (2026-09-19) */
-          if(RC.order && RC.order.length && RC.order.indexOf(sv)<0) sv=h; return sv; }catch(e){ return h; } })(),
+          /* 시도 전체('충청북도', warnOrder[0])도 고를 수 있다 — 관서 목록엔 없지만 유효한 값 */
+          if(RC.order && RC.order.length && RC.order.indexOf(sv)<0 && sv!==(RC.warnOrder||[])[0]) sv=h; return sv; }catch(e){ return h; } })(),
       /* 마지막에 고른 권역을 기억한다. 저장된 값이 지금 지역에 없는 권역이면(예: 북부
          전용 사이트에서 옛 값이 남아 있으면) 전체로 되돌린다. */
       scope: (function(){ var RC=(window.REGION_CONF||{}), g=RC.scopes||null; if(!g) return '전체';
@@ -752,7 +753,7 @@ class Component extends DCLogic {
     if(!window.DASH || !window.MAPGEO){ let n=0; this._poll=setInterval(()=>{ if((window.DASH && window.MAPGEO) || ++n>25){ clearInterval(this._poll); this.forceUpdate(); } }, 60); }
     // ?focus=my — 쉬운 화면 타일에서 넘어오면 전체 지도가 아니라 내 관서 상세로 바로(자료·지도가 준비된 뒤 확대까지)
     const _fp=(function(){ try{ return new URLSearchParams(location.search).get('focus'); }catch(e){ return null; } })();
-    if(_fp==='my' && !this.state.wall){ const go=()=>{ try{ this.focusRegion(this.state.myStation, false); }catch(e){} };
+    if(_fp==='my' && !this.state.wall && this.state.myStation!==((window.REGION_CONF||{}).warnOrder||[])[0]){ const go=()=>{ try{ this.focusRegion(this.state.myStation, false); }catch(e){} };
       let k=0; const tk=setInterval(()=>{ if((window.DASH && window.MAPGEO) || ++k>40){ clearInterval(tk); if(window.DASH && window.MAPGEO) setTimeout(go, 120); } }, 60); }
     this.applyTheme();
     setTimeout(()=>this.fitMap(), 30);
@@ -1768,7 +1769,12 @@ class Component extends DCLogic {
     const d = this.working();
     const st = this.state, w = st.w;
     // 선택 관서 — 현재실황·시간대별·하천정렬·관서카드가 이 관서 기준으로 표출
-    const myStation = st.myStation || (window.REGION_CONF||{}).home || '동두천';
+    // 시도 전체(WIDE, '충청북도')를 고르면: 한 줄 요약·특보·하천·재난문자는 시도 전체 기준,
+    // 날씨 카드(실황·시간대별 예보)는 관서 하나가 있어야 하므로 기본 관서(RC.home)를 '대표'로 보여준다.
+    const _RCw = window.REGION_CONF||{}, WIDE = (_RCw.warnOrder||[])[0] || '';
+    const isWide = !!WIDE && st.myStation===WIDE;
+    const pickLabel = isWide ? WIDE : (st.myStation || _RCw.home || '');
+    const myStation = isWide ? (_RCw.home || '') : (st.myStation || _RCw.home || '동두천');
     const myS = (d.stations||[]).find(x=>x.name===myStation) || (d.stations||[]).find(x=>x.name===((window.REGION_CONF||{}).home||'동두천')) || {};
     const mySg = myS.sigun || myStation;
     const myFc = (myS.forecast && myS.forecast.length) ? myS.forecast : (d.forecast||[]);
@@ -1795,7 +1801,7 @@ class Component extends DCLogic {
     // (2026-09-19 디자인 손질: 시도판은 관측소가 55~72곳이라 전부 나열하면 페이지 절반이 하천 목록이었다)
     const _RM = this.RIVER_META || {};
     const _mineSet = new Set(this.riversOf(d.rivers||[], mySg, myStation).map(r=>String(r.code)+'|'+String(r.sigun||'')));
-    const _isMine = r => _mineSet.has(String(r.raw&&r.raw.code)+'|'+String((r.raw&&r.raw.sigun)||''));
+    const _isMine = r => isWide || _mineSet.has(String(r.raw&&r.raw.code)+'|'+String((r.raw&&r.raw.sigun)||''));
     const _top = new Set((((window.REGION_CONF||{}).topRivers)||[]).map(String));
     const _rank = r => (r.lv==='danger'?0 : r.lv==='warning'?1 : _isMine(r)?2 : _top.has(String(r.raw&&r.raw.code))?3 : 4);
     const _seenCode = new Set();
@@ -1811,14 +1817,22 @@ class Component extends DCLogic {
     // warnings
     const rawWarns=(d.warnings||[]);
     // 내 관할 특보 — mineItems 와 mineBorder 가 같은 판정을 쓴다
-    const _myWarns = rawWarns.filter(w=>this._areaHits(w.area, mySg));
+    // 특보 지역이 선택 관서에 해당하나 — 관서명·시군명에 더해 행정명(region.js admin)으로도 본다.
+    //   기상청 특보구역은 '청주' 하나라서 청주동부·청주서부 둘 다 admin '청주'로 걸려야 한다.
+    //   예비특보 항목은 '청주 (충청북도)'처럼 괄호 안이 상위 구역이라, 괄호 앞만 본다(안 그러면 괄호의 도명이 전 관서에 걸린다).
+    const _adm = (_RCw.admin||{})[myStation];
+    const _hitsMe = a => this._areaHits(a, mySg) || this._areaHits(a, myStation) || (!!_adm && this._areaHits(a, _adm));
+    const _myWarns = isWide ? rawWarns.slice() : rawWarns.filter(w=>_hitsMe(w.area));
     const groupedWarns = this.groupWarns(rawWarns);   // 같은 특보끼리 지역 묶기
     const warns = groupedWarns.map(x=>this.warnBadge(x));
     const prelim = d.prelim||[];
     const prelimNorth = prelim.reduce((a,p)=>a+(p.north||0),0);
-    const prelimCount = prelimNorth;  // 충청북도 상황판 — 예비특보도 충청북도 건수만 카운트
+    const prelimCount = prelimNorth;  // 충청북도 상황판 — 예비특보도 충청북도 건수만 카운트(기상특보 카드는 도 전체)
     const _pef=(function(){ for(var i=0;i<prelim.length;i++){ var p=prelim[i]; if(p.north>0){ var it=(p.items||[]).filter(function(x){return x.north;})[0]; if(it&&it.time) return it.time; } } return ''; })();
     const prelimLine = prelimCount ? ('충청북도 예비특보 '+prelimCount+'건'+(_pef?' · '+_pef+' 예정':'')) : '예비특보 없음';
+    // 상단 바 예비특보 — 충청북도 선택이면 도내 전체, 관서 선택이면 그 관서에 걸린 항목만
+    const _prelimMine = it => it.north && (isWide || _hitsMe(String(it.area||'').split('(')[0]));
+    const myPrelimCount = isWide ? prelimNorth : prelim.reduce((a,p)=>a+(p.items||[]).filter(_prelimMine).length,0);
     // status
     const status = this.overall(rivers, rawWarns, prelimNorth);
     this._danger = (status.label==='경계');
@@ -1837,7 +1851,7 @@ class Component extends DCLogic {
     const _anyWarn = _hazWarns.length > 0;
     const hoBtnCls = 'hoBtn' + (_sevWarn ? ' hoGlow-severe' : _anyWarn ? ' hoGlow-warn' : _rainNow ? ' hoGlow-rain' : '');
     // 관서별 현재 기상 카드: 선택 관서를 맨 앞으로(나머지는 기존 지리 순서, stable)
-    const stationOrder = stations.slice().sort((a,b)=> (a.name===myStation?0:1)-(b.name===myStation?0:1));
+    const stationOrder = stations.slice().sort((a,b)=> (a.name===pickLabel?0:1)-(b.name===pickLabel?0:1));
     // 기상영상 src: 운영 절대URL + ts 캐시버스터 (상대경로=자기 브랜치 고착 문제 해결)
     const _kiImg=d.kmaImages||{}, _IMGH='';
     const _imgSrc=(k)=>{ const info=_kiImg[k]||{}; const f=info.file||('images/kma_'+k+'.png'); return _IMGH+f+(info.ts?('?v='+encodeURIComponent(info.ts)):''); };
@@ -1857,7 +1871,10 @@ class Component extends DCLogic {
     const pm=(d.pm||[]).slice().sort((a,b)=>(b.pm10||0)-(a.pm10||0)).map(p=>({ region:p.region, pm10:p.pm10, pm25:p.pm25, gradeText:p.gradeText,
       color: p.grade==='vbad'?'var(--severe)':p.grade==='bad'?'var(--warn)':p.grade==='normal'?'var(--caution)':'var(--safe)',
       pctW:Math.min(100,Math.round((p.pm10/150)*100))+'%' }));
-    const messages=(d.messages||[]).map(m=>({ sender:m.sender, time:m.time, text:m.text,
+    // 재난문자 — 시도 전체를 고르면 전부, 관서를 고르면 그 시군 발송분 + 시도 전역 발송분만
+    //   (재난문자는 시 단위로 발송된다 — 청주동부·청주서부는 둘 다 청주시 문자를 본다)
+    const myMsgs=isWide ? (d.messages||[]) : (d.messages||[]).filter(m=> m.region===mySg || m.region===myStation || m.region===WIDE);
+    const messages=myMsgs.map(m=>({ sender:m.sender, time:m.time, text:m.text,
       accent: ((m.text||'').includes('경보')||(m.text||'').includes('대피'))?'var(--severe)':'var(--warn)',
       open:()=>this.setState({modal:{kind:'msg', msg:m}}) }));
     const images=[{src:'assets/kma_warn.png',title:'전국 특보 발효도',sub:'기상청'},{src:'assets/kma_radar.png',title:'레이더 합성',sub:'강수 분포'},{src:'assets/kma_satellite.png',title:'천리안 위성 (적외)',sub:'GK2A'},{src:'assets/kma_qpf.png',title:'초단기 강수예측',sub:'기상청'}].map(im=>({ ...im, open:()=>this.setState({modal:{kind:'image', key:im.src, title:im.title}}) }));
@@ -1884,10 +1901,11 @@ class Component extends DCLogic {
     const _chipLabelSm = wide ? 'font-size:9px; font-weight:600; color:var(--ink2); margin-top:4px; white-space:nowrap; letter-spacing:-.4px;' : 'font-size:6.3px; font-weight:600; color:var(--ink2); margin-top:2px; white-space:nowrap; letter-spacing:-.3px;';
     const chipsWrapStyle = wide ? 'display:flex; align-items:center; gap:9px; margin-left:auto; flex-wrap:wrap; position:relative;' : 'display:flex; align-items:stretch; gap:6px; width:100%; margin-left:0; margin-top:8px; flex-wrap:nowrap; position:relative;';
     const chip=(v,l,color,bg,border)=>({value:v,label:l,color:color||'var(--ink)',bg:bg||'var(--surface)',border:border||'var(--border)', style:_chipLayout, valStyle:_chipVal, labelStyle:_chipLabel});
+    const _myWarnN = isWide ? groupedWarns.length : this.groupWarns(_myWarns).length;
     const ribbonChips = [
-      chip(groupedWarns.length, '발효특보', groupedWarns.length?'var(--severe)':'var(--ink2)', groupedWarns.length?'var(--severeSoft)':'var(--surface)', groupedWarns.length?'var(--severe)':'var(--border)'),
-      chip(prelimCount, '예비특보', prelimCount?'var(--caution)':'var(--ink2)', 'var(--surface)', 'var(--border)'),
-      chip((d.messages||[]).length, '재난문자', (d.messages||[]).length?'var(--warn)':'var(--ink2)', 'var(--surface)', 'var(--border)'),
+      chip(_myWarnN, '발효특보', _myWarnN?'var(--severe)':'var(--ink2)', _myWarnN?'var(--severeSoft)':'var(--surface)', _myWarnN?'var(--severe)':'var(--border)'),   // 선택 관서 기준(충청북도면 전체)
+      chip(myPrelimCount, '예비특보', myPrelimCount?'var(--caution)':'var(--ink2)', 'var(--surface)', 'var(--border)'),
+      chip(myMsgs.length, '재난문자', myMsgs.length?'var(--warn)':'var(--ink2)', 'var(--surface)', 'var(--border)'),   // 재난문자 카드와 같은 기준(선택 관서)
       {...chip(worstRiver?worstRiver.pctW:'-', (worstRiver&&_wrPlace)?(_wrScope+' 최고수위('+_wrPlace+')'):'최고수위', worstRiver?worstRiver.color:'var(--ink2)', 'var(--surface)', 'var(--border)'), labelStyle:_chipLabelSm},
       chip(feelsMax?feelsMax+'°':'-', '최고체감', 'var(--ink2)', 'var(--surface)', 'var(--border)')
     ];
@@ -1961,6 +1979,21 @@ class Component extends DCLogic {
         if(st.demo && (myS.rain||0)>fmax){ fmax=myS.rain; fat=''; }
         const myW=_myWarns;
         const myR=_myRisk;
+        if(isWide){
+          // 시도 전체 요약 — 기온 범위 / 1시간 강수 최대 관서 / 전체 특보 / 전체 하천
+          const ss=(d.stations||[]).filter(function(s){ return s.temp!=null; });
+          const tv=ss.map(function(s){ return +s.temp; });
+          let rmax=null, rat='';
+          (d.stations||[]).forEach(function(s){ const a=s.aws||{}; const v=st.demo ? s.rain : ((a.rn60!=null)?a.rn60:s.rain);
+            if(v!=null && (rmax==null || +v>rmax)){ rmax=+v; rat=s.name; } });
+          return [
+            { k:'기온', v:(tv.length?(Math.min.apply(null,tv)+'° ~ '+Math.max.apply(null,tv)+'°'):'-'), c:'var(--ink)' },
+            { k:'1시간 강수 최대', v:(rmax!=null?(rmax+'mm'+(rmax>0?' ('+rat+')':'')):'-'), c:(rmax>0?'var(--brand)':'var(--ink)') },
+            { k:'특보', v:(myW.length?(self.groupWarns(myW).map(function(g){return g.type;}).join('·')):'없음'), c:(myW.length?'var(--severe)':'var(--safe)') },
+            { k:'하천', v:(myR.length?(myR.length+'곳 '+(myR.some(function(r){return r.lv==='danger';})?'위험':'주의')):'전 지점 안전'), c:(myR.length?'var(--warn)':'var(--safe)') },
+            { k:'재난문자', v:(myMsgs.length+'건'), c:(myMsgs.length?'var(--warn)':'var(--ink)') },
+          ];
+        }
         const items=[
           { k:'현재', v:(myS.temp!=null?myS.temp+'°':'-')+(myS.weather?' '+myS.weather:''), c:'var(--ink)' },
           { k:'1시간 강수', v:(rn!=null?rn+'mm':'-'), c:(rn>0?'var(--brand)':'var(--ink)') },
@@ -1971,7 +2004,9 @@ class Component extends DCLogic {
         return items;
       })(this),
       mineBorder: (_myWarns.length||_myRisk.length)?'var(--warn)':'var(--border)',
-      mineOpen:()=>this.focusRegion(myStation, true),
+      mineOpen:()=>{ if(isWide){ this.setState({focus:null, pin:null}); try{ this.animateZoom(null); }catch(e){} } else this.focusRegion(myStation, true); },
+      pickLabel,
+      wxTitle: isWide ? (myStation+' 날씨 · '+WIDE+' 대표') : (myStation+' 날씨'),
       ribbonBg:status.bg, ribbonBorder:status.border, ribbonAccent:status.accent, ribbonPulse:status.pulse,
       ribbonChips,
       // map
@@ -2105,10 +2140,12 @@ class Component extends DCLogic {
         if(g && sc && sc!=='전체' && g[sc]) return g[sc].length+'개 소방서';
         return RC.countText||'';
       })(this),
-      stationList:(d.stations||[]).map(s=>({ name:s.name, isSel:(s.name===myStation),
-        selBg:(s.name===myStation?'var(--brandSoft)':'transparent'), selW:(s.name===myStation?800:600), selColor:(s.name===myStation?'var(--brand)':'var(--ink)'),
+      // 맨 앞은 시도 전체(WIDE) — 고르면 요약·특보·하천·재난문자가 시도 전체 기준
+      stationList:(WIDE ? [{name:WIDE}] : []).concat(d.stations||[]).map(s=>({ name:s.name, isSel:(s.name===pickLabel),
+        selBg:(s.name===pickLabel?'var(--brandSoft)':'transparent'), selW:(s.name===pickLabel?800:600), selColor:(s.name===pickLabel?'var(--brand)':'var(--ink)'),
         pick:()=>this.setMyStation(s.name) })),
-      fire, pm, messages, msgCount:(d.messages||[]).length, hasMsg:(d.messages||[]).length>0, noMsg:(d.messages||[]).length===0, images,
+      fire, pm, messages, msgCount:myMsgs.length, hasMsg:myMsgs.length>0, noMsg:myMsgs.length===0,
+      msgScope: isWide ? '' : ('· '+pickLabel), images,
       hasFlood:flood.length>0, floodCount:flood.length,
       floodBarText: floodHit ? ((floodHit.river||'하천')+' '+(floodHit.kind||'')+' 발령'+(floodNorth.length?' · 충청북도':'')) : '',
       floodSevere: flood.some(f=>(f.kind||'').indexOf('경보')>=0),
