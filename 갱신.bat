@@ -1,10 +1,10 @@
 @echo off
 chcp 65001 > nul
-title Gyeonggi Bukbu Dashboard - Update
+title Chungbuk Dashboard - Update
 cd /d "%~dp0"
 echo.
 echo ====================================================
-echo    Gyeonggi Bukbu Dashboard - Data Update
+echo    Chungbuk Dashboard - Data Update
 echo ====================================================
 echo.
 

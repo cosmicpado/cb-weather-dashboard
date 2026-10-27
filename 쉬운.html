@@ -15,7 +15,6 @@
      · dc-runtime 을 안 쓰는 순수 HTML — 단순함이 목적이라 의존을 안 둔다. -->
 <script src="region.js"></script>
 <script src="cctv-hrfco.js"></script>
-<script src="cctv-busan.js"></script>
 <script src="cctv-links.js"></script>
 <script src="data-cctv.js"></script>
 <script src="data.js"></script>
@@ -145,12 +144,12 @@
   }
 
   /* ── 특보 지역 판정 (지도.html _areaHits 와 같은 낱말 규칙) ── */
-  var WIDE = (RC.warnOrder||[])[0] || '경기도';
+  var WIDE = (RC.warnOrder||[])[0] || '충청북도';
   var ZONE = {'울릉도.독도':'울릉', '흑산도.홍도':'신안', '서해5도':'옹진', '백령도.대청도':'옹진', '연평도.우도':'옹진'};
   var SEA = /(앞바다|먼바다|전해상|해상|연안바다|평수구역)/;
   function canon(n){
     n=String(n||'').trim(); if(!n) return null;
-    if(n==='경기북부'||n==='경기도'||n==='수도권'||n==='경기') return WIDE;
+    if(n==='충청북도'||n==='충청북도'||n==='수도권'||n==='경기') return WIDE;
     if(ZONE[n]) return ZONE[n];   /* 섬 특보구역 → 관서(서버 프로파일에도 같은 표가 있지만 옛 자료·중간 구간 대비) */
     if((RC.wideNames||[]).indexOf(n)>=0) return WIDE;
     if(ORDER.indexOf(n)>=0) return n;
@@ -260,7 +259,7 @@
 
     /* 재난문자 */
     var _t=new Date(), _y=new Date(_t.getTime()-864e5), _ymd=function(d){ return d.getFullYear()+'/'+('0'+(d.getMonth()+1)).slice(-2)+'/'+('0'+d.getDate()).slice(-2); }, TODAY=_ymd(_t), YDAY=_ymd(_y);
-    var msgs = (D.messages||[]).filter(function(m){ return (!m.date || m.date===TODAY || m.date===YDAY) && (!m.region || m.region==='경기도' || m.region===sg || m.region===name); });
+    var msgs = (D.messages||[]).filter(function(m){ return (!m.date || m.date===TODAY || m.date===YDAY) && (!m.region || m.region==='충청북도' || m.region===sg || m.region===name); });
     var tM=$('tMsg'); tM.className='tile ' + (msgs.length ? 'info' : 'safe');
     tM.querySelector('.v').innerHTML = msgs.length + '<small>건</small>';
     tM.querySelector('.d').textContent = msgs.length ? (((msgs[0].date && msgs[0].date!==TODAY) ? msgs[0].date.slice(5) + ' ' : '') + (msgs[0].time||'') + ' ' + String(msgs[0].text||'').slice(0,34) + (String(msgs[0].text||'').length>34?'…':'')) : '최근 재난문자 없음';

@@ -782,7 +782,7 @@ patch("    return {\n      stageRef: (this.stageRef = this.stageRef || React.cre
 # 5) </body> 앞에 데이터 로더 + 변환기 주입
 INJECT = r'''
 <script src="./risk-zones.js"></script>
-<script src="https://gyeonggi-dashboard.visanu81.workers.dev/data.js"></script>
+<script src="data.js"></script>
 <script>
 /* DASHBOARD_DATA(우리 실시간) → WALL_DATA(디자인 형식) 변환·주입.
    stations·rivers·msgs·warns = data.js(5분 갱신), risks = 구글시트 관서별 탭(30분). */
@@ -1006,7 +1006,7 @@ INJECT = r'''
   if(window.DASHBOARD_DATA) apply(window.DASHBOARD_DATA);
   loadRisks();
   setInterval(function(){
-    fetch('https://gyeonggi-dashboard.visanu81.workers.dev/data.js?_t='+Date.now(),{cache:'no-store'})
+    fetch('data.js?_t='+Date.now(),{cache:'no-store'})
       .then(function(r){return r.text();}).then(function(t){ var i=t.indexOf('{'),j=t.lastIndexOf('}'); if(i<0||j<0) return;
         try{ apply(JSON.parse(t.slice(i,j+1))); }catch(e){} }).catch(function(){});
   }, 300000);

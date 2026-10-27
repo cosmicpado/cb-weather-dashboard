@@ -2,7 +2,7 @@
 # (.gitignore와 동일 문법)
 #
 # 사이트에 배포될 파일: index.html, data.js, icon.svg, manifest.json,
-# service-worker.js, images/, 상황판.html
+# service-worker.js, images/, 화면(*.html)·스크립트(*.js)
 
 # === 🔒 보안 critical — API 키·인증 정보 ===
 .env
@@ -45,16 +45,6 @@ README*
 *.bat
 *.vbs
 *.ps1
-
-# === 다른 지역(경기남부) 전용 파일 ===
-# 경기남부 배포(deploy-weather.yml)는 이 파일들을 data.js/map-geo.js/region.js로
-# '이름을 바꾼 뒤' wrangler를 돌리므로 여기서 제외해도 남부 사이트는 정상이다.
-# 제외하지 않으면 북부 사이트가 쓰지도 않는 남부 데이터 수백 KB를 함께 싣는다.
-data-south.js
-map-geo-south.js
-region-south.js
-risk-zones-south.js
-상황판-south.html
 
 # === wrangler 설정 (배포 도구 자체) ===
 wrangler.toml

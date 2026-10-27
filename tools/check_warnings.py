@@ -11,7 +11,7 @@ update_data.py와 상태파일(.tmp/notified_warnings.json·notified_rivers.json
 즉 이 1분 알리미가 평소 특보·하천 알림을 담당하고, 5분 갱신이 백업 역할을 한다.
 
 서버 cron 등록 예:
-  * * * * * cd /root/gyeonggi-dashboard && /usr/bin/python3 tools/check_warnings.py >> warn.log 2>&1
+  * * * * * cd <저장소 경로> && /usr/bin/python3 tools/check_warnings.py >> warn.log 2>&1
 """
 import sys
 from pathlib import Path

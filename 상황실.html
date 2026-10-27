@@ -321,7 +321,7 @@
    · region.js 에 sidoList 가 주입된 화면(작업장/전국판)에서만 나타난다. 경기 전용 사이트엔 없다.
    · 좌상단 오버레이 둘째 줄에 '🗺 시도 · 강원도' 배지. 누르면 시도 칩이 뜨고, 고르면 그 시도
      폴더의 상황실로 이동한다(시도마다 데이터·지도·설정 파일이 달라 한 화면 안에서는 못 바꾼다).
-   · 경기도는 권역이 있어 칩이 셋(경기 전체·경기북부·경기남부) — 2026-09-20 사장님 "경기도 선택하면 북부만 나와":
+   · 충청북도는 권역이 있어 칩이 셋(경기 전체·충청북도·경기남부) — 2026-09-20 사장님 "충청북도 선택하면 북부만 나와":
      벽면은 localStorage.ggScope(지도 화면의 권역 선택)를 따르므로 그냥 이동하면 전에 골라 둔 권역(북부)만 나왔다.
      칩을 누르면 ggScope 를 그 권역으로 바꾸고 이동한다('전체' = 34개 관서 전부).
    · React 밖 고정 레이어 — 순환·배치 편집기와 무관. */
@@ -330,8 +330,8 @@
   var LIST = RC.sidoList || [];
   if (!LIST.length) return;
   var CUR = RC.sidoCurrent || '';
-  /* 작업장 빌드(build_weather_dev.py)가 HTML 안의 '경기북부' 글자를 '경기도'로 바꾸므로 권역 이름은 이어 붙여 만든다 */
-  var GG = '경기' + '도', N = '경기' + '북부', S = '경기' + '남부';   /* 시도 폴더 빌드는 '경기도'도 그 시도 이름으로 바꾼다 */
+  /* 작업장 빌드(build_weather_dev.py)가 HTML 안의 '충청북도' 글자를 '충청북도'로 바꾸므로 권역 이름은 이어 붙여 만든다 */
+  var GG = '경기' + '도', N = '경기' + '북부', S = '경기' + '남부';   /* 시도 폴더 빌드는 '충청북도'도 그 시도 이름으로 바꾼다 */
   var GG_SCOPES = [{ label: '경기 전체', scope: '전체' }, { label: N, scope: N }, { label: S, scope: S }];
 
   function $(tag, style, text) { var e = document.createElement(tag); if (style) e.style.cssText = style; if (text != null) e.textContent = text; return e; }
@@ -354,12 +354,12 @@
   function togglePanel() {
     if (panel) { panel.remove(); panel = null; return; }
     panel = $('div', 'position:fixed;left:10px;top:70px;z-index:45;background:var(--panel,#141e33);border:2px solid var(--cAmber,#ffb020);border-radius:14px;padding:12px 14px;color:var(--fg,#f3f6fc);font:600 14px/1.3 system-ui,sans-serif;box-shadow:0 10px 40px rgba(0,0,0,.45);max-width:560px;');
-    panel.appendChild($('div', 'font-size:12px;color:var(--dim,#93a5c4);margin-bottom:8px;', '시도를 고르면 그 시도 상황실로 이동합니다 · 경기도는 전체/북부/남부 중 하나'));
+    panel.appendChild($('div', 'font-size:12px;color:var(--dim,#93a5c4);margin-bottom:8px;', '시도를 고르면 그 시도 상황실로 이동합니다 · 충청북도는 전체/북부/남부 중 하나'));
     var wrap = $('div', 'display:flex;flex-wrap:wrap;gap:6px;');
     var isGG = (CUR === GG), sc = curScope();
     LIST.forEach(function (sd) {
       if (sd.label === GG) {
-        /* 경기도 = 권역 칩 셋. 지금 경기 화면이면 현재 권역(ggScope, 없으면 전체)에 불을 켠다 */
+        /* 충청북도 = 권역 칩 셋. 지금 경기 화면이면 현재 권역(ggScope, 없으면 전체)에 불을 켠다 */
         var scNow = isGG ? ((sc === N || sc === S) ? sc : '전체') : null;
         GG_SCOPES.forEach(function (g) {
           wrap.appendChild(chip(g.label, scNow === g.scope, function () { go(sd, g.scope); }));
@@ -1706,8 +1706,8 @@ const RISKS = {
   남양주:[['왕숙천 캠핑장','야영객 고립','수난'],['천마산 등산로','산불 취약','산불']],
   구리:[['왕숙천 체육공원','저지대 침수','침수'],['아차산 등산로','산불 취약','산불']]
 };
-const DOMSG = ['경기도','폭염','11:30','폭염이 지속되고 있습니다. ▲낮 시간 야외활동 자제 ▲그늘 휴식, 수분섭취 등 건강관리에 유의 바랍니다.[경기도청]'];
-const OZONE = ['경기도','오존','14:10','오존주의보 발령. 호흡기 질환자·어린이·노약자는 실외활동을 자제하고 자동차 운행을 줄여주시기 바랍니다.[경기도청]'];
+const DOMSG = ['충청북도','폭염','11:30','폭염이 지속되고 있습니다. ▲낮 시간 야외활동 자제 ▲그늘 휴식, 수분섭취 등 건강관리에 유의 바랍니다.[충청북도청]'];
+const OZONE = ['충청북도','오존','14:10','오존주의보 발령. 호흡기 질환자·어린이·노약자는 실외활동을 자제하고 자동차 운행을 줄여주시기 바랍니다.[충청북도청]'];
 const MSGS = {
   고양:[['고양시','폭염','13:12','폭염경보 발효중. 무더위쉼터(경로당·행정복지센터)를 이용하시고 낮 12~17시 야외활동을 자제하시기 바랍니다.'], DOMSG],
   일산:[['고양시','폭염','13:12','폭염경보 발효중. 일산호수공원 등 야외 방문 시 충분한 수분섭취와 그늘 휴식을 실천하시기 바랍니다.'], OZONE],
@@ -2056,10 +2056,10 @@ class Component extends DCLogic {
     const out = [];
     if (s.rain1h >= 20) out.push({ type:'호우경보', area:s.name+' 전역', time:hh(h-2)+':00 발효', color:'var(--cRed,#ff5a5a)', bg:'rgba(255,77,77,.14)', sev:3 });
     else if (s.rain1h >= 5) out.push({ type:'호우주의보', area:s.name+' 전역', time:hh(h-1)+':00 발효', color:'var(--cOrange,#ff9a3c)', bg:'rgba(255,154,60,.14)', sev:2 });
-    if (s.wind >= 12) out.push({ type:'강풍경보', area:'경기북부 내륙', time:hh(h-2)+':00 발효', color:'var(--cRed,#ff5a5a)', bg:'rgba(255,77,77,.14)', sev:3 });
-    else if (s.wind >= 8) out.push({ type:'강풍주의보', area:'경기북부 내륙', time:hh(h-3)+':00 발효', color:'var(--cAmber,#ffb020)', bg:'rgba(255,176,32,.14)', sev:2 });
+    if (s.wind >= 12) out.push({ type:'강풍경보', area:'충청북도 내륙', time:hh(h-2)+':00 발효', color:'var(--cRed,#ff5a5a)', bg:'rgba(255,77,77,.14)', sev:3 });
+    else if (s.wind >= 8) out.push({ type:'강풍주의보', area:'충청북도 내륙', time:hh(h-3)+':00 발효', color:'var(--cAmber,#ffb020)', bg:'rgba(255,176,32,.14)', sev:2 });
     if (!s.wet && s.feels >= 35) out.push({ type:'폭염경보', area:s.name+' 전역', time:'10:00 발효', color:'var(--cRed,#ff5a5a)', bg:'rgba(255,77,77,.14)', sev:1 });
-    else if (!s.wet && s.feels >= 33) out.push({ type:'폭염주의보', area:'경기북부', time:'10:00 발효', color:'var(--cOrange,#ff9a3c)', bg:'rgba(255,154,60,.14)', sev:1 });
+    else if (!s.wet && s.feels >= 33) out.push({ type:'폭염주의보', area:'충청북도', time:'10:00 발효', color:'var(--cOrange,#ff9a3c)', bg:'rgba(255,154,60,.14)', sev:1 });
     return out;
   }
 
@@ -2174,8 +2174,8 @@ class Component extends DCLogic {
       msgs = [
         Object.assign({ sender:s.name+'시', kind:'호우', time:hh(now.getHours())+':'+pad(now.getMinutes()-(now.getMinutes()%6)),
           text:(s.rain1h>=20?'호우경보 발효. ':'호우주의보 발효. ')+'하천변·지하공간·지하주차장 접근을 금지하고 침수 우려 지역 주민은 안전한 곳으로 이동하시기 바랍니다.' }, blue),
-        Object.assign({ sender:'경기도', kind:'호우', time:hh(now.getHours()-1)+':40',
-          text:'시간당 '+s.rain1h+'mm의 강한 비가 내리고 있습니다. 계곡·하천 야영객은 즉시 대피하고 저지대 통행을 자제하시기 바랍니다.[경기도청]' }, blue)
+        Object.assign({ sender:'충청북도', kind:'호우', time:hh(now.getHours()-1)+':40',
+          text:'시간당 '+s.rain1h+'mm의 강한 비가 내리고 있습니다. 계곡·하천 야영객은 즉시 대피하고 저지대 통행을 자제하시기 바랍니다.[충청북도청]' }, blue)
       ];
       if (s.wind >= 12) msgs.push({ sender:'행정안전부', kind:'강풍', time:hh(now.getHours()-2)+':10',
         text:'강풍경보 발효. 간판·비계 등 낙하물에 주의하고 야외 작업과 시설물 접근을 자제하시기 바랍니다.',
@@ -2317,16 +2317,15 @@ class Component extends DCLogic {
 <script src="./risk-zones.js"></script>
 <!-- 하천 CCTV 카드(2026-09-22): 장치번호표·부산 목록·등록표·KBS 토큰(서버가 운영 저장소에 올림) — data.js 보다 먼저(변환기가 판정에 쓴다) -->
 <script src="./cctv-hrfco.js"></script>
-<script src="./cctv-busan.js"></script>
 <script src="./cctv-links.js"></script>
-<script src="https://gyeonggi-dashboard.visanu81.workers.dev/data-cctv.js"></script>
-<script src="https://gyeonggi-dashboard.visanu81.workers.dev/data.js"></script>
+<script src="data-cctv.js"></script>
+<script src="data.js"></script>
 <script>
 /* DASHBOARD_DATA(우리 실시간) → WALL_DATA(디자인 형식) 변환·주입.
    stations·rivers·msgs·warns = data.js(5분 갱신), risks = 구글시트 관서별 탭(30분). */
 (function(){
   /* 관서 목록·행정명은 region.js(window.REGION_CONF)에서. 지역이 바뀌면 그 파일만 갈아끼운다.
-     region.js가 없으면 지금까지 쓰던 경기북부 값으로 동작한다(하위호환). */
+     region.js가 없으면 지금까지 쓰던 충청북도 값으로 동작한다(하위호환). */
   var RC=(typeof window!=='undefined'&&window.REGION_CONF)||{};
   /* 권역 필터 — 화면 컴포넌트의 NAMES와 반드시 같은 규칙일 것(둘이 다르면 데이터-화면이 어긋난다) */
   var NAMES=(function(){ var RC=(typeof window!=='undefined'&&window.REGION_CONF)||{}; var base=RC.order||['고양','일산','파주','연천','의정부','양주','동두천','포천','가평','남양주','구리']; var sc=null; try{ sc=new URLSearchParams(location.search).get('scope'); }catch(e){} var g=RC.scopes||{}; try{ if(sc && !g[sc] && g['경기'+sc]) sc='경기'+sc; }catch(e){} try{ if(!sc && typeof localStorage!=='undefined'){ var v=localStorage.getItem('ggScope'); if(v==='전체') return base; if(v && g[v]) sc=v; } }catch(e){} try{ if(!sc) sc=(RC.hostScope||{})[location.hostname.split('.')[0]]||null; }catch(e){} if(sc && g[sc]) base=base.filter(function(n){ return g[sc].indexOf(n)>=0; }); return base; })();
@@ -2370,9 +2369,9 @@ class Component extends DCLogic {
     return 'cloud'; }
   /* 지도.html _canonRegion 동일 — 특보구역명 → 관서 정규화 */
   function canon(name){ var n=String(name||'').trim(); if(!n) return null; var UNITS=RC.order||[];
-    /* 시도 전역 표기(경기도·강원도·서울…)는 '경기도' 표식으로 — 아래 warnsByStation 이 전 관서 발효로 푼다 */
+    /* 시도 전역 표기(충청북도·강원도·서울…)는 '충청북도' 표식으로 — 아래 warnsByStation 이 전 관서 발효로 푼다 */
     var ZONE={'울릉도.독도':'울릉', '흑산도.홍도':'신안', '서해5도':'옹진', '백령도.대청도':'옹진', '연평도.우도':'옹진'}; if(ZONE[n]) return ZONE[n];   /* 섬 특보구역 → 관서 */
-    if(n==='경기북부'||n==='경기남부'||n==='경기도'||n==='수도권'||n==='경기'||(RC.wideNames||[]).indexOf(n)>=0) return '경기도';
+    if(n==='충청북도'||n==='경기남부'||n==='충청북도'||n==='수도권'||n==='경기'||(RC.wideNames||[]).indexOf(n)>=0) return '충청북도';
     if(UNITS.indexOf(n)>=0) return n;   /* 관서 이름 그대로면 그대로 — 광역시 '중구'를 '중'으로 깎지 않게 */
     n=n.replace(/(동북부|서북부|동남부|서남부|남부|북부|동부|서부|중부|내륙|산지|앞바다|해안)/g,'');
     n=n.replace(/(특별자치시|특별자치도|특별시|광역시|자치시|자치도)/g,'');
@@ -2387,16 +2386,16 @@ class Component extends DCLogic {
     else if(chronic){ color='var(--cAmber,#ffb020)'; bg='rgba(255,176,32,.14)'; }
     else { color='var(--cOrange,#ff9a3c)'; bg='rgba(255,154,60,.14)'; }
     return {sev:sev,color:color,bg:bg}; }
-  /* 실제 발효특보 → 관서별. 지도.html mapRegions 매칭과 동일(경기도=전역). */
+  /* 실제 발효특보 → 관서별. 지도.html mapRegions 매칭과 동일(충청북도=전역). */
   function warnsByStation(warnings){
     var out={}; NAMES.forEach(function(nm){ out[nm]=[]; });
     (warnings||[]).forEach(function(w){
       var st=warnStyle(w.type), spec={}, province=false;
       String(w.area||'').split(/[,·\/]/).forEach(function(a){ var n=canon(a); if(!n) return;
-        if(n==='경기도'){ province=true; }                                    /* '경기도'는 헤더일 수 있어 보류(개별 시군 있으면 무시) */
+        if(n==='충청북도'){ province=true; }                                    /* '충청북도'는 헤더일 수 있어 보류(개별 시군 있으면 무시) */
         else NAMES.forEach(function(nm){ if(sig(nm)===n||nm===n) spec[nm]=1; }); });
       var tgt=spec;
-      if(!Object.keys(spec).length && province) NAMES.forEach(function(nm){ tgt[nm]=1; });  /* 개별 시군 없이 '경기도'만 → 전역 발효 */
+      if(!Object.keys(spec).length && province) NAMES.forEach(function(nm){ tgt[nm]=1; });  /* 개별 시군 없이 '충청북도'만 → 전역 발효 */
       Object.keys(tgt).forEach(function(nm){ out[nm].push({type:w.type,area:w.area||'',time:(w.time?w.time+' 발효':''),color:st.color,bg:st.bg,sev:st.sev}); });
     });
     NAMES.forEach(function(nm){ var seen={},arr=[]; out[nm].sort(function(a,b){return b.sev-a.sev;}).forEach(function(x){ if(!seen[x.type]){seen[x.type]=1;arr.push(x);} }); out[nm]=arr; });
@@ -2472,7 +2471,7 @@ class Component extends DCLogic {
     /* 재난문자 → 관서. 전 관서 키를 항상 설정(빈 []) → 문자 없는 관서에 디자인 샘플문자가 뜨는 폴백 차단. */
     var msgs={};
     NAMES.forEach(function(nm){ var sg=sig(nm);
-      msgs[nm]=(D.messages||[]).filter(function(m){ return m.region===sg||m.region===nm||m.region==='경기도'; })
+      msgs[nm]=(D.messages||[]).filter(function(m){ return m.region===sg||m.region===nm||m.region==='충청북도'; })
         .map(function(m){ return [m.sender||sg,'',m.time||'',m.text||'']; }).slice(0,4); });
     /* 상단바 '항상 띄울 관측소' — 관서 순환과 무관한 전역 목록.
        region.js의 topRivers(한강홍수통제소 관측소 코드)로 고른다. 이름이 아니라 코드로
@@ -2572,7 +2571,7 @@ class Component extends DCLogic {
   if(window.DASHBOARD_DATA) apply(window.DASHBOARD_DATA);
   loadRisks();
   setInterval(function(){
-    fetch('https://gyeonggi-dashboard.visanu81.workers.dev/data.js?_t='+Date.now(),{cache:'no-store'})
+    fetch('data.js?_t='+Date.now(),{cache:'no-store'})
       .then(function(r){return r.text();}).then(function(t){ var i=t.indexOf('{'),j=t.lastIndexOf('}'); if(i<0||j<0) return;
         try{ apply(JSON.parse(t.slice(i,j+1))); }catch(e){} }).catch(function(){});
   }, 300000);

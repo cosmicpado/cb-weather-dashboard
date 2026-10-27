@@ -1,10 +1,11 @@
-cd /root/gyeonggi-dashboard
+cd "$(dirname "$0")"
+REPO=$(pwd)
 
 # ── 중복 실행 방지 ─────────────────────────────────────────────────
-# 지역이 둘로 늘어 한 회차가 3분 가까이 걸린다. 네트워크가 느린 날엔 5분을 넘겨
-# 다음 cron과 겹칠 수 있고, 그러면 두 프로세스가 같은 저장소에 동시에 커밋한다.
+# 네트워크가 느린 날엔 한 회차가 5분을 넘겨 다음 cron과 겹칠 수 있고,
+# 그러면 두 프로세스가 같은 저장소에 동시에 커밋한다.
 # 이미 돌고 있으면 이번 회차는 조용히 건너뛴다(다음 5분에 다시 온다).
-exec 9>/tmp/gg-dashboard-update.lock
+exec 9>/tmp/cb-dashboard-update.lock
 if ! flock -n 9; then
   echo "⏭  이전 회차가 아직 실행 중 — 이번 회차 건너뜀 $(date '+%F %R')" >> cron.log
   exit 0
@@ -17,7 +18,7 @@ fi
 find . -maxdepth 2 -name '*.tmp.*' -mmin +60 -delete 2>/dev/null || true  # 원자적저장 임시파일 잔재
 git gc --prune=now --quiet 2>/dev/null || true   # .git 압축
 
-# fix_gyeonggi.sh(auto-trade, 06시)가 .git을 재생성하며 남긴 잠금 잔재 자가정리 (없으면 무시)
+# 비정상 종료로 남은 git 잠금 잔재 자가정리 (없으면 무시)
 rm -f .git/index.lock 2>/dev/null || true
 
 # ── 원격 동기화 ────────────────────────────────────────────────────
@@ -38,7 +39,7 @@ git branch --set-upstream-to=origin/main main 2>/dev/null || true
 # check_warnings가 아직 없을 때만 전체 crontab 뒤에 한 줄 추가한다.
 CRON_NOW=$(crontab -l 2>/dev/null)
 if echo "$CRON_NOW" | grep -q 'update.sh' && ! echo "$CRON_NOW" | grep -qF 'check_warnings.py'; then
-  ( echo "$CRON_NOW"; echo '* * * * * cd /root/gyeonggi-dashboard && /usr/bin/python3 tools/check_warnings.py >> warn.log 2>&1' ) | crontab - \
+  ( echo "$CRON_NOW"; echo "* * * * * cd $REPO && /usr/bin/python3 tools/check_warnings.py >> warn.log 2>&1" ) | crontab - \
     && echo "🔔 check_warnings 1분 cron 자가등록 $(date '+%F %R')" >> cron.log
 fi
 
@@ -77,44 +78,7 @@ if [ "${GITMB:-0}" -gt "$FLUSH_MB" ] || [ "${CNT:-0}" -gt "$FLUSH_CNT" ]; then
   fi
 fi
 
-# ── 지역별 수집 ────────────────────────────────────────────────────
-# 경기북부(약 2분)와 경기남부(약 3분)를 순서대로 돌리면 5분 cron을 넘겨 다음 회차와
-# 겹친다. 서로 건드리는 파일이 없으므로(상태폴더 .tmp/ vs .tmp/south/, 남부는
-# 기상청 이미지를 북부 것을 재사용) 동시에 돌리고 둘 다 끝난 뒤 한 번만 푸시한다.
-# → 걸리는 시간 = 둘 중 긴 쪽(약 3분).
-#
-# 푸시를 각자 하게 두면 같은 저장소에 동시에 커밋해 경합이 난다. 그래서 수집은
-# --no-push로 파일만 만들고, 마지막 --push-only가 한꺼번에 커밋·푸시·배포한다.
-/usr/bin/python3 tools/update_data.py --profile south --no-push >> cron.log 2>&1 &
-SOUTH_PID=$!
-/usr/bin/python3 tools/update_data.py --no-push >> cron.log 2>&1
-wait $SOUTH_PID
-
-# ── 전국 시도 수집 (2026-09-19 전국 확장) ───────────────────────────────
-# 시도 15개를 5개씩 세 묶음으로 나눠 묶음 안에서는 동시에, 묶음끼리는 차례로 돌린다.
-#   · 전국 공통 자료(특보·재난문자·산불·AWS·하천)는 .tmp/shared/ 공유 캐시로 한 회차에 한 번만 받는다
-#     → 시도 하나당 호출은 시군별 예보(시간 캐시)뿐이라 캐시가 따뜻하면 회차당 5~20초.
-#   · 동시 17개는 메모리 부담이라 5개씩. 새 예보가 나오는 시각(3시간마다)엔 묶음당 1분쯤 걸린다.
-#   · 상태폴더 .tmp/<키>/, 이미지는 북부 것 재사용(share_images_from). 알림은 북부만.
-for GROUP in "gangwon seoul incheon busan daegu"              "daejeon ulsan sejong chungbuk chungnam"              "jeonbuk jngj gyeongbuk gyeongnam jeju"; do
-  PIDS=""
-  for KEY in $GROUP; do
-    /usr/bin/python3 tools/update_data.py --profile $KEY --no-push >> cron.log 2>&1 &
-    PIDS="$PIDS $!"
-  done
-  wait $PIDS
-done
-/usr/bin/python3 tools/update_data.py --push-only >> cron.log 2>&1
-
-# ── 교통상황판 돌리기 (2026-08-28 추가) ────────────────────────────
-# 교통상황판(traffic.visanu81.workers.dev)을 여기서 같이 돌린다.
-# 자세한 사정과 처리는 tools/traffic_hook.py 맨 위에 적어뒀다.
-#
-# ★ 기상상황판에 절대 영향을 주면 안 된다. 그래서
-#   · `exec 9>&-` 로 이 스크립트의 잠금(fd 9)을 자식에게 물려주지 않는다.
-#     안 그러면 교통상황판 작업이 도는 동안 기상 잠금이 잡혀 있어,
-#     다음 회차 기상 갱신이 통째로 건너뛴다.
-#   · 백그라운드로 돌려 이 스크립트를 붙잡지 않는다
-#   · 실패는 통째로 무시한다(|| true). hook 자체도 종료코드가 늘 0 이다.
-( exec 9>&-; /usr/bin/python3 /root/gyeonggi-dashboard/tools/traffic_hook.py     > /tmp/traffic-hook.log 2>&1 || true ) &
-
+# ── 수집 · 커밋 · 푸시 · 배포 ─────────────────────────────────────────
+# update_data.py 가 충청북도 데이터를 모아 data.js 를 만들고, 배포 조건이 되면
+# 커밋·푸시하고 deploy-trigger 브랜치로 Cloudflare 배포를 띄운다.
+/usr/bin/python3 tools/update_data.py >> cron.log 2>&1

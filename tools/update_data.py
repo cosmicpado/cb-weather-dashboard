@@ -6,8 +6,8 @@
 이 파일의 함수들은 지역을 가리지 않는다.
 
 실행:
-  python tools/update_data.py                                 경기북부 → data.js
-  python tools/update_data.py --profile south --no-push       경기남부 → data-south.js
+  python tools/update_data.py              충청북도 → data.js (수집 후 git 커밋·푸시·배포)
+  python tools/update_data.py --no-push    수집만 (로컬 확인용)
 """
 import json
 import os
@@ -71,8 +71,7 @@ def _atomic_write_text(path, text):
 # ───────────────────────────────────────────────────────────────
 # 지역 프로파일 — 어느 지역 상황판을 만들 것인가
 #
-#   python tools/update_data.py                  → 경기북부 (기본, 기존과 동일)
-#   python tools/update_data.py --profile south  → 경기남부 (data-south.js)
+#   python tools/update_data.py                  → 충청북도 (data.js)
 #   ... --no-push     : 깃 푸시·배포 생략 (여러 지역을 연달아 돌릴 때 마지막 회차만 푸시)
 #   ... --no-notify   : 텔레그램 알림 생략
 #
@@ -91,7 +90,7 @@ def _argval(flag, default=None):
     return default
 
 
-PROFILE_NAME = _argval('--profile', 'north')
+PROFILE_NAME = _argval('--profile', _rp.DEFAULT)
 P = _rp.get(PROFILE_NAME)
 NO_PUSH = '--no-push' in sys.argv
 NO_NOTIFY = '--no-notify' in sys.argv or not P['notify']
@@ -101,9 +100,8 @@ OUTPUT_PATH = ROOT / P['data_file']
 TEMPLATE_PATH = ROOT / 'index.html'
 COMBINED_OUTPUT_PATH = ROOT / P['combined_file']
 
-# 상태파일 폴더 — 지역마다 완전히 분리한다. 같이 쓰면 남부 특보가 북부 알림
-# 중복방지 기록을 덮어써서 '이미 보냄' 판정이 뒤섞인다(알림 누락·중복의 원인).
-TMP = (ROOT / '.tmp') if PROFILE_NAME == 'north' else (ROOT / '.tmp' / PROFILE_NAME)
+# 상태파일 폴더 (강수 누적·알림 중복방지 기록 등)
+TMP = ROOT / '.tmp'
 TMP.mkdir(parents=True, exist_ok=True)
 
 
@@ -3700,56 +3698,6 @@ def apply_effective_humidity(regions):
         pass
 
 
-SUMMARY_PATH = ROOT / 'data-summary.js'
-
-
-def _summarize(key, label, d):
-    """시도 데이터 한 벌 → 대문용 한 줄. 화면이 쓰는 판정과 같은 기준(하천 level, 특보 type, 관서 rain)."""
-    regs = d.get('regions') or []
-    rivers = d.get('rivers') or []
-    warns = d.get('warnings') or []
-    types = list(dict.fromkeys(str(w.get('type') or '') for w in warns if w.get('type')))
-    risk = [r for r in rivers if r.get('level') in ('warning', 'danger')]
-    risk.sort(key=lambda r: (r.get('level') != 'danger', -(r.get('value') or 0)))
-    rain = [(float(r.get('rain') or 0), r.get('name')) for r in regs if r.get('rain') is not None]
-    rmax = max(rain) if rain else (0.0, None)
-    prelim = sum(1 for g in (d.get('prelim_warnings') or []) if g.get('north_count'))
-    return {
-        'key': key, 'label': label, 'updated': d.get('updated'), 'stations': len(regs),
-        'warn': len(types), 'warn_types': types[:4],
-        'severe': any(w.get('level') == 'severe' or '경보' in str(w.get('type') or '') for w in warns),
-        'prelim': prelim,
-        'river_risk': len(risk), 'river_top': [{'name': r.get('name'), 'level': r.get('level')} for r in risk[:3]],
-        'rain_max': round(rmax[0], 1), 'rain_where': rmax[1],
-        'msgs': len(d.get('messages') or []),
-    }
-
-
-def build_summary():
-    """전국 요약 data-summary.js — 배포 회차(push_only)마다 모든 프로파일 데이터에서 한 줄씩(2026-09-20).
-    경기는 북부+남부를 합쳐 한 줄(전국 대문의 경기 항목 = 전체판). 파일이 없는 시도는 건너뛴다.
-    git add -A 로 데이터와 같이 커밋되고, _headers 의 /data-*.js 규칙으로 CORS 도 열린다."""
-    rows, gg = [], []
-    for k, p in _rp.PROFILES.items():
-        d = load_previous_data(ROOT / p['data_file'])
-        if not d:
-            continue
-        if k in ('north', 'south'):
-            gg.append(d)
-            continue
-        rows.append(_summarize(k, p.get('wide_label') or p.get('label') or k, d))
-    if gg:
-        merged = {'regions': [], 'rivers': [], 'warnings': [], 'prelim_warnings': [], 'messages': [],
-                  'updated': max(str(x.get('updated') or '') for x in gg)}
-        for x in gg:
-            for f in ('regions', 'rivers', 'warnings', 'prelim_warnings', 'messages'):
-                merged[f] += list(x.get(f) or [])
-        rows.insert(0, _summarize('gyeonggi', '경기도', merged))
-    out = {'generated': datetime.now().strftime('%Y-%m-%d %H:%M:%S'), 'sido': rows}
-    _atomic_write_text(SUMMARY_PATH, 'window.NATION_SUMMARY = ' + json.dumps(out, ensure_ascii=False) + ';\n')
-    return len(rows)
-
-
 KBS_CCTV_PATH = ROOT / 'data-cctv.js'
 
 
@@ -3842,10 +3790,6 @@ def push_only():
               f'변경은 다음 배포 때 함께 올림')
         print(f'[{now_str()}] 종료')
         return
-    try:
-        print(f'  · 전국 요약 {build_summary()}개 시도 → data-summary.js')
-    except Exception as e:
-        print(f'  · 전국 요약 실패({type(e).__name__}) — 건너뜀')
     try:
         _nk, _nh = build_cctv_files()
         print(f'  · CCTV 목록: KBS {_nk}대 · 통제소 장치번호 {_nh}곳 → data-cctv.js')

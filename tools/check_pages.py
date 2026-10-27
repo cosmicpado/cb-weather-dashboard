@@ -26,7 +26,7 @@ except Exception:
 ROOT = Path(__file__).resolve().parent.parent
 
 # 실시간 데이터를 그리는 화면들. 여기 있는 파일은 반드시 region.js를 물어야 한다.
-DATA_PAGES = ['지도.html', '광역.html', '호우.html', '상황실.html']
+DATA_PAGES = ['지도.html', '호우.html', '상황실.html']
 
 # 지역마다 달라지는데 코드에 박히기 쉬운 값들 → REGION_CONF 를 거치는지 본다.
 # (주석·시연용 더미 데이터에는 있어도 되므로, '기본값으로 쓰는 자리'만 잡는다)

@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
-"""시도 프로파일 전부 → 지도(map-geo-<key>.js) + 화면설정(region-<key>.js) 일괄 생성.
+"""충북 프로파일 → 지도(map-geo.js) + 화면설정(region.js) 생성.
 
 전국 확장 2단계(2026-09-18). 프로파일(tools/profiles/*.json)은 build_region_profile.py --sido 가 만든다.
 여기서는 그 뒤 두 산출물을 시도마다 돌리고 결과를 한 표로 보여준다.
 
-  python tools/build_all_sido.py            # 전부
-  python tools/build_all_sido.py busan jeju # 골라서
-  python tools/build_all_sido.py --collect  # + 로컬에서 데이터 1회 수집(data-<key>.js) — 작업장 미리보기용
+  python tools/build_all_sido.py            # 지도·화면설정 다시 생성
+  python tools/build_all_sido.py --collect  # + 데이터 1회 수집(data.js)
 """
 import json
 import subprocess
@@ -40,7 +39,7 @@ def main():
     for pf in profs:
         key = pf.stem
         prof = json.loads(pf.read_text(encoding='utf-8'))
-        ok_map = run(['tools/build_map_geo.py', '--profile', key, '--merge', '--out', f'map-geo-{key}.js'], f'{key} 지도')
+        ok_map = run(['tools/build_map_geo.py', '--profile', key, '--merge', '--out', prof['map_file']], f'{key} 지도')
         ok_js = ok_map and run(['tools/build_region_js.py', key], f'{key} 화면설정')
         ok_data = None
         if collect and ok_js:

@@ -67,7 +67,7 @@ def main():
 
     ips = get_local_ips()
     print('=' * 60)
-    print('  경기북부 기상·재난 상황판 — 사내망 서버 시작')
+    print('  충청북도 기상·재난 상황판 — 사내망 서버 시작')
     print('=' * 60)
     print()
     print('  [사장님 컴퓨터에서 접속]')
