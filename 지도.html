@@ -1896,7 +1896,7 @@ class Component extends DCLogic {
     const ribbonChips = [
       chip(groupedWarns.length, '발효특보', groupedWarns.length?'var(--severe)':'var(--ink2)', groupedWarns.length?'var(--severeSoft)':'var(--surface)', groupedWarns.length?'var(--severe)':'var(--border)'),
       chip(prelimCount, '예비특보', prelimCount?'var(--caution)':'var(--ink2)', 'var(--surface)', 'var(--border)'),
-      chip((d.messages||[]).length, '재난문자', (d.messages||[]).length?'var(--warn)':'var(--ink2)', 'var(--surface)', 'var(--border)'),
+      chip(myMsgs.length, '재난문자', myMsgs.length?'var(--warn)':'var(--ink2)', 'var(--surface)', 'var(--border)'),   // 재난문자 카드와 같은 기준(선택 관서)
       {...chip(worstRiver?worstRiver.pctW:'-', (worstRiver&&_wrPlace)?(_wrScope+' 최고수위('+_wrPlace+')'):'최고수위', worstRiver?worstRiver.color:'var(--ink2)', 'var(--surface)', 'var(--border)'), labelStyle:_chipLabelSm},
       chip(feelsMax?feelsMax+'°':'-', '최고체감', 'var(--ink2)', 'var(--surface)', 'var(--border)')
     ];
