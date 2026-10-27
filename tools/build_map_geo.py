@@ -10,6 +10,9 @@
   W = 1000, pad = 12,  H = 위도폭 * scale + 2*pad
 
 원본: 통계청 2013 시군구 경계(공개 데이터). 시(市) 하위 구(區)는 관서 단위로 묶는다.
+  · 프로파일에 map_source 가 있으면 그 파일(저장소 안 GeoJSON)을 대신 쓴다 — 충북은 2014 청주·청원
+    통합 이후 경계가 필요해 tools/geo/chungbuk.geojson(build_admdong_geo.py 로 생성)을 쓴다.
+    map_simplify(경위도 허용오차)가 있으면 관서별로 합친 뒤 Douglas–Peucker 로 단순화한다.
   · --merge: 구 경계선을 지운다(수원 4구·용인 3구가 한 덩어리로 보인다).
     같은 원본에서 온 인접 폴리곤은 변(邊)을 공유하므로, 양쪽에 반대 방향으로
     한 번씩 나타나는 변만 지우면 외곽선만 남는다(불리언 연산 라이브러리 불필요).
@@ -94,7 +97,10 @@ ORDER['all'] = ['수원', '성남', '분당', '부천', '안양', '안산', '용
                 '가평', '연천']
 
 
-def load_geojson(refresh=False):
+def load_geojson(refresh=False, source=None):
+    """source: 프로파일 map_source(저장소 안 GeoJSON 경로). 없으면 통계청 2013 원본을 내려받아 쓴다."""
+    if source:
+        return json.loads((ROOT / source).read_text(encoding='utf-8'))
     if CACHE.exists() and not refresh:
         return json.loads(CACHE.read_text(encoding='utf-8'))
     CACHE.parent.mkdir(exist_ok=True)
@@ -160,6 +166,41 @@ def merge_rings(rings):
         if len(ring) >= 3:
             out.append([list(p) for p in ring] + [list(start)])
     return out or rings
+
+
+def _simplify_line(pts, tol):
+    """Douglas–Peucker (경위도 단위 허용오차). 양 끝점은 남긴다."""
+    if len(pts) < 3:
+        return pts
+    keep = [False] * len(pts)
+    keep[0] = keep[-1] = True
+    stack = [(0, len(pts) - 1)]
+    while stack:
+        a, b = stack.pop()
+        (x1, y1), (x2, y2) = pts[a], pts[b]
+        dx, dy = x2 - x1, y2 - y1
+        L = math.hypot(dx, dy)
+        far, fd = None, tol
+        for i in range(a + 1, b):
+            x, y = pts[i]
+            d = (abs(dy * (x - x1) - dx * (y - y1)) / L) if L else math.hypot(x - x1, y - y1)
+            if d > fd:
+                far, fd = i, d
+        if far is not None:
+            keep[far] = True
+            stack += [(a, far), (far, b)]
+    return [p for p, k in zip(pts, keep) if k]
+
+
+def simplify_ring(ring, tol):
+    """닫힌 링 단순화 — 첫 점과 가장 먼 점에서 둘로 나눠 각각 Douglas–Peucker."""
+    pts = ring[:-1] if ring[0] == ring[-1] else ring[:]
+    if len(pts) < 8:
+        return ring
+    x0, y0 = pts[0]
+    m = max(range(len(pts)), key=lambda i: (pts[i][0] - x0) ** 2 + (pts[i][1] - y0) ** 2)
+    out = _simplify_line(pts[:m + 1], tol)[:-1] + _simplify_line(pts[m:] + [pts[0]], tol)[:-1]
+    return out + [out[0]] if len(out) >= 3 else ring
 
 
 def area_centroid(rings):
@@ -284,14 +325,16 @@ def split_remote(shapes, kx, force=()):
 
 
 def build(profile, merge=False):
-    geo = load_geojson()
+    prof = {}
+    if profile not in GROUPS:
+        prof = json.loads((ROOT / 'tools' / 'profiles' / f'{profile}.json').read_text(encoding='utf-8'))
+    geo = load_geojson(source=prof.get('map_source'))
     by_code = {str(f['properties']['code']): f for f in geo['features']}
     force_inset = ()
     if profile in GROUPS:
         groups, order = GROUPS[profile], ORDER[profile]
     else:
         groups, order = groups_from_profile(profile, geo)
-        prof = json.loads((ROOT / 'tools' / 'profiles' / f'{profile}.json').read_text(encoding='utf-8'))
         force_inset = tuple(prof.get('map_inset_units') or ())
 
     shapes = {}
@@ -303,6 +346,8 @@ def build(profile, merge=False):
                 raise SystemExit(f'경계자료에 코드 {code}({area})가 없습니다')
             rings.extend(rings_of(f))
         shapes[area] = merge_rings(rings) if merge else rings
+        if prof.get('map_simplify'):          # 상세 원본(map_source)은 합친 뒤 단순화해야 지도 파일이 가볍다
+            shapes[area] = [simplify_ring(r, prof['map_simplify']) for r in shapes[area]]
 
     pts = [p for rs in shapes.values() for r in rs for p in r]
     min_lon = min(p[0] for p in pts)

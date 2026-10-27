@@ -46,6 +46,30 @@ python tools/build_all_sido.py                          # map-geo.js + region.js
 python tools/check_pages.py                             # 화면이 region.js 를 제대로 무는지 검사
 ```
 
+### 손으로 정한 값 (프로파일을 다시 뽑으면 되돌아가니 다시 넣을 것)
+
+`tools/profiles/chungbuk.json` 에서 아래 값은 생성기 결과가 아니라 직접 정한 것이다.
+
+| 키 | 값 | 이유 |
+|---|---|---|
+| `region_order` | 충청북도, 청주동부, 청주서부, 충주, 제천, 보은, 옥천, 영동, 증평, 진천, 괴산, 음성, 단양 | 관서 표시 순서(화면·특보 목록 공통) |
+| `map_alias` | 청주동부 = 상당구·청원구, 청주서부 = 흥덕구·서원구 | 청주 두 소방서 관할 |
+| `map_source` | `tools/geo/chungbuk.geojson` | 2014 청주·청원 통합 이후 경계 (아래) |
+| `map_simplify` | `0.0008` | 상세 경계를 지도용으로 단순화하는 허용오차(경위도, 약 0.7px) |
+
+### 지도 경계 원본
+
+`tools/geo/chungbuk.geojson` 은 최신 행정동 경계([vuski/admdongkor](https://github.com/vuski/admdongkor))를
+시군구로 합친 것이다(현재 ver20261001). 기본 원본(통계청 2013)에는 서원구·청원구가 없어 청주 관할을 그릴 수 없다.
+행정구역이 바뀌어 다시 만들 때 (사내망은 raw.githubusercontent.com 이 막혀 git 으로 한 파일만 받는다):
+
+```
+git clone --depth 1 --filter=blob:none --no-checkout https://github.com/vuski/admdongkor <폴더>
+git -C <폴더> checkout HEAD -- verYYYYMMDD/HangJeongDong_verYYYYMMDD.geojson
+python tools/build_admdong_geo.py <폴더>/verYYYYMMDD/HangJeongDong_verYYYYMMDD.geojson
+python tools/build_all_sido.py
+```
+
 ## 배포 (선택)
 
 - `wrangler.toml` — Cloudflare Workers 정적 자산(`cb-weather-dashboard`). 제외 목록은 `.assetsignore`.
