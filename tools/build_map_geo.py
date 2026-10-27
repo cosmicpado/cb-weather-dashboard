@@ -17,7 +17,7 @@
 
 실행:
   python tools/build_map_geo.py --verify
-  python tools/build_map_geo.py --profile south --merge --out map-geo-south.js
+  python tools/build_map_geo.py --profile chungbuk --merge --out map-geo.js
 """
 import argparse
 import json

@@ -1,14 +1,14 @@
 @echo off
 chcp 65001 > nul
-title 경기북부 기상·재난 상황판
+title 충청북도 기상·재난 상황판
 cd /d "%~dp0"
 echo.
 echo ====================================================
-echo    경기북부 기상·재난 상황판
+echo    충청북도 기상·재난 상황판
 echo ====================================================
 echo.
 echo [1/2] 최신 데이터 가져오는 중...
-python tools\update_data.py
+python tools\update_data.py --no-push
 if errorlevel 1 (
     echo.
     echo [경고] 데이터 갱신 실패. 이전 데이터로 표시됩니다.

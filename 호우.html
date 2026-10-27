@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>호우 상황판 · 경기북부</title>
+<title>호우 상황판 · 충청북도</title>
 <!-- support.js = dc-runtime 본체. 없으면 페이지가 부팅되지 않는다(템플릿이 글자로 노출).
      반드시 진짜 head 안에 둘 것 — helmet에 넣으면 첫 렌더 뒤에 로드돼 부팅이 안 된다.
      leaflet은 이 페이지가 지도를 안 그리므로 생략.
@@ -26,10 +26,10 @@
 <link rel="apple-touch-icon" href="icon.svg">
 <!-- 순서 고정: data.js → data-adapter.js → dashboard-data.js(폴백은 반드시 어댑터 뒤).
      뒤집으면 폴백이 실데이터를 이겨 영영 가짜 값이 보인다. -->
-<!-- 지역 설정 — 반드시 data-adapter.js보다 먼저. 없으면 어댑터가 경기북부 기본값으로
+<!-- 지역 설정 — 반드시 data-adapter.js보다 먼저. 없으면 어댑터가 충청북도 기본값으로
      떨어져 남부 사이트에 북부 관서·강수량이 뜬다(2026-08-07 실제로 발생). -->
 <script src="region.js"></script>
-<script src="https://gyeonggi-dashboard.visanu81.workers.dev/data.js"></script>
+<script src="data.js"></script>
 <script src="data-adapter.js"></script>
 <script src="dashboard-data.js"></script>
 <style>
@@ -147,7 +147,7 @@
     </div>
     <div style="font-size:11px; color:var(--ink3); margin-top:-6px; line-height:1.5;">※ 기상청 특보는 <b>예상</b> 기준이라 실측이 앞설 수 있습니다. 특보가 없어도 실측이 기준을 넘으면 대응하십시오. 호우주의보=3시간 60mm 또는 12시간 110mm · 경보=3시간 90mm 또는 12시간 180mm</div>
 
-    <!-- ── ② 11개 관서 누적강수 랭킹 (핵심) ───────────────── -->
+    <!-- ── ② 12개 관서 누적강수 랭킹 (핵심) ───────────────── -->
     <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; box-shadow:var(--sh2); padding:15px 17px;">
       <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:12px;">
         <div style="display:flex; align-items:baseline; gap:8px;">
@@ -234,7 +234,7 @@
           <span style="font-size:11.5px; font-weight:800; color:{{radarAgeColor}};">{{radarAge}}</span>
         </div>
         <div style="font-size:11.5px; color:var(--ink2); margin-bottom:9px; line-height:1.5;">지금 실제로 내리는 비를 레이더로 관측한 것입니다.</div>
-        <img src="https://gyeonggi-dashboard.visanu81.workers.dev/images/kma_radar.png" alt="레이더" style="width:100%; border-radius:11px; border:1px solid var(--border); background:var(--surface2);">
+        <img src="images/kma_radar.png" alt="레이더" style="width:100%; border-radius:11px; border:1px solid var(--border); background:var(--surface2);">
         {{legendBody}}
       </div>
       <div style="background:var(--surface); border:1px solid {{qpfBorder}}; border-radius:16px; box-shadow:var(--sh2); padding:15px 17px;">
@@ -244,7 +244,7 @@
         </div>
         <div style="font-size:11.5px; color:var(--ink2); margin-bottom:9px; line-height:1.5;">앞으로 비구름이 어디로 갈지 기상청이 예측한 것입니다.</div>
         {{qpfWarnBody}}
-        <img src="https://gyeonggi-dashboard.visanu81.workers.dev/images/kma_qpf.png" alt="초단기 예측강수" style="width:100%; border-radius:11px; border:1px solid var(--border); background:var(--surface2);">
+        <img src="images/kma_qpf.png" alt="초단기 예측강수" style="width:100%; border-radius:11px; border:1px solid var(--border); background:var(--surface2);">
         {{legendBody2}}
       </div>
     </div>
@@ -265,7 +265,7 @@
     </div>
 
     <div style="font-size:11px; color:var(--ink3); text-align:center; padding:6px 0 2px; line-height:1.6;">
-      경기북부 호우 상황판 · 강수량은 기상청 AWS 실측(자동기상관측) 기준 · {{updatedTxt}} 기준<br>
+      충청북도 호우 상황판 · 강수량은 기상청 AWS 실측(자동기상관측) 기준 · {{updatedTxt}} 기준<br>
       관서 대표값은 <b>관할 안에서 가장 많이 온 관측소</b> 값입니다 (평균은 국지호우를 놓칩니다)
     </div>
   </div>
@@ -287,7 +287,7 @@ class Component extends DCLogic {
       myStation: (function(){ var RC=(window.REGION_CONF||{}); var h=RC.home||'동두천'; try{ var sv=(typeof localStorage!=='undefined' && localStorage.getItem('ggMyStation')) || h;
         if(RC.order && RC.order.length && RC.order.indexOf(sv)<0) sv=h; return sv; }catch(e){ return h; } })(),
       stationPickerOpen: (function(){ try{ if(sessionStorage.getItem('ggPickerOpen')==='1'){ sessionStorage.removeItem('ggPickerOpen'); return true; } }catch(e){} return false; })(),
-      /* 권역(경기북부/남부/전체) — 지도.html 과 같은 저장값(ggScope). 없으면 접속 주소의 권역(hostScope), 그것도 없으면 전체.
+      /* 권역(충청북도/남부/전체) — 지도.html 과 같은 저장값(ggScope). 없으면 접속 주소의 권역(hostScope), 그것도 없으면 전체.
          (2026-09-21 사장님: 호우 화면이 권역을 몰라 34개 관서가 다 나왔다) */
       scope: (function(){ var RC=(window.REGION_CONF||{}), g=RC.scopes||null; if(!g) return '전체';
         try{ var v=(typeof localStorage!=='undefined') && localStorage.getItem('ggScope');
@@ -341,7 +341,7 @@ class Component extends DCLogic {
       stations:(d.stations||[]).filter(function(x){ return inName.has(x.name); }),
       rivers:(d.rivers||[]).filter(function(r){ return inSig.has(r.sigun); }),
       warnings:(d.warnings||[]).filter(function(w){ return hitArea(w.area); }),
-      messages:(d.messages||[]).filter(function(m){ return !m.region || m.region==='경기도' || inSig.has(m.region); })
+      messages:(d.messages||[]).filter(function(m){ return !m.region || m.region==='충청북도' || inSig.has(m.region); })
     });
   }
   /* 권역 전환 — 보던 관서가 새 권역에 없으면 그 권역 첫 관서로. 창은 열어 둔다(이어서 관서 선택). */
@@ -385,7 +385,7 @@ class Component extends DCLogic {
     c.warnings = [
       {type:'호우경보', area:'포천, 동두천', level:'severe', time:'15:42'},
       {type:'호우주의보', area:'연천, 양주, 의정부, 파주', level:'warning', time:'15:08'},
-      {type:'강풍주의보', area:'경기북부 전역', level:'warning', time:'14:30'}
+      {type:'강풍주의보', area:'충청북도 전역', level:'warning', time:'14:30'}
     ];
     // 관서별 AWS 실측 — [1시간, 12시간, 일누적, 순간최대풍속, 강수대표소, 돌풍풍향(도), 바람최강소]
     // 강풍도 경보 상황으로: 포천 28m/s(경보급 26↑), 연천 22m/s(주의보급 20↑)
@@ -437,7 +437,7 @@ class Component extends DCLogic {
     c.messages = [
       {sender:'포천시', time:'15:44', text:'[포천시] 시간당 40mm 이상 강한 비가 내리고 있습니다. 저지대·하천변·산사태 위험지역 주민은 즉시 안전한 곳으로 대피하시기 바랍니다.', region:'포천'},
       {sender:'동두천시', time:'15:31', text:'[동두천시] 신천 수위 급상승. 송천교 일대 하천변 산책로를 전면 통제합니다. 접근을 삼가시기 바랍니다.', region:'동두천'},
-      {sender:'경기도', time:'15:05', text:'[경기도] 호우경보 발효. 차량 침수에 주의하고 지하차도·급경사지 통행을 자제해 주세요.', region:'경기도'},
+      {sender:'충청북도', time:'15:05', text:'[충청북도] 호우경보 발효. 차량 침수에 주의하고 지하차도·급경사지 통행을 자제해 주세요.', region:'충청북도'},
       {sender:'연천군', time:'14:52', text:'[연천군] 임진강 수위 상승. 군남댐 방류가 예정되어 있으니 하천변 접근을 자제해 주세요.', region:'연천'}
     ];
     return c;
@@ -447,7 +447,7 @@ class Component extends DCLogic {
   startUpdatePoll(){
     if(this._upd) return;
     this._upd = setInterval(()=>{
-      fetch('https://gyeonggi-dashboard.visanu81.workers.dev/data.js?_t='+Date.now(), {cache:'no-store'})
+      fetch('data.js?_t='+Date.now(), {cache:'no-store'})
         .then(r=>{ if(!r.ok) throw new Error('http '+r.status); return r.text(); })
         .then(txt=>{
           var k=txt.indexOf('DASHBOARD_DATA'); var i=txt.indexOf('=', k<0?0:k); if(i<0) return;
@@ -484,7 +484,7 @@ class Component extends DCLogic {
   renderVals(){
     const d = this.working(), st = this.state, R = React.createElement;   // 시연 모드면 가짜 데이터로 그린다
     const wide = st.w >= 900;
-    const myStation = st.myStation || '동두천';
+    const myStation = st.myStation || (window.REGION_CONF||{}).home;
     const stations = d.stations || [];
     const me = stations.filter(s=>s.name===myStation)[0] || stations[0] || {};
 
@@ -513,7 +513,7 @@ class Component extends DCLogic {
       const cur=(this.num(a.rn12h)||0), best=(worst ? (this.num((worst.aws||{}).rn12h)||0) : -1);
       if(!worstLv || lv.k>worstLv.k || (lv.k===worstLv.k && cur>best)){ worst=s; worstLv=lv; }
     });
-    // ⚠ 이 배너는 '경기북부 11개 관서 중 가장 많이 온 곳'이다(공식특보와 범위를 맞추기 위해).
+    // ⚠ 이 배너는 '충청북도 12개 관서 중 가장 많이 온 곳'이다(공식특보와 범위를 맞추기 위해).
     //   내 관서와 다를 수 있으므로 라벨을 '실측 최다'로 하고, 내 관서 값을 아랫줄에 같이 적는다.
     //   ('우리 실측'이라고만 쓰면 당연히 내 관서로 오해된다 — 실제로 그 지적을 받았다.)
     let obsText='실측 강수 없음', obsSub='', obsLv={c:'var(--ink3)', bg:'var(--surface2)', k:0};
@@ -526,10 +526,10 @@ class Component extends DCLogic {
       obsText = worst.name+' 12시간 '+this.mm(a.rn12h)+'mm · 1시간 '+this.mm(a.rn60)+'mm'+(worstLv.t?(' — '+worstLv.t):'');
       obsLv = worstLv;
       obsSub = (worst.name===myStation)
-        ? '경기북부 11개 관서 중 최다 — 내 관서입니다'
-        : ('경기북부 11개 관서 중 최다 · 내 관서 ' + meTxt.replace(myStation+' ', myStation+' '));
+        ? '충청북도 12개 관서 중 최다 — 내 관서입니다'
+        : ('충청북도 12개 관서 중 최다 · 내 관서 ' + meTxt.replace(myStation+' ', myStation+' '));
     } else {
-      obsText = '경기북부 전 관서 실측 강수 없음';
+      obsText = '충청북도 전 관서 실측 강수 없음';
       obsSub  = '내 관서 ' + meTxt;
     }
 
@@ -978,7 +978,7 @@ class Component extends DCLogic {
     return '';
   }
   /* 선택 관서 중심의 강풍 카드. '동두천 지금'(강수)과 나란히 놓이므로 같은 얼개로 짠다.
-     11개 관서 랭킹 대신 내 관서를 크게 보여주되, '북부 최강'은 한 줄로 남긴다 —
+     12개 관서 랭킹 대신 내 관서를 크게 보여주되, '북부 최강'은 한 줄로 남긴다 —
      지원 판단(어느 관서가 제일 위험한가)을 잃지 않기 위해서. */
   windBody(me, stations, myStation){
     const R=React.createElement;

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""region-<key>.js 생성 — 생성 프로파일(tools/profiles/<key>.json)로 화면 설정을 만든다.
+"""region.js 생성 — 생성 프로파일(tools/profiles/<key>.json)로 화면 설정을 만든다.
 
 전국 확장 1단계(2026-09-18). 경기북부·남부의 region.js 는 손으로 썼지만 시도가 17개면
 그럴 수 없다. 프로파일(뒷단 값) + 지도(map-geo-<key>.js 의 시군 중심좌표)만으로
@@ -10,8 +10,8 @@
   · admin / fireGroup / riverMatch / floodKeywords / riverMeta   프로파일에서
   · wideNames           특보 발표문에서 '시도 전역'을 뜻하는 말들
 
-실행:  python tools/build_region_js.py gangwon        # → region-gangwon.js
-       (map-geo-gangwon.js 가 먼저 있어야 한다: build_map_geo.py --profile gangwon --merge)
+실행:  python tools/build_region_js.py chungbuk       # → region.js
+       (map-geo.js 가 먼저 있어야 한다: build_map_geo.py --profile chungbuk --merge)
 """
 import json
 import math
@@ -26,8 +26,8 @@ except Exception:
 ROOT = Path(__file__).resolve().parent.parent
 
 
-def load_map(key):
-    t = (ROOT / f'map-geo-{key}.js').read_text(encoding='utf-8')
+def load_map(map_file):
+    t = (ROOT / map_file).read_text(encoding='utf-8')
     d = json.loads(t[t.find('{'):t.rfind('}') + 1])
     return {r['name']: (r['cx'], r['cy']) for r in d['regions']}
 
@@ -71,7 +71,7 @@ def ascii_map(pos, cols):
 
 def build(key):
     prof = json.loads((ROOT / 'tools' / 'profiles' / f'{key}.json').read_text(encoding='utf-8'))
-    cent = load_map(key)
+    cent = load_map(prof['map_file'])
     wide = prof['wide_label']
     order = list(prof['region_order'][1:])          # [0]은 시도 전역 이름(세종은 단위 이름과 같다)
     missing = [a for a in order if a not in cent]
@@ -106,7 +106,7 @@ def build(key):
         'office': wide,
         'home': prof['home'],
         'countText': count_text,
-        'dataHost': f"https://{prof['host']}",
+        'dataHost': f"https://{prof['host']}" if prof.get('host') else '',
         'wideNames': sorted({wide, label, prof['full'], *prof.get('wide_names', []),
                              f'{label}북부', f'{label}중부', f'{label}남부', f'{label}동부', f'{label}서부',
                              f'{label}영동', f'{label}영서', f'{label}산지', f'{label}내륙'}),
@@ -126,11 +126,11 @@ def build(key):
     }
     body = json.dumps(conf, ensure_ascii=False, indent=1)
     out = (f'// ===== {wide} 화면 설정 =====\n'
-           f'// tools/build_region_js.py 가 tools/profiles/{key}.json + map-geo-{key}.js 로 만든다.\n'
+           f'// tools/build_region_js.py 가 tools/profiles/{key}.json + {prof["map_file"]} 로 만든다.\n'
            f'// 직접 고치지 말 것 — 다시 생성하면 날아간다. 프로파일을 고치고 다시 돌릴 것.\n'
            f'//   python tools/build_region_js.py {key}\n'
            f'window.REGION_CONF = {body};\n')
-    path = ROOT / f'region-{key}.js'
+    path = ROOT / 'region.js'
     path.write_text(out, encoding='utf-8')
     print(f'생성 완료 → {path}  ({len(order)}개 시군, 배치도 {cols}열)')
     print(ascii_map(pos, cols))

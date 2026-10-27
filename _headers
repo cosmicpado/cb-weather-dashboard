@@ -10,13 +10,11 @@
   Cache-Control: no-store, must-revalidate
 
 # 데이터·매니페스트 — 캐시 안 함 (5분마다 갱신)
-# Access-Control-Allow-Origin: 테스트 버전(gyeonggi-dashboard-2)이 운영 데이터를 읽게 허용
 /data.js
   Cache-Control: no-store, must-revalidate
   Access-Control-Allow-Origin: *
 
-# 시도별 데이터(전국 확장, data-강원=data-gangwon.js …) — 작업장(weather.visanu81.workers.dev)의 시도판이
-# 다른 주소에서 60초 fetch 로 읽으므로 CORS 허용이 없으면 첫 로드 뒤 갱신이 멈춘다(2026-09-20 발견)
+# CCTV 목록(data-cctv.js) — 6시간마다 갱신
 /data-*.js
   Cache-Control: no-store, must-revalidate
   Access-Control-Allow-Origin: *

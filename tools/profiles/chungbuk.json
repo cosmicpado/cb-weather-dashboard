@@ -5,13 +5,13 @@
  "full": "충청북도",
  "home": "청주동부",
  "home_office": "청주동부소방서",
- "host": "weather.visanu81.workers.dev",
- "data_file": "data-chungbuk.js",
- "map_file": "map-geo-chungbuk.js",
- "combined_file": "상황판-chungbuk.html",
+ "host": "",
+ "data_file": "data.js",
+ "map_file": "map-geo.js",
+ "combined_file": "상황판.html",
  "notify": false,
  "tide": false,
- "share_images_from": "data.js",
+ "share_images_from": null,
  "wrn_stn": 131,
  "wrn_prefix": [
   "L104"

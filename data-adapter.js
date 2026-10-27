@@ -80,8 +80,8 @@
       };
     });
 
-    // 시간대별 예보: 관할(동두천) 우선, 없으면 의정부
-    var focusReg = byName['동두천'] || byName['의정부'] || (SRC.regions||[])[0] || {};
+    // 시간대별 예보: 기본 관서(region.js home) 우선, 없으면 첫 시군
+    var focusReg = byName[RC.home] || (SRC.regions||[])[0] || {};
     var hourly = (focusReg.detail && focusReg.detail.hourly) || [];
     var forecast = hourly.map(function(h){
       return { hour:h.hour, icon:h.icon || icon(h.weather), weather:h.weather, temp:h.temp,
