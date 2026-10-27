@@ -1817,14 +1817,22 @@ class Component extends DCLogic {
     // warnings
     const rawWarns=(d.warnings||[]);
     // 내 관할 특보 — mineItems 와 mineBorder 가 같은 판정을 쓴다
-    const _myWarns = isWide ? rawWarns.slice() : rawWarns.filter(w=>this._areaHits(w.area, mySg));
+    // 특보 지역이 선택 관서에 해당하나 — 관서명·시군명에 더해 행정명(region.js admin)으로도 본다.
+    //   기상청 특보구역은 '청주' 하나라서 청주동부·청주서부 둘 다 admin '청주'로 걸려야 한다.
+    //   예비특보 항목은 '청주 (충청북도)'처럼 괄호 안이 상위 구역이라, 괄호 앞만 본다(안 그러면 괄호의 도명이 전 관서에 걸린다).
+    const _adm = (_RCw.admin||{})[myStation];
+    const _hitsMe = a => this._areaHits(a, mySg) || this._areaHits(a, myStation) || (!!_adm && this._areaHits(a, _adm));
+    const _myWarns = isWide ? rawWarns.slice() : rawWarns.filter(w=>_hitsMe(w.area));
     const groupedWarns = this.groupWarns(rawWarns);   // 같은 특보끼리 지역 묶기
     const warns = groupedWarns.map(x=>this.warnBadge(x));
     const prelim = d.prelim||[];
     const prelimNorth = prelim.reduce((a,p)=>a+(p.north||0),0);
-    const prelimCount = prelimNorth;  // 충청북도 상황판 — 예비특보도 충청북도 건수만 카운트
+    const prelimCount = prelimNorth;  // 충청북도 상황판 — 예비특보도 충청북도 건수만 카운트(기상특보 카드는 도 전체)
     const _pef=(function(){ for(var i=0;i<prelim.length;i++){ var p=prelim[i]; if(p.north>0){ var it=(p.items||[]).filter(function(x){return x.north;})[0]; if(it&&it.time) return it.time; } } return ''; })();
     const prelimLine = prelimCount ? ('충청북도 예비특보 '+prelimCount+'건'+(_pef?' · '+_pef+' 예정':'')) : '예비특보 없음';
+    // 상단 바 예비특보 — 충청북도 선택이면 도내 전체, 관서 선택이면 그 관서에 걸린 항목만
+    const _prelimMine = it => it.north && (isWide || _hitsMe(String(it.area||'').split('(')[0]));
+    const myPrelimCount = isWide ? prelimNorth : prelim.reduce((a,p)=>a+(p.items||[]).filter(_prelimMine).length,0);
     // status
     const status = this.overall(rivers, rawWarns, prelimNorth);
     this._danger = (status.label==='경계');
@@ -1893,9 +1901,10 @@ class Component extends DCLogic {
     const _chipLabelSm = wide ? 'font-size:9px; font-weight:600; color:var(--ink2); margin-top:4px; white-space:nowrap; letter-spacing:-.4px;' : 'font-size:6.3px; font-weight:600; color:var(--ink2); margin-top:2px; white-space:nowrap; letter-spacing:-.3px;';
     const chipsWrapStyle = wide ? 'display:flex; align-items:center; gap:9px; margin-left:auto; flex-wrap:wrap; position:relative;' : 'display:flex; align-items:stretch; gap:6px; width:100%; margin-left:0; margin-top:8px; flex-wrap:nowrap; position:relative;';
     const chip=(v,l,color,bg,border)=>({value:v,label:l,color:color||'var(--ink)',bg:bg||'var(--surface)',border:border||'var(--border)', style:_chipLayout, valStyle:_chipVal, labelStyle:_chipLabel});
+    const _myWarnN = isWide ? groupedWarns.length : this.groupWarns(_myWarns).length;
     const ribbonChips = [
-      chip(groupedWarns.length, '발효특보', groupedWarns.length?'var(--severe)':'var(--ink2)', groupedWarns.length?'var(--severeSoft)':'var(--surface)', groupedWarns.length?'var(--severe)':'var(--border)'),
-      chip(prelimCount, '예비특보', prelimCount?'var(--caution)':'var(--ink2)', 'var(--surface)', 'var(--border)'),
+      chip(_myWarnN, '발효특보', _myWarnN?'var(--severe)':'var(--ink2)', _myWarnN?'var(--severeSoft)':'var(--surface)', _myWarnN?'var(--severe)':'var(--border)'),   // 선택 관서 기준(충청북도면 전체)
+      chip(myPrelimCount, '예비특보', myPrelimCount?'var(--caution)':'var(--ink2)', 'var(--surface)', 'var(--border)'),
       chip(myMsgs.length, '재난문자', myMsgs.length?'var(--warn)':'var(--ink2)', 'var(--surface)', 'var(--border)'),   // 재난문자 카드와 같은 기준(선택 관서)
       {...chip(worstRiver?worstRiver.pctW:'-', (worstRiver&&_wrPlace)?(_wrScope+' 최고수위('+_wrPlace+')'):'최고수위', worstRiver?worstRiver.color:'var(--ink2)', 'var(--surface)', 'var(--border)'), labelStyle:_chipLabelSm},
       chip(feelsMax?feelsMax+'°':'-', '최고체감', 'var(--ink2)', 'var(--surface)', 'var(--border)')
