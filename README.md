@@ -56,4 +56,9 @@ python tools/check_pages.py                             # 화면이 region.js �
 
 ## 출처
 
-경기북부 기상·재난 상황판(제작: 소방위 한경승 · 동두천소방서)의 코드를 바탕으로 충청북도용으로 정리했다.
+경기북부 기상·재난 상황판의 코드를 바탕으로 충청북도용으로 정리했다.
+
+- 원작: [visanu81/gyeonggi-dashboard](https://github.com/visanu81/gyeonggi-dashboard)
+- 제작: 소방위 한경승 · 동두천소방서
+
+화면 하단의 제작 크레딧은 원작자 표시이므로 지우지 않는다.
