@@ -37,8 +37,10 @@ git branch --set-upstream-to=origin/main main 2>/dev/null || true
 # SSH 없이 서버가 스스로 1분 알림 cron을 등록한다. crontab에 update.sh 라인이
 # 있을 때만(=정상 crontab이 읽힌 것 확인 → 오토트레이딩 등 기존 cron 안전) +
 # check_warnings가 아직 없을 때만 전체 crontab 뒤에 한 줄 추가한다.
+# 텔레그램 봇 토큰이 .env 에 있을 때만 — 알림을 안 쓰면 1분마다 API 를 부를 이유가 없다.
 CRON_NOW=$(crontab -l 2>/dev/null)
-if echo "$CRON_NOW" | grep -q 'update.sh' && ! echo "$CRON_NOW" | grep -qF 'check_warnings.py'; then
+if grep -qE '^TELEGRAM_BOT_TOKEN=.+' .env 2>/dev/null \
+   && echo "$CRON_NOW" | grep -q 'update.sh' && ! echo "$CRON_NOW" | grep -qF 'check_warnings.py'; then
   ( echo "$CRON_NOW"; echo "* * * * * cd $REPO && /usr/bin/python3 tools/check_warnings.py >> warn.log 2>&1" ) | crontab - \
     && echo "🔔 check_warnings 1분 cron 자가등록 $(date '+%F %R')" >> cron.log
 fi
@@ -56,7 +58,7 @@ fi
 #   (커밋 수는 du가 없는 환경을 위한 백스톱으로만 남긴다)
 GITMB=$(du -sm .git 2>/dev/null | cut -f1)
 CNT=$(git rev-list --count HEAD 2>/dev/null || echo 0)
-FLUSH_MB=1200        # .git 이 1.2GB를 넘으면 압축
+FLUSH_MB=600         # .git 이 600MB를 넘으면 압축 (운영 서버 디스크 10GB 기준 — 압축 중엔 잠시 두 배를 쓴다)
 FLUSH_CNT=2000       # 용량 측정이 안 될 때의 안전장치
 if [ "${GITMB:-0}" -gt "$FLUSH_MB" ] || [ "${CNT:-0}" -gt "$FLUSH_CNT" ]; then
   BASE=$(git rev-parse origin/main 2>/dev/null)

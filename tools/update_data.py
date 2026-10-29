@@ -21,6 +21,15 @@ from pathlib import Path
 
 import requests
 
+# 사내망 HTTPS 검사(중간 인증서) 대응 — 파이썬 기본 인증서 목록(certifi) 대신 Windows 인증서 저장소를 쓴다.
+# 사내망에서는 이게 없으면 모든 API 호출이 CERTIFICATE_VERIFY_FAILED 로 실패한다.
+# 설치되어 있을 때만 적용(pip install truststore) — 서버·GitHub Actions 는 없어도 그대로 동작한다.
+try:
+    import truststore
+    truststore.inject_into_ssl()
+except ImportError:
+    pass
+
 # Windows 콘솔 한글 출력
 try:
     sys.stdout.reconfigure(encoding='utf-8')
