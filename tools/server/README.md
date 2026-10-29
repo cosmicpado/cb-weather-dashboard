@@ -8,7 +8,6 @@
 | 서버 | 네이버클라우드 VPC · Micro `mi1-g3` (vCPU 1, 메모리 1GB) · Ubuntu 24.04 · 디스크 10GB |
 | 네트워크 | VPC `cb-weather-vpc` · Public 서브넷 `cb-weather-public` · 공인 IP |
 | 접속 | `ssh root@<공인IP>` — 비밀번호는 콘솔 › 서버 › 관리자 비밀번호 확인(인증키 `.pem` 필요) |
-| ACG Inbound | TCP 22 를 사무실·집 IP(`/32`)에서만 허용. 3389 는 닫는다. Outbound 는 전체 허용 유지 |
 | 저장소 위치 | `/root/cb-weather-dashboard` (항상 `main`) |
 | 실행 | cron `*/5 * * * * /bin/bash /root/cb-weather-dashboard/update.sh` |
 
