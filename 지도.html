@@ -194,7 +194,7 @@
              '유틸 버튼'(경보음·테마 — 회색, w700). 호우는 강조 링크 급이므로 알림받기와 같은 꼴로 맞춘다.
              배경을 채우면(brandSoft) 혼자 세 번째 스타일이 되어 과하게 튄다. -->
         <a href="{{boardHref}}" class="{{boardCls}}" title="재해 상황판 — 🌧 호우 / ❄ 대설·한파 / 🔥 건조·산불 탭. 특보가 있으면 그 특보에 맞는 탭으로 열립니다" style="height:36px; padding:0 13px; border-radius:10px; border:1px solid var(--brand); background:var(--surface); color:var(--brand); font-size:12.5px; font-weight:800; font-family:inherit; text-decoration:none; display:flex; align-items:center; gap:6px; white-space:nowrap;">{{boardLabel}}</a>
-        <a href="상황실.html" title="상황실(벽면) 모드 — 관할 전 관서를 15초마다 순차 표출. 대형 화면에 띄우고 F11 전체화면으로 사용" style="height:36px; padding:0 13px; border-radius:10px; border:1px solid var(--brand); background:var(--surface); color:var(--brand); font-size:12.5px; font-weight:800; font-family:inherit; text-decoration:none; display:flex; align-items:center; gap:6px; white-space:nowrap;" style-hover="background:var(--surface2)">🖥 상황실</a>
+        <a href="상황실.html" title="상황실(벽면) 모드 — 관할 전 관서를 차례로 표출(한 바퀴 약 3분 — 충북 12관서면 관서당 14초). 대형 화면에 띄우고 F11 전체화면으로 사용" style="height:36px; padding:0 13px; border-radius:10px; border:1px solid var(--brand); background:var(--surface); color:var(--brand); font-size:12.5px; font-weight:800; font-family:inherit; text-decoration:none; display:flex; align-items:center; gap:6px; white-space:nowrap;" style-hover="background:var(--surface2)">🖥 상황실</a>
         <!-- 알림받기(텔레그램) — 숨김. 원작자의 경기북부 봇이라 충북 알림이 아니다.
              충북용 봇을 만들면 href 를 그 봇 주소(https://t.me/<봇이름>)로 바꾸고 이 주석을 풀 것.
         <a href="https://t.me/gg_bukbu_weather_bot" target="_blank" rel="noopener" title="텔레그램 급변 알림 구독 — 봇 채팅에서 /start 한 번이면 끝. 특보·하천 위험·재난문자를 실시간으로 알려드립니다" style="height:36px; padding:0 13px; border-radius:10px; border:1px solid #229ED9; background:var(--surface); color:#229ED9; font-size:12.5px; font-weight:800; font-family:inherit; text-decoration:none; display:flex; align-items:center; gap:6px; white-space:nowrap;" style-hover="background:var(--surface2)">📲 알림받기</a>
@@ -1921,8 +1921,8 @@ class Component extends DCLogic {
         R('div',{style:{fontSize:'12px', color:'var(--ink3)', fontWeight:700}}, '관서 상황단계'),
         R('div',{style:{fontSize:'clamp(22px,2.3vw,38px)', fontWeight:800, color:stage.c, lineHeight:1.05}}, stage.t),
         R('div',{style:{fontSize:'11px', color:'var(--ink3)', marginTop:'2px', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', maxWidth:'240px'}}, warnSummary),
-        R('div',{style:{marginTop:'5px', paddingTop:'5px', borderTop:'1px solid '+stage.c, fontSize:'11px', color:'var(--ink3)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', maxWidth:'240px'}},
-          '충북 재대본 ', R('b',{style:{color:_sg.col, fontSize:'13px'}}, _sg.label), ' · '+_sg.head)),
+        _sg.rank>0 ? R('div',{style:{marginTop:'5px', paddingTop:'5px', borderTop:'1px solid '+stage.c, fontSize:'11px', color:'var(--ink3)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', maxWidth:'240px'}},
+          '충북 재대본 ', R('b',{style:{color:_sg.col, fontSize:'13px'}}, _sg.label), ' · '+_sg.head) : null),   // 평상이면 재대본 줄 생략
       // 4) 시계 + 컨트롤 카드
       R('div',{style:Object.assign({}, cbx, {display:'flex', alignItems:'center', gap:'14px', padding:'10px 18px'})},
         R('div',null,
@@ -2453,7 +2453,8 @@ class Component extends DCLogic {
   statusSub(status, warns, rivers, prelimNorth){
     const parts=[];
     // 관서를 고른 화면이면 도 전체 재대본 단계를 참고로 맨 앞에(status = 재대본), 충청북도면 위 줄이 이미 재대본이다
-    parts.push(status ? ('충북 재대본 '+status.label) : '충북 재대본 비상근무 기준');
+    //   평상(0단계)이면 굳이 적지 않는다 — '충북 재대본 평상 · 발효 특보 없음'은 정보가 없다(2026-10-30)
+    if(!status) parts.push('충북 재대본 비상근무 기준'); else if(status.rank>0) parts.push('충북 재대본 '+status.label);
     if(warns.length){ parts.push('발효 특보 '+warns.length+'건'); } else { parts.push('발효 특보 없음'); }
     const dR=rivers.filter(r=>r.lv==='danger').length, wR=rivers.filter(r=>r.lv==='warning').length;
     if(dR) parts.push('하천 '+dR+'곳 위험 수위'); else if(wR) parts.push('하천 '+wR+'곳 주의 수위'); else parts.push('하천 전 지점 안전');
