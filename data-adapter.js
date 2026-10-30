@@ -31,6 +31,7 @@
         name: nm, sigun: (ALIAS[nm] || nm),
         temp: src.temp, weather: src.weather, icon: icon(src.weather),
         rain: src.rain, wind: src.wind, humid: src.humid, effHumid: src.effHumid,
+        effHumidOff: src.effHumidOfficial || null,   // 기상청 공식 실효습도(가까운 ASOS 관측소) {stn, he, tm}
         feels: round(det.feels_like),
         cum1h: cum['1h']||0, cum3h: cum['3h']||0, cum6h: cum['6h']||0, cum12h: cum['12h']||0,
         // AWS 실측(기상청 공식 누적) — 자체누적(cum*)보다 신뢰도가 높다.

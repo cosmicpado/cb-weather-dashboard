@@ -1521,13 +1521,17 @@ class Component extends DCLogic {
 
   // ════════════════ 건조·산불 탭 ════════════════
   /* 건조특보 기준(기상청): 주의보 = 실효습도 35% 이하 2일 이상 예상 · 경보 = 25% 이하 2일 이상 예상.
-     실효습도는 서버가 관서별 '하루 최저습도'를 최근 7일 가중평균(가중치 0.7)해 낸 자체 계산값이다 —
-     기상청 공식 실효습도와 다를 수 있어 '…급'으로만 표시한다. */
+     실효습도는 서버가 기상청과 같은 식(같은 시각 습도 5일치 가중합, r=0.7)으로 관서 AWS 습도에서 계산한다.
+     기상청 공식값은 ASOS 5곳(청주·충주·제천·보은·추풍령)뿐이고 몇 시간 늦어서, 공식값은 effHumidOfficial 로 나란히 보여 준다.
+     특보는 '2일 이상 지속 예상'까지 보는 판단이라 여기서는 메마른 정도(다소 건조·건조·매우 건조)만 표시한다. */
   effLevel(v){
     const a=this.num(v);
-    if(a!==null && a<=25) return {t:'경보급',  c:'var(--severe)', bg:'var(--severeSoft)', k:4};
-    if(a!==null && a<=35) return {t:'주의보급', c:'var(--warn)',   bg:'var(--warnSoft)',   k:3};
-    if(a!==null && a<=45) return {t:'건조',    c:'var(--caution)', bg:'var(--cautionSoft)', k:2};
+    // ⚠ '주의보급'이라 쓰지 않는다 — 실효습도는 매일 오후 30% 안팎까지 내려가서(2026-10-30 15시 공식 31%)
+    //   순간값에 특보 이름을 붙이면 특보 없는 날에도 오후마다 거의 전 관서가 '주의보급'이 된다.
+    //   특보는 '2일 이상 지속 예상'이 기준이므로 여기서는 메마른 정도만 말한다.
+    if(a!==null && a<=25) return {t:'매우 건조', c:'var(--severe)', bg:'var(--severeSoft)', k:4};
+    if(a!==null && a<=35) return {t:'건조',     c:'var(--warn)',   bg:'var(--warnSoft)',   k:3};
+    if(a!==null && a<=45) return {t:'다소 건조', c:'var(--caution)', bg:'var(--cautionSoft)', k:2};
     return {t:'', c:'var(--ink3)', bg:'transparent', k:0};
   }
   humColor(v){ const a=this.num(v); return a===null ? 'var(--ink3)' : a<=25 ? 'var(--severe)' : a<=35 ? 'var(--warn)' : a<=45 ? 'var(--caution)' : 'var(--ink2)'; }
@@ -1641,7 +1645,7 @@ class Component extends DCLogic {
       hasTyphoon:false,
       warnText, warnBg:wT.bg, warnBorder:wT.bd, warnTagBg:wT.tag,
       obsTag:'가장 메마름', obsText, obsSub, obsBg:oT.bg, obsBorder:oT.bd, obsTagBg:oT.tag,
-      noteTxt:'※ 건조주의보=실효습도 35% 이하 2일 이상 · 경보=25% 이하 2일 이상(기상청). 여기 실효습도는 최근 7일 하루 최저습도로 이 상황판이 계산한 값이라 기상청 공식값과 다를 수 있습니다. 강풍은 작은 불씨도 크게 번지게 하므로 함께 봅니다.',
+      noteTxt:'※ 건조주의보=실효습도 35% 이하가 2일 이상 지속 예상 · 경보=25% 이하 2일 이상(기상청) — 오후 한때 35% 아래로 내려가는 것만으로는 특보 수준이 아닙니다. 여기 실효습도는 기상청과 같은 식(같은 시각 습도 5일치 가중합)으로 관서 AWS 습도에서 계산한 실시간 값이며, 하루 중 오후에 가장 낮습니다. 기상청 공식값(ASOS)은 관서 칸에 함께 적었습니다. 강풍은 작은 불씨도 크게 번지게 하므로 함께 봅니다.',
       rankTitle:(key==='eff'?'실효습도':key==='hum'?'지금 습도':'순간 최대풍속'),
       rankSrcTxt:(key==='wind'?'기상청 AWS 실측 · 센 순':'낮을수록 메마름 · 메마른 순'),
       rankTabs, rankRows, rankEmpty:!stations.length, rankEmptyTxt:'습도 자료를 불러오는 중입니다.',
@@ -1676,6 +1680,8 @@ class Component extends DCLogic {
         R('span',{style:{fontSize:'34px', fontWeight:900, color:this.humColor(eff), lineHeight:1, fontVariantNumeric:'tabular-nums'}}, eff===null?'—':Math.round(eff)),
         R('span',{style:{fontSize:'14px', fontWeight:700, color:'var(--ink2)'}}, '%'),
         lv.t ? R('span',{style:{fontSize:'11px', fontWeight:900, color:'#fff', background:lv.c, padding:'3px 8px', borderRadius:'6px'}}, lv.t) : null),
+      (function(o, self){ return o && o.he!=null
+        ? row('기상청 공식 ('+o.stn+' '+String(o.tm||'').slice(11,13)+'시)', self.pct(o.he), self.humColor(o.he)) : null; })(s.effHumidOff, this),
       row('지금 습도', this.pct(hum), this.humColor(hum)),
       row('순간 최대풍속', this.ms(w.wss)+(wl.t?' · '+wl.t:''), wl.k>=2?wl.c:null),
       row('풍향', this.dirTxt(w.wds) ? this.dirTxt(w.wds)+'풍' : '—'),

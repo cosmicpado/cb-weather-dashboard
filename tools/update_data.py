@@ -3785,20 +3785,82 @@ def detect_and_notify(prev, data):
         _save_sent_messages(sent_log)
 
 
-EFF_HUMID_PATH = TMP / 'humid_daily.json'
+EFF_HUMID_PATH = TMP / 'humid_hourly.json'
+EFF_OFFICIAL_PATH = TMP / 'eff_humid_official.json'
+EFF_R = 0.7
+
+
+def fetch_eff_humid_official():
+    """기상청 공식 실효습도 — 기상자료개방포털(data.kma.go.kr) '실효습도' 표가 부르는 주소 (2026-10-30).
+    ASOS(종관) 관측소만 있고, 시각별로 he(실효습도)와 hm0~hm4(같은 시각 오늘~4일 전 상대습도)를 준다.
+    인증키·로그인 없이 POST 한 번. 포털 반영이 몇 시간 늦어 '마지막 시각' 값을 쓴다. 30분 캐시.
+    실패하면 직전 캐시(없으면 {}) — 공식값은 참고 표시용이라 없어도 화면은 돈다."""
+    stns = sorted({int(v) for v in (P.get('eff_humid_asos') or {}).values()})
+    if not stns:
+        return {}
+    try:
+        cache = json.loads(EFF_OFFICIAL_PATH.read_text(encoding='utf-8')) if EFF_OFFICIAL_PATH.exists() else {}
+    except Exception:
+        cache = {}
+    if cache.get('_ts') and _time.time() - cache['_ts'] < 1800:
+        return cache.get('data', {})
+    out = {}
+    # 오늘·어제 둘 다 받는다 — 포털은 몇 시간 늦게 올라와 '지금 시각' 행이 없을 때가 많은데,
+    #   어제 같은 시각 행의 hm0~hm3 이 곧 1~4일 전 습도라 그것으로 빈 날을 채울 수 있다.
+    for day in (datetime.now(), datetime.now() - timedelta(days=1)):
+        try:
+            r = requests.post('https://data.kma.go.kr/climate/ehum/selectEhumChartAjax.do', timeout=20,
+                              headers={'User-Agent': 'Mozilla/5.0', 'X-Requested-With': 'XMLHttpRequest'},
+                              data={'serviceSe': 'F00101', 'selectType': '2', 'mddlClssCd': 'SFC01',
+                                    'schStnId': ','.join(map(str, stns)), 'startDt': day.strftime('%Y%m%d')})
+            j = r.json()
+        except Exception as e:
+            print(f'  · 공식 실효습도 수집 실패: {type(e).__name__}')
+            break
+        if j.get('code') != '00':
+            continue
+        for it in j.get('data') or []:
+            try:
+                sid = str(it['stnId']); he = float(str(it.get('he', '')).strip())
+            except (KeyError, ValueError):
+                continue
+            rec = out.setdefault(sid, {'nm': it.get('stnNm', ''), 'hours': {}})
+            rec['hours'][str(it.get('tmHh', ''))] = {'he': round(he, 1), 'hm': [it.get('hm%d' % i) for i in range(5)]}
+    if not out:
+        return cache.get('data', {})
+    for rec in out.values():   # 마지막 시각 값을 따로 꺼내 둔다
+        last = max(rec['hours'])
+        rec['tm'], rec['he'] = last, rec['hours'][last]['he']
+    try:
+        _atomic_write_text(EFF_OFFICIAL_PATH, json.dumps({'_ts': _time.time(), 'data': out}, ensure_ascii=False))
+    except Exception:
+        pass
+    return out
 
 
 def apply_effective_humidity(regions):
-    """실효습도(effective humidity) — 산불·화재 위험 지표. 상황실 v2 '출동 영향 판단'에 사용.
-    기상청식: 최근 며칠 '일별 최저습도'의 가중합(비율 r=0.7, 오늘 가중치 최대). 이력이 짧으면
-    가중평균(Σr^n·H / Σr^n)으로 안정 추정 — 하루치면 오늘 최저습도, 며칠 쌓이면 정확해진다.
-    일별 최저습도를 .tmp/humid_daily.json에 누적(당일은 갱신), 최근 7일만 유지."""
-    today = datetime.now().strftime('%Y-%m-%d')
+    """실효습도(effective humidity) — 건조특보·산불 위험 지표. 기상청과 같은 식으로 계산한다:
+        He = (1-r)·(H0 + r·H1 + r²·H2 + r³·H3 + r⁴·H4),  r = 0.7
+        H0~H4 = '같은 시각'의 상대습도 — 오늘, 1~4일 전 (기상청 포털의 hm0~hm4)
+      ⚠ 2026-10-30 전까지는 '하루 최저습도'로 계산해서 공식값보다 20~30%p 낮게(더 메마르게) 나왔다
+        (충주 공식 57.8% ↔ 우리 30%). 그 방식은 버렸다.
+    관서별 매 시각 습도(AWS 실측)를 .tmp/humid_hourly.json 에 쌓는다(5일 유지).
+    이력이 모자란 날은 같은 시각의 가까운 ASOS 관측소 습도(공식 자료의 hm1~hm4)로 채우고,
+    그것도 없으면 있는 날만으로 가중평균한 뒤 5일 가중합 비율(0.832)을 곱한다.
+    공식 ASOS 값은 reg['effHumidOfficial'] 로 같이 실어 화면이 나란히 보여준다."""
+    now = datetime.now()
     try:
         store = json.loads(EFF_HUMID_PATH.read_text(encoding='utf-8')) if EFF_HUMID_PATH.exists() else {}
     except Exception:
         store = {}
-    R = 0.7
+    try:
+        official = fetch_eff_humid_official()
+    except Exception as e:
+        print(f'  · 공식 실효습도 건너뜀: {type(e).__name__}')
+        official = {}
+    asos = P.get('eff_humid_asos') or {}
+    full = sum(EFF_R ** n for n in range(5))
+    keep = (now - timedelta(days=5)).strftime('%Y-%m-%d %H')
     for reg in regions or []:
         nm = reg.get('name')
         h = reg.get('humid')
@@ -3808,15 +3870,45 @@ def apply_effective_humidity(regions):
             h = float(h)
         except (TypeError, ValueError):
             continue
-        rec = store.get(nm, {})
-        rec[today] = min(float(rec.get(today, h)), h)          # 당일 최저 갱신
-        days = sorted(rec.keys(), reverse=True)[:7]            # 최근 7일
-        rec = {dk: rec[dk] for dk in days}
+        # 관측 시각(HH:MM)을 가까운 정시로 — 기상청 값은 정시 관측이다
+        bt = str(((reg.get('detail') or {}).get('observation') or {}).get('base_time') or '')
+        t = now
+        try:
+            hh, mm = int(bt[:2]), int(bt[3:5])
+            t = now.replace(hour=hh, minute=0, second=0, microsecond=0) + timedelta(hours=1 if mm >= 30 else 0)
+            if t > now + timedelta(hours=1):
+                t -= timedelta(days=1)
+        except (ValueError, IndexError):
+            pass
+        rec = {k: v for k, v in store.get(nm, {}).items() if k >= keep}
+        rec[t.strftime('%Y-%m-%d %H')] = h
         store[nm] = rec
-        vals = [rec[dk] for dk in days]                         # 최신순(오늘=index 0)
-        s = sum((R ** n) * hv for n, hv in enumerate(vals))
-        w = sum(R ** n for n in range(len(vals)))
-        reg['effHumid'] = round(s / w) if w else round(h)
+        off = official.get(str(asos.get(nm, '')), {})
+        oh = off.get('hours') or {}
+
+        def asos_hm(day_t):
+            # day_t 시각의 ASOS 습도 — 그날부터 k일 뒤 같은 시각 행의 hm[k] 에 들어 있다
+            for k in range(5):
+                row = oh.get((day_t + timedelta(days=k)).strftime('%Y-%m-%d %H:00'))
+                if row and row['hm'][k] is not None:
+                    return float(row['hm'][k])
+            return None
+        vals, used = [], 0
+        for n in range(5):
+            v = rec.get((t - timedelta(days=n)).strftime('%Y-%m-%d %H'))
+            if v is not None:
+                used += 1                            # 우리 관서 실측
+            elif n:
+                v = asos_hm(t - timedelta(days=n))   # 이력이 없으면 같은 시각 가까운 ASOS 습도로
+            if v is not None:
+                vals.append((n, v))
+        if vals:
+            wsum = sum(EFF_R ** n for n, _ in vals)
+            he = (1 - EFF_R) * full * sum((EFF_R ** n) * v for n, v in vals) / wsum
+            reg['effHumid'] = round(he)
+            reg['effHumidDays'] = used
+        if off.get('he') is not None:
+            reg['effHumidOfficial'] = {'stn': off.get('nm', ''), 'he': off['he'], 'tm': off.get('tm', '')}
     try:
         _atomic_write_text(EFF_HUMID_PATH, json.dumps(store, ensure_ascii=False))
     except Exception:
@@ -4006,7 +4098,7 @@ def main():
                 data['regions'][i] = pr
                 print(f'  · {r.get("name")} 수집 실패 → 이전 값 보존')
 
-    # 실효습도 — 최근 며칠 일별최저습도 가중합(산불·화재 위험). 이력이 쌓일수록 정확.
+    # 실효습도 — 기상청 식(같은 시각 5일 습도 가중합, r=0.7) + 기상청 공식 ASOS 값
     try:
         apply_effective_humidity(data['regions'])
     except Exception as e:
