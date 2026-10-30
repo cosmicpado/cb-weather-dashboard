@@ -127,6 +127,12 @@ def main():
     try:
         srv = Server(('0.0.0.0' if a.lan else '127.0.0.1', a.port), handler)
     except OSError:
+        if a.lan:
+            # 내부망 서버는 의견 접수·다른 PC 접속이 목적이라, 다른 프로그램이 포트를 잡고 있으면 조용히 물러나면 안 된다
+            print(f'\n  ✗ {a.port} 포트를 다른 프로그램이 이미 쓰고 있어 내부망 서버를 열 수 없습니다.', flush=True)
+            print('    예전에 켜 둔 서버 창(서버시작.bat 등)이나 다른 로컬서버 창을 닫고 다시 실행하세요.', flush=True)
+            print(f'    무엇이 쓰는지 보기: netstat -ano | findstr :{a.port}\n', flush=True)
+            sys.exit(1)
         # 이미 그 포트로 띄운 서버가 있으면(같은 폴더를 보고 있을 테니) 데이터만 받는다
         print(f'{a.port} 포트는 이미 사용 중 — 데이터만 받습니다. 화면은 쓰던 서버로 보세요. (끄기: Ctrl+C)', flush=True)
         try:
