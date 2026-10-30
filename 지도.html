@@ -236,7 +236,7 @@
             <span style="font-size:26px; font-weight:800; letter-spacing:-.5px; color:{{ribbonAccent}};">{{statusLabel}}</span>
             <span style="font-size:13px; font-weight:600; color:var(--ink2);">{{statusHead}}</span>
           </div>
-          <div style="font-size:12.5px; color:var(--ink2); margin-top:3px;">{{statusSub}}</div>
+          <sc-if value="{{hasStatusSub}}" hint-placeholder-val="{{false}}"><div style="font-size:12.5px; color:var(--ink2); margin-top:3px;">{{statusSub}}</div></sc-if>
         </div>
       </div>
       <div style="{{chipsWrapStyle}}">
@@ -2243,6 +2243,7 @@ class Component extends DCLogic {
       // ribbon
       statusLabel:rib.label, statusHead:rib.head, pageBlink:!!(status.blink || rib.blink) && !st.wall && !st.noBlink,
       statusSub: this.statusSub(isWide ? {wide:true, rank:status.rank} : status, (isWide ? groupedWarns : this.groupWarns(_myWarns)), (isWide ? rivers : rivers.filter(_isMine)), prelimNorth),   // 관서 화면은 관할 하천만
+      hasStatusSub: !!this.statusSub(isWide ? {wide:true, rank:status.rank} : status, (isWide ? groupedWarns : this.groupWarns(_myWarns)), (isWide ? rivers : rivers.filter(_isMine)), prelimNorth),   // 평상시엔 아랫줄이 비어 줄 자체를 숨긴다
       // 내 관서 한 줄 — 기온·하늘 / 1시간 강수(AWS) / 6시간 최대 예측 / 관할 특보 / 관할 하천
       mineItems:(function(self){
         // 시연 모드는 관서 카드의 rain 만 바꾸고 AWS·6시간 예측은 원값이라, 한 줄이 '비 안 옴'으로 남는 모순이 있었다
@@ -2458,7 +2459,7 @@ class Component extends DCLogic {
     else if(status && status.rank>0) parts.push('충북 재대본 '+status.label);
     if(warns.length) parts.push('발효 특보 '+warns.length+'건');   // 없으면 위 줄이 '발효 특보 없음'이라 되풀이하지 않는다
     const dR=rivers.filter(r=>r.lv==='danger').length, wR=rivers.filter(r=>r.lv==='warning').length;
-    if(dR) parts.push('하천 '+dR+'곳 위험 수위'); else if(wR) parts.push('하천 '+wR+'곳 주의 수위'); else parts.push('하천 전 지점 안전');
+    if(dR) parts.push('하천 '+dR+'곳 위험 수위'); else if(wR) parts.push('하천 '+wR+'곳 주의 수위');   // 모두 안전하면 적지 않는다
     if(prelimNorth) parts.push('예비특보 '+prelimNorth+'건');
     return parts.join(' · ');
   }
