@@ -1404,7 +1404,7 @@ https://scripts.sil.org/OFL
           <div style="font-size:calc(30px*var(--fz,1));font-weight:520;color:var(--fg,#f2f5fa);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ dobLine }}</div>
         </div>
         <div style="border-radius:24px;padding:20px 30px;display:flex;flex-direction:column;justify-content:center;gap:8px;background:{{ levelBg }};border:3px solid {{ levelBorder }};min-width:0;">
-          <div style="font-size:calc(32px*var(--fz,1));font-weight:570;letter-spacing:.06em;color:{{ levelSub }};white-space:nowrap;">{{ stationName }} 관서 상황단계</div>
+          <div style="font-size:calc(32px*var(--fz,1));font-weight:570;letter-spacing:.06em;color:{{ levelSub }};white-space:nowrap;">{{ stageName }} 관서 상황단계</div>
           <div style="font-size:calc(104px*var(--fz,1));font-weight:660;line-height:1;color:{{ levelFg }};letter-spacing:-.02em;white-space:nowrap;">{{ levelName }}</div>
           <div style="font-size:calc(30px*var(--fz,1));font-weight:520;color:{{ levelSub }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ levelReason }}</div>
         </div>
@@ -2287,6 +2287,7 @@ class Component extends DCLogic {
       keyTitle: (_RC.topRiversTitle || '주요 감시'),
       keyAccent: (_kworst==='safe' ? (this.props.accent||'#ff7a2f') : _kcol(_kworst)),
       railStyle: _RAIL,
+      stageName: String(s.name||'').replace(/^청주(?=동부|서부)/,''),   // 단계 카드 제목만 '동부'·'서부' — 4글자면 이 칸만 넓어진다
       stationName: s.name, nextName: NAMES[(this.state.idx+1)%NAMES.length],
       rotLabel: (this.state.idx+1)+' / '+NAMES.length,
       icon: s.sky[1], skyText: s.sky[0], temp: s.temp.toFixed(1), feels: s.feels,
