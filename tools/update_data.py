@@ -554,6 +554,28 @@ def parse_pcp(val):
         return 0
 
 
+def parse_sno(val):
+    """SNO(1시간 신적설) 문자열을 cm 숫자로 — 단기예보 응답에 이미 들어 있던 항목(2026-10-30부터 읽는다).
+    기상청 표기: '적설없음' | '1.0cm 미만' | '1.2cm' | '5.0cm 이상'  (parse_pcp 와 같은 대표값 규칙)"""
+    if val is None:
+        return 0
+    s = str(val).strip()
+    if not s or s in ('적설없음', '-', 'null', '0'):
+        return 0
+    s = s.replace('cm', '').strip()
+    try:
+        if '미만' in s:
+            return float(s.replace('미만', '').strip()) / 2
+        if '~' in s:
+            lo, hi = s.split('~')[:2]
+            return (float(lo.strip()) + float(hi.strip())) / 2
+        if '이상' in s:
+            return float(s.replace('이상', '').strip()) + 5
+        return float(s)
+    except ValueError:
+        return 0
+
+
 def deg_to_dir(deg):
     """풍향 0~360° → 16방위 한글."""
     try:
@@ -678,6 +700,7 @@ def fetch_one_region_forecast(region):
         humid = int(float(cats.get('REH', 0)))
         wind = float(cats.get('WSD', 0))
         rain = parse_pcp(cats.get('PCP', '0'))
+        snow = parse_sno(cats.get('SNO'))          # 1시간 신적설(cm) — 대설·결빙 카드
         pop = int(float(cats.get('POP', 0))) if cats.get('POP') else 0
         try: vec = float(cats.get('VEC', 0))
         except: vec = 0
@@ -701,6 +724,7 @@ def fetch_one_region_forecast(region):
             'temp': round(temp, 1),
             'feels_like': round(feel, 1) if feel is not None else round(temp, 1),
             'rain_mm': rain,
+            'snow_cm': snow,
             'rain_pop': pop,
             'wind_ms': round(wind, 1),
             'wind_deg': vec,

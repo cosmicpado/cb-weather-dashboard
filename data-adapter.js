@@ -25,7 +25,7 @@
       // 관서별 시간대별 예보 — 선택 관서 전환 시 그 관서 예보를 쓰기 위해 각 station에 포함
       var fc = ((det.hourly)||[]).map(function(h){
         return { hour:h.hour, icon:h.icon || icon(h.weather), weather:h.weather, temp:h.temp,
-          feels:h.feels_like, rain:h.rain_mm, pop:h.rain_pop, wind:h.wind_ms, dir:h.wind_dir, deg:h.wind_deg, humid:h.humid };
+          feels:h.feels_like, rain:h.rain_mm, snow:h.snow_cm, pop:h.rain_pop, wind:h.wind_ms, dir:h.wind_dir, deg:h.wind_deg, humid:h.humid };
       });
       return {
         name: nm, sigun: (ALIAS[nm] || nm),

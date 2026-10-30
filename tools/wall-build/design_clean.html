@@ -1249,7 +1249,6 @@ https://scripts.sil.org/OFL
     <div style="height:38px;flex:none;display:flex;align-items:center;gap:28px;font-size:26px;font-weight:500;color:var(--dim,#8e9bb0);">
       <div>데이터 · 기상청 / 행정안전부 / 한강홍수통제소 / 에어코리아 / 국립산림과학원</div>
       <div style="width:2px;height:22px;background:var(--line,#28313f);"></div>
-      <div>제작 · 소방위 한경승 · 동두천소방서 &nbsp;|&nbsp; 도움 · 소방장 온재웅, 이국신</div>
       <div style="margin-left:auto;font-variant-numeric:tabular-nums;">관서 자동 순환 {{ rotSec }}초 · 데이터 자동 갱신 5분 · 마지막 갱신 {{ updatedLabel }}</div>
     </div>
   </div>
@@ -1471,8 +1470,8 @@ class Component extends DCLogic {
       note:'체감 '+_f+'° · 야외활동·고령자 건강 유의, 물 자주 마시기', k:_f>=35?2:1 }; }
     else if(_f<10){ tc={ icon:'🥶', title:'한파 주의', level:_f<=-25?'경고':_f<=-10?'주의':_f<=0?'관심':'쌀쌀',
       note:'체감 '+_f+'° · 보온·빙판길·저체온 유의', k:_f<=-10?2:(_f<=0?1:0) }; }
-    else { const big=(_rg!=null && _rg>=10); tc={ icon:'🌤️', title:'일교차·건강', level:big?'일교차 큼':'쾌적',
-      note:(_rg!=null?('최고 '+Math.round(s.tmax)+'° · 최저 '+Math.round(s.tmin)+'° (일교차 '+Math.round(_rg)+'°)'):('체감 '+_f+'°'))+(big?' · 환절기 건강 유의':''), k:big?1:0 }; }
+    else { const big=(_rg!=null && _rg>=10); tc={ icon:'🌤️', title:'일교차', level:big?'일교차 큼':'쾌적',
+      note:(_rg!=null?('최고 '+Math.round(s.tmax)+'° · 최저 '+Math.round(s.tmin)+'° (일교차 '+Math.round(_rg)+'°)'):('체감 '+_f+'°')), k:big?1:0 }; }
     imp.push({ icon:tc.icon, title:tc.title, level:tc.level, note:tc.note, color:_C[tc.k], bg:_B[tc.k] });
     const worst = Math.max(...rv.map(r=>parseFloat(r.pct)));
     const fl = s.rain1h>=20 || worst>=88 ? 2 : (s.rain1h>=8 || worst>=70 ? 1 : 0);

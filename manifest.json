@@ -7,7 +7,7 @@
   "display": "standalone",
   "orientation": "any",
   "background_color": "#f5f1e8",
-  "theme_color": "#1a3a5c",
+  "theme_color": "#2563eb",
   "lang": "ko",
   "categories": ["utilities", "weather", "government"],
   "icons": [
