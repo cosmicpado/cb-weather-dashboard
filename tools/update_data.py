@@ -946,6 +946,50 @@ def _load_klc():
         return None
 
 
+SUN_PATH = TMP / 'sun_kasi.json'
+
+
+def fetch_sun_times():
+    """한국천문연구원 출몰시각(공공데이터포털 RiseSetInfoService.getLCRiseSetInfo) — 관서별 오늘 일출·일몰.
+    좌표(시·군청, 프로필 office_latlon)로 묻는다. 하루 한 번만 실제로 부르고 그날은 파일 캐시를 쓴다.
+    Returns: {'date': 'YYYYMMDD', 'src': 'kasi', 'by': {관서: {'rise': 'HH:MM', 'set': 'HH:MM'}}} 또는 None
+    실패하면 None — 화면(stage.js cbSun)이 같은 좌표로 계산한 값으로 대신한다."""
+    pts = P.get('office_latlon') or {}
+    if not pts or not DATA_KEY:
+        return None
+    today = datetime.now().strftime('%Y%m%d')
+    try:
+        cache = json.loads(SUN_PATH.read_text(encoding='utf-8')) if SUN_PATH.exists() else {}
+    except Exception:
+        cache = {}
+    if cache.get('date') == today and len(cache.get('by') or {}) == len(pts):
+        return cache
+    by, seen = {}, {}
+    for nm, (lat, lon) in pts.items():
+        key = f'{lat},{lon}'
+        if key in seen:                       # 청주동부·서부처럼 같은 좌표는 한 번만
+            by[nm] = seen[key]
+            continue
+        r = requests.get('https://apis.data.go.kr/B090041/openapi/service/RiseSetInfoService/getLCRiseSetInfo',
+                         params={'serviceKey': DATA_KEY, 'locdate': today, 'longitude': lon, 'latitude': lat, 'dnYn': 'Y'},
+                         timeout=10)
+        txt = r.text
+        rise = _re.search(r'<sunrise>\s*(\d{4})', txt)
+        sset = _re.search(r'<sunset>\s*(\d{4})', txt)
+        if not (rise and sset):
+            _brief = _re.sub(r'\s+', ' ', txt)[:80]   # 파이썬 3.11 이하는 f-string 안 역슬래시를 못 쓴다
+            print(f'  · 출몰시각 응답 이상({nm}): {_brief}')
+            return None
+        v = {'rise': rise.group(1)[:2] + ':' + rise.group(1)[2:], 'set': sset.group(1)[:2] + ':' + sset.group(1)[2:]}
+        by[nm] = seen[key] = v
+    out = {'date': today, 'src': 'kasi', 'by': by}
+    try:
+        _atomic_write_text(SUN_PATH, json.dumps(out, ensure_ascii=False))
+    except Exception:
+        pass
+    return out
+
+
 def fetch_tide():
     """파주 임진강 물때 — 강화대교 조석예보 고저조를 받아 두포리(+2h)로 환산.
 
@@ -3995,6 +4039,19 @@ def main():
         # 실패 시 이전 값을 쓰면 '끝난 태풍'이 계속 떠 있게 된다 → 빈 값이 안전
         data['typhoon'] = []
         print(f'  ✗ 태풍 수집 실패: {type(e).__name__} → 표시 안 함')
+
+    # 일출·일몰 — 한국천문연구원 공식값(하루 1회). 실패하면 화면이 같은 좌표로 계산한다.
+    print('[일출·일몰]')
+    try:
+        data['sun'] = fetch_sun_times()
+        if data['sun']:
+            _c = next(iter(data['sun']['by'].values()))
+            print(f'  ✓ 한국천문연구원 {len(data["sun"]["by"])}개 관서 (예: 일출 {_c["rise"]} · 일몰 {_c["set"]})')
+        else:
+            print('  · 출몰시각 없음 → 화면 계산값 사용')
+    except Exception as e:
+        data['sun'] = None
+        print(f'  ✗ 출몰시각 실패: {type(e).__name__} → 화면 계산값 사용')
 
     # 물때(조석) — 파주 임진강 하구. 강화대교 예보 +2h = 두포리. 하루 1회 실호출(날짜캐시).
     print('[물때(조석)]')

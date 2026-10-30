@@ -116,8 +116,9 @@
   };
 })();
 
-/* 일출·일몰 — 관서(시·군청) 좌표로 계산. NOAA 간이식, 정밀 천문 계산과 1분 이내.
-   window.cbSun(date, 관서명) → { rise:'06:52', set:'17:35' } (좌표 없는 이름은 청주) */
+/* 일출·일몰 — 한국천문연구원 공식값(서버가 하루 한 번 받아 data.js 의 sun)을 먼저 쓰고,
+   없거나 날짜가 다르면 같은 관서(시·군청) 좌표로 계산한다(NOAA 간이식, 정밀 계산과 1분 이내).
+   window.cbSun(date, 관서명) → { rise:'06:52', set:'17:35', riseMin, setMin, src:'kasi'|'calc' } */
 (function () {
   var LL = {
     '청주동부': [36.642, 127.489], '청주서부': [36.642, 127.489], '충주': [36.991, 127.926], '제천': [37.132, 128.191],
@@ -140,9 +141,17 @@
     return Math.round((((UT + 9) % 24) + 24) % 24 * 60);   // 한국 표준시(서머타임 없음)
   }
   function hm(m) { return m == null ? '--:--' : (String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0')); }
+  function toMin(t) { var m = /^(\d\d):(\d\d)$/.exec(String(t || '')); return m ? (+m[1]) * 60 + (+m[2]) : null; }
   window.cbSun = function (date, name) {
-    var ll = LL[name] || LL['청주동부'], d = date || new Date();
+    var d = date || new Date();
+    var ymd = d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0');
+    var K = (window.DASHBOARD_DATA || {}).sun;
+    var o = K && K.date === ymd && K.by && (K.by[name] || K.by['청주동부']);
+    if (o && toMin(o.rise) != null && toMin(o.set) != null) {
+      return { rise: o.rise, set: o.set, riseMin: toMin(o.rise), setMin: toMin(o.set), src: 'kasi' };
+    }
+    var ll = LL[name] || LL['청주동부'];
     var r = calc(d, ll[0], ll[1], true), s = calc(d, ll[0], ll[1], false);
-    return { rise: hm(r), set: hm(s), riseMin: r, setMin: s };
+    return { rise: hm(r), set: hm(s), riseMin: r, setMin: s, src: 'calc' };
   };
 })();
