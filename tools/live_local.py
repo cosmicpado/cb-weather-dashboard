@@ -1,7 +1,8 @@
 """로컬에서 운영 데이터를 계속 받아 보기 — API 를 부르지 않고, 운영 서버가 5분마다 main 에 올리는 데이터를 가져온다.
 
-    python tools/live_local.py            # http://localhost:8765/지도.html
-    python tools/live_local.py --port 9000 --every 30
+    python tools/live_local.py              # 데이터 받기 + 웹서버 http://localhost:8765/지도.html
+    python tools/live_local.py --port 8000  # 웹서버 포트 바꾸기
+    python tools/live_local.py --no-serve   # 데이터만 받기(화면은 이미 띄운 다른 서버로 볼 때)
 
 - 1분마다 git fetch 로 origin/main 의 data.js · data-cctv.js · images/*.png 를 작업 폴더에 덮어쓴다
   (지금 브랜치·커밋·스테이지는 건드리지 않는다. 바뀐 데이터 파일은 커밋하지 말 것).
@@ -54,7 +55,13 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--port', type=int, default=8765)
     ap.add_argument('--every', type=int, default=60, help='가져오기 간격(초)')
+    ap.add_argument('--no-serve', action='store_true', help='데이터만 받아 오고 웹서버는 띄우지 않는다(이미 다른 서버를 쓸 때)')
     a = ap.parse_args()
+    if a.no_serve:
+        try:
+            loop(a.every)
+        except KeyboardInterrupt:
+            sys.exit(0)
     threading.Thread(target=loop, args=(a.every,), daemon=True).start()
     class Quiet(http.server.SimpleHTTPRequestHandler):
         def log_message(self, *x):                 # 요청 로그는 끈다(가져오기 기록만 보이게)
