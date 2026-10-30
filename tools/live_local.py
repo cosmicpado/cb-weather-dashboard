@@ -1,7 +1,9 @@
 """로컬에서 운영 데이터를 계속 받아 보기 — API 를 부르지 않고, 운영 서버가 5분마다 main 에 올리는 데이터를 가져온다.
 
-    python tools/live_local.py            # http://localhost:8765/지도.html
-    python tools/live_local.py --port 9000 --every 30
+    python tools/live_local.py              # 데이터 받기 + 웹서버 http://localhost:8765/지도.html
+    python tools/live_local.py --port 8000  # 웹서버 포트 바꾸기
+    python tools/live_local.py --no-serve   # 데이터만 받기(화면은 이미 띄운 다른 서버로 볼 때)
+    python tools/live_local.py --lan        # 다른 PC 에서도 접속(내부망 배포) — http://<이 PC IP>:8000/
 
 - 1분마다 git fetch 로 origin/main 의 data.js · data-cctv.js · images/*.png 를 작업 폴더에 덮어쓴다
   (지금 브랜치·커밋·스테이지는 건드리지 않는다. 바뀐 데이터 파일은 커밋하지 말 것).
@@ -54,15 +56,47 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--port', type=int, default=8765)
     ap.add_argument('--every', type=int, default=60, help='가져오기 간격(초)')
+    ap.add_argument('--no-serve', action='store_true', help='데이터만 받아 오고 웹서버는 띄우지 않는다(이미 다른 서버를 쓸 때)')
+    ap.add_argument('--lan', action='store_true', help='다른 PC 에서도 접속하게 연다(기본은 이 PC 만)')
     a = ap.parse_args()
+    if a.no_serve:
+        try:
+            loop(a.every)
+        except KeyboardInterrupt:
+            sys.exit(0)
     threading.Thread(target=loop, args=(a.every,), daemon=True).start()
     class Quiet(http.server.SimpleHTTPRequestHandler):
         def log_message(self, *x):                 # 요청 로그는 끈다(가져오기 기록만 보이게)
             pass
     handler = functools.partial(Quiet, directory=str(ROOT))
-    print(f'열기: http://localhost:{a.port}/지도.html   (끄기: Ctrl+C)', flush=True)
+    class Server(http.server.ThreadingHTTPServer):
+        allow_reuse_address = False                # Windows 는 켜 두면 이미 쓰는 포트에도 겹쳐 붙는다
     try:
-        http.server.ThreadingHTTPServer(('127.0.0.1', a.port), handler).serve_forever()
+        srv = Server(('0.0.0.0' if a.lan else '127.0.0.1', a.port), handler)
+    except OSError:
+        if a.lan:
+            # 내부망 서버는 다른 PC 접속이 목적이라, 다른 프로그램이 포트를 잡고 있으면 조용히 물러나면 안 된다
+            print(f'\n  ✗ {a.port} 포트를 다른 프로그램이 이미 쓰고 있어 내부망 서버를 열 수 없습니다.', flush=True)
+            print('    예전에 켜 둔 서버 창(서버시작.bat 등)이나 다른 로컬서버 창을 닫고 다시 실행하세요.', flush=True)
+            print(f'    무엇이 쓰는지 보기: netstat -ano | findstr :{a.port}\n', flush=True)
+            sys.exit(1)
+        # 이미 그 포트로 띄운 서버가 있으면(같은 폴더를 보고 있을 테니) 데이터만 받는다
+        print(f'{a.port} 포트는 이미 사용 중 — 데이터만 받습니다. 화면은 쓰던 서버로 보세요. (끄기: Ctrl+C)', flush=True)
+        try:
+            while True:
+                time.sleep(3600)
+        except KeyboardInterrupt:
+            sys.exit(0)
+    print(f'열기: http://localhost:{a.port}/지도.html   (끄기: 이 창 닫기 또는 Ctrl+C)', flush=True)
+    if a.lan:
+        import socket
+        try:
+            ip = socket.gethostbyname(socket.gethostname())
+        except OSError:
+            ip = '<이 PC IP>'
+        print(f'다른 PC 에서: http://{ip}:{a.port}/지도.html', flush=True)
+    try:
+        srv.serve_forever()
     except KeyboardInterrupt:
         sys.exit(0)
 
