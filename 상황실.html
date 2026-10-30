@@ -1811,7 +1811,8 @@ class Component extends DCLogic {
     const fireRisk = wet ? 0 : (effHum<=35 && wind>=4 ? 2 : (effHum<=45 ? 1 : 0));
     const skyIdx = rain1h >= 20 ? 4 : (wet ? 3 : (r2 > .72 ? 1 : 0));
     return { i, name, temp:+temp, humid, wind:+wind, gust:(g && g.gust!=null)?+g.gust:+(wind*1.7).toFixed(1), rain1h, rday:((g && g.rday != null) ? g.rday : 0), sky:SKY[skyIdx],
-      feels, effHum, wet, fireRisk, hourly:(g&&g.hourly)?g.hourly:null, windDeg: (g && g.wdeg != null) ? Math.round(g.wdeg) : null,
+      feels, effHum, wet, fireRisk, hourly:(g&&g.hourly)?g.hourly:null,
+      tmax:(g&&g.tmax!=null)?+g.tmax:null, tmin:(g&&g.tmin!=null)?+g.tmin:null, windDeg: (g && g.wdeg != null) ? Math.round(g.wdeg) : null,
       pm10: (g && g.pm10 != null) ? g.pm10 : Math.round(14 + r1*46) };
   }
 
@@ -2153,11 +2154,21 @@ class Component extends DCLogic {
       level:['낮음','주의','높음'][fireRisk],
       note:'실효습도 '+s.effHum+'% · 풍속 '+s.wind+'m/s · 풍향 '+(s.windDeg==null ? '—' : ['북','북동','동','남동','남','남서','서','북서'][Math.floor(((s.windDeg+22.5)%360)/45)]),
       color:['var(--cGreen,#2ad19a)','var(--cAmber,#ffb020)','var(--cRed,#ff5a5a)'][fireRisk], bg:['rgba(42,209,154,.08)','rgba(255,176,32,.1)','rgba(255,77,77,.12)'][fireRisk] });
-    const heat = s.feels>=38 ? 2 : (s.feels>=33 ? 1 : 0);
-    imp.push({ icon:'🌡️', title:'온열질환 구급 수요',
-      level:['평시','증가','급증 경계'][heat],
-      note:'체감 '+s.feels+'° · 옥외작업·고령자 취약, 구급 예비대 확인',
-      color:['var(--cGreen,#2ad19a)','var(--cAmber,#ffb020)','var(--cRed,#ff5a5a)'][heat], bg:['rgba(42,209,154,.08)','rgba(255,176,32,.1)','rgba(255,77,77,.12)'][heat] });
+    /* 체감온도 카드 — 구급 전용 어휘 대신 모든 직원이 읽는 말로(2026-10-30). 지도.html tempCard 와 같은 기준.
+       체감 30° 이상 온열질환 주의(기상청 폭염 영향예보 31·33·35·38) · 10° 미만 한파 주의(체감온도 0·-10·-25) · 그 사이 일교차 */
+    const _C=['var(--cGreen,#2ad19a)','var(--cAmber,#ffb020)','var(--cRed,#ff5a5a)'], _B=['rgba(42,209,154,.08)','rgba(255,176,32,.1)','rgba(255,77,77,.12)'];
+    const _f=s.feels, _rg=(s.tmax!=null&&s.tmin!=null)?(s.tmax-s.tmin):null;
+    let tc;
+    if(_f!=null && _f>=30){ const k=_f>=35?2:1;
+      tc={ icon:'🌡️', title:'온열질환 주의', level:_f>=38?'위험':_f>=35?'경고':_f>=33?'주의':_f>=31?'관심':'유의',
+           note:'체감 '+_f+'° · 야외활동·고령자 건강 유의, 물 자주 마시기', k:k }; }
+    else if(_f!=null && _f<10){ const k=_f<=-10?2:(_f<=0?1:0);
+      tc={ icon:'🥶', title:'한파 주의', level:_f<=-25?'경고':_f<=-10?'주의':_f<=0?'관심':'쌀쌀',
+           note:'체감 '+_f+'° · 보온·빙판길·저체온 유의', k:k }; }
+    else { const big=(_rg!=null && _rg>=10);
+      tc={ icon:'🌤️', title:'일교차·건강', level:big?'일교차 큼':'쾌적',
+           note:(_rg!=null?('최고 '+Math.round(s.tmax)+'° · 최저 '+Math.round(s.tmin)+'° (일교차 '+Math.round(_rg)+'°)'):('체감 '+_f+'°'))+(big?' · 환절기 건강 유의':''), k:big?1:0 }; }
+    imp.push({ icon:tc.icon, title:tc.title, level:tc.level, note:tc.note, color:_C[tc.k], bg:_B[tc.k] });
     const _rw = rv.filter(x=>!x.isDam).map(r=>parseFloat(r.pct));
     const worst = _rw.length ? Math.max.apply(null,_rw) : 0;
     const fl = s.rain1h>=20 || worst>=88 ? 2 : (s.rain1h>=8 || worst>=70 ? 1 : 0);
@@ -2426,6 +2437,7 @@ class Component extends DCLogic {
            지금까지 어느 화면에도 없었다(실황 카드는 1·3·6·12시간만). 2026-08-17 추가. */
         rday:nv(a.rnday),
         feels:nv(det.feels_like!=null?det.feels_like:r.feels), eff:nv(r.effHumid),
+        tmax:nv(r.tmax), tmin:nv(r.tmin), rn12:nv(a.rn12h),   /* 체감온도 카드(일교차)·자동 위험구역(집중호우) */
         hourly:(hrs.length?hrs:null) };
     });
     /* 하천 → 관서. sigun 없으면 이름에서 시군 추출(가장 긴 매칭 우선: '남양주'가 '양주'보다 먼저).
@@ -2459,6 +2471,18 @@ class Component extends DCLogic {
       if(!sg) return;
       NAMES.forEach(function(nm){ if(sig(nm)===sg && nm!=='일산') put(nm); });  /* 시군 관서에만(일산 중복 방지) */
     });
+    /* 자동 위험구역 — 하천 경계·주의수위 이상 · 1시간 0.3m 급상승, 집중호우(1시간 30mm·12시간 110mm 이상).
+       구글시트로 손으로 적던 방식은 2026-10-30 폐지. 지도.html autoRisks 와 같은 기준. 행 = [이름, 설명, 유형] */
+    var risks={};
+    NAMES.forEach(function(nm,i){ var out=[];
+      rivers[nm].forEach(function(e){ if(e[3]==='dam') return;
+        var lv=e[4], d1=e[5], why='';
+        if(lv==='danger') why='경계수위 '+e[2]+'m 이상'; else if(lv==='warning') why='주의수위 '+e[6]+'m 이상';
+        else if(d1!=null && d1>=0.3) why='1시간에 '+d1.toFixed(2)+'m 급상승';
+        if(why) out.push([e[0], '현재 '+(e[1]!=null?e[1].toFixed(2):'-')+'m · '+why, '하천 수위']); });
+      var st=stations[i]||{}, h1=st.rain, h12=st.rn12;
+      if((h1||0)>=30 || (h12||0)>=110) out.push([nm+' 집중호우', '1시간 '+(h1!=null?h1:'-')+'mm · 12시간 '+(h12!=null?h12:'-')+'mm', '집중호우']);
+      risks[nm]=out; });
     /* 정렬: 공식 경보 → 주의보 → 하천(위험수위 대비 높은 순) → 댐. 벽면 가독성 위해 최대 5행. */
     NAMES.forEach(function(nm){
       rivers[nm].sort(function(a,b){
@@ -2517,65 +2541,18 @@ class Component extends DCLogic {
       });
     });
     cctv.sort(function(a,b){ return (a.rank-b.rank)||(a.si-b.si)||(b.ratio-a.ratio); });
-    return { stations:stations, rivers:rivers, msgs:msgs, warns:warnsByStation(D.warnings), cctv:cctv,
+    return { stations:stations, rivers:rivers, msgs:msgs, warns:warnsByStation(D.warnings), cctv:cctv, risks:risks,
              keyRivers:keyRivers, ultra:ultra, updated:D.updated,
              /* 새 카드 3장(레이더·태풍·물때, 2026-09-18) 원시 데이터 통과 */
              kmaImages:(D.kma_images||{}), typhoon:(D.typhoon||[]), tide:(D.tide||null) };
   }
-  /* ── 위험구역: 구글시트 관서별 탭 (지도.html loadRiskSheet 포팅, name/type/note만) ── */
-  function parseCSV(txt){ var lines=txt.replace(/\r/g,'').split('\n').filter(function(l){return l.length;});
-    return lines.map(function(line){ var out=[],cur='',q=false; for(var i=0;i<line.length;i++){ var c=line[i];
-      if(q){ if(c==='"'){ if(line[i+1]==='"'){cur+='"';i++;} else q=false; } else cur+=c; }
-      else { if(c==='"') q=true; else if(c===','){ out.push(cur); cur=''; } else cur+=c; } } out.push(cur); return out; }); }
-  function rowsFrom(txt, tabRegion){
-    if(!txt || txt.charAt(0)==='<' || txt.indexOf('setResponse')>=0) return [];
-    var rows=parseCSV(txt); if(rows.length<2) return [];
-    var head=rows[0].map(function(x){return (x||'').trim();});
-    var col=function(n){ return head.findIndex(function(x){return x.indexOf(n)>=0;}); };
-    var iReg=col('지역'),iType=col('유형');
-    var iName=col('이름'); if(iName<0) iName=col('명칭'); if(iName<0) iName=col('주소');
-    var iNote=col('설명'); if(iNote<0) iNote=col('주소');
-    var res=[];
-    for(var i=1;i<rows.length;i++){ var r=rows[i];
-      var name=(r[iName]||'').trim(), type=(r[iType]||'').trim(), note=(r[iNote]||'').trim();
-      if(!(type||name||note)) continue;                        /* 텅 빈(번호만) 행 제외 */
-      var region=tabRegion;
-      if(!region){ var cell=(r[iReg]||'').trim(); region=NAMES.find(function(nm){ return cell.indexOf(sig(nm))>=0; }); }
-      if(!region) continue;
-      if(note===name) note='';                                 /* 설명칸 비어 주소가 중복되면 비움 */
-      if(!name && note) { name=note; note=''; }
-      res.push([region, name, note, type]);
-    }
-    return res;
-  }
-  function loadRisks(){
-    var base=window.RISK_SHEET_URL; if(!base) return;
-    var sep=base.indexOf('?')>=0?'&':'?';
-    var fetchTxt=function(url){ return fetch(url).then(function(r){return r.ok?r.text():'';}).catch(function(){return '';}); };
-    var jobs=[]; SIG.forEach(function(sg){ var set=[sg]; if(ADMIN[sg]&&ADMIN[sg]!==sg) set.push(ADMIN[sg]);
-      set.forEach(function(t){ jobs.push({region:sg,name:t}); }); });
-    jobs.push({region:'일산',name:'일산'});
-    Promise.all([fetchTxt(base)].concat(jobs.map(function(j){ return fetchTxt(base+sep+'sheet='+encodeURIComponent(j.name)).then(function(txt){return {region:j.region,txt:txt};}); }))).then(function(all){
-      var defTxt=all[0]||'', items=rowsFrom(defTxt,''); var seen={}; if(defTxt) seen[defTxt]=1;   /* 첫 탭: 지역칸으로 구분 */
-      all.slice(1).forEach(function(t){ if(t.txt && t.txt!==defTxt && !seen[t.txt]){ seen[t.txt]=1; items=items.concat(rowsFrom(t.txt, t.region)); } });  /* 없는 탭→첫 탭 반환·중복 방어 */
-      var byStn={}; NAMES.forEach(function(nm){ byStn[nm]=[]; });
-      items.forEach(function(it){ if(byStn[it[0]]) byStn[it[0]].push([it[1], it[2], it[3]]); });
-      if(window.WALL_DATA) window.WALL_DATA.risks=byStn;
-    }).catch(function(){});
-  }
-  function apply(D){ var w=build(D); if(!w) return;
-    if(window.WALL_DATA && window.WALL_DATA.risks) w.risks=window.WALL_DATA.risks;   /* 로드된 위험구역 보존 */
-    else { w.risks={}; NAMES.forEach(function(nm){ w.risks[nm]=[]; }); }             /* 초기: 샘플 대신 '없음' */
-    window.WALL_DATA=w;
-  }
+  function apply(D){ var w=build(D); if(!w) return; window.WALL_DATA=w; }
   if(window.DASHBOARD_DATA) apply(window.DASHBOARD_DATA);
-  loadRisks();
   setInterval(function(){
     fetch('data.js?_t='+Date.now(),{cache:'no-store'})
       .then(function(r){return r.text();}).then(function(t){ var i=t.indexOf('{'),j=t.lastIndexOf('}'); if(i<0||j<0) return;
         try{ apply(JSON.parse(t.slice(i,j+1))); }catch(e){} }).catch(function(){});
   }, 300000);
-  setInterval(loadRisks, 1800000);
 })();
 </script>
 

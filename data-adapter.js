@@ -120,14 +120,6 @@
                    // src 'rdr' = 예측 영상을 못 받아 레이더 강수실황으로 대신한 것(update_data.py)
                    title:((ki.qpf&&ki.qpf.src)==='rdr') ? '레이더 강수실황' : '초단기 강수예측' }
     };
-    // 날씨해설 그림(청주기상지청 '내일~모레 강수 예상지역 분포도' 등) — 날씨누리 원본 주소.
-    // 지도 화면은 강수예측이 '레이더 강수실황'으로 대신될 때(레이더 합성과 겹침) 이 그림을 넷째 칸에 쓴다.
-    var cmt = SRC.bulletins && SRC.bulletins.commentary;
-    if (cmt && cmt.img) {
-      var ct = String(cmt.tmFc || '');
-      kmaImages.cmt = { file: cmt.img, ok: true, title: '날씨해설 그림', sub: cmt.img_alt || '청주기상지청',
-                        ts: ct.length >= 12 ? ct.slice(0,4)+'-'+ct.slice(4,6)+'-'+ct.slice(6,8)+' '+ct.slice(8,10)+':'+ct.slice(10,12) : '' };
-    }
 
     window.DASH = {
       updated: SRC.updated,

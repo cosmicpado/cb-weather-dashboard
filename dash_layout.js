@@ -22,9 +22,9 @@
     { id: 'imgs',     name: '기상 이미지' }
   ];
   var CARDS = [
+    { id: 'msg',    name: '재난문자',   noHide: true, sec: 'hero' },
     { id: 'warn',   name: '기상특보',   noHide: true, sec: 'hero' },
     { id: 'info',   name: '기상정보·날씨해설', sec: 'hero' },
-    { id: 'msg',    name: '재난문자',   noHide: true, sec: 'hero' },
     { id: 'river',  name: '하천 수위',  noHide: true, sec: 'hero' },
     { id: 'hourly', name: '시간대별 예보', sec: 'trio' },
     { id: 'fire',   name: '산불 위험도',  sec: 'trio' },
