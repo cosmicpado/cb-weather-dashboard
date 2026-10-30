@@ -233,6 +233,17 @@
       </div>
     </sc-if>
 
+    <!-- ── ⑤-2 올해 충북 산불 — 건조·산불 탭에서만 ── -->
+    <sc-if value="{{isFire}}">
+      <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; box-shadow:var(--sh2); padding:15px 17px;">
+        <div style="display:flex; align-items:baseline; gap:8px; margin-bottom:11px;">
+          <span style="font-size:15px; font-weight:900; color:var(--ink);">올해 충북 산불</span>
+          <span style="font-size:11.5px; color:var(--ink3);">{{fireListSub}}</span>
+        </div>
+        {{fireListBody}}
+      </div>
+    </sc-if>
+
     <!-- ── ⑥ 충북 특보 발효현황 + 레이더 — 지도 화면 '기상 이미지'와 같은 순서(특보 왼쪽 · 레이더 오른쪽).
          예전 오른쪽 칸 '초단기 예측강수'는 예측 영상을 못 받아 늘 '레이더 강수실황'(=왼쪽 레이더와 같은 그림)이었다(2026-10-30). -->
     <div style="display:grid; grid-template-columns:{{radarCols}}; gap:13px;">
@@ -250,7 +261,7 @@
           <span style="font-size:11.5px; font-weight:800; color:{{radarAgeColor}};">{{radarAge}}</span>
         </div>
         <div style="font-size:11.5px; color:var(--ink2); margin-bottom:9px; line-height:1.5;">{{radarDesc}}</div>
-        <img src="images/kma_radar.png" alt="레이더" style="width:100%; border-radius:11px; border:1px solid var(--border); background:var(--surface2);">
+        <img src="{{radarImg}}" alt="{{radarTitle}}" style="width:100%; border-radius:11px; border:1px solid var(--border); background:var(--surface2);">
         {{legendBody}}
       </div>
     </div>
@@ -291,8 +302,9 @@ class Component extends DCLogic {
       w: (typeof window !== 'undefined' ? window.innerWidth : 1440),
       rankTab: '12h',
       snowTab: 'snow',
+      fireTab: 'eff',
       // 탭 — 주소 ?mode=rain|snow 가 있으면 그것(호우.html·대설.html 옛 주소가 넘겨줌), 없으면 null = 자동
-      mode: (function(){ try{ var m=new URLSearchParams(location.search).get('mode'); return (m==='rain'||m==='snow') ? m : null; }catch(e){ return null; } })(),
+      mode: (function(){ try{ var m=new URLSearchParams(location.search).get('mode'); return (m==='rain'||m==='snow'||m==='fire') ? m : null; }catch(e){ return null; } })(),
       myStation: (function(){ var RC=(window.REGION_CONF||{}); var h=RC.home||'동두천'; try{ var sv=(typeof localStorage!=='undefined' && localStorage.getItem('ggMyStation')) || h;
         if(RC.order && RC.order.length && RC.order.indexOf(sv)<0) sv=h; return sv; }catch(e){ return h; } })(),
       stationPickerOpen: (function(){ try{ if(sessionStorage.getItem('ggPickerOpen')==='1'){ sessionStorage.removeItem('ggPickerOpen'); return true; } }catch(e){} return false; })(),
@@ -330,7 +342,7 @@ class Component extends DCLogic {
     this.syncTitle();
   }
   // 브라우저 탭 제목도 지금 탭에 맞춘다 (창을 여러 개 띄워 둘 때 구분용)
-  syncTitle(){ try{ const t=(this.curMode()==='snow'?'대설·한파':'호우')+' 상황판 · 충청북도'; if(document.title!==t) document.title=t; }catch(e){} }
+  syncTitle(){ try{ const m=this.curMode(), t=(m==='snow'?'대설·한파':m==='fire'?'건조·산불':'호우')+' 상황판 · 충청북도'; if(document.title!==t) document.title=t; }catch(e){} }
   // ⚠ 이 메서드는 단 한 번만 정의할 것 (중복 정의로 타이머가 누수된 전례가 있음)
   componentWillUnmount(){
     clearInterval(this._clock); clearInterval(this._poll); clearInterval(this._upd); this._upd=null;
@@ -341,21 +353,23 @@ class Component extends DCLogic {
   getData(){ return (typeof window!=='undefined' && window.DASH) ? window.DASH : this.FB; }
   working(){ const b=this.getData(); return this.scoped(this.state.demo ? this.applyDemo(b) : b); }
 
-  /* ── 탭(호우 / 대설·한파) ───────────────────────────────
-     직원이 고르지 않았으면 자동: ① 발효 중인 특보(대설·한파 ↔ 호우·태풍) ② 이 PC에서 마지막으로 고른 탭 ③ 계절(11~3월 대설·한파).
-     특보가 1순위인 건, 한겨울에 호우특보가 나거나 늦가을 첫 대설특보가 날 때 엉뚱한 탭이 열리지 않게 하려는 것. */
+  /* ── 탭(호우 / 대설·한파 / 건조·산불) ───────────────────────────────
+     직원이 고르지 않았으면 자동: ① 발효 중인 특보 ② 이 PC에서 마지막으로 고른 탭 ③ 계절.
+     특보가 둘 이상 겹치면 호우·태풍 → 대설·한파 → 건조 순(인명 피해가 빠른 쪽 먼저).
+     강풍은 어느 탭에나 같이 붙는 특보라 자동 선택에 쓰지 않는다.
+     계절: 3~5월 건조·산불(봄철 산불조심기간) · 6~10월 호우 · 11~2월 대설·한파. */
   autoMode(b){
     const w=(this.scoped(b||{}).warnings||[]).map(x=>String(x.type||'')).join(' ');
-    const sn=/대설|한파/.test(w), rn=/호우|태풍/.test(w);
-    if(sn && !rn) return 'snow';
-    if(rn && !sn) return 'rain';
-    try{ const v=localStorage.getItem('cbBoardMode'); if(v==='rain'||v==='snow') return v; }catch(e){}
+    if(/호우|태풍/.test(w)) return 'rain';
+    if(/대설|한파/.test(w)) return 'snow';
+    if(/건조/.test(w)) return 'fire';
+    try{ const v=localStorage.getItem('cbBoardMode'); if(v==='rain'||v==='snow'||v==='fire') return v; }catch(e){}
     const m=new Date().getMonth()+1;
-    return (m>=11 || m<=3) ? 'snow' : 'rain';
+    return (m>=3 && m<=5) ? 'fire' : (m>=6 && m<=10) ? 'rain' : 'snow';
   }
   curMode(b){ return this.state.mode || this.autoMode(b || this.getData()); }
   setMode(m){ try{ localStorage.setItem('cbBoardMode', m); }catch(e){} this.setState({mode:m}); }
-  applyDemo(base){ return this.curMode(base)==='snow' ? this.snowDemo(base) : this.rainDemo(base); }
+  applyDemo(base){ const m=this.curMode(base); return m==='snow' ? this.snowDemo(base) : m==='fire' ? this.fireDemo(base) : this.rainDemo(base); }
   /* 권역 필터 — 지도.html scoped() 와 같은 규칙. 관서·하천·특보·재난문자를 권역 것만 남긴다.
      region.js 에 scopes 가 없는 시도(강원·서울…)는 그대로 통과. */
   scoped(d){
@@ -682,9 +696,10 @@ class Component extends DCLogic {
     const out = {
       rootRef:this.rootRef, theme:st.theme,
       // 탭
-      isRain,
+      isRain, isFire:false, radarImg:'images/kma_radar.png',
       modeTabs: [{k:'rain', label:'🌧 호우', title:'호우 — 실측 강수·6시간 예측·강풍·하천 수위'},
-                 {k:'snow', label:'❄ 대설·한파', title:'대설·한파 — 예상 적설·최저기온·결빙 위험·한파'}].map(t=>({
+                 {k:'snow', label:'❄ 대설·한파', title:'대설·한파 — 예상 적설·최저기온·결빙 위험·한파'},
+                 {k:'fire', label:'🔥 건조·산불', title:'건조·산불 — 실효습도·바람·산불위험예보·올해 산불'}].map(t=>({
         label:t.label, title:t.title,
         bg:(mode===t.k ? 'var(--surface)' : 'transparent'), fg:(mode===t.k ? 'var(--brand)' : 'var(--ink3)'),
         sh:(mode===t.k ? 'var(--sh1)' : 'none'), pick:()=>this.setMode(t.k) })),
@@ -739,7 +754,7 @@ class Component extends DCLogic {
       // 시연 모드 ({{}}에서 삼항 연산을 못 쓰므로 스타일을 여기서 통째로 만들어 넘긴다)
       demo: st.demo,
       demoBtnLabel: st.demo?'■':'▶',
-      demoTitle: st.demo?'시연 종료':(isRain?'시연 모드 — 가상 호우 상황으로 화면 동작 보기':'시연 모드 — 가상 대설경보·한파 상황으로 화면 동작 보기'),
+      demoTitle: st.demo?'시연 종료':(isRain?'시연 모드 — 가상 호우 상황으로 화면 동작 보기':mode==='fire'?'시연 모드 — 가상 건조경보·산불 상황으로 화면 동작 보기':'시연 모드 — 가상 대설경보·한파 상황으로 화면 동작 보기'),
       demoBtnStyle: 'width:34px; height:34px; padding:0; border-radius:10px; border:1px solid '+(st.demo?'var(--severe)':'var(--border2)')+'; background:'+(st.demo?'var(--severe)':'var(--surface)')+'; color:'+(st.demo?'#fff':'var(--ink2)')+'; font-size:13px; line-height:1; display:inline-flex; align-items:center; justify-content:center; font-weight:800; font-family:inherit; cursor:pointer;',
       toggleDemo:()=>this.setState({demo:!this.state.demo}),
       // 레이아웃
@@ -780,7 +795,7 @@ class Component extends DCLogic {
       infoTs: (d.weatherInfo||{}).tmFc_display || '',
       infoBody: this.infoBody(d)
     };
-    return isRain ? out : Object.assign(out, this.snowVals(d, me, myStation, stations, wide));
+    return isRain ? out : Object.assign(out, mode==='fire' ? this.fireVals(d, me, myStation, stations, wide) : this.snowVals(d, me, myStation, stations, wide));
   }
 
   // ── 기상영상 신선도 ─────────────────────────────────────
@@ -1470,7 +1485,7 @@ class Component extends DCLogic {
   }
 
   // ── 기상청 해설 (중기전망 기온·강수 + 기상정보 전문) ──────────
-  snowInfoBody(d){
+  snowInfoBody(d, note){
     const R=React.createElement;
     const info=String((d.weatherInfo||{}).content || '').replace(/\\n/g,'\n').replace(/\n{2,}/g,'\n').trim();   // 전문에 줄바꿈이 '\n' 글자로 섞여 오는 경우가 있다
     const mid=(d.midForecast||{}).content || '';
@@ -1483,7 +1498,7 @@ class Component extends DCLogic {
         lines.map((x,i)=>R('div',{key:i, style:{fontSize:'12.5px', color:'var(--ink)', lineHeight:1.6, marginTop:(i?'4px':0)}}, x))) : null,
       info ? R('div',{style:{maxHeight:'240px', overflow:'auto', background:'var(--surface2)', borderRadius:'10px', padding:'11px 13px'}},
         R('div',{style:{fontSize:'12.5px', color:'var(--ink2)', lineHeight:1.7, whiteSpace:'pre-wrap'}}, info)) : null,
-      R('div',{style:{fontSize:'10.5px', color:'var(--ink3)', marginTop:'7px'}}, '※ 기상청이 발표한 기상정보 전문입니다. 대설·한파 때는 적설 현황·전망이 실립니다.'));
+      R('div',{style:{fontSize:'10.5px', color:'var(--ink3)', marginTop:'7px'}}, note || '※ 기상청이 발표한 기상정보 전문입니다. 대설·한파 때는 적설 현황·전망이 실립니다.'));
   }
 
   // ── 재난문자 ────────────────────────────────────────────
@@ -1496,6 +1511,271 @@ class Component extends DCLogic {
     return R('div',{style:{display:'flex', flexDirection:'column', gap:'7px'}},
       list.slice(0,6).map((m,i)=>{
         const mine = (m.region===sig);
+        return R('div',{key:i, style:{padding:'9px 11px', borderRadius:'10px', background:(mine?'var(--brandSoft)':'var(--surface2)'), border:'1px solid '+(mine?'var(--brand)':'var(--border)')}},
+          R('div',{style:{display:'flex', justifyContent:'space-between', gap:'8px', marginBottom:'3px'}},
+            R('span',{style:{fontSize:'11.5px', fontWeight:800, color:(mine?'var(--brand)':'var(--ink2)')}}, m.sender||m.region||''),
+            R('span',{style:{fontSize:'10.5px', color:'var(--ink3)'}}, m.time||'')),
+          R('div',{style:{fontSize:'12px', color:'var(--ink2)', lineHeight:1.5, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden'}}, m.text||''));
+      }));
+  }
+
+  // ════════════════ 건조·산불 탭 ════════════════
+  /* 건조특보 기준(기상청): 주의보 = 실효습도 35% 이하 2일 이상 예상 · 경보 = 25% 이하 2일 이상 예상.
+     실효습도는 서버가 관서별 '하루 최저습도'를 최근 7일 가중평균(가중치 0.7)해 낸 자체 계산값이다 —
+     기상청 공식 실효습도와 다를 수 있어 '…급'으로만 표시한다. */
+  effLevel(v){
+    const a=this.num(v);
+    if(a!==null && a<=25) return {t:'경보급',  c:'var(--severe)', bg:'var(--severeSoft)', k:4};
+    if(a!==null && a<=35) return {t:'주의보급', c:'var(--warn)',   bg:'var(--warnSoft)',   k:3};
+    if(a!==null && a<=45) return {t:'건조',    c:'var(--caution)', bg:'var(--cautionSoft)', k:2};
+    return {t:'', c:'var(--ink3)', bg:'transparent', k:0};
+  }
+  humColor(v){ const a=this.num(v); return a===null ? 'var(--ink3)' : a<=25 ? 'var(--severe)' : a<=35 ? 'var(--warn)' : a<=45 ? 'var(--caution)' : 'var(--ink2)'; }
+  pct(v){ const a=this.num(v); return a===null ? '—' : Math.round(a)+'%'; }
+  ms(v){ const a=this.num(v); return a===null ? '—' : a.toFixed(1).replace(/\.0$/,'')+'m/s'; }
+  // 산불위험예보 권역 — 관서 이름으로 찾고, 없으면 같은 시(청주서부 → '청주…' 권역)로
+  fireGroupOf(d, s){
+    const list=(d.fire||[]), nm=String(s.name||''), sg=String(s.sigun||nm);
+    return list.find(f=>String(f.region||'').split('·').some(x=>x===nm || x===sg))
+        || list.find(f=>String(f.region||'').split('·').some(x=>x.slice(0,2)===nm.slice(0,2))) || null;
+  }
+  fireLvColor(l){ return l>=4 ? 'var(--severe)' : l>=3 ? 'var(--warn)' : l>=2 ? 'var(--caution)' : 'var(--safe)'; }
+  // 올해 충북 산불 — 어댑터가 넘기지 않아 원본에서 읽는다(시연이면 시연 목록)
+  fireStatsOf(d){ return d.fireStats || ((window.DASHBOARD_DATA||{}).fire_stats) || {}; }
+
+  fireDemo(base){
+    const c = JSON.parse(JSON.stringify(base));
+    c.typhoon = [];
+    c.warnings = [
+      {type:'건조경보', area:'제천, 단양, 충주', level:'severe', time:'10:00'},
+      {type:'건조주의보', area:'청주동부, 청주서부, 증평, 진천, 괴산, 음성', level:'warning', time:'10:00'},
+      {type:'강풍주의보', area:'제천, 단양', level:'warning', time:'13:00'}
+    ];
+    c.prelim = [];
+    c.fire = [
+      {region:'제천·단양·충주', level:4, levelText:'매우높음'},
+      {region:'음성·진천·괴산', level:3, levelText:'높음'},
+      {region:'증평·청주동부·보은', level:3, levelText:'높음'},
+      {region:'옥천·영동', level:2, levelText:'보통'}
+    ];
+    // 관서별 [실효습도, 지금 습도, 순간최대풍속, 10분평균, 풍향(도)]
+    const D = {
+      '제천':[19,16,21.4,11.2,300], '단양':[21,18,20.6,10.4,295], '충주':[24,20,15.2,7.9,290],
+      '괴산':[28,23,12.1,6.3,285], '음성':[30,24,11.4,6.0,280], '진천':[31,26,10.8,5.7,280],
+      '증평':[32,27,10.2,5.4,275], '청주동부':[33,27,11.6,6.1,280], '청주서부':[34,29,9.8,5.2,275],
+      '보은':[37,31,8.9,4.6,270], '옥천':[40,34,8.1,4.2,265], '영동':[42,36,8.6,4.5,260]
+    };
+    const hh = new Date().getHours();
+    (c.stations||[]).forEach(s=>{
+      const v=D[s.name]; if(!v) return;
+      s.effHumid=v[0]; s.humid=v[1]; s.wind=v[3]; s.weather='맑음'; s.icon='☀'; s.rain=0;
+      s.aws = Object.assign({}, s.aws, {ok:3, total:3, rn60:0, rn12h:0, rnday:0, wind:{wss:v[2], ws10:v[3], wds:v[4], station:s.name}});
+      s.obs = Object.assign({}, s.obs, {reh:v[1], pty:'0', rn1:0, base_time:'14:00'});
+      // 오후에 가장 메마르고 바람이 세다가 밤에 습도가 오르는 전형적 봄철 건조일
+      s.forecast = Array.from({length:24}, (_,i)=>{
+        const h=(hh+i+1)%24, day=(h>=11 && h<=17);
+        const hum = Math.round(Math.min(85, v[1] + (day ? 0 : (h>=21||h<=6 ? 30 : 15))));
+        const wind = +(v[3]*(day ? 1 : 0.55)).toFixed(1);
+        return { hour:h+'시', icon:(h>=19||h<=6?'🌙':'☀'), weather:'맑음', temp:(day?18:7), feels:(day?17:5),
+          rain:0, snow:0, pop:0, wind, dir:'서북서', deg:v[4], humid:hum };
+      });
+    });
+    const p2=x=>String(x).padStart(2,'0'), n=new Date();
+    const today=n.getFullYear()+'-'+p2(n.getMonth()+1)+'-'+p2(n.getDate());
+    const inc=((this.fireStatsOf(base).incidents)||[]).slice();
+    inc.unshift({sido:'충북', sigungu:'제천', address:'충북 제천 백운 평동 산45 [시연]', cause:'쓰레기소각',
+      occur_time:today+' 13:20:00', end_time:'', damage_area:null, is_north:true, is_this_year:true});
+    c.fireStats = {incidents:inc};
+    c.messages = [
+      {sender:'제천시', time:'13:41', text:'[제천시] 백운면 평동리 산불 발생. 인근 주민과 등산객은 안전한 곳으로 대피하시고 입산을 자제해 주시기 바랍니다.', region:'제천'},
+      {sender:'충청북도', time:'10:12', text:'[충청북도] 건조특보 발효 중. 논·밭두렁과 쓰레기 소각을 금지하며, 산림 인접지에서 화기 취급을 삼가 주시기 바랍니다.', region:'충청북도'},
+      {sender:'단양군', time:'09:30', text:'[단양군] 강한 바람으로 작은 불씨도 대형 산불로 번질 수 있습니다. 입산 시 화기 소지를 금지합니다.', region:'단양'}
+    ];
+    return c;
+  }
+
+  fireVals(d, me, myStation, stations, wide){
+    const st=this.state, R=React.createElement;
+    // ①공식특보 — 건조·강풍(강풍은 산불 확산 조건)
+    const warns=(d.warnings||[]).filter(w=>/건조|강풍/.test(w.type||''));
+    const sev=warns.some(w=>w.level==='severe' || String(w.type||'').indexOf('경보')>=0);
+    const pre=(d.prelim||[]).filter(p=>/건조|강풍/.test(p.type||'') && (p.north||0)>0);
+    const warnText = warns.length ? warns.map(w=>(w.type||'')+' '+(w.area||'')).join(' · ')
+      : (pre.length ? pre.map(p=>p.type+' '+(p.items||[]).filter(i=>i.north).map(i=>i.area).join(', ')).join(' · ') : '발효 중인 건조·강풍특보 없음');
+    const wTone = warns.length ? (sev?'severe':'warn') : (pre.length?'caution':'');
+    // ②가장 메마른 관서(실효습도)
+    const rows0 = stations.map(s=>({ s, eff:this.num(s.effHumid), hum:this.num(s.humid), wss:this.num(((s.aws||{}).wind||{}).wss),
+      wds:((s.aws||{}).wind||{}).wds }));
+    const dry = rows0.filter(r=>r.eff!==null).sort((a,b)=>a.eff-b.eff)[0];
+    const meR = rows0.find(r=>r.s.name===myStation) || {};
+    const dLv = dry ? this.effLevel(dry.eff) : {k:0};
+    const obsText = dry ? (dry.s.name+' 실효습도 '+this.pct(dry.eff)+(dLv.t?(' — '+dLv.t):'')) : '습도 자료를 불러오는 중입니다';
+    const obsSub = dry ? ((dry.s.name===myStation) ? '충청북도 관서 중 가장 메마름 — 내 관서입니다' : ('내 관서 '+myStation+' 실효습도 '+this.pct(meR.eff)+' · 지금 습도 '+this.pct(meR.hum))) : '';
+    // 순위
+    const TABS=[{k:'eff',label:'실효습도'},{k:'hum',label:'지금 습도'},{k:'wind',label:'바람'}];
+    const key=st.fireTab;
+    const val=r=> key==='eff' ? r.eff : key==='hum' ? r.hum : r.wss;
+    const rows=rows0.slice().sort((a,b)=>{ const x=val(a), y=val(b); if(x===null) return 1; if(y===null) return -1; return key==='wind' ? y-x : x-y; });
+    const maxW=Math.max(1, ...rows0.map(r=>r.wss||0));
+    const rankRows=rows.map(r=>{
+      const v=val(r), isMine=r.s.name===myStation;
+      const lv = key==='wind' ? this.windLevel(v, null) : this.effLevel(v);
+      const pct = v===null ? 0 : key==='wind' ? Math.max(3, Math.round(v/maxW*100)) : Math.max(3, Math.min(100, 100-Math.round(v)));
+      const sub = key==='eff' ? ('습도 '+this.pct(r.hum)+' · 바람 '+this.ms(r.wss))
+                : key==='hum' ? ('실효 '+this.pct(r.eff)+' · 바람 '+this.ms(r.wss))
+                : ((this.dirTxt(r.wds)?this.dirTxt(r.wds)+'풍 · ':'')+'실효 '+this.pct(r.eff));
+      return { name:r.s.name, valTxt:(v===null?'—':(key==='wind'?this.ms(v):this.pct(v))),
+        valColor:(v===null?'var(--ink3)':(lv.k?lv.c:'var(--ink2)')), barW:pct+'%', barColor:(v===null?'var(--border2)':(lv.k?lv.c:'var(--border2)')),
+        sub:(lv.t?lv.t+' · ':'')+sub, rowBg:(isMine?'var(--brandSoft)':(lv.k>=3?lv.bg:'transparent')), rowBd:(isMine?'var(--brand)':'transparent'),
+        nameW:(isMine?900:700), nameColor:(isMine?'var(--brand)':'var(--ink)') };
+    });
+    const rankTabs=TABS.map(t=>({ label:t.label, bg:(key===t.k?'var(--brand)':'var(--surface)'), fg:(key===t.k?'#fff':'var(--ink2)'),
+      bd:(key===t.k?'var(--brand)':'var(--border2)'), pick:()=>this.setState({fireTab:t.k}) }));
+    const tone=k=> k ? {bg:'var(--'+k+'Soft)', bd:'var(--'+k+')', tag:'var(--'+k+')'} : {bg:'var(--surface)', bd:'var(--border)', tag:'var(--ink3)'};
+    const wT=tone(wTone), oT=tone(dLv.k>=4?'severe':dLv.k>=3?'warn':dLv.k>=2?'caution':'');
+    const ki=this.kmaRaw(), satMin=this.ageMin((ki.satellite||{}).ts);
+    const fs=this.fireStatsOf(d), inc=(fs.incidents||[]).filter(i=>i.is_north!==false && i.is_this_year!==false);
+    return {
+      isFire:true,
+      demoText:'▶ 시연 모드 — 아래 숫자는 전부 가짜입니다 (건조경보·산불 상황 연습용)',
+      hasTyphoon:false,
+      warnText, warnBg:wT.bg, warnBorder:wT.bd, warnTagBg:wT.tag,
+      obsTag:'가장 메마름', obsText, obsSub, obsBg:oT.bg, obsBorder:oT.bd, obsTagBg:oT.tag,
+      noteTxt:'※ 건조주의보=실효습도 35% 이하 2일 이상 · 경보=25% 이하 2일 이상(기상청). 여기 실효습도는 최근 7일 하루 최저습도로 이 상황판이 계산한 값이라 기상청 공식값과 다를 수 있습니다. 강풍은 작은 불씨도 크게 번지게 하므로 함께 봅니다.',
+      rankTitle:(key==='eff'?'실효습도':key==='hum'?'지금 습도':'순간 최대풍속'),
+      rankSrcTxt:(key==='wind'?'기상청 AWS 실측 · 센 순':'낮을수록 메마름 · 메마른 순'),
+      rankTabs, rankRows, rankEmpty:!stations.length, rankEmptyTxt:'습도 자료를 불러오는 중입니다.',
+      midCols: wide ? 'minmax(0,1fr) minmax(0,1fr) minmax(0,1fr)' : 'minmax(0,1fr)',
+      c1Title:myStation+' 지금', c1Sub:'', c1Body:this.fireNowBody(me),
+      c2Title:'산불위험예보', c2Sub:'국립산림과학원 · 권역별', c2Body:this.fireRiskBody(d, me),
+      c3Title:'앞으로 24시간', c3Sub:myStation+' · 습도·바람·비', c3Body:this.fireAheadBody(me),
+      f24Title:'시간대별 습도·바람 예보', fcst24Body:this.fireFcst24Body(me),
+      fireListSub:'올해 '+inc.length+'건 · 최근 순', fireListBody:this.fireListBody(inc),
+      radarTitle:'위성 (천리안)', radarImg:'images/kma_satellite.png'+(((ki.satellite||{}).ts)?('?v='+encodeURIComponent(ki.satellite.ts)):''),
+      radarAge:this.ageTxt(satMin)+' 자료', radarAgeColor:this.ageColor(satMin, 30),
+      radarDesc:'구름 없이 맑은 날이 이어지면 메마름이 깊어집니다. 큰 산불은 위성 영상에 연기가 보이기도 합니다.',
+      legendBody:null,
+      infoBody:this.snowInfoBody(d, '※ 기상청이 발표한 기상정보 전문입니다. 건조·강풍 때는 건조 현황·전망이 실립니다.'),
+      msgBody:this.fireMsgBody(d, me),
+      footA:'충청북도 건조·산불 상황판 · 습도·바람은 기상청 AWS 실측, 산불위험은 국립산림과학원',
+      footB:'산불 발생 이력은 산림청 산불통계(진화 완료 건 위주)입니다'
+    };
+  }
+
+  fireNowBody(s){
+    const R=React.createElement, a=s.aws||{}, w=a.wind||{};
+    const hum=this.num(s.humid), eff=this.num(s.effHumid);
+    if(hum===null && eff===null) return R('div',{style:{fontSize:'13px', color:'var(--ink3)'}}, '이 관서의 관측 자료가 없습니다.');
+    const lv=this.effLevel(eff), wl=this.windLevel(w.wss, w.ws10);
+    const row=(label,val,color)=>R('div',{style:{display:'flex', justifyContent:'space-between', alignItems:'baseline', padding:'6px 0', borderBottom:'1px solid var(--border)'}},
+      R('span',{style:{fontSize:'12.5px', color:'var(--ink2)'}}, label),
+      R('span',{style:{fontSize:'14px', fontWeight:800, color:color||'var(--ink)', fontVariantNumeric:'tabular-nums'}}, val));
+    return R('div',null,
+      R('div',{style:{fontSize:'11.5px', fontWeight:800, color:'var(--ink3)', marginBottom:'3px'}}, '실효습도'),
+      R('div',{style:{display:'flex', alignItems:'baseline', gap:'9px', marginBottom:'9px'}},
+        R('span',{style:{fontSize:'34px', fontWeight:900, color:this.humColor(eff), lineHeight:1, fontVariantNumeric:'tabular-nums'}}, eff===null?'—':Math.round(eff)),
+        R('span',{style:{fontSize:'14px', fontWeight:700, color:'var(--ink2)'}}, '%'),
+        lv.t ? R('span',{style:{fontSize:'11px', fontWeight:900, color:'#fff', background:lv.c, padding:'3px 8px', borderRadius:'6px'}}, lv.t) : null),
+      row('지금 습도', this.pct(hum), this.humColor(hum)),
+      row('순간 최대풍속', this.ms(w.wss)+(wl.t?' · '+wl.t:''), wl.k>=2?wl.c:null),
+      row('풍향', this.dirTxt(w.wds) ? this.dirTxt(w.wds)+'풍' : '—'),
+      row('오늘 강수', (this.num(a.rnday)!==null ? this.num(a.rnday)+'mm' : '—')),
+      R('div',{style:{fontSize:'11px', color:'var(--ink3)', marginTop:'8px', lineHeight:1.5}},
+        '바람이 부는 쪽(풍하측)으로 불이 번집니다. 지금 '+(this.dirTxt(w.wds)||'—')+'풍이면 '+(this.dirTxt(((this.num(w.wds)||0)+180)%360)||'—')+'쪽이 위험합니다.'));
+  }
+
+  fireRiskBody(d, me){
+    const R=React.createElement, list=(d.fire||[]), mine=this.fireGroupOf(d, me);
+    if(!list.length) return R('div',{style:{fontSize:'13px', color:'var(--ink3)'}}, '산불위험예보를 불러오는 중입니다.');
+    return R('div',null,
+      R('div',{style:{display:'flex', flexDirection:'column', gap:'7px'}},
+        list.map((f,i)=>{ const c=this.fireLvColor(f.level), on=(mine && mine.region===f.region);
+          return R('div',{key:i, style:{display:'flex', alignItems:'center', justifyContent:'space-between', gap:'8px', padding:'9px 11px', borderRadius:'10px',
+            background:(f.level>=3 ? (f.level>=4?'var(--severeSoft)':'var(--warnSoft)') : 'var(--surface2)'), border:'1px solid '+(on?'var(--brand)':'var(--border)')}},
+            R('span',{style:{fontSize:'13px', fontWeight:(on?900:700), color:(on?'var(--brand)':'var(--ink)')}}, (on?'📍 ':'')+f.region),
+            R('span',{style:{fontSize:'15px', fontWeight:900, color:c}}, f.levelText||'-')); })),
+      R('div',{style:{fontSize:'11px', color:'var(--ink3)', marginTop:'9px', lineHeight:1.55}},
+        '낮음·보통·높음·매우높음 4단계. 권역 안 시군 중 가장 높은 값입니다(시군 안에 높은 단계 지역이 조금이라도 있으면 그 단계).'));
+  }
+
+  fireAheadBody(s){
+    const R=React.createElement, list=(s.forecast||[]).slice(0,24);
+    if(!list.length) return R('div',{style:{fontSize:'13px', color:'var(--ink3)'}}, '예보 자료를 불러오는 중입니다.');
+    const hs=list.map(x=>this.num(x.humid)), ws=list.map(x=>this.num(x.wind));
+    const minH=Math.min(...hs.filter(v=>v!==null)), maxW=Math.max(...ws.filter(v=>v!==null));
+    const atH=list[hs.indexOf(minH)]||{}, atW=list[ws.indexOf(maxW)]||{};
+    const rain=list.reduce((a,x)=>a+(this.num(x.rain)||0),0), popMax=Math.max(0,...list.map(x=>this.num(x.pop)||0));
+    const dryH=hs.filter(v=>v!==null && v<=35).length;
+    const head = rain>=1 ? {t:'비 예보 '+(Math.round(rain*10)/10)+'mm', c:'var(--brand)', bg:'var(--brandSoft)', sub:'메마름이 다소 풀립니다'}
+               : dryH>0 ? {t:'비 없음 · 메마름 계속', c:'var(--warn)', bg:'var(--warnSoft)', sub:'습도 35% 이하 '+dryH+'시간'}
+               : {t:'비 예보 없음', c:'var(--ink)', bg:'var(--surface2)', sub:'강수확률 최고 '+popMax+'%'};
+    const row=(label,val,color)=>R('div',{style:{display:'flex', justifyContent:'space-between', alignItems:'baseline', padding:'6px 0', borderBottom:'1px solid var(--border)'}},
+      R('span',{style:{fontSize:'12.5px', color:'var(--ink2)'}}, label),
+      R('span',{style:{fontSize:'14px', fontWeight:800, color:color||'var(--ink)', fontVariantNumeric:'tabular-nums'}}, val));
+    return R('div',null,
+      R('div',{style:{background:head.bg, borderRadius:'11px', padding:'11px 13px', marginBottom:'9px'}},
+        R('div',{style:{fontSize:'16px', fontWeight:900, color:head.c}}, head.t),
+        R('div',{style:{fontSize:'12.5px', fontWeight:700, color:'var(--ink)', marginTop:'4px'}}, head.sub)),
+      row('가장 메마를 때', this.pct(minH)+' · '+(atH.hour||''), this.humColor(minH)),
+      row('바람 가장 셀 때', this.ms(maxW)+' · '+(atW.hour||'')+(atW.dir?' '+atW.dir+'풍':'')),
+      row('강수확률 최고', popMax+'%'),
+      R('div',{style:{fontSize:'11px', color:'var(--ink3)', marginTop:'8px', lineHeight:1.5}}, '기상청 단기예보 기준(바람은 평균풍속)'));
+  }
+
+  fireFcst24Body(s){
+    const R=React.createElement, list=(s.forecast||[]).slice(0,24);
+    if(!list.length) return R('div',{style:{fontSize:'13px', color:'var(--ink3)'}}, '시간대별 예보를 불러오는 중입니다.');
+    const hs=list.map(x=>this.num(x.humid));
+    const minH=Math.min(...hs.filter(v=>v!==null));
+    return R('div',null,
+      R('div',{style:{fontSize:'12.5px', fontWeight:800, color:(minH<=35?'var(--warn)':'var(--ink2)'), marginBottom:'10px'}},
+        '앞으로 24시간 최저 습도 '+this.pct(minH)+' · 막대가 짧을수록 메마름'),
+      R('div',{style:{display:'flex', gap:'4px', overflowX:'auto', paddingBottom:'7px'}},
+        list.map((x,i)=>{
+          const h=hs[i], hr=String(x.hour||''), hn=this.hourNum(hr), night=(hn!==null && (hn>=21 || hn<=5));
+          const rainy=(this.num(x.rain)||0)>0;
+          return R('div',{key:i, style:{flex:'0 0 auto', width:'40px', display:'flex', flexDirection:'column', alignItems:'center', gap:'4px',
+                                        padding:'5px 0', borderRadius:'8px', background:(night?'var(--surface3)':'transparent')}},
+            R('span',{style:{fontSize:'10.5px', fontWeight:800, color:this.humColor(h), height:'13px'}}, h===null?'':Math.round(h)),
+            R('div',{style:{width:'100%', height:'66px', display:'flex', alignItems:'flex-end', justifyContent:'center'}},
+              R('div',{style:{width:'16px', height:Math.max(3, Math.round((h||0)*0.66))+'px', background:this.humColor(h)==='var(--ink2)'?'var(--border2)':this.humColor(h), borderRadius:'4px 4px 0 0'}})),
+            R('span',{style:{fontSize:'10.5px', fontWeight:800, color:((this.num(x.wind)||0)>=9?'var(--warn)':'var(--ink2)')}}, this.num(x.wind)===null?'':this.num(x.wind)),
+            R('span',{style:{fontSize:'10px', height:'12px', lineHeight:'12px', color:'var(--brand)', fontWeight:900}}, rainy?'비':''),
+            R('span',{style:{fontSize:'10px', fontWeight:(night?800:600), color:(night?'var(--ink2)':'var(--ink3)')}}, hr.replace('시','')));
+        })),
+      R('div',{style:{fontSize:'10.5px', color:'var(--ink3)', marginTop:'4px', lineHeight:1.5}},
+        '위 숫자=습도(%) · 가운데=평균풍속(m/s) · 회색칸=야간(21~05시). 보통 한낮(13~16시)에 가장 메마르고 바람이 셉니다.'));
+  }
+
+  fireListBody(inc){
+    const R=React.createElement;
+    if(!inc.length) return R('div',{style:{fontSize:'13px', color:'var(--ink3)'}}, '올해 충북 산불 발생 기록이 없습니다.');
+    const cnt={}; inc.forEach(i=>{ const k=i.cause||'기타'; cnt[k]=(cnt[k]||0)+1; });
+    const causes=Object.entries(cnt).sort((a,b)=>b[1]-a[1]);
+    const open=!!this.state.fireListOpen, shown=open ? inc : inc.slice(0,6);
+    return R('div',null,
+      R('div',{style:{display:'flex', flexWrap:'wrap', gap:'6px', marginBottom:'10px'}},
+        causes.map(([k,v],i)=>R('span',{key:i, style:{fontSize:'11.5px', fontWeight:800, color:'var(--ink2)', background:'var(--surface2)', border:'1px solid var(--border)', padding:'3px 9px', borderRadius:'999px'}}, k+' '+v+'건'))),
+      R('div',{style:{display:'grid', gridTemplateColumns:(this.state.w>=900?'repeat(2,minmax(0,1fr))':'minmax(0,1fr)'), gap:'7px'}},
+        shown.map((x,i)=>{ const live=!x.end_time;
+          return R('div',{key:i, style:{padding:'9px 11px', borderRadius:'10px', background:(live?'var(--severeSoft)':'var(--surface2)'), border:'1px solid '+(live?'var(--severe)':'var(--border)')}},
+            R('div',{style:{display:'flex', justifyContent:'space-between', gap:'8px', marginBottom:'3px'}},
+              R('span',{style:{fontSize:'12.5px', fontWeight:800, color:'var(--ink)'}}, (x.sigungu||'')+' · '+(x.cause||'기타')),
+              R('span',{style:{fontSize:'11px', fontWeight:(live?900:600), color:(live?'var(--severe)':'var(--ink3)')}}, live ? '진화 중' : String(x.occur_time||'').slice(0,16))),
+            R('div',{style:{fontSize:'11.5px', color:'var(--ink2)', lineHeight:1.5}},
+              (x.address||'') + (x.damage_area!=null ? ' · 피해 '+x.damage_area+'ha' : '') + (live ? ' · '+String(x.occur_time||'').slice(11,16)+' 발생' : '')));
+        })),
+      inc.length>6 ? R('div',{onClick:()=>this.setState({fireListOpen:!open}), style:{marginTop:'9px', padding:'8px', borderRadius:'9px', cursor:'pointer', textAlign:'center', fontSize:'12px', fontWeight:800, color:'var(--brand)', background:'var(--brandSoft)'}},
+        open ? '접기 ▴' : ('나머지 '+(inc.length-6)+'건 더 보기 ▾')) : null);
+  }
+
+  fireMsgBody(d, me){
+    const R=React.createElement, sig=me.sigun || me.name;
+    let list=(d.messages||[]).filter(m=>/산불|건조|화재|입산|소각|화기|강풍/.test(m.text||''));
+    if(!list.length) list=(d.messages||[]).slice(0,5);
+    if(!list.length) return R('div',{style:{fontSize:'13px', color:'var(--ink3)'}}, '최근 재난문자가 없습니다.');
+    return R('div',{style:{display:'flex', flexDirection:'column', gap:'7px'}},
+      list.slice(0,6).map((m,i)=>{ const mine=(m.region===sig);
         return R('div',{key:i, style:{padding:'9px 11px', borderRadius:'10px', background:(mine?'var(--brandSoft)':'var(--surface2)'), border:'1px solid '+(mine?'var(--brand)':'var(--border)')}},
           R('div',{style:{display:'flex', justifyContent:'space-between', gap:'8px', marginBottom:'3px'}},
             R('span',{style:{fontSize:'11.5px', fontWeight:800, color:(mine?'var(--brand)':'var(--ink2)')}}, m.sender||m.region||''),
