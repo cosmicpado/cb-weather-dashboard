@@ -2325,7 +2325,7 @@ class Component extends DCLogic {
       fireColor: ['var(--cSafe,#aeb8c8)','var(--cAmber,#ffb020)','var(--cRed,#ff5a5a)'][s.fireRisk],
       pm10: s.pm10, pmGrade: s.pm10<=30?'좋음':(s.pm10<=80?'보통':'나쁨'),
       pmColor: s.pm10<=30 ? 'var(--cSafe,#aeb8c8)' : (s.pm10<=80 ? 'var(--cBlue,#54aaff)' : 'var(--cOrange,#ff9a3c)'),
-      sunrise:'05:32', sunset:'19:44',
+      sunrise:(window.cbSun ? window.cbSun(now, s.name).rise : '--:--'), sunset:(window.cbSun ? window.cbSun(now, s.name).set : '--:--'),   // 순환 중인 관서 좌표(stage.js)
       rail, rotSec, progressPct: prog.toFixed(1)+'%',
       playIcon: this.state.playing ? '❚❚' : '▶',
       themeIcon: dark ? '☀' : '☾',
