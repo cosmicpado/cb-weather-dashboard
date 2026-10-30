@@ -2099,18 +2099,17 @@ class Component extends DCLogic {
     const _anyWarn = _hazWarns.length > 0;
     const hoBtnCls = 'hoBtn' + (_sevWarn ? ' hoGlow-severe' : _anyWarn ? ' hoGlow-warn' : _rainNow ? ' hoGlow-rain' : '') + (st.noBlink ? ' hoStill' : '');   // 🚨 점멸 끄기면 색만 남기고 맥동은 멈춤
     // 재해 상황판 버튼(하나) — 특보에 맞는 탭으로 열고 빛나게 한다. 겹치면 호우·태풍 → 대설·한파 → 건조(재해.html autoMode 와 같은 순서).
-    //   강풍만 있으면 호우 탭(강풍 카드가 거기 있다). 아무 일 없으면 재해.html 이 스스로 고르는 탭(마지막으로 고른 탭 → 계절)과 같은 이름.
+    //   강풍만 있으면 호우 탭(강풍 카드가 거기 있다). 아무 일 없으면 '재해 상황판'(탭은 재해.html 이 마지막 선택 → 계절로 고른다).
     const _glow = ws => 'hoBtn' + (ws.some(w=> String(w.type||'').indexOf('경보')>=0) ? ' hoGlow-severe' : ' hoGlow-warn') + (st.noBlink ? ' hoStill' : '');
     const _rnW = rawWarns.filter(w=> /호우|태풍/.test(String(w.type||'')));
     const _snW = rawWarns.filter(w=> /대설|한파/.test(String(w.type||'')));
     const _drW = rawWarns.filter(w=> /건조/.test(String(w.type||'')));
     const _LB = {rain:'🌧 호우', snow:'❄ 대설·한파', fire:'🔥 건조·산불'};
-    const _calmMode = (function(){ try{ const v=localStorage.getItem('cbBoardMode'); if(v==='rain'||v==='snow'||v==='fire') return v; }catch(e){} const m=new Date().getMonth()+1; return (m>=3&&m<=5) ? 'fire' : (m>=6&&m<=10) ? 'rain' : 'snow'; })();
     const _board = _rnW.length ? {href:'재해.html?mode=rain', label:_LB.rain, cls:hoBtnCls}
                  : _snW.length ? {href:'재해.html?mode=snow', label:_LB.snow, cls:_glow(_snW)}
                  : _drW.length ? {href:'재해.html?mode=fire', label:_LB.fire, cls:_glow(_drW)}
                  : (_anyWarn || _rainNow) ? {href:'재해.html?mode=rain', label:_LB.rain, cls:hoBtnCls}
-                 : {href:'재해.html', label:_LB[_calmMode], cls:'hoBtn'};
+                 : {href:'재해.html', label:'📋 재해 상황판', cls:'hoBtn'};   // 평상시엔 중립 이름 — '🌧 호우'로 두면 비 오는 상황으로 읽힌다(2026-10-30)
     // 관서별 현재 기상 카드: 선택 관서를 맨 앞으로(나머지는 기존 지리 순서, stable)
     const stationOrder = stations.slice().sort((a,b)=> (a.name===pickLabel?0:1)-(b.name===pickLabel?0:1));
     // 기상영상 src: 운영 절대URL + ts 캐시버스터 (상대경로=자기 브랜치 고착 문제 해결)
