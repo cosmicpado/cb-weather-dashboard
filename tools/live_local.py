@@ -27,6 +27,19 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 FEEDBACK = ROOT / 'feedback' / 'feedback.jsonl'
 _fb_lock = threading.Lock()
+
+
+def _my_ips():
+    import socket
+    ips = {'127.0.0.1', '::1'}
+    try:
+        ips.update(socket.gethostbyname_ex(socket.gethostname())[2])
+    except OSError:
+        pass
+    return ips
+
+
+MY_IPS = _my_ips()
 FILES = ['data.js', 'data-cctv.js']
 
 
@@ -84,7 +97,8 @@ def main():
             self.wfile.write(body)
 
         def _local(self):
-            return self.client_address[0] in ('127.0.0.1', '::1')
+            # 서버 PC 자신 — localhost 뿐 아니라 이 PC 의 IP 주소(http://10.x.x.x:8000)로 열어도 같은 PC 다
+            return self.client_address[0] in MY_IPS
 
         def do_POST(self):
             if self.path.split('?')[0] != '/api/feedback':
