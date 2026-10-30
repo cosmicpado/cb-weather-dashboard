@@ -1462,11 +1462,18 @@ class Component extends DCLogic {
       level:['낮음','주의','높음'][fireRisk],
       note:'실효습도 '+s.effHum+'% · 풍속 '+s.wind+'m/s · 풍향 '+['북','북동','동','남동','남','남서','서','북서'][Math.floor(((s.windDeg+22.5)%360)/45)],
       color:['#2ad19a','#ffb020','#ff5a5a'][fireRisk], bg:['rgba(42,209,154,.08)','rgba(255,176,32,.1)','rgba(255,77,77,.12)'][fireRisk] });
-    const heat = s.feels>=38 ? 2 : (s.feels>=33 ? 1 : 0);
-    imp.push({ icon:'🌡️', title:'온열질환 구급 수요',
-      level:['평시','증가','급증 경계'][heat],
-      note:'체감 '+s.feels+'° · 옥외작업·고령자 취약, 구급 예비대 확인',
-      color:['#2ad19a','#ffb020','#ff5a5a'][heat], bg:['rgba(42,209,154,.08)','rgba(255,176,32,.1)','rgba(255,77,77,.12)'][heat] });
+    /* 체감온도 카드 — 구급 전용 어휘 대신 모든 직원이 읽는 말로(2026-10-30). 상황실.html·지도.html 과 같은 기준.
+       체감 30° 이상 온열질환 주의 · 10° 미만 한파 주의 · 그 사이 일교차 */
+    const _C=['#2ad19a','#ffb020','#ff5a5a'], _B=['rgba(42,209,154,.08)','rgba(255,176,32,.1)','rgba(255,77,77,.12)'];
+    const _f=s.feels, _rg=(s.tmax!=null&&s.tmin!=null)?(s.tmax-s.tmin):null;
+    let tc;
+    if(_f>=30){ tc={ icon:'🌡️', title:'온열질환 주의', level:_f>=38?'위험':_f>=35?'경고':_f>=33?'주의':_f>=31?'관심':'유의',
+      note:'체감 '+_f+'° · 야외활동·고령자 건강 유의, 물 자주 마시기', k:_f>=35?2:1 }; }
+    else if(_f<10){ tc={ icon:'🥶', title:'한파 주의', level:_f<=-25?'경고':_f<=-10?'주의':_f<=0?'관심':'쌀쌀',
+      note:'체감 '+_f+'° · 보온·빙판길·저체온 유의', k:_f<=-10?2:(_f<=0?1:0) }; }
+    else { const big=(_rg!=null && _rg>=10); tc={ icon:'🌤️', title:'일교차·건강', level:big?'일교차 큼':'쾌적',
+      note:(_rg!=null?('최고 '+Math.round(s.tmax)+'° · 최저 '+Math.round(s.tmin)+'° (일교차 '+Math.round(_rg)+'°)'):('체감 '+_f+'°'))+(big?' · 환절기 건강 유의':''), k:big?1:0 }; }
+    imp.push({ icon:tc.icon, title:tc.title, level:tc.level, note:tc.note, color:_C[tc.k], bg:_B[tc.k] });
     const worst = Math.max(...rv.map(r=>parseFloat(r.pct)));
     const fl = s.rain1h>=20 || worst>=88 ? 2 : (s.rain1h>=8 || worst>=70 ? 1 : 0);
     imp.push({ icon:'🌊', title:'침수·수난 출동',

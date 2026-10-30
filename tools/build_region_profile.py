@@ -554,6 +554,10 @@ def build_river_meta(codes, inventory, dam_inv=None, with_cctv=True):
         if with_cctv:
             m['cctv'] = has_cctv(code, sess)
             time.sleep(0.25)      # 홍수통제소에 몰아치지 않게
+        # 관측소 위치 — 관서 지도에 수위 점·자동 위험지역 핀을 찍는다
+        lat, lon = dms_to_deg(src.get('lat')), dms_to_deg(src.get('lon'))
+        if lat is not None and lon is not None:
+            m['lat'], m['lon'] = lat, lon
         out[code] = m
     return out
 

@@ -232,14 +232,18 @@ window.REGION_CONF = {
    "agc": "한국수자원공사",
    "addr": "충청북도 충주시 종민동",
    "pfh": 145,
-   "cctv": false
+   "cctv": false,
+   "lat": 37.003611,
+   "lon": 127.995556
   },
   "1003611": {
    "kind": "dam",
    "agc": "한국수자원공사",
    "addr": "충청북도 충주시 가금면 장천리",
    "pfh": 67.3,
-   "cctv": false
+   "cctv": false,
+   "lat": 37.044722,
+   "lon": 127.866667
   },
   "1003626": {
    "agc": "기후에너지환경부",
@@ -251,7 +255,9 @@ window.REGION_CONF = {
    "srs": 5.4,
    "pfh": 5.4,
    "fstn": false,
-   "cctv": false
+   "cctv": false,
+   "lat": 37.032778,
+   "lon": 128.296389
   },
   "1003636": {
    "agc": "기후에너지환경부",
@@ -263,7 +269,9 @@ window.REGION_CONF = {
    "srs": 15.9,
    "pfh": 15.9,
    "fstn": false,
-   "cctv": false
+   "cctv": false,
+   "lat": 37.040278,
+   "lon": 128.405556
   },
   "1003645": {
    "agc": "기후에너지환경부",
@@ -275,7 +283,9 @@ window.REGION_CONF = {
    "srs": 5.7,
    "pfh": 5.7,
    "fstn": true,
-   "cctv": true
+   "cctv": true,
+   "lat": 36.931111,
+   "lon": 128.335556
   },
   "1003652": {
    "agc": "기후에너지환경부",
@@ -287,7 +297,9 @@ window.REGION_CONF = {
    "srs": 4.4,
    "pfh": 4.4,
    "fstn": false,
-   "cctv": false
+   "cctv": false,
+   "lat": 37.188333,
+   "lon": 127.9925
   },
   "1003658": {
    "agc": "기후에너지환경부",
@@ -299,7 +311,9 @@ window.REGION_CONF = {
    "srs": 5,
    "pfh": 5.3,
    "fstn": true,
-   "cctv": true
+   "cctv": true,
+   "lat": 37.148611,
+   "lon": 128.008889
   },
   "1003661": {
    "agc": "기후에너지환경부",
@@ -311,14 +325,18 @@ window.REGION_CONF = {
    "srs": 7.2,
    "pfh": 8.3,
    "fstn": true,
-   "cctv": true
+   "cctv": true,
+   "lat": 37.112222,
+   "lon": 128.106111
   },
   "1004310": {
    "kind": "dam",
    "agc": "한국수력원자력",
    "addr": "충청북도 괴산군 칠성면 산막이옛길 43",
    "pfh": 136.93,
-   "cctv": false
+   "cctv": false,
+   "lat": 36.7625,
+   "lon": 127.845
   },
   "1004616": {
    "agc": "기후에너지환경부",
@@ -330,7 +348,9 @@ window.REGION_CONF = {
    "srs": 7.9,
    "pfh": 7.9,
    "fstn": false,
-   "cctv": false
+   "cctv": false,
+   "lat": 36.611944,
+   "lon": 127.681667
   },
   "1004620": {
    "agc": "기후에너지환경부",
@@ -342,7 +362,9 @@ window.REGION_CONF = {
    "srs": 7.2,
    "pfh": 7.2,
    "fstn": false,
-   "cctv": false
+   "cctv": false,
+   "lat": 36.615278,
+   "lon": 127.701667
   },
   "1004631": {
    "agc": "기후에너지환경부",
@@ -354,7 +376,9 @@ window.REGION_CONF = {
    "srs": 6.7,
    "pfh": 7.9,
    "fstn": false,
-   "cctv": false
+   "cctv": false,
+   "lat": 36.694167,
+   "lon": 127.745278
   },
   "1004646": {
    "agc": "기후에너지환경부",
@@ -366,7 +390,9 @@ window.REGION_CONF = {
    "srs": 3.8,
    "pfh": 3.6,
    "fstn": true,
-   "cctv": true
+   "cctv": true,
+   "lat": 36.79,
+   "lon": 127.878056
   },
   "1004680": {
    "agc": "기후에너지환경부",
@@ -378,7 +404,9 @@ window.REGION_CONF = {
    "srs": 4.6,
    "pfh": 4.7,
    "fstn": false,
-   "cctv": false
+   "cctv": false,
+   "lat": 36.887778,
+   "lon": 127.946111
   },
   "1004693": {
    "agc": "기후에너지환경부",
@@ -390,7 +418,9 @@ window.REGION_CONF = {
    "srs": 8.5,
    "pfh": 8.5,
    "fstn": true,
-   "cctv": true
+   "cctv": true,
+   "lat": 36.87,
+   "lon": 127.855278
   },
   "1004694": {
    "agc": "기후에너지환경부",
@@ -402,7 +432,9 @@ window.REGION_CONF = {
    "srs": 6.5,
    "pfh": 6.5,
    "fstn": false,
-   "cctv": false
+   "cctv": false,
+   "lat": 36.983333,
+   "lon": 127.793889
   },
   "1004695": {
    "agc": "기후에너지환경부",
@@ -414,7 +446,9 @@ window.REGION_CONF = {
    "srs": 7.6,
    "pfh": 7.6,
    "fstn": true,
-   "cctv": true
+   "cctv": true,
+   "lat": 36.966111,
+   "lon": 127.871667
   },
   "1007609": {
    "agc": "기후에너지환경부",
@@ -426,7 +460,9 @@ window.REGION_CONF = {
    "srs": 4.5,
    "pfh": 5.4,
    "fstn": false,
-   "cctv": false
+   "cctv": false,
+   "lat": 37.032222,
+   "lon": 127.604722
   },
   "1007610": {
    "agc": "기후에너지환경부",
@@ -438,7 +474,9 @@ window.REGION_CONF = {
    "srs": 4.1,
    "pfh": 4.1,
    "fstn": true,
-   "cctv": true
+   "cctv": true,
+   "lat": 37.070833,
+   "lon": 127.604444
   },
   "1007613": {
    "agc": "기후에너지환경부",
@@ -450,7 +488,9 @@ window.REGION_CONF = {
    "srs": 4.4,
    "pfh": 4.4,
    "fstn": false,
-   "cctv": false
+   "cctv": false,
+   "lat": 37.122222,
+   "lon": 127.659444
   },
   "3004670": {
    "agc": "기후에너지환경부",
@@ -462,7 +502,9 @@ window.REGION_CONF = {
    "srs": 1.67,
    "pfh": 1.67,
    "fstn": false,
-   "cctv": false
+   "cctv": false,
+   "lat": 36.121667,
+   "lon": 127.711389
   },
   "3004685": {
    "agc": "기후에너지환경부",
@@ -474,7 +516,9 @@ window.REGION_CONF = {
    "srs": 7.02,
    "pfh": 7.02,
    "fstn": true,
-   "cctv": true
+   "cctv": true,
+   "lat": 36.211111,
+   "lon": 127.715833
   },
   "3004690": {
    "agc": "기후에너지환경부",
@@ -486,7 +530,9 @@ window.REGION_CONF = {
    "srs": 9.47,
    "pfh": 9.47,
    "fstn": true,
-   "cctv": true
+   "cctv": true,
+   "lat": 36.211944,
+   "lon": 127.707778
   },
   "3006680": {
    "agc": "한국수자원공사",
@@ -497,7 +543,9 @@ window.REGION_CONF = {
    "alm": 7.9,
    "srs": 9.9,
    "fstn": false,
-   "cctv": false
+   "cctv": false,
+   "lat": 36.239444,
+   "lon": 127.667778
   },
   "3007610": {
    "agc": "기후에너지환경부",
@@ -509,7 +557,9 @@ window.REGION_CONF = {
    "srs": 3.41,
    "pfh": 3.41,
    "fstn": false,
-   "cctv": false
+   "cctv": false,
+   "lat": 36.520278,
+   "lon": 127.718333
   },
   "3007617": {
    "agc": "기후에너지환경부",
@@ -521,7 +571,9 @@ window.REGION_CONF = {
    "srs": 3.27,
    "pfh": 3.27,
    "fstn": false,
-   "cctv": false
+   "cctv": false,
+   "lat": 36.496389,
+   "lon": 127.7375
   },
   "3007620": {
    "agc": "기후에너지환경부",
@@ -533,7 +585,9 @@ window.REGION_CONF = {
    "srs": 4.58,
    "pfh": 4.58,
    "fstn": true,
-   "cctv": true
+   "cctv": true,
+   "lat": 36.489444,
+   "lon": 127.7225
   },
   "3007660": {
    "agc": "기후에너지환경부",
@@ -545,7 +599,9 @@ window.REGION_CONF = {
    "srs": 8.66,
    "pfh": 8.66,
    "fstn": true,
-   "cctv": true
+   "cctv": true,
+   "lat": 36.317222,
+   "lon": 127.758056
   },
   "3008630": {
    "agc": "기후에너지환경부",
@@ -557,7 +613,9 @@ window.REGION_CONF = {
    "srs": 5.44,
    "pfh": 5.44,
    "fstn": true,
-   "cctv": true
+   "cctv": true,
+   "lat": 36.3175,
+   "lon": 127.555
   },
   "3011613": {
    "agc": "기후에너지환경부",
@@ -569,7 +627,9 @@ window.REGION_CONF = {
    "srs": 3.79,
    "pfh": 3.79,
    "fstn": false,
-   "cctv": true
+   "cctv": true,
+   "lat": 36.884444,
+   "lon": 127.376389
   },
   "3011615": {
    "agc": "기후에너지환경부",
@@ -581,7 +641,9 @@ window.REGION_CONF = {
    "srs": 2.89,
    "pfh": 2.89,
    "fstn": false,
-   "cctv": true
+   "cctv": true,
+   "lat": 36.855,
+   "lon": 127.462222
   },
   "3011620": {
    "agc": "기후에너지환경부",
@@ -593,7 +655,9 @@ window.REGION_CONF = {
    "srs": 6.12,
    "pfh": 6.12,
    "fstn": true,
-   "cctv": true
+   "cctv": true,
+   "lat": 36.876389,
+   "lon": 127.477222
   },
   "3011625": {
    "agc": "기후에너지환경부",
@@ -605,7 +669,9 @@ window.REGION_CONF = {
    "srs": 4.44,
    "pfh": 4.44,
    "fstn": true,
-   "cctv": true
+   "cctv": true,
+   "lat": 36.783889,
+   "lon": 127.572222
   },
   "3011631": {
    "agc": "기후에너지환경부",
@@ -617,7 +683,9 @@ window.REGION_CONF = {
    "srs": 4.17,
    "pfh": 4.17,
    "fstn": false,
-   "cctv": false
+   "cctv": false,
+   "lat": 36.814167,
+   "lon": 127.627222
   },
   "3011635": {
    "agc": "기후에너지환경부",
@@ -629,7 +697,9 @@ window.REGION_CONF = {
    "srs": 7.32,
    "pfh": 7.32,
    "fstn": true,
-   "cctv": true
+   "cctv": true,
+   "lat": 36.714167,
+   "lon": 127.475556
   },
   "3011645": {
    "agc": "기후에너지환경부",
@@ -641,7 +711,9 @@ window.REGION_CONF = {
    "srs": 5.99,
    "pfh": 5.99,
    "fstn": true,
-   "cctv": true
+   "cctv": true,
+   "lat": 36.646667,
+   "lon": 127.481389
   },
   "3011660": {
    "agc": "기후에너지환경부",
@@ -653,7 +725,9 @@ window.REGION_CONF = {
    "srs": 6.34,
    "pfh": 6.34,
    "fstn": true,
-   "cctv": true
+   "cctv": true,
+   "lat": 36.674444,
+   "lon": 127.361667
   },
   "3011663": {
    "agc": "기후에너지환경부",
@@ -665,7 +739,9 @@ window.REGION_CONF = {
    "srs": 4.81,
    "pfh": 4.81,
    "fstn": false,
-   "cctv": false
+   "cctv": false,
+   "lat": 36.648333,
+   "lon": 127.421111
   },
   "3011665": {
    "agc": "기후에너지환경부",
@@ -677,7 +753,9 @@ window.REGION_CONF = {
    "srs": 9.38,
    "pfh": 9.38,
    "fstn": true,
-   "cctv": true
+   "cctv": true,
+   "lat": 36.623056,
+   "lon": 127.350556
   }
  }
 };
