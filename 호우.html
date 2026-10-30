@@ -239,12 +239,12 @@
       </div>
       <div style="background:var(--surface); border:1px solid {{qpfBorder}}; border-radius:16px; box-shadow:var(--sh2); padding:15px 17px;">
         <div style="display:flex; align-items:baseline; justify-content:space-between; gap:8px; margin-bottom:9px; flex-wrap:wrap;">
-          <span style="font-size:15px; font-weight:900; color:var(--ink);">초단기 예측강수</span>
+          <span style="font-size:15px; font-weight:900; color:var(--ink);">{{qpfTitle}}</span>
           <span style="font-size:11.5px; font-weight:800; color:{{qpfAgeColor}};">{{qpfAge}}</span>
         </div>
-        <div style="font-size:11.5px; color:var(--ink2); margin-bottom:9px; line-height:1.5;">앞으로 비구름이 어디로 갈지 기상청이 예측한 것입니다.</div>
+        <div style="font-size:11.5px; color:var(--ink2); margin-bottom:9px; line-height:1.5;">{{qpfDesc}}</div>
         {{qpfWarnBody}}
-        <img src="images/kma_qpf.png" alt="초단기 예측강수" style="width:100%; border-radius:11px; border:1px solid var(--border); background:var(--surface2);">
+        <img src="images/kma_qpf.png" alt="{{qpfTitle}}" style="width:100%; border-radius:11px; border:1px solid var(--border); background:var(--surface2);">
         {{legendBody2}}
       </div>
     </div>
@@ -356,11 +356,11 @@ class Component extends DCLogic {
 
   /* ── 시연 모드 — 호우경보 상황 ──────────────────────────────
      비가 안 올 때도 화면을 검증하고, 실제 상황 전에 눈에 익혀두기 위한 것.
-     시나리오는 지도.html의 시연(포천·동두천 호우경보)과 일부러 똑같이 맞췄다 —
+     시나리오는 지도.html의 시연(청주동부·청주서부 호우경보)과 일부러 똑같이 맞췄다 —
      두 화면을 나란히 켜도 앞뒤가 맞아야 하기 때문.
      숫자는 공식 호우기준에 맞춰 각 단계가 하나씩 보이도록 구성했다:
-       포천 1시간 73mm → 극한호우(72mm↑) / 동두천 12시간 188mm → 경보급(180↑)
-       연천·양주·의정부 12시간 110~140mm → 주의보급(110↑) / 나머지는 그 아래  */
+       청주서부 1시간 74mm → 극한호우(72mm↑) / 청주동부 12시간 186mm → 경보급(180↑)
+       증평·진천·괴산 12시간 115~142mm → 주의보급(110↑) / 나머지는 그 아래  */
   applyDemo(base){
     const c = JSON.parse(JSON.stringify(base));
     // 태풍 시연 — 실제 힌남노(2022) 제원을 본떠 만든 가상 태풍. 강도는 2026년부터
@@ -383,24 +383,25 @@ class Component extends DCLogic {
       }];
     })();
     c.warnings = [
-      {type:'호우경보', area:'포천, 동두천', level:'severe', time:'15:42'},
-      {type:'호우주의보', area:'연천, 양주, 의정부, 파주', level:'warning', time:'15:08'},
+      {type:'호우경보', area:'청주동부, 청주서부', level:'severe', time:'15:42'},
+      {type:'호우주의보', area:'증평, 진천, 괴산', level:'warning', time:'15:08'},
       {type:'강풍주의보', area:'충청북도 전역', level:'warning', time:'14:30'}
     ];
     // 관서별 AWS 실측 — [1시간, 12시간, 일누적, 순간최대풍속, 강수대표소, 돌풍풍향(도), 바람최강소]
-    // 강풍도 경보 상황으로: 포천 28m/s(경보급 26↑), 연천 22m/s(주의보급 20↑)
+    // 지점명은 프로파일 aws_stations 의 실제 관측소. 강풍도 경보 상황으로: 청주서부 27m/s(경보급 26↑), 괴산 21m/s(주의보급 20↑)
     const D = {
-      '포천':   [73, 196, 214, 28.4, '내촌면',   295, '관인'],
-      '동두천': [48, 188, 203, 21.6, '상패',     280, '하봉암'],
-      '연천':   [31, 141, 152, 22.3, '연천백의', 300, '군남'],
-      '양주':   [26, 124, 133, 17.8, '장흥면',   270, '남면'],
-      '의정부': [22, 113, 121, 15.2, '신곡',     265, '의정부'],
-      '파주':   [17,  96, 104, 14.6, '파주금촌', 285, '탄현'],
-      '가평':   [14,  71,  78, 12.1, '경기가평', 250, '가평조종'],
-      '남양주': [11,  58,  63, 10.4, '창현',     245, '오남'],
-      '고양':   [ 8,  44,  49,  9.2, '주교',     275, '고양'],
-      '일산':   [ 8,  44,  49,  9.2, '주교',     275, '고양'],
-      '구리':   [ 6,  33,  37,  7.6, '수택동',   240, '구리']
+      '청주서부': [74, 198, 216, 27.1, '서청주',   295, '청주'],
+      '청주동부': [52, 186, 201, 19.4, '오창가곡', 280, '청주(공)'],
+      '증평':     [33, 142, 151, 18.2, '증평',     300, '증평'],
+      '진천':     [28, 126, 134, 17.0, '진천',     270, '위성센터'],
+      '괴산':     [24, 115, 123, 21.3, '청천',     265, '괴산'],
+      '음성':     [17,  94, 102, 14.6, '금왕',     285, '음성'],
+      '보은':     [14,  72,  79, 12.1, '속리산',   250, '보은'],
+      '충주':     [11,  57,  62, 10.4, '노은',     245, '충주'],
+      '옥천':     [ 9,  46,  51,  9.2, '옥천',     275, '옥천청산'],
+      '영동':     [ 7,  35,  39,  8.1, '가곡',     240, '추풍령'],
+      '제천':     [ 6,  31,  34,  7.6, '백운',     240, '제천'],
+      '단양':     [ 4,  22,  25,  6.9, '영춘',     235, '단양']
     };
     (c.stations||[]).forEach(s=>{
       const v = D[s.name]; if(!v) return;
@@ -409,19 +410,18 @@ class Component extends DCLogic {
       // 강풍은 별도 지점 — 실측에서도 11개 중 8개 관서가 '비 최다'와 '바람 최강'이 다르다.
       // 시연도 일부러 다른 지점 이름을 넣어 그 사실이 화면에서 드러나게 한다.
       s.aws.wind = { wss:v[3], ws10:+(v[3]*0.62).toFixed(1), wds:v[5], station:v[6] };
-      if(s.name==='일산') s.aws.alt='고양';       // 대체 표기도 시연에서 보이게
       s.rain = v[0]; s.weather='비'; s.icon='🌧';
       s.level = v[1]>=180 ? 'danger' : (v[1]>=110 ? 'warning' : 'normal');
       s.cum12h = Math.round(v[1]*0.62);            // 자체집계가 실제보다 적게 나오는 문제도 재현
       s.obs = Object.assign({}, s.obs, {rn1:v[0], pty:'1', base_time:'15:00'});
       // 앞으로 6시간 — 강한 비가 이어지다 잦아드는 전형적 호우
-      const prof = (s.name==='포천'||s.name==='동두천') ? [42,38,29,18,9,3] : [21,17,12,7,3,1];
+      const prof = (s.name==='청주서부'||s.name==='청주동부') ? [42,38,29,18,9,3] : [21,17,12,7,3,1];
       const hh = new Date().getHours();
       s.fcst6 = prof.map((mm,i)=>({ time:String((hh+i+1)%24).padStart(2,'0')+':00',
         rain_mm:mm, pop: Math.min(90, 40+mm), pty:1, pty_txt:'비', sky:4, temp:22, lgt: i<2?1:0 }));
       // 24시간 시간대별 — 소강 뒤 야간에 2차 집중호우가 오는 시나리오(가장 위험한 전형).
       // 야간 호우는 대피가 어려워 같은 양이라도 더 위험하다는 점을 시연에서 보이게 한다.
-      const hard = (s.name==='포천'||s.name==='동두천');
+      const hard = (s.name==='청주서부'||s.name==='청주동부');
       const p24 = hard ? [42,38,29,18,9,3,1,0,0,2,6,14,27,35,31,22,12,5,2,0,0,0,1,3]
                        : [21,17,12,7,3,1,0,0,0,1,3,7,14,18,16,11,6,2,1,0,0,0,0,1];
       s.forecast = p24.map((mm,i)=>({ hour:String((hh+i+1)%24)+'시', icon:(mm>0?'🌧':'☁'), weather:(mm>0?'비':'흐림'),
@@ -432,13 +432,13 @@ class Component extends DCLogic {
     const bump=(needle,val,tr)=>{ const r=(c.rivers||[]).filter(x=>(x.name||'').indexOf(needle)>=0)[0]; if(!r) return;
       r.value=val; r.delta1=tr; r.delta3=+(tr*2.4).toFixed(2);
       r.level = (r.danger!=null && val>=r.danger) ? 'danger' : ((r.warning!=null && val>=r.warning) ? 'warning' : 'safe'); };
-    bump('동두천 송천교',5.28,0.44); bump('한탄강',12.6,0.34); bump('군남댐',31.9,0.28);
-    bump('신천 (연천)',3.84,0.19); bump('필승교',1.62,0.21);
+    bump('팔결교',6.6,0.44); bump('미호강교',7.2,0.38); bump('석남천',3.1,0.26);
+    bump('반탄교',2.3,0.19); bump('목도교',4.5,0.21);
     c.messages = [
-      {sender:'포천시', time:'15:44', text:'[포천시] 시간당 40mm 이상 강한 비가 내리고 있습니다. 저지대·하천변·산사태 위험지역 주민은 즉시 안전한 곳으로 대피하시기 바랍니다.', region:'포천'},
-      {sender:'동두천시', time:'15:31', text:'[동두천시] 신천 수위 급상승. 송천교 일대 하천변 산책로를 전면 통제합니다. 접근을 삼가시기 바랍니다.', region:'동두천'},
+      {sender:'청주시', time:'15:44', text:'[청주시] 미호강 수위 급상승. 오송읍 궁평2지하차도 등 하천변 지하차도를 전면 통제합니다. 저지대 주민은 즉시 안전한 곳으로 대피하시기 바랍니다.', region:'청주동부'},
+      {sender:'증평군', time:'15:31', text:'[증평군] 보강천 수위 상승. 하천변 산책로와 둔치 주차장 이용을 금지합니다. 접근을 삼가시기 바랍니다.', region:'증평'},
       {sender:'충청북도', time:'15:05', text:'[충청북도] 호우경보 발효. 차량 침수에 주의하고 지하차도·급경사지 통행을 자제해 주세요.', region:'충청북도'},
-      {sender:'연천군', time:'14:52', text:'[연천군] 임진강 수위 상승. 군남댐 방류가 예정되어 있으니 하천변 접근을 자제해 주세요.', region:'연천'}
+      {sender:'괴산군', time:'14:52', text:'[괴산군] 괴산댐 방류가 예정되어 있습니다. 달천 하류 하천변 접근을 자제해 주세요.', region:'괴산'}
     ];
     return c;
   }
@@ -665,6 +665,8 @@ class Component extends DCLogic {
       qpfAgeColor: this.ageColor(qpfMin, 40),
       qpfBorder: (qpfMin!==null && qpfMin>90) ? 'var(--warn)' : 'var(--border)',
       qpfWarnBody: this.qpfWarnBody(qpfMin),
+      qpfTitle: ((ki.qpf||{}).src==='rdr') ? '레이더 강수실황' : '초단기 예측강수',
+      qpfDesc: ((ki.qpf||{}).src==='rdr') ? '지금 비가 내리는 곳을 레이더로 본 것입니다(예측 영상을 받을 수 없어 실황으로 대신 표시).' : '앞으로 비구름이 어디로 갈지 기상청이 예측한 것입니다.',
       legendBody: this.legendBody(), legendBody2: this.legendBody(),
       infoTs: (d.weatherInfo||{}).tmFc_display || '',
       infoBody: this.infoBody(d)

@@ -1568,6 +1568,45 @@ def _kw_in_text(text, kw):
 NORTH_GG_REG_MAP = P['reg_map']
 
 
+def fetch_weather_commentary():
+    """지방청 날씨해설 최신 1건 — 날씨누리 통보문 화면(list.do?kind=cmt)에서 읽는다.
+    공개 API 가 없다(WthrWrnInfoService 는 특보·기상정보만). 하루 두 번(새벽·오후) 나오므로
+    오늘 것이 아직 없으면(자정~새벽) 어제 것을 쓴다.
+    반환: {title, tmFc, seq, period, text, img, img_alt, pdf} 또는 None."""
+    import html as _html, re as _re
+    for back in (0, 1):
+        day = (datetime.now() - timedelta(days=back)).strftime('%Y-%m-%d')
+        r = shared_get(f'wcmt_{WRN_STN}_{day}', 'https://www.weather.go.kr/w/special-report/list.do',
+                       params={'stn': WRN_STN, 'kind': 'cmt', 'date': day},
+                       timeout=15, max_age=1200, headers={'User-Agent': 'Mozilla/5.0'})
+        if r.status_code != 200:
+            continue
+        t = r.content.decode('utf-8', 'replace')
+        m = _re.search(r'<option value="cmt:(\d{12}):(\d+)" selected', t)
+        body = _re.search(r'<div class="cmp-view-content">(.*?)<div class="cmp-stack">', t, _re.S)
+        if not m or not body:
+            continue
+        def txt(s):
+            s = _re.sub(r'<br\s*/?>', '\n', s)
+            return _html.unescape(_re.sub(r'<[^>]+>', '', s)).strip()
+        head = _re.search(r'<div class="cmp-view-header">(.*?)</div>', t, _re.S)
+        spans = [s for s in _re.findall(r'<span>\s*\|\s*([^<]*)</span>', head.group(1) if head else '') if s.strip()]
+        period = _re.search(r'<div class="cmp-view-announce">.*?<em>([^<]*)</em>', t, _re.S)
+        img = _re.search(r'<img src="(/w/repositary/image/wrn_img/[^"]+)" alt="([^"]*)"', body.group(1))
+        pdf = _re.search(r'href="(/w/repositary/xml/wrn/pdf/[^"]+)"', t)
+        p = _re.search(r'<p>(.*?)</p>', body.group(1), _re.S)
+        return {
+            'title': _html.unescape(spans[-1].strip()) if spans else '날씨해설',
+            'tmFc': m.group(1), 'seq': int(m.group(2)),
+            'period': _html.unescape(period.group(1).strip()) if period else '',
+            'text': txt(p.group(1)) if p else '',
+            'img': 'https://www.weather.go.kr' + img.group(1) if img else '',
+            'img_alt': _html.unescape(img.group(2)) if img else '',
+            'pdf': 'https://www.weather.go.kr' + pdf.group(1) if pdf else '',
+        }
+    return None
+
+
 def fetch_warning_bulletins():
     """기상청 통보문·기상정보 목록 + 본문 일괄 수집.
     - getWthrWrnList:  특보 통보문 발표·해제 이력 (최근 7일)
@@ -1578,7 +1617,8 @@ def fetch_warning_bulletins():
     from_dt = (now - timedelta(days=3)).strftime('%Y%m%d')
     to_dt = now.strftime('%Y%m%d')
 
-    bulletins = {'warnings_full': [], 'info_list': []}
+    # stn: 화면이 날씨누리 통보문 링크·그림 주소(…_131_4.png)를 만들 때 쓴다
+    bulletins = {'warnings_full': [], 'info_list': [], 'stn': WRN_STN}
 
     # 1) 통보문 본문 (전문)
     try:
@@ -1596,11 +1636,12 @@ def fetch_warning_bulletins():
                 tmFc = str(it.get('tmFc', ''))
                 bulletins['warnings_full'].append({
                     'title': it.get('t1', '') or '특보 통보문',
-                    'current': it.get('t2', ''),   # 현재 상황
-                    'time': it.get('t3', ''),       # 시각
-                    'extra': it.get('t4', ''),
-                    'summary': it.get('t6', '') or '',  # 종합 의견
-                    'other': it.get('other', ''),
+                    'current': it.get('t2', ''),   # 해당구역
+                    'time': it.get('t3', ''),       # 발효시각
+                    'extra': it.get('t4', ''),      # 내용
+                    'summary': it.get('t6', '') or '',  # 이 통보문 뒤의 특보 발효현황
+                    'prelim': it.get('t7', '') or '',   # 예비특보
+                    'other': it.get('other', ''),   # 참고사항
                     'tmFc': tmFc,
                     'tmFc_display': f'{tmFc[:4]}-{tmFc[4:6]}-{tmFc[6:8]} {tmFc[8:10]}:{tmFc[10:12]}' if len(tmFc) >= 12 else tmFc,
                     'seq': it.get('tmSeq', ''),
@@ -1661,6 +1702,37 @@ def fetch_warning_bulletins():
                     break  # 찾으면 종료 (108 우선)
     except Exception as e:
         print(f'    기상정보 본문: {type(e).__name__}')
+
+    # 4) 지방청 기상정보 본문 (충북 안개·비 현황과 전망 등) — 화면 '기상정보·날씨해설' 카드
+    try:
+        r = shared_get(f'wrn_infofull_{WRN_STN}', f'{base}/getWthrInfo', params={
+            'serviceKey': DATA_KEY, 'pageNo': 1, 'numOfRows': 10,
+            'dataType': 'JSON', 'stnId': WRN_STN,
+            'fromTmFc': from_dt, 'toTmFc': to_dt,
+        }, timeout=15, max_age=600)
+        r.raise_for_status()
+        items = r.json()['response']['body'].get('items', {})
+        its = items.get('item', []) if items else []
+        if isinstance(its, dict):
+            its = [its]
+        out = []
+        for it in its:
+            # 본문 끝에 글자 그대로의 '\n\n'(역슬래시+n)이 붙어 온다
+            text = str(it.get('t1') or '').replace('\\n', '\n').replace('\r', '').strip()
+            if text:
+                out.append({'text': text, 'tmFc': str(it.get('tmFc', '')), 'seq': it.get('tmSeq', '')})
+        out.sort(key=lambda x: x['tmFc'], reverse=True)
+        bulletins['info_full'] = out[:6]
+    except Exception as e:
+        print(f'    지방청 기상정보: {type(e).__name__}')
+
+    # 5) 날씨해설 (지방청 단기 전망 — 하루 두 번) — 공개 API 가 없어 날씨누리 통보문 화면에서 읽는다
+    try:
+        cmt = fetch_weather_commentary()
+        if cmt:
+            bulletins['commentary'] = cmt
+    except Exception as e:
+        print(f'    날씨해설: {type(e).__name__}')
 
     # 최신순 정렬
     bulletins['warnings_full'].sort(key=lambda x: x['tmFc'], reverse=True)
@@ -1738,9 +1810,14 @@ def download_kma_images():
 
     result = {}
 
-    # 1) nph-wrn7 (전국 특보 발효 현황)
+    # 1) nph-wrn7 (특보 발효 현황) — 충청북도를 가운데 둔 확대 그림.
+    #    lon·lat 가 중심, range 가 반경(km). 105km 면 충북 전역(영동~단양)이 한 장에 들어온다.
+    #    city·name=1 시군 경계·이름, tmef=1 발효시각 표기, wrn 은 특보 종류 전체.
     try:
-        url = f'https://apihub.kma.go.kr/api/typ03/cgi/wrn/nph-wrn7?tm={tm}&authKey={KMA_APIHUB_KEY}'
+        wm = P.get('wrn_map') or {'lon': 127.9, 'lat': 36.68, 'range': 105}
+        url = (f'https://apihub.kma.go.kr/api/typ03/cgi/wrn/nph-wrn7?tm={tm}'
+               f'&lon={wm["lon"]}&lat={wm["lat"]}&range={wm["range"]}&size=600'
+               f'&city=1&name=1&tmef=1&wrn=W,R,C,D,O,V,T,S,Y,H,&authKey={KMA_APIHUB_KEY}')
         r = requests.get(url, timeout=15)
         if r.status_code == 200 and r.headers.get('Content-Type', '').startswith('image/'):
             path = os.path.join(img_dir, 'kma_warn.png')
@@ -1807,6 +1884,19 @@ def download_kma_images():
                                  'back_min': back_min}
                 ok = True
                 break
+        if not ok:
+            # 예측(dfs) 영상은 API허브 목록에서 새로 신청할 수 없다(원작자는 예전 신청분으로 받았다).
+            # 우리 키는 같은 이름의 레이더 '강수실황'(rdr)만 승인돼 있어, 예측이 안 되면 실황으로 대신한다.
+            # src 로 어느 영상인지 화면에 알린다 — 실황을 '예측'이라고 띄우면 안 된다.
+            try:
+                r = requests.get(f'https://apihub.kma.go.kr/api/typ03/cgi/rdr/nph-qpf_ana_img?authKey={KMA_APIHUB_KEY}', timeout=15)
+                if r.status_code == 200 and _is_real_image_png(r.content):
+                    with open(path, 'wb') as f:
+                        f.write(r.content)
+                    result['qpf'] = {'ok': True, 'ts': ts, 'bytes': len(r.content), 'src': 'rdr'}
+                    ok = True
+            except Exception:
+                pass
         if not ok:
             # 모든 시점 fail — 기존 정상 PNG 파일이 있으면 보존, 에러 이미지면 삭제 X
             # (사장님 PC 또는 다음 회차에서 정상 받을 때까지)
@@ -3033,7 +3123,9 @@ def deploy_decision(data, extra=None):
     rapid = any(p[1] for p in parts)
     changed = (sig != st.get('sig', ''))
 
-    if changed and mins >= 4:
+    if '--deploy-now' in sys.argv:
+        reason = '코드반영'   # update.sh 가 원격의 새 코드(PR Merge)를 받은 회차 — 화면도 바로 새 코드로
+    elif changed and mins >= 4:
         reason = '이슈변화'
     elif rapid and mins >= 20:
         reason = '급변특보중'

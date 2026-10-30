@@ -27,8 +27,11 @@ rm -f .git/index.lock 2>/dev/null || true
 # 무조건 되돌리면 그걸 매번 지워버린다(위성영상·강수누적 기록이 5분마다 원복).
 # → 원격이 우리보다 앞서 있을 때(코드 배포·히스토리 압축)만 되돌린다.
 git fetch origin -q
+DEPLOY_NOW=""
 if ! git merge-base --is-ancestor origin/main HEAD 2>/dev/null; then
   git reset --hard origin/main -q          # 원격에 새 코드 있음 — 데이터는 이번 회차에 다시 만든다
+  DEPLOY_NOW="--deploy-now"                # 40분 주기를 기다리지 않고 이번 회차에 바로 배포
+  echo "⬇ 새 코드 받음 $(git log --oneline -1) — 이번 회차 배포" >> cron.log
 fi
 # push 목적지(upstream) 자동복구 — .git이 재생성돼 upstream이 날아가도 다음 push 정상화
 git branch --set-upstream-to=origin/main main 2>/dev/null || true
@@ -83,4 +86,4 @@ fi
 # ── 수집 · 커밋 · 푸시 · 배포 ─────────────────────────────────────────
 # update_data.py 가 충청북도 데이터를 모아 data.js 를 만들고, 배포 조건이 되면
 # 커밋·푸시하고 deploy-trigger 브랜치로 Cloudflare 배포를 띄운다.
-/usr/bin/python3 tools/update_data.py >> cron.log 2>&1
+/usr/bin/python3 tools/update_data.py $DEPLOY_NOW >> cron.log 2>&1

@@ -2,7 +2,7 @@
    대시보드(지도.html) 배치 편집기 — 2026-09-18 사장님 지시(상황실 편집기의 확장)
    ----------------------------------------------------------------------------
    지도 화면은 폰~벽면까지 반응형이라 상황실처럼 격자에 못 놓는다. 여기서 뜻이 있는 편집은
-     · 섹션 순서 바꾸기 (리본 / 상황도 / 관서별 기상 / 예보·산불·미세먼지 / 기상영상)
+     · 섹션 순서 바꾸기 (리본 / 상황도 / 관서별 기상 / 예보·산불·미세먼지 / 기상 이미지)
      · 섹션·카드 숨기기
      · 지도 크기 (보통 / 크게 / 아주 크게)
    화면(React/dc-runtime)은 건드리지 않는다 — CSS 변수(--ds-<id>-o / -d, --ds-map)만 :root 에 쓴다.
@@ -19,10 +19,11 @@
     { id: 'hero',     name: '상황도 + 특보·문자·하천', noHide: true },
     { id: 'stations', name: '관서별 현재 기상' },
     { id: 'trio',     name: '예보 · 산불 · 미세먼지' },
-    { id: 'imgs',     name: '기상영상' }
+    { id: 'imgs',     name: '기상 이미지' }
   ];
   var CARDS = [
     { id: 'warn',   name: '기상특보',   noHide: true, sec: 'hero' },
+    { id: 'info',   name: '기상정보·날씨해설', sec: 'hero' },
     { id: 'msg',    name: '재난문자',   noHide: true, sec: 'hero' },
     { id: 'river',  name: '하천 수위',  noHide: true, sec: 'hero' },
     { id: 'hourly', name: '시간대별 예보', sec: 'trio' },
@@ -32,7 +33,7 @@
   var MAPS = [[1, '보통'], [1.35, '크게'], [1.8, '아주 크게']];
   var DEFAULT = { order: SECTIONS.map(function (s) { return s.id; }), hide: {}, map: 1 };
   var DISP = { ribbon: 'block', hero: 'grid', stations: 'block', trio: 'grid', imgs: 'block',
-               warn: 'flex', msg: 'flex', river: 'flex', hourly: 'block', fire: 'block', pm: 'flex' };
+               warn: 'flex', info: 'flex', msg: 'flex', river: 'flex', hourly: 'block', fire: 'block', pm: 'flex' };
 
   function scopeKey() {
     var RC = window.REGION_CONF || {}, g = RC.scopes || {}, sc = null;
@@ -60,7 +61,7 @@
   function isDefault(L) { return L.order.join() === DEFAULT.order.join() && !Object.keys(L.hide).length && L.map === 1; }
 
   /* 짧은 코드: D1<권역>.<섹션 순서 첫글자 5자>.<숨김 id 첫글자들>.<지도단계>  예) D1북.rhsti..1 */
-  var INITIAL = { ribbon: 'r', hero: 'h', stations: 's', trio: 't', imgs: 'i', warn: 'w', msg: 'm', river: 'v', hourly: 'y', fire: 'f', pm: 'p' };
+  var INITIAL = { ribbon: 'r', hero: 'h', stations: 's', trio: 't', imgs: 'i', warn: 'w', info: 'n', msg: 'm', river: 'v', hourly: 'y', fire: 'f', pm: 'p' };
   var BY_INI = {}; Object.keys(INITIAL).forEach(function (k) { BY_INI[INITIAL[k]] = k; });
   function encode(L) {
     return 'D' + VER + SCOPE.replace('경기', '').charAt(0) + '.' + L.order.map(function (x) { return INITIAL[x]; }).join('')
