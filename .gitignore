@@ -22,9 +22,6 @@ __pycache__/
 .venv/
 venv/
 
-# 상황실 빌드 원본 — 디자인 단독실행본(4MB). 폰트 추출용 원천이라 로컬에만 둔다.
-# (update_data.py의 자동 푸시가 'git add -A'라, 빼두지 않으면 5분마다 4MB가 딸려 올라간다)
-tools/wall-build/original_bundle.html
 
 # 에디터
 .vscode/

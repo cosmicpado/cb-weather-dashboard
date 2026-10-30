@@ -93,7 +93,7 @@
   window.cctvInline = function (x) { return !!(x.hls || x.frame || (x.kbs && !window.KBS_STREAM_BLOCKED && window.kbsCam(x.kbs)) || (x.hrfco && window.hrfcoCam(x.hrfco))); };
   window.cctvPoster = function (x) { if (x.thumb) return x.thumb + (x.thumb.indexOf('?') < 0 ? '?' : '&') + '_t=' + Math.floor(Date.now() / 30000); var c = x.kbs ? window.kbsCam(x.kbs) : null; return c ? c.img : ''; };
 
-  /* 홍수통제소 영상 서버는 유역(fc)마다 다르다 — getCctvScreen.do 응답의 videoOutputSSL 실측(2026-10-30).
+  /* 홍수통제소 영상 서버는 유역(fc)마다 다르다 — getCctvScreen.do 응답의 videoOutputSSL 실측.
      예전엔 한강(lw.hrfco.go.kr)으로 고정해서, 충북 CCTV 20곳 중 금강 13곳은 없는 주소를 15초씩 붙잡고
      재시도하다 늦게 뜨거나 실패했다. 응답은 CORS 로 못 읽으므로 주소 규칙을 여기 둔다. */
   var HRFCO_HOST = { '01': ['lw.hrfco.go.kr', 'hi.hrfco.go.kr'],

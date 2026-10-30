@@ -116,10 +116,7 @@
     var kmaImages = {
       radar:     { file:'images/kma_radar.png',     ts:(ki.radar&&ki.radar.ts)||'' , ok:!(ki.radar&&ki.radar.ok===false) },
       satellite: { file:'images/kma_satellite.png', ts:(ki.satellite&&ki.satellite.ts)||'', ok:!(ki.satellite&&ki.satellite.ok===false) },
-      warn:      { file:'images/kma_warn.png',      ts:(ki.wrn&&ki.wrn.ts)||'', ok:!(ki.wrn&&ki.wrn.ok===false) },
-      qpf:       { file:'images/kma_qpf.png',       ts:(ki.qpf&&ki.qpf.ts)||'', ok:!(ki.qpf&&ki.qpf.ok===false),
-                   // src 'rdr' = 예측 영상을 못 받아 레이더 강수실황으로 대신한 것(update_data.py)
-                   title:((ki.qpf&&ki.qpf.src)==='rdr') ? '레이더 강수실황' : '초단기 강수예측' }
+      warn:      { file:'images/kma_warn.png',      ts:(ki.wrn&&ki.wrn.ts)||'', ok:!(ki.wrn&&ki.wrn.ok===false) }
     };
 
     window.DASH = {

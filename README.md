@@ -2,13 +2,12 @@
 
 충청북도 11개 시군(12개 관서 — 청주는 동부·서부)의 기상·특보·재난문자·하천 수위·산불위험을 한 화면에 모아 보는 상황판.
 
-## 바로 쓰기
+## 운영 구조
 
-| 하고 싶은 것 | 방법 |
-|---|---|
-| 내 PC에서 보기 | `상황판열기.bat` — 데이터 갱신(`--no-push`) 후 브라우저로 열기 |
-| 사내망 동료와 같이 보기 | `서버시작.bat` — `http://<내 IP>:8000/` 으로 접속 |
-| 데이터만 갱신 | `python tools/update_data.py --no-push` |
+- 네이버클라우드 서버가 5분마다 `tools/update_data.py` 로 수집해 `main` 에 커밋·푸시한다(`update.sh`, 설치는 `tools/server/README.md`).
+- 배포가 필요하면 서버가 `deploy-trigger` 브랜치를 밀고, GitHub Actions 가 Cloudflare Workers 로 배포한다.
+- PR 을 Merge 하면 서버가 다음 회차에 새 코드를 받아 바로 배포한다.
+- 내 PC에서 데이터만 받아 보려면 `python tools/update_data.py --no-push` (푸시 모드는 서버 커밋과 엇갈리니 쓰지 말 것).
 
 데이터 수집에는 공공 API 키가 필요하다. 저장소 루트에 `.env` 를 만들고 아래 값을 넣는다(커밋 금지, `.gitignore` 처리됨).
 
@@ -24,8 +23,8 @@ KMA_APIHUB_KEY=...      # 기상청 API 허브 (AWS·특보)
 | 파일 | 내용 |
 |---|---|
 | `지도.html` | 메인 — 관서 지도, 특보·재난문자·하천·시간대별 예보 (`index.html` 이 여기로 보냄) |
-| `호우.html` | 호우 집중 — 관서별 누적강수 랭킹, 레이더·예측강수 |
-| `상황실.html` | 벽면 대형화면 — 관서를 15초마다 순환 표출 |
+| `재해.html` | 재해 상황판 — 🌧 호우 · ❄ 대설·한파 · 🔥 건조·산불 탭 (`호우.html` 은 호우 탭으로 넘기는 옛 주소) |
+| `상황실.html` | 벽면 대형화면 — 관서를 차례로 순환 표출(한 바퀴 약 3분) |
 | `쉬운.html` | 큰 글씨 간단 화면 |
 | `도움말.html` | 사용설명서 |
 
@@ -70,7 +69,7 @@ python tools/build_admdong_geo.py <폴더>/verYYYYMMDD/HangJeongDong_verYYYYMMDD
 python tools/build_all_sido.py
 ```
 
-## 배포 (선택)
+## 배포
 
 - `wrangler.toml` — Cloudflare Workers 정적 자산(`cb-weather-dashboard`). 제외 목록은 `.assetsignore`.
 - `.github/workflows/cloudflare-deploy.yml` — `deploy-trigger` 브랜치 push 시 배포. `update_data.py`(푸시 모드)가 배포 조건이 되면 이 브랜치를 민다.
