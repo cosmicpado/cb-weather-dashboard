@@ -116,8 +116,18 @@
       radar:     { file:'images/kma_radar.png',     ts:(ki.radar&&ki.radar.ts)||'' , ok:!(ki.radar&&ki.radar.ok===false) },
       satellite: { file:'images/kma_satellite.png', ts:(ki.satellite&&ki.satellite.ts)||'', ok:!(ki.satellite&&ki.satellite.ok===false) },
       warn:      { file:'images/kma_warn.png',      ts:(ki.wrn&&ki.wrn.ts)||'', ok:!(ki.wrn&&ki.wrn.ok===false) },
-      qpf:       { file:'images/kma_qpf.png',       ts:(ki.qpf&&ki.qpf.ts)||'', ok:!(ki.qpf&&ki.qpf.ok===false) }
+      qpf:       { file:'images/kma_qpf.png',       ts:(ki.qpf&&ki.qpf.ts)||'', ok:!(ki.qpf&&ki.qpf.ok===false),
+                   // src 'rdr' = 예측 영상을 못 받아 레이더 강수실황으로 대신한 것(update_data.py)
+                   title:((ki.qpf&&ki.qpf.src)==='rdr') ? '레이더 강수실황' : '초단기 강수예측' }
     };
+    // 날씨해설 그림(청주기상지청 '내일~모레 강수 예상지역 분포도' 등) — 날씨누리 원본 주소.
+    // 지도 화면은 강수예측이 '레이더 강수실황'으로 대신될 때(레이더 합성과 겹침) 이 그림을 넷째 칸에 쓴다.
+    var cmt = SRC.bulletins && SRC.bulletins.commentary;
+    if (cmt && cmt.img) {
+      var ct = String(cmt.tmFc || '');
+      kmaImages.cmt = { file: cmt.img, ok: true, title: '날씨해설 그림', sub: cmt.img_alt || '청주기상지청',
+                        ts: ct.length >= 12 ? ct.slice(0,4)+'-'+ct.slice(4,6)+'-'+ct.slice(6,8)+' '+ct.slice(8,10)+':'+ct.slice(10,12) : '' };
+    }
 
     window.DASH = {
       updated: SRC.updated,
@@ -132,6 +142,10 @@
       typhoon: SRC.typhoon || [],
       midForecast: SRC.mid_forecast || null,
       weatherInfo: (SRC.bulletins && SRC.bulletins.info_detail) || null,
+      // 특보 통보문(발표·해제 '제N-M호') — 기상특보 카드의 '최근 특보 통보문' 목록
+      // info_full·commentary — '기상정보·날씨해설' 카드(지방청 기상정보 본문 · 날씨해설 최신 1건)
+      bulletins: { warnings_full: (SRC.bulletins && SRC.bulletins.warnings_full) || [], stn: (SRC.bulletins && SRC.bulletins.stn) || 131,
+                   info_full: (SRC.bulletins && SRC.bulletins.info_full) || [], commentary: (SRC.bulletins && SRC.bulletins.commentary) || null },
       // 물때(조석) — 파주 임진강 두포리(강화대교 예보 +2h). 없으면 null(파주 외엔 카드 미표시).
       tide: SRC.tide || null
     };

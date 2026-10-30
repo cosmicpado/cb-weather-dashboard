@@ -4,3 +4,7 @@ compatibility_date = "2024-10-21"
 
 [assets]
 directory = "."
+
+# Cloudflare Git 연결(Workers Builds)의 PR 미리보기 — `wrangler preview` 는 이 블록이 있어야 돈다(비어 있어도 됨).
+# 없으면 PR 마다 "missing a `previews` block" 으로 빌드 실패. 실제 배포(GitHub Actions 의 wrangler deploy)와는 무관.
+[previews]
