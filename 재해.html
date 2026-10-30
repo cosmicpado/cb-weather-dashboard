@@ -215,7 +215,7 @@
       <div style="display:flex; align-items:baseline; justify-content:space-between; gap:8px; margin-bottom:4px; flex-wrap:wrap;">
         <div style="display:flex; align-items:baseline; gap:8px;">
           <span style="font-size:15px; font-weight:900; color:var(--ink);">{{f24Title}}</span>
-          <span style="font-size:11.5px; color:var(--ink3);">{{myStation}} · 앞으로 24시간</span>
+          <span style="font-size:11.5px; color:var(--ink3);">{{cardName}} · 앞으로 24시간</span>
         </div>
         <span style="font-size:11.5px; color:var(--ink3);">옆으로 밀어서 보기 →</span>
       </div>
@@ -306,10 +306,10 @@ class Component extends DCLogic {
       // 탭 — 주소 ?mode=rain|snow 가 있으면 그것(호우.html·대설.html 옛 주소가 넘겨줌), 없으면 null = 자동
       mode: (function(){ try{ var m=new URLSearchParams(location.search).get('mode'); return (m==='rain'||m==='snow'||m==='fire') ? m : null; }catch(e){ return null; } })(),
       myStation: (function(){ var RC=(window.REGION_CONF||{}); var h=RC.home||'동두천'; try{ var sv=(typeof localStorage!=='undefined' && localStorage.getItem('ggMyStation')) || h;
-        if(RC.order && RC.order.length && RC.order.indexOf(sv)<0) sv=h; return sv; }catch(e){ return h; } })(),
+        var W=(RC.warnOrder||[])[0]||'충청북도'; if(sv!==W && RC.order && RC.order.length && RC.order.indexOf(sv)<0) sv=h; return sv; }catch(e){ return h; } })(),
       stationPickerOpen: (function(){ try{ if(sessionStorage.getItem('ggPickerOpen')==='1'){ sessionStorage.removeItem('ggPickerOpen'); return true; } }catch(e){} return false; })(),
       /* 권역(충청북도/남부/전체) — 지도.html 과 같은 저장값(ggScope). 없으면 접속 주소의 권역(hostScope), 그것도 없으면 전체.
-         (2026-09-21 사장님: 호우 화면이 권역을 몰라 34개 관서가 다 나왔다) */
+         (권역을 모르면 다른 권역 관서까지 다 나온다) */
       scope: (function(){ var RC=(window.REGION_CONF||{}), g=RC.scopes||null; if(!g) return '전체';
         try{ var v=(typeof localStorage!=='undefined') && localStorage.getItem('ggScope');
           if(v && (v==='전체' || g[v])) return v; }catch(e){}
@@ -592,8 +592,13 @@ class Component extends DCLogic {
     const wide = st.w >= 900;
     const myStation = st.myStation || (window.REGION_CONF||{}).home;
     const stations = d.stations || [];
-    const me = stations.filter(s=>s.name===myStation)[0] || stations[0] || {};
     const mode = this.curMode(), isRain = (mode==='rain');
+    // 충청북도(도 전체)를 고르면: 순위·하천·재난문자는 도 전체, 관서 카드는 지금 탭에서 가장 위험한 관서를 대표로
+    const WIDE = ((window.REGION_CONF||{}).warnOrder||[])[0] || '충청북도', isWide = (myStation===WIDE);
+    this._wide = isWide;
+    const rep = isWide ? this.wideRep(stations, mode) : null;
+    const me = rep ? rep.s : (stations.filter(s=>s.name===myStation)[0] || stations[0] || {});
+    const cardName = rep ? rep.s.name : myStation;
 
     // 시계
     const n=st.now, p2=x=>String(x).padStart(2,'0');
@@ -632,12 +637,13 @@ class Component extends DCLogic {
       const a=worst.aws||{};
       obsText = worst.name+' 12시간 '+this.mm(a.rn12h)+'mm · 1시간 '+this.mm(a.rn60)+'mm'+(worstLv.t?(' — '+worstLv.t):'');
       obsLv = worstLv;
-      obsSub = (worst.name===myStation)
+      obsSub = isWide ? '충청북도 12개 관서 중 최다'
+        : (worst.name===myStation)
         ? '충청북도 12개 관서 중 최다 — 내 관서입니다'
         : ('충청북도 12개 관서 중 최다 · 내 관서 ' + meTxt.replace(myStation+' ', myStation+' '));
     } else {
       obsText = '충청북도 전 관서 실측 강수 없음';
-      obsSub  = '내 관서 ' + meTxt;
+      obsSub  = isWide ? '' : ('내 관서 ' + meTxt);
     }
 
     // ── 관서별 랭킹 ─────────────────────────────────────
@@ -743,7 +749,7 @@ class Component extends DCLogic {
       }),
       stationPickerOpen:st.stationPickerOpen,
       toggleStationPicker:()=>this.toggleStationPicker(),
-      stationList: stations.map(s=>({ name:s.name,
+      stationList: [{name:WIDE}].concat(stations).map(s=>({ name:s.name,
         selBg:(s.name===myStation?'var(--brandSoft)':'transparent'),
         selColor:(s.name===myStation?'var(--brand)':'var(--ink)'),
         selW:(s.name===myStation?800:600),
@@ -781,7 +787,7 @@ class Component extends DCLogic {
       // 본문 블록
       fcst24Body: this.fcst24Body(me),
       riverBody: this.riverBody(d),
-      riverSub: '한강홍수통제소 · 고른 관서 관할 먼저',
+      riverSub: '홍수통제소 · ' + (isWide ? '도 전체' : '고른 관서 관할 먼저'),
       msgBody: this.msgBody(d, me),
       // 기상영상 신선도 — 레이더는 관측시각(tm)이 정확하고, 예측강수는 저장시각(ts)뿐이다.
       // 6시간 전 '예측'을 아무 표시 없이 띄우면 오히려 위험하므로 나이를 항상 보여준다.
@@ -795,7 +801,34 @@ class Component extends DCLogic {
       infoTs: (d.weatherInfo||{}).tmFc_display || '',
       infoBody: this.infoBody(d)
     };
-    return isRain ? out : Object.assign(out, mode==='fire' ? this.fireVals(d, me, myStation, stations, wide) : this.snowVals(d, me, myStation, stations, wide));
+    const res = isRain ? out : Object.assign(out, mode==='fire' ? this.fireVals(d, me, myStation, stations, wide) : this.snowVals(d, me, myStation, stations, wide));
+    res.cardName = cardName;
+    if(rep){
+      res.c1Title = cardName+' 지금';
+      res.c1Sub = '도내 '+rep.why;
+      ['c2Sub','c3Sub'].forEach(k=>{ if(res[k]) res[k]=String(res[k]).split(myStation).join(cardName); });
+    }
+    return res;
+  }
+  /* 도 전체일 때 카드에 보여 줄 대표 관서 — 탭마다 '가장 위험한' 기준이 다르다 */
+  wideRep(stations, mode){
+    const list=stations.filter(s=>s && s.name);
+    if(!list.length) return null;
+    const by=(f, asc)=> list.map(s=>({s, v:f(s)})).filter(x=>x.v!==null && !isNaN(x.v)).sort((a,b)=> asc ? a.v-b.v : b.v-a.v)[0];
+    if(mode==='snow'){
+      const sn=by(s=>this.snowSum(s));
+      if(sn && sn.v>0) return {s:sn.s, why:'적설 최다'};
+      const lo=by(s=>this.minOf(s,'temp'), true);
+      return lo ? {s:lo.s, why:'최저기온'} : {s:list[0], why:''};
+    }
+    if(mode==='fire'){
+      const dr=by(s=>this.num(s.effHumid), true);
+      return dr ? {s:dr.s, why:'가장 메마름'} : {s:list[0], why:''};
+    }
+    const rn=by(s=>this.num((s.aws||{}).rn12h));
+    if(rn && rn.v>0) return {s:rn.s, why:'12시간 강수 최다'};
+    const wd=by(s=>this.num(((s.aws||{}).wind||{}).wss));
+    return wd ? {s:wd.s, why:'바람 최강'} : {s:list[0], why:''};
   }
 
   // ── 기상영상 신선도 ─────────────────────────────────────
@@ -1098,13 +1131,13 @@ class Component extends DCLogic {
     return '';
   }
   /* 선택 관서 중심의 강풍 카드. '동두천 지금'(강수)과 나란히 놓이므로 같은 얼개로 짠다.
-     12개 관서 랭킹 대신 내 관서를 크게 보여주되, '북부 최강'은 한 줄로 남긴다 —
+     12개 관서 랭킹 대신 내 관서를 크게 보여주되, '도내 최강'은 한 줄로 남긴다 —
      지원 판단(어느 관서가 제일 위험한가)을 잃지 않기 위해서. */
   windBody(me, stations, myStation){
     const R=React.createElement;
     const w = (me.aws||{}).wind || {};
     const v = this.num(w.wss);
-    // 북부 최강 (내 관서 제외하고 비교했을 때 더 센 곳이 있으면 알린다)
+    // 도내 최강 (내 관서보다 더 센 곳이 있으면 알린다)
     let top=null, topV=-1;
     stations.forEach(s=>{ const ww=(s.aws||{}).wind||{}; const vv=this.num(ww.wss);
       if(vv!==null && vv>topV){ topV=vv; top={name:s.name, w:ww}; } });
@@ -1113,7 +1146,7 @@ class Component extends DCLogic {
       return R('div',{style:{fontSize:'13px', color:'var(--ink3)', lineHeight:1.6}},
         '이 관서의 바람 자료가 없습니다.',
         top ? R('div',{style:{fontSize:'11.5px', marginTop:'7px'}},
-          '북부 최강 ' + top.name + ' ' + this.mm(top.w.wss) + 'm/s') : null);
+          '도내 최강 ' + top.name + ' ' + this.mm(top.w.wss) + 'm/s') : null);
     }
     const lv = this.windLevel(w.wss, w.ws10);
     const dir = this.dirTxt(w.wds);
@@ -1139,7 +1172,7 @@ class Component extends DCLogic {
       (top && top.name!==myStation && topV>v)
         ? R('div',{style:{marginTop:'9px', paddingTop:'9px', borderTop:'1px solid var(--border)', fontSize:'11.5px',
                           fontWeight:(topLv&&topLv.k>=3?800:600), color:(topLv&&topLv.k>=3?topLv.c:'var(--ink2)')}},
-            '북부 최강 — ' + top.name + ' ' + top.w.station + ' ' + this.mm(top.w.wss) + 'm/s'
+            '도내 최강 — ' + top.name + ' ' + top.w.station + ' ' + this.mm(top.w.wss) + 'm/s'
             + (topLv&&topLv.t?(' · '+topLv.t):''))
         : null);
   }
@@ -1155,7 +1188,7 @@ class Component extends DCLogic {
     const myStation=this.state.myStation || (window.REGION_CONF||{}).home;
     const me=(d.stations||[]).find(s=>s.name===myStation)||{}, sg=me.sigun||myStation;
     const codes=(((window.REGION_CONF||{}).riverCodes)||{})[myStation];
-    const isMine=r=> codes ? codes.indexOf(String(r.code))>=0 : (r.sigun ? r.sigun===sg : String(r.name||'').indexOf(sg)>=0);
+    const isMine=r=> this._wide ? true : codes ? codes.indexOf(String(r.code))>=0 : (r.sigun ? r.sigun===sg : String(r.name||'').indexOf(sg)>=0);
     const order={danger:0, warning:1, safe:2};
     const rank=r=>(order[r.level]==null?3:order[r.level]);
     const sortFn=(a,b)=> rank(a)-rank(b) || ((b.danger?b.value/b.danger:0)-(a.danger?a.value/a.danger:0));
@@ -1180,7 +1213,7 @@ class Component extends DCLogic {
       R('span',{style:{fontSize:'13px', fontWeight:900, color:'var(--ink)'}}, t), R('span',{style:{fontSize:'11.5px', color:'var(--ink3)'}}, sub));
     const open=!!this.state.riverOthersOpen, othersAlert=others.filter(r=>r.level==='danger'||r.level==='warning').length;
     return R('div',{},
-      head('📍 '+myStation+' 관할', mine.length+'곳'),
+      head(this._wide ? '충청북도 전체' : ('📍 '+myStation+' 관할'), mine.length+'곳'),
       mine.length ? R('div',{style:{display:'grid', gridTemplateColumns:cols, gap:'8px'}}, mine.map(card))
                   : R('div',{style:{fontSize:'12.5px', color:'var(--ink3)', padding:'4px 2px 6px'}}, '관할 하천 관측소가 없습니다.'),
       others.length ? R('div',{style:{marginTop:'12px'}},
@@ -1291,11 +1324,11 @@ class Component extends DCLogic {
     if(snowTop && snowTop.snow>0){
       topLv = this.snowLevel(snowTop.snow); topTag='적설 최다';
       topText = snowTop.s.name+' 24시간 예상 '+this.cm(snowTop.snow)+(topLv.t?(' — '+topLv.t):'');
-      topSub = (snowTop.s.name===myStation) ? '충청북도 관서 중 최다 — 내 관서입니다' : ('내 관서 '+myStation+' '+this.cm(meRow.snow));
+      topSub = this._wide ? '충청북도 관서 중 최다' : (snowTop.s.name===myStation) ? '충청북도 관서 중 최다 — 내 관서입니다' : ('내 관서 '+myStation+' '+this.cm(meRow.snow));
     } else if(coldTop){
       topLv = this.coldLevel(coldTop.low); topTag='최저 기온';
       topText = coldTop.s.name+' 24시간 최저 '+this.deg(coldTop.low)+'℃'+(topLv.t?(' — '+topLv.t):'');
-      topSub = '눈 예보 없음 · ' + ((coldTop.s.name===myStation) ? '충청북도 관서 중 가장 추운 곳이 내 관서입니다' : ('내 관서 '+myStation+' 최저 '+this.deg(meRow.low)+'℃'));
+      topSub = '눈 예보 없음' + (this._wide ? '' : ' · ' + ((coldTop.s.name===myStation) ? '충청북도 관서 중 가장 추운 곳이 내 관서입니다' : ('내 관서 '+myStation+' 최저 '+this.deg(meRow.low)+'℃')));
     } else { topLv={k:0}; topTag='예보'; topText='예보 자료를 불러오는 중입니다'; topSub=''; }
 
     // ── 관서별 순위 ─────────────────────────────────────
@@ -1614,7 +1647,7 @@ class Component extends DCLogic {
     const meR = rows0.find(r=>r.s.name===myStation) || {};
     const dLv = dry ? this.effLevel(dry.eff) : {k:0};
     const obsText = dry ? (dry.s.name+' 실효습도 '+this.pct(dry.eff)+(dLv.t?(' — '+dLv.t):'')) : '습도 자료를 불러오는 중입니다';
-    const obsSub = dry ? ((dry.s.name===myStation) ? '충청북도 관서 중 가장 메마름 — 내 관서입니다' : ('내 관서 '+myStation+' 실효습도 '+this.pct(meR.eff)+' · 지금 습도 '+this.pct(meR.hum))) : '';
+    const obsSub = (dry && this._wide) ? '충청북도 관서 중 가장 메마름' : dry ? ((dry.s.name===myStation) ? '충청북도 관서 중 가장 메마름 — 내 관서입니다' : ('내 관서 '+myStation+' 실효습도 '+this.pct(meR.eff)+' · 지금 습도 '+this.pct(meR.hum))) : '';
     // 순위
     const TABS=[{k:'eff',label:'실효습도'},{k:'hum',label:'지금 습도'},{k:'wind',label:'바람'}];
     const key=st.fireTab;
@@ -1691,7 +1724,7 @@ class Component extends DCLogic {
   }
 
   fireRiskBody(d, me){
-    const R=React.createElement, list=(d.fire||[]), mine=this.fireGroupOf(d, me);
+    const R=React.createElement, list=(d.fire||[]), mine=this._wide ? null : this.fireGroupOf(d, me);
     if(!list.length) return R('div',{style:{fontSize:'13px', color:'var(--ink3)'}}, '산불위험예보를 불러오는 중입니다.');
     return R('div',null,
       R('div',{style:{display:'flex', flexDirection:'column', gap:'7px'}},
