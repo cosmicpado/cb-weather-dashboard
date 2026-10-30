@@ -220,7 +220,7 @@
   <!-- 재대본 비상 3단계(심각) — 화면 가장자리가 붉게 깜빡인다(상황실·벽면 모드와 같은 효과) -->
   <sc-if value="{{pageBlink}}" hint-placeholder-val="{{false}}"><div class="pageAlarm"></div></sc-if>
   <section data-dash="ribbon" style="padding:16px 22px 0;">
-    <div onClick="{{openWarnAll}}" style="position:relative; overflow:hidden; display:flex; align-items:center; gap:18px; flex-wrap:wrap; padding:16px 20px; border-radius:16px; cursor:pointer; background:{{ribbonBg}}; border:1px solid {{ribbonBorder}}; box-shadow:var(--sh2);">
+    <div onClick="{{openWarnAll}}" title="{{ribbonTitle}}" style="position:relative; overflow:hidden; display:flex; align-items:center; gap:18px; flex-wrap:wrap; padding:16px 20px; border-radius:16px; cursor:{{ribbonCursor}}; background:{{ribbonBg}}; border:1px solid {{ribbonBorder}}; box-shadow:var(--sh2);">
       <div style="position:absolute; left:0; top:0; bottom:0; width:6px; background:{{ribbonAccent}};"></div>
       <sc-if value="{{ribbonPulse}}" hint-placeholder-val="{{false}}">
         <div style="position:absolute; inset:0; pointer-events:none; background:linear-gradient(90deg,transparent, {{ribbonAccent}}22, transparent); width:38%; animation:dashSweep 2.6s linear infinite;"></div>
@@ -2242,7 +2242,7 @@ class Component extends DCLogic {
       boardHref:_board.href, boardLabel:_board.label, boardCls:_board.cls,
       // ribbon
       statusLabel:rib.label, statusHead:rib.head, pageBlink:!!(status.blink || rib.blink) && !st.wall && !st.noBlink,
-      statusSub: this.statusSub(isWide ? null : status, (isWide ? groupedWarns : this.groupWarns(_myWarns)), (isWide ? rivers : rivers.filter(_isMine)), prelimNorth),   // 관서 화면은 관할 하천만
+      statusSub: this.statusSub(isWide ? {wide:true, rank:status.rank} : status, (isWide ? groupedWarns : this.groupWarns(_myWarns)), (isWide ? rivers : rivers.filter(_isMine)), prelimNorth),   // 관서 화면은 관할 하천만
       // 내 관서 한 줄 — 기온·하늘 / 1시간 강수(AWS) / 6시간 최대 예측 / 관할 특보 / 관할 하천
       mineItems:(function(self){
         // 시연 모드는 관서 카드의 rain 만 바꾸고 AWS·6시간 예측은 원값이라, 한 줄이 '비 안 옴'으로 남는 모순이 있었다
@@ -2444,6 +2444,8 @@ class Component extends DCLogic {
       toggleBlink:()=>{ const v=!this.state.noBlink; try{ if(typeof localStorage!=='undefined') localStorage.setItem('ggNoBlink', v?'1':'0'); }catch(e){} this.setState({noBlink:v}); },
       toggleDemo:()=>this.setState({demo:!this.state.demo}, ()=>this.fitMap()),
       openWarnAll:()=>{ if(rawWarns.length) this.setState({modal:{kind:'warn'}}); },
+      ribbonCursor: rawWarns.length ? 'pointer' : 'default',   // 특보가 있을 때만 눌러서 전체 특보 창을 연다
+      ribbonTitle: rawWarns.length ? '눌러서 발효 중인 특보 전체 보기' : '',
       closeModal:()=>this.setState({modal:null}),
       stop:(e)=>{ e && e.stopPropagation && e.stopPropagation(); }
     };
@@ -2451,10 +2453,10 @@ class Component extends DCLogic {
 
   statusSub(status, warns, rivers, prelimNorth){
     const parts=[];
-    // 관서를 고른 화면이면 도 전체 재대본 단계를 참고로 맨 앞에(status = 재대본), 충청북도면 위 줄이 이미 재대본이다
-    //   평상(0단계)이면 굳이 적지 않는다 — '충북 재대본 평상 · 발효 특보 없음'은 정보가 없다
-    if(!status) parts.push('충북 재대본 비상근무 기준'); else if(status.rank>0) parts.push('충북 재대본 '+status.label);
-    if(warns.length){ parts.push('발효 특보 '+warns.length+'건'); } else { parts.push('발효 특보 없음'); }
+    // 평상이면 단계 이름을 따로 적지 않는다. 충청북도 화면은 위 줄이 이미 재대본 단계라 기준만 밝힌다.
+    if(status && status.wide){ if(status.rank>0) parts.push('충북 재대본 비상근무 기준'); }
+    else if(status && status.rank>0) parts.push('충북 재대본 '+status.label);
+    if(warns.length) parts.push('발효 특보 '+warns.length+'건');   // 없으면 위 줄이 '발효 특보 없음'이라 되풀이하지 않는다
     const dR=rivers.filter(r=>r.lv==='danger').length, wR=rivers.filter(r=>r.lv==='warning').length;
     if(dR) parts.push('하천 '+dR+'곳 위험 수위'); else if(wR) parts.push('하천 '+wR+'곳 주의 수위'); else parts.push('하천 전 지점 안전');
     if(prelimNorth) parts.push('예비특보 '+prelimNorth+'건');
