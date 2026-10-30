@@ -67,9 +67,21 @@ def main():
         def log_message(self, *x):                 # 요청 로그는 끈다(가져오기 기록만 보이게)
             pass
     handler = functools.partial(Quiet, directory=str(ROOT))
-    print(f'열기: http://localhost:{a.port}/지도.html   (끄기: Ctrl+C)', flush=True)
+    class Server(http.server.ThreadingHTTPServer):
+        allow_reuse_address = False                # Windows 는 켜 두면 이미 쓰는 포트에도 겹쳐 붙는다
     try:
-        http.server.ThreadingHTTPServer(('127.0.0.1', a.port), handler).serve_forever()
+        srv = Server(('127.0.0.1', a.port), handler)
+    except OSError:
+        # 이미 그 포트로 띄운 서버가 있으면(같은 폴더를 보고 있을 테니) 데이터만 받는다
+        print(f'{a.port} 포트는 이미 사용 중 — 데이터만 받습니다. 화면은 쓰던 서버로 보세요. (끄기: Ctrl+C)', flush=True)
+        try:
+            while True:
+                time.sleep(3600)
+        except KeyboardInterrupt:
+            sys.exit(0)
+    print(f'열기: http://localhost:{a.port}/지도.html   (끄기: 이 창 닫기 또는 Ctrl+C)', flush=True)
+    try:
+        srv.serve_forever()
     except KeyboardInterrupt:
         sys.exit(0)
 
