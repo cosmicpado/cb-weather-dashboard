@@ -226,8 +226,17 @@
       {{riverBody}}
     </div>
 
-    <!-- ── ⑤ 레이더 + 초단기 예측강수 (각자 신선도 표시) ────────── -->
+    <!-- ── ⑤ 충북 특보 발효현황 + 레이더 — 지도 화면 '기상 이미지'와 같은 순서(특보 왼쪽 · 레이더 오른쪽).
+         예전 오른쪽 칸 '초단기 예측강수'는 예측 영상을 못 받아 늘 '레이더 강수실황'(=왼쪽 레이더와 같은 그림)이었다(2026-10-30). -->
     <div style="display:grid; grid-template-columns:{{radarCols}}; gap:13px;">
+      <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; box-shadow:var(--sh2); padding:15px 17px;">
+        <div style="display:flex; align-items:baseline; justify-content:space-between; gap:8px; margin-bottom:9px; flex-wrap:wrap;">
+          <span style="font-size:15px; font-weight:900; color:var(--ink);">충북 특보 발효현황</span>
+          <span style="font-size:11.5px; font-weight:800; color:{{warnImgAgeColor}};">{{warnImgAge}}</span>
+        </div>
+        <div style="font-size:11.5px; color:var(--ink2); margin-bottom:9px; line-height:1.5;">지금 충청북도에 발효 중인 특보 구역입니다. 그림을 누르면 날씨누리 충북 특보 통보문이 열립니다.</div>
+        <a href="{{wrnUrl}}" target="_blank" rel="noopener" title="눌러서 날씨누리 충북 특보 통보문 보기" style="display:block;"><img src="{{warnImgSrc}}" alt="충북 특보 발효현황" style="width:100%; border-radius:11px; border:1px solid var(--border); background:var(--surface2);"></a>
+      </div>
       <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; box-shadow:var(--sh2); padding:15px 17px;">
         <div style="display:flex; align-items:baseline; justify-content:space-between; gap:8px; margin-bottom:9px; flex-wrap:wrap;">
           <span style="font-size:15px; font-weight:900; color:var(--ink);">비구름 (레이더)</span>
@@ -236,16 +245,6 @@
         <div style="font-size:11.5px; color:var(--ink2); margin-bottom:9px; line-height:1.5;">지금 실제로 내리는 비를 레이더로 관측한 것입니다.</div>
         <img src="images/kma_radar.png" alt="레이더" style="width:100%; border-radius:11px; border:1px solid var(--border); background:var(--surface2);">
         {{legendBody}}
-      </div>
-      <div style="background:var(--surface); border:1px solid {{qpfBorder}}; border-radius:16px; box-shadow:var(--sh2); padding:15px 17px;">
-        <div style="display:flex; align-items:baseline; justify-content:space-between; gap:8px; margin-bottom:9px; flex-wrap:wrap;">
-          <span style="font-size:15px; font-weight:900; color:var(--ink);">{{qpfTitle}}</span>
-          <span style="font-size:11.5px; font-weight:800; color:{{qpfAgeColor}};">{{qpfAge}}</span>
-        </div>
-        <div style="font-size:11.5px; color:var(--ink2); margin-bottom:9px; line-height:1.5;">{{qpfDesc}}</div>
-        {{qpfWarnBody}}
-        <img src="images/kma_qpf.png" alt="{{qpfTitle}}" style="width:100%; border-radius:11px; border:1px solid var(--border); background:var(--surface2);">
-        {{legendBody2}}
       </div>
     </div>
 
@@ -581,7 +580,10 @@ class Component extends DCLogic {
     const ki = this.kmaRaw();
     const radarMin = (this.ageMinTm((ki.radar||{}).tm) !== null)
       ? this.ageMinTm((ki.radar||{}).tm) : this.ageMin((ki.radar||{}).ts);
-    const qpfMin = this.ageMin((ki.qpf||{}).ts);
+    const warnImgMin = this.ageMin((ki.wrn||{}).ts);
+    // 날씨누리 충북 최신 특보 통보문 — 지도.html bulletinInfo 와 같은 주소 규칙(날짜가 빠지면 해당 통보문이 안 열린다)
+    const _bl=d.bulletins||{}, _stn=_bl.stn||131, _b0=(_bl.warnings_full||[])[0], _t=String((_b0||{}).tmFc||'');
+    const wrnUrl='https://www.weather.go.kr/w/special-report/list.do?stn='+_stn+'&kind=met'+((_b0 && _t.length>=12 && _b0.seq!=null) ? ('&date='+_t.slice(0,4)+'-'+_t.slice(4,6)+'-'+_t.slice(6,8)+'&reportId=met:'+_t.slice(0,12)+':'+_b0.seq) : '');
 
     return {
       rootRef:this.rootRef, theme:st.theme,
@@ -655,19 +657,17 @@ class Component extends DCLogic {
       fcst24Body: this.fcst24Body(me),
       windBody: this.windBody(me, stations, myStation),
       riverBody: this.riverBody(d),
-      riverSub: '한강홍수통제소',
+      riverSub: '한강홍수통제소 · 고른 관서 관할 먼저',
       msgBody: this.msgBody(d, me),
       // 기상영상 신선도 — 레이더는 관측시각(tm)이 정확하고, 예측강수는 저장시각(ts)뿐이다.
       // 6시간 전 '예측'을 아무 표시 없이 띄우면 오히려 위험하므로 나이를 항상 보여준다.
       radarAge: this.ageTxt(radarMin) + (radarMin!==null && radarMin<30 ? ' 관측' : ' 관측 ⚠'),
       radarAgeColor: this.ageColor(radarMin, 30),
-      qpfAge: this.ageTxt(qpfMin) + ' 자료',
-      qpfAgeColor: this.ageColor(qpfMin, 40),
-      qpfBorder: (qpfMin!==null && qpfMin>90) ? 'var(--warn)' : 'var(--border)',
-      qpfWarnBody: this.qpfWarnBody(qpfMin),
-      qpfTitle: ((ki.qpf||{}).src==='rdr') ? '레이더 강수실황' : '초단기 예측강수',
-      qpfDesc: ((ki.qpf||{}).src==='rdr') ? '지금 비가 내리는 곳을 레이더로 본 것입니다(예측 영상을 받을 수 없어 실황으로 대신 표시).' : '앞으로 비구름이 어디로 갈지 기상청이 예측한 것입니다.',
-      legendBody: this.legendBody(), legendBody2: this.legendBody(),
+      warnImgAge: this.ageTxt(warnImgMin) + ' 자료',
+      warnImgAgeColor: this.ageColor(warnImgMin, 20),
+      warnImgSrc: 'images/kma_warn.png'+(((ki.wrn||{}).ts)?('?v='+encodeURIComponent(ki.wrn.ts)):''),
+      wrnUrl,
+      legendBody: this.legendBody(),
       infoTs: (d.weatherInfo||{}).tmFc_display || '',
       infoBody: this.infoBody(d)
     };
@@ -696,13 +696,6 @@ class Component extends DCLogic {
     if(min <= fresh*3) return 'var(--caution)';
     return 'var(--severe)';
   }
-  qpfWarnBody(min){
-    const R=React.createElement;
-    if(min===null || min<=90) return null;
-    return R('div',{style:{background:'var(--warnSoft)', border:'1px solid var(--warn)', borderRadius:'9px', padding:'8px 11px', marginBottom:'9px', fontSize:'12px', color:'var(--ink)', fontWeight:700, lineHeight:1.5}},
-      '⚠ 이 예측 그림은 ' + this.ageTxt(min) + ' 자료입니다. 기상청 예측 영상이 갱신되지 않고 있으니 지금 상황 판단에는 위쪽 레이더와 관서별 실측을 쓰십시오.');
-  }
-
   // ── 색 읽는 법 (그림에도 범례가 있지만 작아서 안 보인다) ──
   legendBody(){
     const R=React.createElement;
@@ -1027,27 +1020,49 @@ class Component extends DCLogic {
   }
 
   // ── 하천 수위 ───────────────────────────────────────────
+  /* 하천 수위 — 고른 관서의 관할 하천을 먼저, 다른 지역은 '참고'로 아래에 접어 둔다(2026-10-30).
+     관할 판정은 지도.html riversOf 와 같다: region.js riverCodes 로 지정된 관서는 코드로, 아니면 시군(sigun)으로.
+     다른 지역도 주의 이상이 있으면 접힌 줄에 몇 곳인지 보여 준다(접어 놔도 놓치지 않게). */
   riverBody(d){
     const R=React.createElement;
     const rv=(d.rivers||[]);
     if(!rv.length) return R('div',{style:{fontSize:'13px', color:'var(--ink3)'}}, '하천 자료를 불러오는 중입니다.');
+    const myStation=this.state.myStation || (window.REGION_CONF||{}).home;
+    const me=(d.stations||[]).find(s=>s.name===myStation)||{}, sg=me.sigun||myStation;
+    const codes=(((window.REGION_CONF||{}).riverCodes)||{})[myStation];
+    const isMine=r=> codes ? codes.indexOf(String(r.code))>=0 : (r.sigun ? r.sigun===sg : String(r.name||'').indexOf(sg)>=0);
     const order={danger:0, warning:1, safe:2};
-    const list=rv.slice().sort((a,b)=>(order[a.level]==null?3:order[a.level])-(order[b.level]==null?3:order[b.level]));
-    return R('div',{style:{display:'grid', gridTemplateColumns:(this.state.w>=900?'repeat(4,1fr)':'repeat(2,1fr)'), gap:'8px'}},
-      list.map((r,i)=>{
-        const c = r.level==='danger'?'var(--severe)':r.level==='warning'?'var(--warn)':'var(--safe)';
-        const bg = r.level==='danger'?'var(--severeSoft)':r.level==='warning'?'var(--warnSoft)':'var(--surface2)';
-        const d1 = (r.delta1!=null && !isNaN(r.delta1)) ? ((r.delta1>0?'▲':r.delta1<0?'▼':'-') + Math.abs(r.delta1).toFixed(2)) : '';
-        return R('div',{key:i, style:{background:bg, border:'1px solid '+(r.level==='safe'?'var(--border)':c), borderRadius:'11px', padding:'10px 11px'}},
-          R('div',{style:{fontSize:'11.5px', color:'var(--ink2)', marginBottom:'4px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}, r.name||''),
-          R('div',{style:{display:'flex', alignItems:'baseline', gap:'5px'}},
-            R('span',{style:{fontSize:'19px', fontWeight:900, color:c, fontVariantNumeric:'tabular-nums'}}, (r.value!=null?(+r.value).toFixed(2):'—')),
-            R('span',{style:{fontSize:'11px', color:'var(--ink3)'}}, 'm'),
-            d1 ? R('span',{style:{fontSize:'11px', fontWeight:700, color:(r.delta1>0?'var(--warn)':'var(--ink3)'), marginLeft:'auto'}}, d1) : null),
-          // ⚠ 이 값은 한강홍수통제소 4단계 중 '관심(attwl)'과 '경계(almwl)'다.
-          //   예전엔 '주의/심각'이라고 적었는데 실제 주의·심각은 이보다 높은 값이라 라벨이 한 단계씩 틀렸다.
-          R('div',{style:{fontSize:'10.5px', color:'var(--ink3)', marginTop:'3px'}}, '관심 '+(r.warning!=null?r.warning:'—')+'m · 경계 '+(r.danger!=null?r.danger:'—')+'m'));
-      }));
+    const rank=r=>(order[r.level]==null?3:order[r.level]);
+    const sortFn=(a,b)=> rank(a)-rank(b) || ((b.danger?b.value/b.danger:0)-(a.danger?a.value/a.danger:0));
+    const seen=new Set(), uniq=rv.filter(r=>{ const k=String(r.code||r.name); if(seen.has(k)) return false; seen.add(k); return true; });
+    const mine=uniq.filter(isMine).sort(sortFn), others=uniq.filter(r=>!isMine(r)).sort(sortFn);
+    const cols=(this.state.w>=900?'repeat(4,1fr)':'repeat(2,1fr)');
+    const card=(r,i)=>{
+      const c = r.level==='danger'?'var(--severe)':r.level==='warning'?'var(--warn)':'var(--safe)';
+      const bg = r.level==='danger'?'var(--severeSoft)':r.level==='warning'?'var(--warnSoft)':'var(--surface2)';
+      const d1 = (r.delta1!=null && !isNaN(r.delta1)) ? ((r.delta1>0?'▲':r.delta1<0?'▼':'-') + Math.abs(r.delta1).toFixed(2)) : '';
+      return R('div',{key:i, style:{background:bg, border:'1px solid '+(r.level==='safe'?'var(--border)':c), borderRadius:'11px', padding:'10px 11px'}},
+        R('div',{style:{fontSize:'11.5px', color:'var(--ink2)', marginBottom:'4px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}, r.name||''),
+        R('div',{style:{display:'flex', alignItems:'baseline', gap:'5px'}},
+          R('span',{style:{fontSize:'19px', fontWeight:900, color:c, fontVariantNumeric:'tabular-nums'}}, (r.value!=null?(+r.value).toFixed(2):'—')),
+          R('span',{style:{fontSize:'11px', color:'var(--ink3)'}}, 'm'),
+          d1 ? R('span',{style:{fontSize:'11px', fontWeight:700, color:(r.delta1>0?'var(--warn)':'var(--ink3)'), marginLeft:'auto'}}, d1) : null),
+        // ⚠ 이 값은 한강홍수통제소 4단계 중 '관심(attwl)'과 '경계(almwl)'다.
+        //   예전엔 '주의/심각'이라고 적었는데 실제 주의·심각은 이보다 높은 값이라 라벨이 한 단계씩 틀렸다.
+        R('div',{style:{fontSize:'10.5px', color:'var(--ink3)', marginTop:'3px'}}, '관심 '+(r.warning!=null?r.warning:'—')+'m · 경계 '+(r.danger!=null?r.danger:'—')+'m'));
+    };
+    const head=(t,sub)=>R('div',{style:{display:'flex', alignItems:'baseline', gap:'8px', margin:'2px 2px 8px'}},
+      R('span',{style:{fontSize:'13px', fontWeight:900, color:'var(--ink)'}}, t), R('span',{style:{fontSize:'11.5px', color:'var(--ink3)'}}, sub));
+    const open=!!this.state.riverOthersOpen, othersAlert=others.filter(r=>r.level==='danger'||r.level==='warning').length;
+    return R('div',{},
+      head('📍 '+myStation+' 관할', mine.length+'곳'),
+      mine.length ? R('div',{style:{display:'grid', gridTemplateColumns:cols, gap:'8px'}}, mine.map(card))
+                  : R('div',{style:{fontSize:'12.5px', color:'var(--ink3)', padding:'4px 2px 6px'}}, '관할 하천 관측소가 없습니다.'),
+      others.length ? R('div',{style:{marginTop:'12px'}},
+        R('div',{onClick:()=>this.setState({riverOthersOpen:!open}), style:{display:'flex', alignItems:'center', justifyContent:'center', gap:'8px', padding:'8px', borderRadius:'9px', cursor:'pointer', fontSize:'12px', fontWeight:800, color:'var(--brand)', background:'var(--brandSoft)'}},
+          (open?'다른 지역 접기 ▴':'다른 지역 참고 '+others.length+'곳 보기 ▾'),
+          othersAlert ? R('span',{style:{fontSize:'11px', fontWeight:900, color:'#fff', background:'var(--warn)', padding:'1px 7px', borderRadius:'999px'}}, '주의 이상 '+othersAlert+'곳') : null),
+        open ? R('div',{style:{display:'grid', gridTemplateColumns:cols, gap:'8px', marginTop:'8px', opacity:.92}}, others.map(card)) : null) : null);
   }
 
   // ── 재난문자 ────────────────────────────────────────────

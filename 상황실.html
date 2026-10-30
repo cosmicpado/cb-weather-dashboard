@@ -1401,7 +1401,7 @@ https://scripts.sil.org/OFL
       </sc-if>
 
       <div style="width:460px;border-radius:24px;padding:24px 32px;display:flex;flex-direction:column;justify-content:center;gap:6px;background:{{ levelBg }};border:3px solid {{ levelBorder }};">
-        <div style="font-size:calc(34px*var(--fz,1));font-weight:570;letter-spacing:.06em;color:{{ levelSub }};">관서 상황단계</div>
+        <div style="font-size:calc(34px*var(--fz,1));font-weight:570;letter-spacing:.06em;color:{{ levelSub }};">재대본 비상단계</div>
         <div style="font-size:calc(118px*var(--fz,1));font-weight:660;line-height:1;color:{{ levelFg }};letter-spacing:-.02em;">{{ levelName }}</div>
         <div style="font-size:calc(32px*var(--fz,1));font-weight:520;color:{{ levelSub }};">{{ levelReason }}</div>
       </div>
@@ -1767,7 +1767,7 @@ class Component extends DCLogic {
   }
   paint(){
     const dark = this.state.theme !== 'light';
-    const alert = this.level().rank >= 3;
+    const alert = this.level().rank >= 4;   // 3단계(심각) — 배경 붉게·가장자리 점멸
     const acc = this.props.accent || '#ff7a2f';
     const v = dark
       ? { bg: alert?'#1a0a0d':'#0d1118', panel: alert?'#251014':'#151b26', panel2: alert?'#2e151a':'#1b2230', line: alert?'#5e2027':'#28313f', track:'#232c3a', fg:'#f2f5fa', dim:'#8e9bb0' }
@@ -2063,21 +2063,27 @@ class Component extends DCLogic {
     return out;
   }
 
+  /* 상황단계 = 충청북도 재대본 '기상특보 단계별 비상근무체계'(stage.js, 도 전체 기준) — 2026-10-30.
+     예전엔 순환 중인 관서의 특보로 평상/주의/경계/심각을 정했다.
+     시연: 주소에 ?stage=준비|주의|경계|심각 (3단계 심각이면 화면 가장자리 붉은 점멸·경보 띠) */
   level(){
-    const f = this.props.forceAlert, map = {'평상':0,'주의':1,'경계':2,'심각':3};
-    const s = this.st(), w = this.warnsOf(s);
-    if (f && f !== 'auto') return this.levelFor(map[f] ?? 0, w);
-    return this.levelFor(w.length ? Math.max.apply(null, w.map(x=>x.sev)) : 0, w);
+    const map = {'평상':0,'준비':1,'주의':2,'경계':3,'심각':4};
+    let q = null; try { q = new URLSearchParams(location.search).get('stage'); } catch(e) {}
+    const f = this.props.forceAlert, g = EXT().stage || null;
+    const rank = (q && map[q]!=null) ? map[q] : ((f && f!=='auto' && map[f]!=null) ? map[f] : (g ? g.rank : 0));
+    return this.levelFor(rank, (q || (f && f!=='auto')) ? null : g);
   }
-  levelFor(rank, w){
+  levelFor(rank, g){
     const defs = [
-      { rank:0, name:'평상', fg:'var(--lv0Fg)', bg:'var(--lv0Bg)', border:'var(--lv0Bd)', sub:'var(--lv0Sub)' },
-      { rank:1, name:'주의', fg:'var(--lv1Fg)', bg:'var(--lv1Bg)', border:'var(--lv1Bd)', sub:'var(--lv1Sub)' },
-      { rank:2, name:'경계', fg:'var(--lv2Fg)', bg:'var(--lv2Bg)', border:'var(--lv2Bd)', sub:'var(--lv2Sub)' },
-      { rank:3, name:'심각', fg:'var(--lv3Fg)', bg:'var(--lv3Bg)', border:'var(--lv3Bd)', sub:'var(--lv3Sub)' }
+      { rank:0, name:'평상', step:'',          fg:'var(--lv0Fg)', bg:'var(--lv0Bg)', border:'var(--lv0Bd)', sub:'var(--lv0Sub)' },
+      { rank:1, name:'준비', step:'준비 단계',  fg:'var(--cBlue,#54aaff)', bg:'rgba(84,170,255,.12)', border:'rgba(84,170,255,.6)', sub:'var(--cBlue,#54aaff)' },
+      { rank:2, name:'주의', step:'비상 1단계', fg:'var(--lv1Fg)', bg:'var(--lv1Bg)', border:'var(--lv1Bd)', sub:'var(--lv1Sub)' },
+      { rank:3, name:'경계', step:'비상 2단계', fg:'var(--lv2Fg)', bg:'var(--lv2Bg)', border:'var(--lv2Bd)', sub:'var(--lv2Sub)' },
+      { rank:4, name:'심각', step:'비상 3단계', fg:'var(--lv3Fg)', bg:'var(--lv3Bg)', border:'var(--lv3Bd)', sub:'var(--lv3Sub)' }
     ];
-    const reason = (w && w.length) ? w.map(x=>x.type).slice(0,2).join(' · ')+' 발효' : '발효 특보 없음';
-    return Object.assign({}, defs[rank], { reason });
+    const d = defs[Math.max(0, Math.min(4, rank))];
+    const reason = g ? ((d.step ? '재대본 '+d.step+' · ' : '')+g.reason) : (d.step ? '재대본 '+d.step+' (시연)' : '대설·호우·태풍 특보 없음');
+    return Object.assign({}, d, { reason, why: g ? g.reason : '시연' });
   }
 
   renderVals(){
@@ -2165,8 +2171,8 @@ class Component extends DCLogic {
       tc={ icon:'🥶', title:'한파 주의', level:_f<=-25?'경고':_f<=-10?'주의':_f<=0?'관심':'쌀쌀',
            note:'체감 '+_f+'° · 보온·빙판길·저체온 유의', k:k }; }
     else { const big=(_rg!=null && _rg>=10);
-      tc={ icon:'🌤️', title:'일교차·건강', level:big?'일교차 큼':'쾌적',
-           note:(_rg!=null?('최고 '+Math.round(s.tmax)+'° · 최저 '+Math.round(s.tmin)+'° (일교차 '+Math.round(_rg)+'°)'):('체감 '+_f+'°'))+(big?' · 환절기 건강 유의':''), k:big?1:0 }; }
+      tc={ icon:'🌤️', title:'일교차', level:big?'일교차 큼':'쾌적',
+           note:(_rg!=null?('최고 '+Math.round(s.tmax)+'° · 최저 '+Math.round(s.tmin)+'° (일교차 '+Math.round(_rg)+'°)'):('체감 '+_f+'°')), k:big?1:0 }; }
     imp.push({ icon:tc.icon, title:tc.title, level:tc.level, note:tc.note, color:_C[tc.k], bg:_B[tc.k] });
     const _rw = rv.filter(x=>!x.isDam).map(r=>parseFloat(r.pct));
     const worst = _rw.length ? Math.max.apply(null,_rw) : 0;
@@ -2277,10 +2283,10 @@ class Component extends DCLogic {
       updatedLabel: pad(now.getHours())+':'+pad(Math.floor(now.getMinutes()/5)*5),
       obsTime: pad(now.getHours())+':00',
       levelName: lv.name, levelFg: lv.fg, levelBg: lv.bg, levelBorder: lv.border, levelSub: lv.sub, levelReason: lv.reason,
-      isAlert: lv.rank >= 3,
-      alertHead: s.rain1h>=20 ? '호우경보 발효 · '+s.name+' 전역' : '강풍경보 발효 · '+s.name+' 전역',
-      alertSub: s.rain1h>=20 ? '시간당 '+s.rain1h+'mm · 하천 급증 · 저지대 침수 및 지하공간 고립 위험' : '순간풍속 '+s.gust+'m/s · 고가차 운용 제한 · 시설물 파손 신고 급증 예상',
-      alertAction: '비상 1단계',
+      isAlert: lv.rank >= 4,
+      alertHead: '충북 재대본 비상 3단계 · 심각',
+      alertSub: lv.why,
+      alertAction: '비상 3단계',
       rain1h: s.rain1h.toFixed(1), humid: s.humid, effHum: s.effHum,
       effHumColor: s.effHum<=35 ? 'var(--cRed,#ff5a5a)' : (s.effHum<=45 ? 'var(--cAmber,#ffb020)' : 'var(--fg,#f2f5fa)'),
       wind: s.wind.toFixed(1), gust: s.gust.toFixed(1),
@@ -2325,6 +2331,31 @@ class Component extends DCLogic {
 
 
 <script src="./risk-zones.js"></script>
+<script src="./stage.js"></script>
+<script>
+/* ▶ 시연 — 재대본 비상단계를 골라 화면을 미리 본다(2026-10-30). 주소의 ?stage= 값만 바꾼다:
+   level() 가 매 렌더(0.5초)마다 읽으므로 새로고침 없이 바뀐다. 실제 데이터는 그대로 두고 단계만 덮어쓴다. */
+(function(){
+  var STAGES=[['평상','평상','#2ad19a'],['준비','준비','#54aaff'],['주의','1단계','#ffb020'],['경계','2단계','#ff7a2f'],['심각','3단계','#ff5a5a']];
+  function cur(){ try{ return new URLSearchParams(location.search).get('stage'); }catch(e){ return null; } }
+  function set(v){ try{ var u=new URL(location.href); if(v) u.searchParams.set('stage',v); else u.searchParams.delete('stage'); history.replaceState(null,'',u); }catch(e){} draw(); }
+  var box, open=false;
+  function btn(txt, css, fn, title){ var b=document.createElement('a'); b.textContent=txt; if(title) b.title=title;
+    b.style.cssText='cursor:pointer;padding:6px 11px;border-radius:9px;font:700 12px system-ui,sans-serif;white-space:nowrap;'+css; b.onclick=fn; return b; }
+  function draw(){
+    if(!box){ box=document.createElement('div'); box.style.cssText='position:fixed;left:50%;top:8px;transform:translateX(-50%);z-index:30;display:flex;gap:6px;align-items:center;'; document.body.appendChild(box); }
+    var c=cur(); box.innerHTML='';
+    var base='border:1px solid var(--line,#28313f);background:var(--panel,#151b26);color:var(--fg,#f2f5fa);';
+    var main=btn(c?('■ 시연 중 · '+c):'▶ 시연', base+(c?'opacity:1;border-color:#ff5a5a;color:#ff5a5a;':'opacity:.28;'), function(){ if(c){ set(null); open=false; } else { open=!open; draw(); } },
+      c?'시연 끝내기 — 실제 단계로 돌아갑니다':'재대본 비상단계를 골라 화면이 어떻게 바뀌는지 봅니다(3단계 = 붉은 점멸)');
+    if(!c){ main.onmouseenter=function(){ main.style.opacity=1; }; main.onmouseleave=function(){ if(!open) main.style.opacity=.28; }; }
+    box.appendChild(main);
+    if(open || c){ STAGES.forEach(function(st){ var on=(c===st[0]);
+      box.appendChild(btn(st[1], 'border:1.5px solid '+st[2]+';background:'+(on?st[2]:'var(--panel,#151b26)')+';color:'+(on?'#0b1220':'var(--fg,#f2f5fa)')+';', function(){ set(st[0]); }, '재대본 '+st[1])); }); }
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', draw); else draw();
+})();
+</script>
 <!-- 하천 CCTV 카드(2026-09-22): 장치번호표·부산 목록·등록표·KBS 토큰(서버가 운영 저장소에 올림) — data.js 보다 먼저(변환기가 판정에 쓴다) -->
 <script src="./cctv-hrfco.js"></script>
 <script src="./cctv-links.js"></script>
@@ -2540,7 +2571,8 @@ class Component extends DCLogic {
       });
     });
     cctv.sort(function(a,b){ return (a.rank-b.rank)||(a.si-b.si)||(b.ratio-a.ratio); });
-    return { stations:stations, rivers:rivers, msgs:msgs, warns:warnsByStation(D.warnings), cctv:cctv, risks:risks,
+    var stage = window.cbStage ? window.cbStage((D.warnings||[]).map(function(w){ return { type:w.type||w.title||w.name||'', area:w.area||w.region||w.regions||'', level:w.level||'' }; }), D.prelim_warnings||[], D.typhoon||[]) : null;
+    return { stations:stations, rivers:rivers, msgs:msgs, warns:warnsByStation(D.warnings), cctv:cctv, risks:risks, stage:stage,
              keyRivers:keyRivers, ultra:ultra, updated:D.updated,
              /* 새 카드 3장(레이더·태풍·물때, 2026-09-18) 원시 데이터 통과 */
              kmaImages:(D.kma_images||{}), typhoon:(D.typhoon||[]), tide:(D.tide||null) };

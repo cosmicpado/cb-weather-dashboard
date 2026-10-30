@@ -150,7 +150,7 @@ td.n{white-space:nowrap;font-weight:700}
     <tr><td class="n">관서별 현재 기상</td><td>전 관서의 기온·강수·풍속·습도를 한 줄씩</td></tr>
     <tr><td class="n">선택 관서 상세</td><td>실황 + 24시간 시간대별 예보표</td></tr>
     <tr><td class="n">산불 / 미세먼지</td><td>권역별 산불위험, 시군별 PM10</td></tr>
-    <tr><td class="n">기상 이미지</td><td>충북 특보 발효현황(누르면 날씨누리 통보문) · 레이더 합성 · 천리안 위성 (눌러서 확대) — 날씨해설 그림은 아래 날씨해설 칸</td></tr>
+    <tr><td class="n">기상 이미지</td><td>충북 특보 발효현황(확대 창에서 그림을 누르면 날씨누리 충북 통보문) · 레이더 합성 · 천리안 위성 (눌러서 확대) — 날씨해설 그림은 아래 날씨해설 칸</td></tr>
     <tr><td class="n">맨 아래</td><td>날씨해설(중기전망), 기상정보 전문</td></tr>
   </table></div>
 
@@ -201,7 +201,7 @@ td.n{white-space:nowrap;font-weight:700}
     <tr><td class="n">① 관서명</td><td>지금 보여주는 관서. 아래에 <code>6 / <span class="cnt">11</span></code>(몇 번째인지)과 다음 관서</td></tr>
     <tr><td class="n">② 날씨</td><td>기온 · 하늘상태 · 체감온도. <b>LIVE</b> 옆 시각은 관측 시각</td></tr>
     <tr class="imjin"><td class="n">③ 임진강 감시</td><td><b>관서가 넘어가도 안 바뀝니다.</b> 필승교 · 군남댐을 항상 표시</td></tr>
-    <tr><td class="n">④ 관서 상황단계</td><td>그 관서의 <b>평상 / 주의 / 경계 / 심각</b>과 이유</td></tr>
+    <tr><td class="n">④ 재대본 비상단계</td><td>충청북도 전체의 <b>평상 / 준비 / 주의 / 경계 / 심각</b>과 이유</td></tr>
     <tr><td class="n">⑤ 시계</td><td>현재 시각과 조작 버튼</td></tr>
   </table></div>
 
@@ -217,6 +217,7 @@ td.n{white-space:nowrap;font-weight:700}
     <tr><td class="n">❚❚ / ▶</td><td>자동 순환 <b>멈춤 / 다시 시작</b>. 한 관서를 오래 봐야 할 때 멈춥니다.</td></tr>
     <tr><td class="n">‹ &nbsp; ›</td><td>이전 / 다음 관서로 직접 이동</td></tr>
     <tr><td class="n">☀ / ☾</td><td>밝은 화면 / 어두운 화면 전환</td></tr>
+    <tr><td class="n">▶ 시연 <small>(맨 위 가운데)</small></td><td>재대본 비상단계(평상·준비·1·2·3단계)를 골라 화면이 어떻게 바뀌는지 미리 봅니다. 실제 자료는 그대로이고 단계만 바뀝니다. <b>■ 시연 중</b>을 누르면 끝납니다.</td></tr>
   </table></div>
 
   <h3>가운데 카드들</h3>
@@ -242,17 +243,22 @@ td.n{white-space:nowrap;font-weight:700}
   <!-- ============ 3. 색·기호 ============ -->
   <h2 id="rule">3. 색·기호 한눈에 보기</h2>
 
-  <h3>관서 상황단계</h3>
-  <p>지금 그 관서에 발효 중인 <b>기상특보</b>만으로 정해집니다.</p>
+  <h3>재대본 비상단계</h3>
+  <p>충청북도 재난안전대책본부의 <b>기상특보 단계별 비상근무체계</b>를 그대로 따릅니다. 관서가 아니라 <b>도 전체</b>에서
+     몇 개 시·군에 특보가 났는지로 정해지고, 청주동부·청주서부는 '청주' 한 개 시로 셉니다.</p>
   <div class="tw"><table>
-    <tr><th style="width:110px">단계</th><th>이럴 때 뜹니다</th></tr>
-    <tr><td class="n"><span class="pill p-safe">평상</span></td><td>발효 중인 특보 없음</td></tr>
-    <tr><td class="n"><span class="pill p-caution">주의</span></td><td><b>폭염 · 한파 · 건조 · 황사 · 오존</b> 특보 — 며칠씩 이어지는 종류</td></tr>
-    <tr><td class="n"><span class="pill p-warn">경계</span></td><td><b>호우 · 강풍 · 대설 · 태풍 · 풍랑</b> 등의 <b>주의보</b></td></tr>
-    <tr><td class="n"><span class="pill p-severe">심각</span></td><td>위 급성 재해의 <b>경보</b> — 화면 테두리가 붉게 깜빡입니다</td></tr>
+    <tr><th style="width:110px">단계</th><th>대설·호우</th><th>태풍</th></tr>
+    <tr><td class="n"><span class="pill p-safe">평상</span></td><td colspan="2">해당 특보 없음</td></tr>
+    <tr><td class="n"><span class="pill" style="background:#e8f1ff;color:#2b6fd6">준비</span></td><td>예비특보 3개 시·군 (주의보 1~2개 시·군 포함)</td><td>태풍정보 발표(한반도 영향)</td></tr>
+    <tr><td class="n"><span class="pill p-caution">주의</span><br><small>비상 1단계</small></td><td>주의보 3개 시·군 · 경보 1개 시·군</td><td>예비특보</td></tr>
+    <tr><td class="n"><span class="pill p-warn">경계</span><br><small>비상 2단계</small></td><td>경보 3개 시·군 이상</td><td>주의보 및 경보</td></tr>
+    <tr><td class="n"><span class="pill p-severe">심각</span><br><small>비상 3단계</small></td><td colspan="2">광역적 경보 — 경보 6개 시·군 이상(도내 11개 시·군의 과반) 또는 도 전역</td></tr>
   </table></div>
-  <p style="font-size:13.5px;color:var(--ink2)">폭염경보가 떠도 '주의'에 머무는 이유는, 폭염처럼 며칠 이어지는 특보로
-     화면을 24시간 빨갛게 두면 정작 호우·강풍 때 눈에 안 들어오기 때문입니다.</p>
+  <p style="font-size:13.5px;color:var(--ink2)">폭염·한파·강풍·건조 같은 다른 특보는 단계에 넣지 않고 기상특보 카드에서 봅니다.
+     하천 경계수위는 단계와 별개로 경보음을 울립니다.</p>
+  <p style="font-size:13.5px;color:var(--ink2)"><b>3단계(심각)</b>가 되면 화면 가장자리가 <b>붉게 깜빡이고</b> 경보음이 울립니다
+     (상황실 화면은 배경도 붉게 바뀌고 위쪽에 경보 띠가 뜹니다). 미리 보려면 지도 화면의 ▶(시연) → <b>3단계</b>를 누르거나,
+     상황실 화면 <b>맨 위 가운데 ▶ 시연</b> 버튼 → <b>3단계</b>를 누르세요(다시 누르면 시연 끝).</p>
 
   <h3>공통 색</h3>
   <div class="tw"><table>
@@ -289,17 +295,20 @@ td.n{white-space:nowrap;font-weight:700}
       <td>높음</td>
     </tr>
     <tr>
-      <td class="n">🌡️ 온열질환 주의</td>
-      <td>평시<br><small>체감 33° 미만</small></td>
-      <td>증가<br><small>체감 33~38°</small></td>
-      <td>급증 경계<br><small>체감 38° 이상</small></td>
-    </tr>
-    <tr>
       <td class="n">🌊 침수·수난 출동</td>
       <td>평시</td>
       <td>주의<br><small>시간당 8mm 이상<br>또는 하천이 경계수위의 70% 이상</small></td>
       <td>경계<br><small>시간당 20mm 이상<br>또는 하천이 경계수위의 88% 이상</small></td>
     </tr>
+  </table></div>
+
+  <h3>🌡️ 체감온도 카드 — 계절에 따라 카드가 바뀝니다</h3>
+  <p>관서의 <b>체감온도</b>를 보고 세 가지 중 하나를 띄웁니다. 단계는 기상청 기준을 따릅니다.</p>
+  <div class="tw"><table>
+    <tr><th style="width:110px">체감온도</th><th style="width:150px">카드</th><th>단계</th></tr>
+    <tr><td class="n">30° 이상</td><td>🌡️ <b>온열질환 주의</b></td><td>31 관심 · 33 주의 · 35 경고 · 38 위험 <small>(기상청 폭염 영향예보 기준)</small></td></tr>
+    <tr><td class="n">10° 미만</td><td>🥶 <b>한파 주의</b></td><td>0~10 쌀쌀 · 0 이하 관심 · -10 이하 주의 · -25 이하 경고 <small>(기상청 체감온도 단계)</small></td></tr>
+    <tr><td class="n">10~30°</td><td>🌤️ <b>일교차</b></td><td>오늘 최고·최저 차이가 10° 이상이면 <b>일교차 큼</b>, 아니면 <b>쾌적</b></td></tr>
   </table></div>
 
   <ul>
@@ -325,9 +334,8 @@ td.n{white-space:nowrap;font-weight:700}
       <td colspan="2" style="text-align:center;color:var(--safe);font-weight:800">같음 (순간풍속 8 · 10m/s)</td>
     </tr>
     <tr>
-      <td class="n">🌡️ 온열질환</td>
-      <td>3단계<br><small>평시 / 증가(33°) / 급증 경계(38°)</small></td>
-      <td>4단계<br><small>평시 / 관심(31°) / 증가(33°) / 급증(38°)</small></td>
+      <td class="n">🌡️ 체감온도 카드</td>
+      <td colspan="2" style="text-align:center;color:var(--safe);font-weight:800">같음 (온열질환 주의 · 한파 주의 · 일교차)</td>
     </tr>
     <tr>
       <td class="n">🌊 침수·수난</td>
@@ -356,6 +364,18 @@ td.n{white-space:nowrap;font-weight:700}
   <h3>풍속과 순간풍속</h3>
   <p><b>풍속</b>은 일정 시간 평균, <b>순간풍속</b>은 그 사이 가장 세게 분 순간의 값입니다.
      구조물 파손이나 고가 전개 위험은 순간풍속이 좌우합니다.</p>
+
+  <h3>시간대별 예보와 6시간 강수예측의 강수량이 다릅니다</h3>
+  <p>둘은 기상청의 <b>서로 다른 예보</b>라서 같은 시각이라도 숫자가 다를 수 있습니다.</p>
+  <ul>
+    <li><b>시간대별 예보</b> = <b>단기예보</b>. 하루 8번(02·05·08·11·14·17·20·23시) 발표되고, 화면에는
+        가장 최근 발표분이 나옵니다. 발표한 지 최대 3시간이 지난 예보일 수 있습니다.</li>
+    <li><b>6시간 강수예측</b> = <b>초단기예보</b>. <b>매시간</b> 새로 발표되고, 직전의 레이더·관측을 반영해
+        앞으로 6시간만 예측합니다.</li>
+    <li>기상청은 강수량을 <b>구간</b>으로 내놓기도 합니다('1mm 미만', '30~50mm' 등). 화면은 숫자로 보여주려고
+        '1mm 미만' → 0.5mm, '30~50mm' → 40mm처럼 대표값으로 바꿉니다.</li>
+  </ul>
+  <p><b>가까운 몇 시간은 6시간 강수예측(초단기)이 더 최신</b>이고, 그 뒤 시간은 시간대별 예보(단기)를 보시면 됩니다.</p>
 
   <h3>▶ 시연 모드를 켰는데 상황이 심각하게 나옵니다</h3>
   <p>시연 모드는 <b>교육·훈련용 가짜 상황</b>입니다. 실제 상황이 아니니 끄고 보십시오.

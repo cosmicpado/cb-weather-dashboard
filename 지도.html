@@ -45,6 +45,7 @@
 <script src="dashboard-data.js"></script>
 <script src="map-geo.js"></script>
 <script src="risk-zones.js"></script>
+<script src="stage.js"></script>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   :root{
@@ -106,6 +107,8 @@
   .wallAlarm-severe .wallBeacon{ animation: dashBlink 1.15s infinite; }
   @keyframes wallPulse{ 0%,100%{ box-shadow: inset 0 0 0 4px var(--severe); } 50%{ box-shadow: inset 0 0 0 10px var(--severe); } }
   @media (prefers-reduced-motion: reduce){ .wallAlarm-severe{ animation:none; box-shadow: inset 0 0 0 6px var(--severe); } }
+  .pageAlarm{ position:fixed; inset:0; z-index:8990; pointer-events:none; animation: wallPulse 1.5s ease-in-out infinite; }
+  @media (prefers-reduced-motion: reduce){ .pageAlarm{ animation:none; box-shadow: inset 0 0 0 6px var(--severe); } }
 </style>
 </helmet>
 <div ref="{{rootRef}}" data-theme="{{theme}}" style="min-height:100vh; width:100%; background:linear-gradient(180deg,var(--bg),var(--bg2) 60%); color:var(--ink); padding-bottom:44px; position:relative; overflow-x:clip;">
@@ -128,8 +131,9 @@
   <div style="position:sticky; top:0; z-index:50; background:var(--bg);">
   <header style="position:relative; z-index:3; display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; padding:11px 22px; background:var(--headerBg); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); border-bottom:1px solid var(--border);">
     <div style="display:flex; align-items:center; gap:13px; min-width:0;">
-      <div style="width:42px; height:42px; border-radius:12px; background:linear-gradient(140deg,var(--severe),#b91c1c); display:flex; align-items:center; justify-content:center; box-shadow:0 4px 14px -3px rgba(212,42,47,.55); flex-shrink:0;">
-        <svg width="23" height="23" viewBox="0 0 24 24" fill="none"><path d="M12 3 L21.5 20 H2.5 Z" fill="#fff"></path><rect x="11" y="9" width="2" height="6" rx="1" fill="#d42a2f"></rect><circle cx="12" cy="17.2" r="1.25" fill="#d42a2f"></circle></svg>
+      <!-- 로고: 해+구름(구름조금) — 365일 쓰는 화면이라 경고 세모 대신 평상시에도 어울리는 그림(icon.svg 와 같음, 2026-10-30) -->
+      <div style="width:42px; height:42px; border-radius:12px; background:linear-gradient(140deg,#3b82f6,#1d4ed8); display:flex; align-items:center; justify-content:center; box-shadow:0 4px 14px -3px rgba(37,99,235,.5); flex-shrink:0;">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><g stroke="#fcd34d" stroke-width="1.5" stroke-linecap="round"><line x1="15.5" y1="1.6" x2="15.5" y2="3"></line><line x1="20.4" y1="3.6" x2="19.4" y2="4.6"></line><line x1="22.4" y1="8.5" x2="21" y2="8.5"></line><line x1="10.6" y1="3.6" x2="11.6" y2="4.6"></line></g><circle cx="15.5" cy="8.5" r="3.8" fill="#fcd34d"></circle><path d="M6.6 20.4h10.6a3.7 3.7 0 0 0 .2-7.4 5.3 5.3 0 0 0-10.2-.6 4 4 0 0 0-.6 8z" fill="#fff"></path></svg>
       </div>
       <div style="min-width:0;">
         <div style="display:flex; align-items:center; gap:9px;">
@@ -209,6 +213,8 @@
   <!-- 배치 편집(dash_layout.js): 섹션 순서(order)·표시(display)를 CSS 변수로 받는 컨테이너 -->
   <div data-dash-main style="display:flex; flex-direction:column;">
   <!-- ============ ALERT RIBBON ============ -->
+  <!-- 재대본 비상 3단계(심각) — 화면 가장자리가 붉게 깜빡인다(상황실·벽면 모드와 같은 효과) -->
+  <sc-if value="{{pageBlink}}" hint-placeholder-val="{{false}}"><div class="pageAlarm"></div></sc-if>
   <section data-dash="ribbon" style="padding:16px 22px 0;">
     <div onClick="{{openWarnAll}}" style="position:relative; overflow:hidden; display:flex; align-items:center; gap:18px; flex-wrap:wrap; padding:16px 20px; border-radius:16px; cursor:pointer; background:{{ribbonBg}}; border:1px solid {{ribbonBorder}}; box-shadow:var(--sh2);">
       <div style="position:absolute; left:0; top:0; bottom:0; width:6px; background:{{ribbonAccent}};"></div>
@@ -656,7 +662,7 @@
     <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(184px,1fr)); gap:14px;">
       <div onClick="{{openImgWarn}}" style="background:var(--surface); border:1px solid var(--border); border-radius:14px; box-shadow:var(--sh1); overflow:hidden; cursor:pointer;" style-hover="box-shadow:var(--sh2); border-color:var(--brand2)">
         <div style="aspect-ratio:1/1; background:var(--surface2); overflow:hidden;"><img src="{{imgWarnSrc}}" alt="충북 특보 발효현황" style="width:100%; height:100%; object-fit:cover; display:block;"></div>
-        <div style="padding:10px 13px;"><div style="font-size:12.5px; font-weight:800; color:var(--ink);">충북 특보 발효현황</div><div style="font-size:10.5px; color:var(--ink3); margin-top:2px;">기상청 · 클릭하면 충북 통보문 ↗</div></div>
+        <div style="padding:10px 13px;"><div style="font-size:12.5px; font-weight:800; color:var(--ink);">충북 특보 발효현황</div><div style="font-size:10.5px; color:var(--ink3); margin-top:2px;">기상청 · 확대 후 충북 통보문</div></div>
       </div>
       <div onClick="{{openImgRadar}}" style="background:var(--surface); border:1px solid var(--border); border-radius:14px; box-shadow:var(--sh1); overflow:hidden; cursor:pointer;" style-hover="box-shadow:var(--sh2); border-color:var(--brand2)">
         <div style="aspect-ratio:1/1; background:var(--surface2); overflow:hidden;"><img src="{{imgRadarSrc}}" alt="레이더 합성" style="width:100%; height:100%; object-fit:cover; display:block;"></div>
@@ -758,7 +764,7 @@ class Component extends DCLogic {
       wallStn: 0,
       wallPaused: false,
       demo: !!props.demo || !!_demoQ,
-      demoStage: (['normal','caution','warn','severe'].indexOf(_demoQ)>=0 ? _demoQ : 'severe'),
+      demoStage: (['normal','ready','caution','warn','severe'].indexOf(_demoQ)>=0 ? _demoQ : 'severe'),
       // 경보음 음소거 — localStorage에 저장해 새로고침·자동갱신·재시작 후에도 유지.
       //   (예전엔 false 고정이라, 껐다가도 화면이 새로 그려지면 경보가 되살아났다.)
       muted: (function(){ try{ return (typeof localStorage!=='undefined' && localStorage.getItem('ggMuted')==='1'); }catch(e){ return false; } })(),
@@ -952,9 +958,13 @@ class Component extends DCLogic {
         this._autoT=setTimeout(()=>{ this._autoT=null; try{ this.setState({autoApplied:null}); }catch(e){} }, 8000);
       } }).catch(()=>{}); }, 60000); }
   applyUpdate(){ if(this._pending){ window.DASHBOARD_DATA=this._pending; if(window.adaptDashboard) window.adaptDashboard(); this._pending=null; this.setState({pendingUpdate:null}); } }
-  weatherImgBody(){ var R=React.createElement, d=this.working(), ki=d.kmaImages||{}, self=this; var tabs=[{k:'radar',l:'📡 레이더'},{k:'satellite',l:'🛰️ 위성 (적외)'},{k:'warn',l:'🚨 충북 특보 발효현황'}]; var cur=this.state.wimgTab||'radar', info=ki[cur]||{}, IMGH='', file=IMGH+(info.file||('images/kma_'+cur+'.png'))+(info.ts?('?v='+encodeURIComponent(info.ts)):''); return R('div',{}, R('div',{style:{display:'flex',gap:'6px',flexWrap:'wrap',marginBottom:'12px'}}, tabs.map(function(t){ return R('button',{key:t.k,onClick:function(){ self.setState({wimgTab:t.k}); },style:{padding:'8px 13px',borderRadius:'9px',border:'1px solid '+(cur===t.k?'var(--brand)':'var(--border2)'),background:cur===t.k?'var(--brand)':'var(--surface2)',color:cur===t.k?'#fff':'var(--ink2)',fontSize:'12.5px',fontWeight:800,cursor:'pointer',fontFamily:'inherit'}}, t.l); })), R('img',{src:file,alt:cur,style:{width:'100%',borderRadius:'12px',display:'block',border:'1px solid var(--border)',background:'var(--surface2)',minHeight:'240px'}}), info.ts?R('div',{style:{fontSize:'11px',color:'var(--ink3)',marginTop:'8px',textAlign:'right'}}, '갱신 '+info.ts):null,
-    cur==='warn' ? (function(){ var bl=d.bulletins||{}, b0=(bl.warnings_full||[])[0], url=b0 ? self.bulletinInfo(b0, bl.stn).url : self.WRN_LIST_URL(bl.stn);
-      return R('a',{href:url,target:'_blank',rel:'noopener',style:{display:'flex',alignItems:'center',justifyContent:'center',marginTop:'10px',padding:'10px',borderRadius:'10px',border:'1px solid var(--border)',background:'var(--surface2)',color:'var(--brand)',fontSize:'12.5px',fontWeight:800,textDecoration:'none'}}, '🌐 충북 특보 통보문 원문 보기 ↗'); })() : null); }
+  weatherImgBody(){ var R=React.createElement, d=this.working(), ki=d.kmaImages||{}, self=this; var tabs=[{k:'radar',l:'📡 레이더'},{k:'satellite',l:'🛰️ 위성 (적외)'},{k:'warn',l:'🚨 충북 특보 발효현황'}]; var cur=this.state.wimgTab||'radar', info=ki[cur]||{}, IMGH='', file=IMGH+(info.file||('images/kma_'+cur+'.png'))+(info.ts?('?v='+encodeURIComponent(info.ts)):'');
+    // 특보 발효현황은 확대해 보여주고, 그림이나 아래 버튼을 누르면 날씨누리 충북 최신 통보문으로 간다
+    var bl=d.bulletins||{}, b0=(bl.warnings_full||[])[0], wrnUrl=b0 ? self.bulletinInfo(b0, bl.stn).url : self.WRN_LIST_URL(bl.stn);
+    var img=R('img',{src:file,alt:cur,style:{width:'100%',borderRadius:'12px',display:'block',border:'1px solid var(--border)',background:'var(--surface2)',minHeight:'240px'}});
+    return R('div',{}, R('div',{style:{display:'flex',gap:'6px',flexWrap:'wrap',marginBottom:'12px'}}, tabs.map(function(t){ return R('button',{key:t.k,onClick:function(){ self.setState({wimgTab:t.k}); },style:{padding:'8px 13px',borderRadius:'9px',border:'1px solid '+(cur===t.k?'var(--brand)':'var(--border2)'),background:cur===t.k?'var(--brand)':'var(--surface2)',color:cur===t.k?'#fff':'var(--ink2)',fontSize:'12.5px',fontWeight:800,cursor:'pointer',fontFamily:'inherit'}}, t.l); })), (cur==='warn' ? R('a',{href:wrnUrl,target:'_blank',rel:'noopener',title:'눌러서 날씨누리 충북 특보 통보문 보기',style:{display:'block',cursor:'pointer'}}, img) : img), info.ts?R('div',{style:{fontSize:'11px',color:'var(--ink3)',marginTop:'8px',textAlign:'right'}}, '갱신 '+info.ts):null,
+    cur==='warn' ? (function(){
+      return R('a',{href:wrnUrl,target:'_blank',rel:'noopener',style:{display:'flex',alignItems:'center',justifyContent:'center',marginTop:'10px',padding:'10px',borderRadius:'10px',border:'1px solid var(--border)',background:'var(--surface2)',color:'var(--brand)',fontSize:'12.5px',fontWeight:800,textDecoration:'none'}}, '🌐 충북 특보 통보문 원문 보기 ↗'); })() : null); }
   hourlyTableBody(fc){
     var R=React.createElement;
     if(!fc || !fc.length) return R('div',{style:{fontSize:'12px', color:'var(--ink3)', padding:'10px 4px'}}, '시간별 예보 데이터가 없습니다.');
@@ -1221,33 +1231,44 @@ class Component extends DCLogic {
     const c = JSON.parse(JSON.stringify(base));
     const stg = this.state.demoStage || 'severe';
     const bump=(needle,val,tr)=>{ const r=(c.rivers||[]).find(x=>x.name.includes(needle)); if(!r) return; const h=r.history||[]; const b0=h.length?h[0]:val*0.4; r.history=h.map((v,i)=>+(b0+(val-b0)*Math.pow(i/((h.length-1)||1),1.7)).toFixed(2)); r.value=val; r.delta1=tr; r.delta3=+(tr*2.4).toFixed(2); };
-    // 시연 단계(화면 아래 단계 버튼) — 평상 → 주의 → 경계 → 심각. 도움말 '관서 상황단계' 표와 같은 기준:
-    //   주의 = 폭염처럼 오래 가는 특보 / 경계 = 급성 재해(호우 등) 주의보 / 심각 = 급성 재해 경보(테두리 점멸·경보음)
+    // 시연 단계(화면 아래 단계 버튼) — 충북 재대본 '기상특보 단계별 비상근무체계'(stage.js) 그대로:
+    //   준비 = 호우 예비특보 3개 시·군 / 1단계 주의 = 호우주의보 3개 시·군 / 2단계 경계 = 호우경보 3개 시·군 /
+    //   3단계 심각 = 광역적 호우경보(7개 시·군) — 화면 가장자리 점멸·경보음
     //   실제 데이터의 특보·문자·홍수예보는 지우고 단계에 맞는 가상 상황만 남긴다(섞이면 단계가 안 보인다).
-    c.prelim=[]; c.flood=[];
+    c.prelim=[]; c.flood=[]; c.typhoon=[];
+    const rainy=(names, lv, tag, r1, r3)=>{ const S=new Set(names); (c.stations||[]).forEach(s=>{ if(S.has(s.name)){ s.level=lv; s.weather='비'; s.icon='🌧'; s.rain=Math.max(s.rain||0,r1); s.cum3h=Math.max(s.cum3h||0,r3); s.tag=tag; } }); };
     if(stg==='normal'){ c.warnings=[]; c.messages=[]; return c; }
-    if(stg==='caution'){
-      c.warnings=[{type:'폭염주의보', area:'청주동부, 청주서부, 충주, 옥천, 영동', level:'warning', time:'11:00'}];
-      c.messages=[{sender:'충청북도', time:'11:30', text:'[충청북도] 폭염주의보 발효. 낮 시간 야외활동을 자제하고 물을 자주 드시기 바랍니다.', region:'충청북도'}];
+    if(stg==='ready'){
+      c.warnings=[];
+      c.prelim=[{type:'호우 예비특보', total:3, north:3, items:['청주','증평','진천'].map(a=>({time:'오늘 밤(18시~24시)', area:a+' (충청북도)', north:true}))}];
+      c.messages=[];
       return c;
     }
-    if(stg==='warn'){
-      c.warnings=[{type:'호우주의보', area:'청주동부, 청주서부, 증평', level:'warning', time:'15:08'}];
-      const wn=new Set(['청주동부','청주서부','증평']);
-      (c.stations||[]).forEach(s=>{ if(wn.has(s.name)){ s.level='warning'; s.weather='비'; s.icon='🌧'; s.rain=Math.max(s.rain,15); s.cum3h=Math.max(s.cum3h,29); s.tag='호우주의보'; } });
+    if(stg==='caution'){
+      c.warnings=[{type:'호우주의보', area:'청주동부, 청주서부, 증평, 진천', level:'warning', time:'15:08'}];
+      rainy(['청주동부','청주서부','증평','진천'],'warning','호우주의보',15,29);
       bump('팔결교',4.6,0.21); bump('석남천',2.6,0.15);
       c.messages=[{sender:'청주시', time:'15:12', text:'[청주시] 호우주의보 발효. 하천변·지하차도 이용을 자제하고 저지대 주민은 기상정보에 유의하시기 바랍니다.', region:'청주동부'}];
       return c;
     }
-    // 심각 — 충북 호우: 청주(동부·서부) 호우경보, 증평·진천·괴산 호우주의보.
+    if(stg==='warn'){
+      c.warnings=[{type:'호우경보', area:'청주동부, 청주서부, 증평, 진천', level:'severe', time:'15:42'},
+                  {type:'호우주의보', area:'괴산, 음성', level:'warning', time:'15:08'}];
+      rainy(['청주동부','청주서부','증평','진천'],'danger','호우경보',34,66); rainy(['괴산','음성'],'warning','호우주의보',15,29);
+      bump('팔결교',5.4,0.32); bump('미호강교',6.1,0.28); bump('석남천',2.9,0.2);
+      c.messages=[{sender:'청주시', time:'15:44', text:'[청주시] 호우경보 발효. 하천변·지하차도 통행을 금지하고 저지대 주민은 안전한 곳으로 이동하시기 바랍니다.', region:'청주동부'},
+                  {sender:'충청북도', time:'15:05', text:'[충청북도] 호우경보 발효. 차량 침수에 주의하고 지하차도·급경사지 통행을 자제해 주세요.', region:'충청북도'}];
+      return c;
+    }
+    // 3단계 심각 — 광역적 호우경보: 청주(동부·서부)·증평·진천·괴산·음성·충주 7개 시·군 경보, 강풍주의보 도 전역.
     //   특보 지역은 서버가 펼친 모양 그대로 관서명으로 쓴다(기상청 '청주' → 청주동부·청주서부).
     c.warnings = [
-      {type:'호우경보', area:'청주동부, 청주서부', level:'severe', time:'15:42'},
-      {type:'호우주의보', area:'증평, 진천, 괴산', level:'warning', time:'15:08'},
+      {type:'호우경보', area:'청주동부, 청주서부, 증평, 진천, 괴산, 음성, 충주', level:'severe', time:'15:42'},
+      {type:'호우주의보', area:'보은, 옥천', level:'warning', time:'15:08'},
       {type:'강풍주의보', area:'충청북도 전역', level:'warning', time:'14:30'}
     ];
     // 관서명으로 고른다 — 청주서부는 sigun 이 '청주동부'(예보 자료를 함께 쓴다)라 sigun 으로 고르면 안 된다
-    const dg=new Set(['청주동부','청주서부']), wn=new Set(['증평','진천','괴산']);
+    const dg=new Set(['청주동부','청주서부','증평','진천','괴산','음성','충주']), wn=new Set(['보은','옥천']);
     (c.stations||[]).forEach(s=>{
       if(dg.has(s.name)){ s.level='danger'; s.weather='비'; s.icon='🌧'; s.rain=Math.max(s.rain,34); s.cum3h=Math.max(s.cum3h,66); s.tag='호우경보'; }
       else if(wn.has(s.name)){ s.level='warning'; s.weather='비'; s.icon='🌧'; s.rain=Math.max(s.rain,15); s.cum3h=Math.max(s.cum3h,29); s.tag='호우주의보'; }
@@ -1524,13 +1545,15 @@ class Component extends DCLogic {
         })) : null);
     }));
   }
-  overall(rivers, warns, prelimNorth){
-    const anyD = rivers.some(r=>r.lv==='danger') || warns.some(w=>w.level==='severe');
-    const anyW = rivers.some(r=>r.lv==='warning') || warns.some(w=>w.level==='warning');
-    if(anyD) return {label:'경계', accent:'var(--severe)', bg:'var(--severeSoft)', border:'var(--severe)', pulse:true, head:'즉시 대응 필요'};
-    if(anyW) return {label:'주의', accent:'var(--warn)', bg:'var(--warnSoft)', border:'var(--warn)', pulse:true, head:'상황 예의주시'};
-    if(warns.length || prelimNorth) return {label:'관찰', accent:'var(--caution)', bg:'var(--cautionSoft)', border:'var(--caution)', pulse:false, head:'예비 단계'};
-    return {label:'정상', accent:'var(--safe)', bg:'var(--safeSoft)', border:'var(--border)', pulse:false, head:'전 지역 안정'};
+  /* 종합 단계 = 충청북도 재난안전대책본부 '기상특보 단계별 비상근무체계'(stage.js). 2026-10-30부터.
+     예전엔 하천 수위·모든 특보로 정상/관찰/주의/경계를 정했다. 하천은 단계에서 빠지고 하천 카드·경보음으로 본다. */
+  stageStatus(d){
+    const g=(typeof window!=='undefined' && window.cbStage) ? window.cbStage(d.warnings, d.prelim, d.typhoon) : {rank:0, name:'평상', step:'', color:'safe', reason:'', blink:false};
+    const C={safe:'var(--safe)', brand:'var(--brand)', caution:'var(--caution)', warn:'var(--warn)', severe:'var(--severe)'};
+    const SF={safe:'var(--safeSoft)', brand:'var(--brandSoft)', caution:'var(--cautionSoft)', warn:'var(--warnSoft)', severe:'var(--severeSoft)'};
+    return { rank:g.rank, label:g.name, step:g.step, reason:g.reason, blink:g.blink, col:C[g.color],
+      accent:C[g.color], bg:SF[g.color], border:g.rank?C[g.color]:'var(--border)', pulse:g.rank>=2,
+      head: g.rank ? ('충북 재대본 '+g.step) : '재대본 비상단계 해당 없음' };
   }
 
   warnBadge(w){
@@ -1615,8 +1638,7 @@ class Component extends DCLogic {
     const pm=(d.pm||[]).slice().sort((a,b)=>(b.pm10||0)-(a.pm10||0));
     const fire=(d.fire||[]).slice().sort((a,b)=>(b.level||0)-(a.level||0));
     const typ=(d.typhoon||[])[0];
-    const status = (riskRivers.some(r=>r.lv==='danger')||sevWarns.length) ? {label:'경보',col:'var(--severe)'}
-                 : (riskRivers.length||grouped.length) ? {label:'주의',col:'var(--warn)'} : {label:'평상',col:'var(--safe)'};
+    const status = this.stageStatus(d);   // 종합상황 = 충북 재대본 비상단계
 
     // 관서별 최고 특보 (groupWarns가 이미 시군명으로 정규화)
     const regWarn={};
@@ -1644,7 +1666,7 @@ class Component extends DCLogic {
           R('span',{style:{fontSize:'13px', color:'var(--ink3)'}}, dateStr))),
       R('div',{style:{flex:1, display:'flex', gap:'10px', minWidth:0}}, kpis),
       R('div',{className:'wallBeacon', style:{minWidth:'138px', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', background:status.col, borderRadius:'14px', padding:'6px 16px'}},
-        R('div',{style:{fontSize:'12px', color:'rgba(255,255,255,.9)', fontWeight:700}}, '종합상황'),
+        R('div',{style:{fontSize:'12px', color:'rgba(255,255,255,.9)', fontWeight:700}}, status.rank?('재대본 '+status.step):'재대본 비상단계'),
         R('div',{style:{fontSize:'clamp(24px,2.6vw,42px)', fontWeight:800, color:'#fff', lineHeight:1.05}}, status.label),
         R('div',{style:{fontSize:'10.5px', color:'rgba(255,255,255,.85)', marginTop:'1px', fontVariantNumeric:'tabular-nums'}}, String(d.updated||'').replace(/^\d{4}-/,'').replace(/:\d\d$/,''))));
 
@@ -1806,8 +1828,8 @@ class Component extends DCLogic {
     const fire=(d.fire||[]).find(z=>String(z.region||'').includes(sg));
     const risks=this.getRisks().filter(z=>z.region===f);
     const fc=(s.forecast&&s.forecast.length)?s.forecast:(d.forecast||[]);
-    const acute = myWarns.some(g=>/호우|홍수|태풍|강풍|풍랑|해일|대설/.test(g.type)&&(g.level==='severe'||String(g.type).includes('경보'))) || near.some(r=>r.lv==='danger');
-    const stage = acute?{t:'경보',c:C.severe,soft:CSFT.severe}:(myWarns.some(g=>g.level==='severe'||String(g.type).includes('경보'))?{t:'경계',c:C.severe,soft:CSFT.severe}:myWarns.length?{t:'주의',c:C.warn,soft:CSFT.warn}:{t:'정상',c:C.safe,soft:CSFT.safe});
+    // 상황단계 = 충북 재대본 비상단계(도 전체, stage.js) — 관서 특보는 아래 '기상특보' 카드에서 본다
+    const _sg=this.stageStatus(d), stage={t:_sg.label, c:_sg.col, soft:_sg.bg, step:_sg.step, reason:_sg.reason, blink:_sg.blink};
     const warnSummary = myWarns.length? (myWarns.map(g=>g.type).join(' · ')+' 발효') : '발효 중인 특보 없음';
     const sunR=this.sunRiseSet(now, 37.9, 127.0, 9, 'rise'), sunS=this.sunRiseSet(now, 37.9, 127.0, 9, 'set');
 
@@ -1830,7 +1852,7 @@ class Component extends DCLogic {
       : (feels!=null && feels<10)
       ? {icon:'🥶', title:'한파 주의', sub:'체감 '+num(feels,1)+'° · 보온·빙판길·저체온 유의',
          st: feels<=-25?mk('경고','severe'):feels<=-10?mk('주의','warn'):feels<=0?mk('관심','caution'):mk('쌀쌀','brand')}
-      : {icon:'🌤️', title:'일교차·건강', sub:(tRange!=null?('최고 '+num(s.tmax,0)+'° · 최저 '+num(s.tmin,0)+'° (일교차 '+num(tRange,0)+'°)'):('체감 '+num(feels,1)+'°'))+(tRange!=null&&tRange>=10?' · 환절기 건강 유의':''),
+      : {icon:'🌤️', title:'일교차', sub:(tRange!=null?('최고 '+num(s.tmax,0)+'° · 최저 '+num(s.tmin,0)+'° (일교차 '+num(tRange,0)+'°)'):('체감 '+num(feels,1)+'°')),
          st: (tRange!=null && tRange>=10)?mk('일교차 큼','caution'):mk('쾌적','safe')};
     const floodJ = (rn60>=30||worstPct>=0.8||near.some(r=>r.lv==='danger'))?mk('경계','severe'):(rn60>=10||worstPct>=0.5)?mk('주의','caution'):mk('평시','safe');
     const judges=[
@@ -1869,10 +1891,10 @@ class Component extends DCLogic {
           R('div',{style:{fontSize:'13px', fontWeight:800, color:'var(--severe)'}}, '● LIVE'),
           R('div',{style:{fontSize:'12px', color:'var(--ink3)', marginTop:'2px', fontVariantNumeric:'tabular-nums'}}, clock.slice(0,5)))),
       // 3) 상황단계 카드 (테두리 박스)
-      R('div',{className:(acute?'wallBeacon':''), style:{border:'2px solid '+stage.c, background:stage.soft, borderRadius:'16px', padding:'8px 20px', display:'flex', flexDirection:'column', justifyContent:'center', textAlign:'center', minWidth:'118px'}},
-        R('div',{style:{fontSize:'12px', color:'var(--ink3)', fontWeight:700}}, '관서 상황단계'),
+      R('div',{className:(stage.blink?'wallBeacon':''), style:{border:'2px solid '+stage.c, background:stage.soft, borderRadius:'16px', padding:'8px 20px', display:'flex', flexDirection:'column', justifyContent:'center', textAlign:'center', minWidth:'118px'}},
+        R('div',{style:{fontSize:'12px', color:'var(--ink3)', fontWeight:700}}, stage.step?('재대본 '+stage.step):'재대본 비상단계'),
         R('div',{style:{fontSize:'clamp(22px,2.3vw,38px)', fontWeight:800, color:stage.c, lineHeight:1.05}}, stage.t),
-        R('div',{style:{fontSize:'11px', color:'var(--ink3)', marginTop:'2px', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', maxWidth:'240px'}}, warnSummary)),
+        R('div',{style:{fontSize:'11px', color:'var(--ink3)', marginTop:'2px', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', maxWidth:'240px'}}, (stage.step?stage.reason:warnSummary))),
       // 4) 시계 + 컨트롤 카드
       R('div',{style:Object.assign({}, cbx, {display:'flex', alignItems:'center', gap:'14px', padding:'10px 18px'})},
         R('div',null,
@@ -2020,8 +2042,9 @@ class Component extends DCLogic {
     const _prelimMine = it => it.north && (isWide || _hitsMe(String(it.area||'').split('(')[0]));
     const myPrelimCount = isWide ? prelimNorth : prelim.reduce((a,p)=>a+(p.items||[]).filter(_prelimMine).length,0);
     // status
-    const status = this.overall(rivers, rawWarns, prelimNorth);
-    this._danger = (status.label==='경계');
+    const status = this.stageStatus(d);
+    // 경보음 — 3단계(심각) 또는 하천 경계수위(단계와 별개로 즉시 알린다)
+    this._danger = status.rank>=4 || rivers.some(r=>r.lv==='danger');
     // 홍수예보 발령
     const flood = (d.flood||[]); const floodNorth = flood.filter(f=>f.north); const floodHit = floodNorth[0]||flood[0];
     // stations
@@ -2068,7 +2091,6 @@ class Component extends DCLogic {
     const bulletins=(_bul.warnings_full||[]).slice(0,5).map(b=>{ const x=this.bulletinInfo(b,_wstn);
       return { ...x, head:(x.no?x.no+' · ':'')+x.issued+' 발표', dot:x.lift?'var(--ink3)':'var(--severe)',
         open:()=>this.setState({modal:{kind:'bulletin', b:x}}) }; });
-    const wrnReportUrl=bulletins.length ? bulletins[0].url : this.WRN_LIST_URL(_wstn);
     const wxInfoItems=this.wxInfoList(d);
     const images=[{src:'assets/kma_warn.png',title:'충북 특보 발효현황',sub:'기상청'},{src:'assets/kma_radar.png',title:'레이더 합성',sub:'강수 분포'},{src:'assets/kma_satellite.png',title:'천리안 위성 (적외)',sub:'GK2A'},{src:'assets/kma_qpf.png',title:'초단기 강수예측',sub:'기상청'}].map(im=>({ ...im, open:()=>this.setState({modal:{kind:'image', key:im.src, title:im.title}}) }));
     // kpi/ribbon chips
@@ -2134,9 +2156,10 @@ class Component extends DCLogic {
       rootRef:this.rootRef, mapRef:this.mapRef, theme:st.theme, demo:st.demo,
       // 상황실(벽면) 모드 — 위험 시 wallAlarm 클래스로 경보색 전환(애니는 스타일시트)
       wall:st.wall, notWall:!st.wall,
-      wallCls:(function(){ var A=/호우|홍수|태풍|강풍|풍랑|해일|대설/;
-        var sev = riversByRisk.some(function(r){return r.lv==='danger';}) || rawWarns.some(function(w){return A.test(String(w.type||''))&&(w.level==='severe'||String(w.type||'').indexOf('경보')>=0);}) || (flood||[]).some(function(f){return f.north;});
-        var wrn = riversByRisk.some(function(r){return r.lv==='warning';}) || rawWarns.some(function(w){return A.test(String(w.type||''));});
+      wallCls:(function(){
+        // 테두리 점멸 = 재대본 3단계(심각) · 하천 경계수위 · 홍수예보 / 고정 테두리 = 2단계(경계) · 하천 주의수위
+        var sev = status.rank>=4 || riversByRisk.some(function(r){return r.lv==='danger';}) || (flood||[]).some(function(f){return f.north;});
+        var wrn = status.rank>=3 || riversByRisk.some(function(r){return r.lv==='warning';});
         return 'wallRoot'+(sev?' wallAlarm-severe':(wrn?' wallAlarm-warn':'')); })(),
       wallBody: st.wall ? this.wallBody(d) : null,
       MAPW:this.MAPW, MAPH:this.MAPH, HW:this.HW, HH:this.HH,
@@ -2157,14 +2180,14 @@ class Component extends DCLogic {
       muteLabel: st.muted?'🔕':'🔔',
       muteTitle: st.muted?'경보음 꺼짐 — 누르면 켜짐':'경보음 켜짐 — 누르면 꺼짐',
       demoBtnLabel: st.demo?'■':'▶',
-      demoStages: [['normal','평상','특보 없음','var(--safe)'],['caution','폭염주의보','오래 가는 특보 — 관서 상황단계 주의','var(--caution)'],['warn','호우주의보','급성 재해 주의보 — 관서 상황단계 경계','var(--warn)'],['severe','호우경보','급성 재해 경보 — 관서 상황단계 심각 · 상황실 테두리 점멸 · 경보음','var(--severe)']].map(([k,l,t,col])=>{ const on=(st.demoStage||'severe')===k;
+      demoStages: [['normal','평상','특보 없음','var(--safe)'],['ready','준비','호우 예비특보 3개 시·군 — 재대본 준비 단계','var(--brand)'],['caution','1단계','호우주의보 3개 시·군 — 재대본 비상 1단계(주의)','var(--caution)'],['warn','2단계','호우경보 3개 시·군 — 재대본 비상 2단계(경계)','var(--warn)'],['severe','3단계','광역적 호우경보 — 재대본 비상 3단계(심각) · 화면 가장자리 점멸 · 경보음','var(--severe)']].map(([k,l,t,col])=>{ const on=(st.demoStage||'severe')===k;
         return { label:l, title:t, pick:()=>this.setState({demoStage:k}, ()=>this.fitMap()),
           style:'height:30px; min-width:52px; padding:0 12px; border-radius:9px; border:1.5px solid '+col+'; background:'+(on?col:'var(--surface)')+'; color:'+(on?'#fff':'var(--ink)')+'; font-size:12.5px; font-weight:800; font-family:inherit; cursor:pointer;' }; }),
       demoTitle: st.demo?'시연 종료':'시연 모드 — 가상 호우 상황으로 화면 동작 보기',
       demoBtnStyle: 'width:34px; height:34px; padding:0; border-radius:10px; border:1px solid '+(st.demo?'var(--severe)':'var(--border)')+'; background:'+(st.demo?'var(--severe)':'var(--surface2)')+'; color:'+(st.demo?'#fff':'var(--ink2)')+'; font-size:13px; line-height:1; font-family:inherit; cursor:pointer; display:inline-flex; align-items:center; justify-content:center;',
       hoBtnCls,
       // ribbon
-      statusLabel:status.label, statusHead:status.head,
+      statusLabel:status.label, statusHead:status.head, pageBlink:!!status.blink && !st.wall,
       statusSub: this.statusSub(status, groupedWarns, rivers, prelimNorth),
       // 내 관서 한 줄 — 기온·하늘 / 1시간 강수(AWS) / 6시간 최대 예측 / 관할 특보 / 관할 하천
       mineItems:(function(self){
@@ -2247,7 +2270,7 @@ class Component extends DCLogic {
       focusBaseBtnStyle:this._fbtn((st.focusBasemap||'Base')==='Base'),
       focusHybridBtnStyle:this._fbtn((st.focusBasemap||'Base')==='Hybrid'),
       // 특보 발효도는 확대 대신 날씨누리 충북 최신 통보문으로 바로 간다(부서에서 통보문 자료를 쓴다)
-      openImgWarn:()=>{ window.open(wrnReportUrl, '_blank', 'noopener'); },
+      openImgWarn:()=>this.setState({wimgTab:'warn', modal:{kind:'weatherimg'}}),   // 확대 창 → 그림·버튼을 누르면 충북 통보문
       bulletins, hasBulletin:bulletins.length>0, wrnListUrl:this.WRN_LIST_URL(_wstn),
       wxInfoItems, wxInfoCount:wxInfoItems.length, hasWxInfo:wxInfoItems.length>0, noWxInfo:!wxInfoItems.length,
       wxInfoListUrl:'https://www.weather.go.kr/w/special-report/list.do?stn='+_wstn+'&kind='+((wxInfoItems[0]||{}).kind||'inf'),
@@ -2373,10 +2396,11 @@ class Component extends DCLogic {
 
   statusSub(status, warns, rivers, prelimNorth){
     const parts=[];
+    if(status && status.rank) parts.push(status.reason);
     if(warns.length){ parts.push('발효 특보 '+warns.length+'건'); } else { parts.push('발효 특보 없음'); }
     const dR=rivers.filter(r=>r.lv==='danger').length, wR=rivers.filter(r=>r.lv==='warning').length;
     if(dR) parts.push('하천 '+dR+'곳 위험 수위'); else if(wR) parts.push('하천 '+wR+'곳 주의 수위'); else parts.push('하천 전 지점 안전');
-    if(prelimNorth) parts.push('북부 예비특보 '+prelimNorth+'건');
+    if(prelimNorth) parts.push('예비특보 '+prelimNorth+'건');
     return parts.join(' · ');
   }
 
