@@ -64,27 +64,54 @@
     });
     var tyInfo = (typhoon || []).some(function (x) { return x && (x.near_kr || ['1', '2', '3'].indexOf(String(x.eff)) >= 0); });
 
-    var best = { rank: 0, reason: '' };
-    function up(rank, reason) { if (rank > best.rank) best = { rank: rank, reason: reason }; }
+    // 한 줄 기준(short) — 화면에 '주의 · 호우 주의보 3개 시·군'처럼 단계 이름 옆에 붙인다
+    var kinds = {}; (warnings || []).concat((prelim || [])).forEach(function (w) { var m = String(w.type || '').match(/호우|대설/); if (m) kinds[m[0]] = 1; });
+    var rsName = Object.keys(kinds).join('·') || '호우';
+    var best = { rank: 0, reason: '', short: '' };
+    function up(rank, reason, short) { if (rank > best.rank) best = { rank: rank, reason: reason, short: short }; }
     // 대설·호우
-    var nW = count(rsW), nA = count(rsA), nP = count(rsP);
-    if (rsWide || nW >= WIDE_N) up(4, '광역적 경보 · 경보 ' + nW + '개 시·군(' + names(rsW) + ')');
-    else if (nW >= 3) up(3, '경보 ' + nW + '개 시·군(' + names(rsW) + ')');
-    else if (nW >= 1) up(2, '경보 ' + nW + '개 시·군(' + names(rsW) + ')');
-    if (nA >= 3) up(2, '주의보 이상 ' + nA + '개 시·군(' + names(rsA) + ')');
-    else if (nA >= 1) up(1, '주의보 ' + nA + '개 시·군(' + names(rsA) + ')');
-    if (nP >= 3) up(1, '예비특보 ' + nP + '개 시·군(' + names(rsP) + ')');
+    var nW = count(rsW), nA = count(rsA), nP = count(rsP), nAo = nA - nW;
+    var rsShort = rsName + ' ' + [nW ? '경보 ' + nW + '개' : '', nAo > 0 ? '주의보 ' + nAo + '개' : ''].filter(Boolean).join(' · ') + ' 시·군';
+    if (rsWide || nW >= WIDE_N) up(4, '광역적 경보 · 경보 ' + nW + '개 시·군(' + names(rsW) + ')', rsShort);
+    else if (nW >= 3) up(3, '경보 ' + nW + '개 시·군(' + names(rsW) + ')', rsShort);
+    else if (nW >= 1) up(2, '경보 ' + nW + '개 시·군(' + names(rsW) + ')', rsShort);
+    if (nA >= 3) up(2, '주의보 이상 ' + nA + '개 시·군(' + names(rsA) + ')', rsShort);
+    else if (nA >= 1) up(1, '주의보 ' + nA + '개 시·군(' + names(rsA) + ')', rsShort);
+    if (nP >= 3) up(1, '예비특보 ' + nP + '개 시·군(' + names(rsP) + ')', rsName + ' 예비특보 ' + nP + '개 시·군');
     // 태풍
     var tW = count(tyW), tA = count(tyA);
-    if (tyWide || tW >= WIDE_N) up(4, '태풍 광역적 경보 · ' + tW + '개 시·군');
-    else if (tA >= 1) up(3, '태풍 ' + (tW ? '경보' : '주의보') + ' ' + tA + '개 시·군(' + names(tyA) + ')');
-    if (count(tyP) >= 1) up(2, '태풍 예비특보 ' + count(tyP) + '개 시·군');
-    if (tyInfo) up(1, '태풍정보 발표(한반도 영향)');
+    var tyShort = '태풍 ' + [tW ? '경보 ' + tW + '개' : '', (tA - tW) > 0 ? '주의보 ' + (tA - tW) + '개' : ''].filter(Boolean).join(' · ') + ' 시·군';
+    if (tyWide || tW >= WIDE_N) up(4, '태풍 광역적 경보 · ' + tW + '개 시·군', tyShort);
+    else if (tA >= 1) up(3, '태풍 ' + (tW ? '경보' : '주의보') + ' ' + tA + '개 시·군(' + names(tyA) + ')', tyShort);
+    if (count(tyP) >= 1) up(2, '태풍 예비특보 ' + count(tyP) + '개 시·군', '태풍 예비특보');
+    if (tyInfo) up(1, '태풍정보 발표(한반도 영향)', '태풍정보 발표');
 
     var s = STAGES[best.rank];
     var hazard = /태풍/.test(best.reason) ? '태풍' : (best.rank ? '대설·호우' : '');
     return { rank: s.rank, key: s.key, name: s.name, step: s.step, color: s.color, hazard: hazard,
-             reason: best.rank ? (hazard === '태풍' ? best.reason : '대설·호우 ' + best.reason) : '대설·호우·태풍 특보 없음', blink: s.rank >= 4 };
+             big: ['평상', '준비', '1단계', '2단계', '3단계'][s.rank],          // 크게 쓰는 글자
+             short: best.rank ? best.short : '발효 특보 없음',                 // 단계 이름 옆 한 줄 기준
+             reason: best.rank ? (hazard === '태풍' ? best.reason : '대설·호우 ' + best.reason) : '발효 특보 없음', blink: s.rank >= 4 };
   };
   window.cbStage.STAGES = STAGES;
+
+  /* ❄️ 대설·결빙 카드 판정 — 눈이 오거나 올 때 '침수·수난 출동' 자리에 대신 띄운다(지도·상황실 공통, 2026-10-30).
+     warnTypes: 그 관서 특보 종류들 · hourly: 단기예보 시간별 [{snow(cm), weather}] · fcst6: 초단기예보 [{pty_txt|pty}]
+     단계: 대설경보 또는 24시간 예상 적설 20cm↑ = 경계 · 대설주의보 또는 5cm↑ = 주의 · 눈 예보만 = 관심
+     (5·20cm 는 대설주의보·경보 기준). 눈 기미가 없으면 null → 침수·수난 카드를 그대로 쓴다. */
+  window.cbSnow = function (warnTypes, hourly, fcst6) {
+    var T = (warnTypes || []).join(' '), hw = (hourly || []).slice(0, 24);
+    var sum = hw.reduce(function (a, h) { var v = +(h && h.snow); return a + (isNaN(v) ? 0 : v); }, 0);
+    var SN = /눈|진눈깨비/;
+    var snowy = /대설/.test(T) || sum > 0 || hw.some(function (h) { return h && SN.test(String(h.weather || '')); })
+              || (fcst6 || []).some(function (f) { return f && SN.test(String(f.pty_txt || f.pty || '')); });
+    if (!snowy) return null;
+    var k, lv;
+    if (/대설경보/.test(T) || sum >= 20) { k = 2; lv = '경계'; }
+    else if (/대설주의보/.test(T) || sum >= 5) { k = 1; lv = '주의'; }
+    else { k = 1; lv = '관심'; }
+    var w = /대설경보/.test(T) ? '대설경보 발효 · ' : (/대설주의보/.test(T) ? '대설주의보 발효 · ' : '');
+    var amt = sum > 0 ? ('24시간 예상 적설 ' + (sum < 1 ? '1cm 미만' : (Math.round(sum * 10) / 10) + 'cm')) : '눈 예보';
+    return { k: k, level: lv, note: w + amt + ' · 제설·빙판·고립 유의' };
+  };
 })();

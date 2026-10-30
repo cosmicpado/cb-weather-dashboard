@@ -1335,8 +1335,6 @@ https://scripts.sil.org/OFL
   <a href="도움말.html" title="사용설명서 — 화면 보는 법과 색·기호, 자동 판단 기준" style="position:absolute;left:98px;top:8px;z-index:20;opacity:.22;padding:6px 11px;border-radius:9px;border:1px solid var(--line,#28313f);background:var(--panel,#151b26);color:var(--fg,#f2f5fa);font-size:calc(12px*var(--fz,1));font-weight:520;text-decoration:none;white-space:nowrap;" class="wall-ov" style-hover="opacity:1;border-color:var(--acc,#ff7a2f)">❓ 설명서</a>
   <div ref="{{ stageRef }}" style="width:3840px;height:2160px;flex:none;transform-origin:center center;padding:56px;display:flex;flex-direction:column;gap:28px;color:var(--fg,#f2f5fa);background:var(--bg,#0d1118);position:relative;">
 
-    <div style="position:absolute;inset:0;pointer-events:none;border-radius:0;animation:alertGlow 2.4s ease-in-out infinite;opacity:var(--alertOn,0);"></div>
-
     <!-- ===== TOP BAR ===== -->
     <div style="{{ topBarStyle }}">
 
@@ -1355,21 +1353,19 @@ https://scripts.sil.org/OFL
         </div>
       </div>
 
-      <div style="display:flex;align-items:center;gap:36px;background:var(--panel,#151b26);border:2px solid var(--line,#28313f);border-radius:24px;padding:0 36px;min-width:0;">
-        <div style="font-size:calc(92px*var(--fz,1));line-height:1;flex:none;">{{ icon }}</div>
-        <div style="display:flex;flex-direction:column;gap:6px;min-width:0;">
+      <div style="display:flex;align-items:center;gap:26px;background:var(--panel,#151b26);border:2px solid var(--line,#28313f);border-radius:24px;padding:0 30px;min-width:0;overflow:hidden;">
+        <div style="font-size:calc(80px*var(--fz,1));line-height:1;flex:none;">{{ icon }}</div>
+        <div style="display:flex;flex-direction:column;gap:8px;min-width:0;">
           <div style="display:flex;align-items:baseline;gap:8px;">
-            <div style="font-size:calc(140px*var(--fz,1));font-weight:660;line-height:.9;letter-spacing:-.04em;font-variant-numeric:tabular-nums;">{{ temp }}</div>
-            <div style="font-size:calc(66px*var(--fz,1));font-weight:520;color:var(--dim,#8e9bb0);line-height:1;">°C</div>
+            <div style="font-size:calc(118px*var(--fz,1));font-weight:660;line-height:.9;letter-spacing:-.04em;font-variant-numeric:tabular-nums;">{{ temp }}</div>
+            <div style="font-size:calc(54px*var(--fz,1));font-weight:520;color:var(--dim,#8e9bb0);line-height:1;">°C</div>
           </div>
-          <div style="font-size:calc(44px*var(--fz,1));font-weight:520;color:var(--dim,#8e9bb0);white-space:nowrap;">{{ skyText }} · 체감 {{ feels }}°</div>
-        </div>
-        <div style="margin-left:auto;display:flex;flex-direction:column;gap:12px;align-items:flex-end;flex:none;">
-          <div style="display:flex;align-items:center;gap:14px;">
-            <div style="width:20px;height:20px;border-radius:50%;background:#ff3b3b;animation:livePulse 1.6s ease-in-out infinite;"></div>
-            <div style="font-size:calc(34px*var(--fz,1));font-weight:660;letter-spacing:.16em;">LIVE</div>
+          <div style="font-size:calc(36px*var(--fz,1));font-weight:520;color:var(--dim,#8e9bb0);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ skyText }} · 체감 {{ feels }}°</div>
+          <div style="display:flex;align-items:center;gap:12px;white-space:nowrap;">
+            <div style="width:16px;height:16px;border-radius:50%;background:#ff3b3b;animation:livePulse 1.6s ease-in-out infinite;flex:none;"></div>
+            <div style="font-size:calc(26px*var(--fz,1));font-weight:660;letter-spacing:.14em;">LIVE</div>
+            <div style="font-size:calc(26px*var(--fz,1));color:var(--dim,#8e9bb0);font-weight:500;">{{ updatedLabel }}</div>
           </div>
-          <div style="font-size:calc(30px*var(--fz,1));color:var(--dim,#8e9bb0);font-weight:500;white-space:nowrap;">{{ updatedLabel }}</div>
         </div>
       </div>
 
@@ -1400,10 +1396,18 @@ https://scripts.sil.org/OFL
       </div>
       </sc-if>
 
-      <div style="width:460px;border-radius:24px;padding:24px 32px;display:flex;flex-direction:column;justify-content:center;gap:6px;background:{{ levelBg }};border:3px solid {{ levelBorder }};">
-        <div style="font-size:calc(34px*var(--fz,1));font-weight:570;letter-spacing:.06em;color:{{ levelSub }};">재대본 비상단계</div>
-        <div style="font-size:calc(118px*var(--fz,1));font-weight:660;line-height:1;color:{{ levelFg }};letter-spacing:-.02em;">{{ levelName }}</div>
-        <div style="font-size:calc(32px*var(--fz,1));font-weight:520;color:{{ levelSub }};">{{ levelReason }}</div>
+      <!-- 단계 카드 — 왼쪽: 충북 재대본 비상단계(도 전체, 관서 순환과 무관하게 같은 값) · 오른쪽: 지금 관서의 상황단계 -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;min-width:0;max-width:1500px;">
+        <div style="border-radius:24px;padding:20px 30px;display:flex;flex-direction:column;justify-content:center;gap:8px;background:{{ dobBg }};border:3px solid {{ dobColor }};min-width:0;">
+          <div style="font-size:calc(32px*var(--fz,1));font-weight:570;letter-spacing:.06em;color:var(--dim,#8e9bb0);white-space:nowrap;">충북 재대본 비상단계</div>
+          <div style="font-size:calc(104px*var(--fz,1));font-weight:660;line-height:1;color:{{ dobColor }};letter-spacing:-.02em;white-space:nowrap;">{{ dobBig }}</div>
+          <div style="font-size:calc(30px*var(--fz,1));font-weight:520;color:var(--fg,#f2f5fa);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ dobLine }}</div>
+        </div>
+        <div style="border-radius:24px;padding:20px 30px;display:flex;flex-direction:column;justify-content:center;gap:8px;background:{{ levelBg }};border:3px solid {{ levelBorder }};min-width:0;">
+          <div style="font-size:calc(32px*var(--fz,1));font-weight:570;letter-spacing:.06em;color:{{ levelSub }};white-space:nowrap;">{{ stationName }} 관서 상황단계</div>
+          <div style="font-size:calc(104px*var(--fz,1));font-weight:660;line-height:1;color:{{ levelFg }};letter-spacing:-.02em;white-space:nowrap;">{{ levelName }}</div>
+          <div style="font-size:calc(30px*var(--fz,1));font-weight:520;color:{{ levelSub }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ levelReason }}</div>
+        </div>
       </div>
 
       <div style="width:640px;background:var(--panel,#151b26);border:2px solid var(--line,#28313f);border-radius:24px;padding:0 40px;display:flex;flex-direction:column;justify-content:center;gap:8px;">
@@ -1424,21 +1428,6 @@ https://scripts.sil.org/OFL
     <div style="height:10px;flex:none;background:var(--panel2,#1b2230);border-radius:6px;overflow:hidden;">
       <div style="height:100%;background:var(--acc,#ff7a2f);border-radius:6px;transition:width .5s linear;width:{{ progressPct }};"></div>
     </div>
-
-    <!-- ===== ALERT BANNER ===== -->
-    <sc-if value="{{ isAlert }}" hint-placeholder-val="{{ false }}">
-      <div style="height:140px;flex:none;border-radius:22px;background:{{ levelBg }};border:3px solid {{ levelBorder }};display:flex;align-items:center;gap:36px;padding:0 44px;animation:alertBar 1.8s ease-in-out infinite;">
-        <div style="font-size:calc(70px*var(--fz,1));line-height:1;flex:none;">⚠</div>
-        <div style="display:flex;flex-direction:column;gap:4px;min-width:0;">
-          <div style="font-size:calc(60px*var(--fz,1));font-weight:660;line-height:1.1;color:{{ levelFg }};white-space:nowrap;">{{ alertHead }}</div>
-          <div style="font-size:calc(33px*var(--fz,1));font-weight:520;color:{{ levelSub }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ alertSub }}</div>
-        </div>
-        <div style="margin-left:auto;flex:none;text-align:right;">
-          <div style="font-size:calc(28px*var(--fz,1));font-weight:570;color:{{ levelSub }};letter-spacing:.06em;">대응 단계</div>
-          <div style="font-size:calc(52px*var(--fz,1));font-weight:660;color:{{ levelFg }};line-height:1.15;white-space:nowrap;">{{ alertAction }}</div>
-        </div>
-      </div>
-    </sc-if>
 
     <!-- ===== MAIN GRID ===== -->
     <div data-wall-grid style="flex:1;min-height:0;display:grid;grid-template-columns:repeat(12,minmax(0,1fr));grid-template-rows:repeat(24,minmax(0,1fr));gap:0;margin:-14px;">
@@ -1504,14 +1493,21 @@ https://scripts.sil.org/OFL
         <div data-card="warn" style="margin:14px;background:var(--panel,#151b26);border:3px solid {{ warnBorder }};border-radius:22px;padding:26px 30px;display:flex;flex-direction:column;gap:16px;min-height:0;grid-column:var(--wl-warn-c,5)/span var(--wl-warn-cs,4);grid-row:var(--wl-warn-r,1)/span var(--wl-warn-rs,6);display:var(--wl-warn-d,flex);--fz:var(--wl-warn-fz,1);min-height:0;min-width:0;overflow:hidden;">
           <div style="display:flex;align-items:baseline;justify-content:space-between;">
             <div style="font-size:calc(40px*var(--fz,1));font-weight:660;">기상특보</div>
-            <div style="font-size:calc(30px*var(--fz,1));font-weight:570;color:var(--dim,#8e9bb0);">발효 {{ warnCount }}건 · 기상청</div>
+            <div style="font-size:calc(30px*var(--fz,1));font-weight:570;color:var(--dim,#8e9bb0);">{{ warnHead }}</div>
           </div>
           <div style="flex:1;min-height:0;display:flex;flex-direction:column;gap:14px;overflow:hidden;">
             <sc-for list="{{ warns }}" as="w" hint-placeholder-count="2">
-              <div style="flex:1 1 auto;min-height:104px;display:flex;align-items:center;gap:24px;border-radius:16px;padding:0 28px;background:{{ w.bg }};border-left:14px solid {{ w.color }};">
+              <div style="flex:1 1 auto;min-height:104px;display:flex;align-items:center;gap:24px;border-radius:16px;padding:0 28px;background:{{ w.bg }};">
                 <div style="font-size:calc(58px*var(--fz,1));font-weight:660;color:{{ w.color }};white-space:nowrap;">{{ w.type }}</div>
                 <div style="font-size:calc(34px*var(--fz,1));font-weight:520;color:var(--dim,#8e9bb0);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ w.area }}</div>
                 <div style="margin-left:auto;font-size:calc(34px*var(--fz,1));font-weight:570;color:var(--dim,#8e9bb0);font-variant-numeric:tabular-nums;white-space:nowrap;">{{ w.time }}</div>
+              </div>
+            </sc-for>
+            <sc-for list="{{ prelimRows }}" as="p" hint-placeholder-count="1">
+              <div style="flex:0 0 auto;min-height:100px;display:flex;align-items:center;gap:22px;border-radius:16px;padding:0 28px;background:rgba(255,176,32,.08);border:2px dashed rgba(255,176,32,.45);">
+                <div style="font-size:calc(50px*var(--fz,1));font-weight:660;color:var(--cAmber,#ffb020);white-space:nowrap;">⚠ {{ p.type }}</div>
+                <div style="font-size:calc(36px*var(--fz,1));font-weight:570;color:var(--fg,#f2f5fa);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ p.areas }}</div>
+                <div style="margin-left:auto;font-size:calc(32px*var(--fz,1));font-weight:570;color:var(--dim,#8e9bb0);white-space:nowrap;">{{ p.time }}</div>
               </div>
             </sc-for>
             <sc-if value="{{ noWarn }}" hint-placeholder-val="{{ false }}">
@@ -1551,7 +1547,7 @@ https://scripts.sil.org/OFL
           </div>
           <div style="flex:1;min-height:0;display:flex;flex-direction:column;gap:12px;">
             <sc-for list="{{ impacts }}" as="i" hint-placeholder-count="4">
-              <div style="flex:1 1 auto;min-height:76px;display:flex;align-items:center;gap:24px;border-radius:16px;padding:0 26px;background:{{ i.bg }};border-left:12px solid {{ i.color }};">
+              <div style="flex:1 1 auto;min-height:76px;display:flex;align-items:center;gap:24px;border-radius:16px;padding:0 26px;background:{{ i.bg }};">
                 <div style="font-size:calc(44px*var(--fz,1));line-height:1;flex:none;">{{ i.icon }}</div>
                 <div style="display:flex;flex-direction:column;gap:2px;min-width:0;">
                   <div style="font-size:calc(38px*var(--fz,1));font-weight:545;line-height:1.05;white-space:nowrap;">{{ i.title }}</div>
@@ -1574,7 +1570,7 @@ https://scripts.sil.org/OFL
           </div>
           <div style="flex:1;min-height:0;display:flex;flex-direction:column;gap:14px;overflow:hidden;">
             <sc-for list="{{ msgs }}" as="m" hint-placeholder-count="3">
-              <div style="flex:1 1 auto;min-height:150px;border-radius:16px;padding:20px 26px;background:{{ m.bg }};border-left:12px solid {{ m.color }};display:flex;flex-direction:column;gap:8px;overflow:hidden;">
+              <div style="flex:1 1 auto;min-height:150px;border-radius:16px;padding:20px 26px;background:{{ m.bg }};display:flex;flex-direction:column;gap:8px;overflow:hidden;">
                 <div style="display:flex;align-items:baseline;gap:16px;">
                   <div style="font-size:calc(34px*var(--fz,1));font-weight:660;color:{{ m.color }};white-space:nowrap;">{{ m.sender }}</div>
                   <div style="font-size:calc(30px*var(--fz,1));font-weight:520;color:var(--dim,#8e9bb0);white-space:nowrap;">{{ m.kind }}</div>
@@ -1650,9 +1646,8 @@ https://scripts.sil.org/OFL
     <!-- ===== STATION RAIL ===== -->
     <div style="{{ railStyle }}">
       <sc-for list="{{ rail }}" as="s" hint-placeholder-count="11">
-        <div sc-camel-on-click="{{ s.go }}" style="cursor:pointer;border-radius:18px;padding:12px 12px;display:flex;flex-direction:column;justify-content:center;gap:5px;background:{{ s.bg }};border:3px solid {{ s.border }};">
+        <div sc-camel-on-click="{{ s.go }}" style="cursor:pointer;border-radius:18px;padding:12px 12px;display:flex;flex-direction:column;justify-content:center;gap:5px;background:{{ s.bg }};border:{{ s.bw }} solid {{ s.border }};box-shadow:{{ s.glow }};">
           <div style="display:flex;align-items:center;gap:10px;">
-            <div style="width:14px;height:14px;border-radius:50%;background:{{ s.dot }};flex:none;"></div>
             <div style="font-size:calc(36px*var(--fz,1));font-weight:660;color:{{ s.fg }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ s.name }}</div>
           </div>
           <div style="display:flex;align-items:baseline;gap:10px;">
@@ -1675,7 +1670,7 @@ https://scripts.sil.org/OFL
 </x-dc>
 <script type="text/x-dc" data-dc-script="" data-props="{&quot;rotateSeconds&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:15,&quot;min&quot;:5,&quot;max&quot;:60,&quot;unit&quot;:&quot;초&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;순환&quot;},&quot;startTheme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;dark&quot;,&quot;light&quot;],&quot;default&quot;:&quot;dark&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;표시&quot;},&quot;forceAlert&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;auto&quot;,&quot;평상&quot;,&quot;주의&quot;,&quot;경계&quot;,&quot;심각&quot;],&quot;default&quot;:&quot;auto&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;표시&quot;},&quot;accent&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;var(--cGreen,#2ad19a)&quot;,&quot;options&quot;:[&quot;#ff7a2f&quot;,&quot;var(--cAmber,#ffb020)&quot;,&quot;var(--cBlue,#54aaff)&quot;,&quot;var(--cGreen,#2ad19a)&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;표시&quot;}}">
 const C = {
-  red:'#ff4d4d', amber:'var(--cAmber,#ffb020)', green:'var(--cGreen,#2ad19a)', blue:'var(--cBlue,#54aaff)', dim:'#8e9bb0'
+  red:'#ff4d4d', amber:'var(--cAmber,#ffb020)', green:'var(--cSafe,#aeb8c8)', blue:'var(--cBlue,#54aaff)', dim:'#8e9bb0'
 };
 const NAMES = (function(){ var RC=(typeof window!=='undefined'&&window.REGION_CONF)||{}; var base=RC.order||['고양','일산','파주','연천','의정부','양주','동두천','포천','가평','남양주','구리']; var sc=null; try{ sc=new URLSearchParams(location.search).get('scope'); }catch(e){} var g=RC.scopes||{}; try{ if(sc && !g[sc] && g['경기'+sc]) sc='경기'+sc; }catch(e){} try{ if(!sc && typeof localStorage!=='undefined'){ var v=localStorage.getItem('ggScope'); if(v==='전체') return base; if(v && g[v]) sc=v; } }catch(e){} try{ if(!sc) sc=(RC.hostScope||{})[location.hostname.split('.')[0]]||null; }catch(e){} if(sc && g[sc]) base=base.filter(function(n){ return g[sc].indexOf(n)>=0; }); return base; })();
 const SKY = [['맑음','☀️'],['구름많음','⛅'],['흐림','☁️'],['비','🌧️'],['소나기','⛈️']];
@@ -1767,23 +1762,24 @@ class Component extends DCLogic {
   }
   paint(){
     const dark = this.state.theme !== 'light';
-    const alert = this.level().rank >= 4;   // 3단계(심각) — 배경 붉게·가장자리 점멸
+    const alert = this.isAlert();   // 관서 심각 또는 재대본 3단계 — 배경 붉게·가장자리 점멸
     const acc = this.props.accent || '#ff7a2f';
     const v = dark
-      ? { bg: alert?'#1a0a0d':'#0d1118', panel: alert?'#251014':'#151b26', panel2: alert?'#2e151a':'#1b2230', line: alert?'#5e2027':'#28313f', track:'#232c3a', fg:'#f2f5fa', dim:'#8e9bb0' }
-      : { bg: alert?'#fdeceb':'#eef1f6', panel:'#ffffff', panel2: alert?'#fdf0ef':'#f3f6fa', line: alert?'#f0b4b0':'#dde3ec', track:'#e4e9f1', fg:'#101620', dim:'#5d6a7e' };
+      ? { bg: alert?'#130e12':'#0d1118', panel: alert?'#18151c':'#151b26', panel2: alert?'#1e1922':'#1b2230', line: alert?'#43262c':'#28313f', track:'#232c3a', fg:'#f2f5fa', dim:'#8e9bb0' }   // 경보: 옅은 붉은 기만
+      : { bg: alert?'#f6eff1':'#eef1f6', panel:'#ffffff', panel2: alert?'#f8f3f5':'#f3f6fa', line: alert?'#e8cfd2':'#dde3ec', track:'#e4e9f1', fg:'#101620', dim:'#5d6a7e' };
     const r = document.documentElement.style;
     Object.keys(v).forEach(k=>r.setProperty('--'+k, v[k]));
     r.setProperty('--acc', dark ? acc : '#E86A12');
-    const A = dark ? {cGreen:'#2AD19A',cAmber:'#FFB020',cOrange:'#FF9A3C',cRed:'#FF5A5A',cBlue:'#54AAFF',cIndigo:'#B7C4FF'}
-                   : {cGreen:'#1DA77A',cAmber:'#CC8400',cOrange:'#EA7100',cRed:'#FF5A5A',cBlue:'#2B96FF',cIndigo:'#728BFF'};
+    // cSafe = 정상·낮음·좋음·안전·평상(문제없음) — 색을 빼서 위험한 곳만 색이 남게. cGreen 은 강조색(관서 이름 줄·진행 막대)용으로 남긴다
+    const A = dark ? {cGreen:'#2AD19A',cSafe:'#AEB8C8',cAmber:'#FFB020',cOrange:'#FF9A3C',cRed:'#FF5A5A',cBlue:'#54AAFF',cIndigo:'#B7C4FF'}
+                   : {cGreen:'#1DA77A',cSafe:'#6B7891',cAmber:'#CC8400',cOrange:'#EA7100',cRed:'#FF5A5A',cBlue:'#2B96FF',cIndigo:'#728BFF'};
     Object.keys(A).forEach(k=>r.setProperty('--'+k, A[k]));
     const L = dark
-      ? [['rgba(42,209,154,.12)','#2AD19A','rgba(42,209,154,.85)','rgba(42,209,154,.55)'],
+      ? [['rgba(142,155,176,.08)','#D5DBE6','rgba(174,184,200,.9)','rgba(142,155,176,.45)'],   // 평상 = 회색
          ['rgba(255,176,32,.14)','#FFB020','rgba(255,176,32,.9)','rgba(255,176,32,.6)'],
          ['rgba(255,122,47,.16)','#FF7A2F','rgba(255,122,47,.92)','rgba(255,122,47,.7)'],
          ['rgba(255,77,77,.18)','#FF5A5A','rgba(255,140,140,.95)','rgba(255,77,77,.8)']]
-      : [['#2AD19A','#0B1220','rgba(11,18,32,.75)','#1DA77A'],
+      : [['#E6EAF0','#101620','rgba(11,18,32,.7)','#B9C2D0'],
          ['#FFB020','#0B1220','rgba(11,18,32,.75)','#CC8400'],
          ['#FF7A2F','#0B1220','rgba(11,18,32,.78)','#E05A10'],
          ['#FF5A5A','#0B1220','rgba(11,18,32,.82)','#E03A3A']];
@@ -1811,7 +1807,7 @@ class Component extends DCLogic {
     const skyIdx = rain1h >= 20 ? 4 : (wet ? 3 : (r2 > .72 ? 1 : 0));
     return { i, name, temp:+temp, humid, wind:+wind, gust:(g && g.gust!=null)?+g.gust:+(wind*1.7).toFixed(1), rain1h, rday:((g && g.rday != null) ? g.rday : 0), sky:SKY[skyIdx],
       feels, effHum, wet, fireRisk, hourly:(g&&g.hourly)?g.hourly:null,
-      tmax:(g&&g.tmax!=null)?+g.tmax:null, tmin:(g&&g.tmin!=null)?+g.tmin:null, windDeg: (g && g.wdeg != null) ? Math.round(g.wdeg) : null,
+      tmax:(g&&g.tmax!=null)?+g.tmax:null, tmin:(g&&g.tmin!=null)?+g.tmin:null, snowHr:(g&&g.snowHr)||[], windDeg: (g && g.wdeg != null) ? Math.round(g.wdeg) : null,
       pm10: (g && g.pm10 != null) ? g.pm10 : Math.round(14 + r1*46) };
   }
 
@@ -1968,7 +1964,7 @@ class Component extends DCLogic {
         style:{maxWidth:'100%',maxHeight:'100%',objectFit:'contain',display:'block'}}));
   }
   typhoonEl(){
-    const R = window.React.createElement, DIM='var(--dim,#8e9bb0)', GREEN='var(--cGreen,#2ad19a)', RED='var(--cRed,#ff5a5a)', AMBER='var(--cAmber,#ffb020)';
+    const R = window.React.createElement, DIM='var(--dim,#8e9bb0)', GREEN='var(--cSafe,#aeb8c8)', RED='var(--cRed,#ff5a5a)', AMBER='var(--cAmber,#ffb020)';
     const list=(EXT().typhoon)||[];
     if(!list.length) return R('div',{style:{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:'12px'}},
       R('div',{style:{fontSize:'64px',fontWeight:660,color:GREEN}},'활동 태풍 없음'),
@@ -2028,7 +2024,7 @@ class Component extends DCLogic {
     const p=this.cctvPick(s);
     if(!p) return R('div',{style:{flex:1,display:'flex',alignItems:'center',justifyContent:'center',fontSize:'38px',fontWeight:570,color:DIM,textAlign:'center'}},'화면 안에서 틀 수 있는 하천 CCTV 없음');
     const cam=p.cam, key=p.key;
-    const col=cam.rank===0?'var(--cRed,#ff5a5a)':(cam.rank===1?'var(--cOrange,#ff9a3c)':'var(--cGreen,#2ad19a)');
+    const col=cam.rank===0?'var(--cRed,#ff5a5a)':(cam.rank===1?'var(--cOrange,#ff9a3c)':'var(--cSafe,#aeb8c8)');
     const st=(self._cctvSt&&self._cctvSt.key===key)?self._cctvSt.text:'연결 중…';
     const media=cam.x.frame
       ? R('iframe',{key:'wf'+key, src:cam.x.frame, loading:'lazy', style:{position:'absolute',top:0,left:0,width:'100%',height:'100%',border:0,background:'#000'}})
@@ -2063,28 +2059,34 @@ class Component extends DCLogic {
     return out;
   }
 
-  /* 상황단계 = 충청북도 재대본 '기상특보 단계별 비상근무체계'(stage.js, 도 전체 기준) — 2026-10-30.
-     예전엔 순환 중인 관서의 특보로 평상/주의/경계/심각을 정했다.
-     시연: 주소에 ?stage=준비|주의|경계|심각 (3단계 심각이면 화면 가장자리 붉은 점멸·경보 띠) */
+  /* 관서 상황단계 — 순환 중인 관서에 발효 중인 특보로 정한다(관서별 현황판이라 관서 기준이 맞다, 2026-10-30 되돌림).
+     폭염·한파·건조·황사·오존(며칠 이어지는 특보)=주의 · 그 밖의 주의보=경계 · 경보=심각.
+     도 전체 기준인 충북 재대본 비상단계(stage.js)는 같은 카드 아래 줄에 따로 보여 준다(dob()). */
   level(){
-    const map = {'평상':0,'준비':1,'주의':2,'경계':3,'심각':4};
-    let q = null; try { q = new URLSearchParams(location.search).get('stage'); } catch(e) {}
-    const f = this.props.forceAlert, g = EXT().stage || null;
-    const rank = (q && map[q]!=null) ? map[q] : ((f && f!=='auto' && map[f]!=null) ? map[f] : (g ? g.rank : 0));
-    return this.levelFor(rank, (q || (f && f!=='auto')) ? null : g);
+    const f = this.props.forceAlert, map = {'평상':0,'주의':1,'경계':2,'심각':3};
+    const s = this.st(), w = this.warnsOf(s);
+    if (f && f !== 'auto') return this.levelFor(map[f] ?? 0, w);
+    return this.levelFor(w.length ? Math.max.apply(null, w.map(x=>x.sev)) : 0, w);
   }
-  levelFor(rank, g){
+  levelFor(rank, w){
     const defs = [
-      { rank:0, name:'평상', step:'',          fg:'var(--lv0Fg)', bg:'var(--lv0Bg)', border:'var(--lv0Bd)', sub:'var(--lv0Sub)' },
-      { rank:1, name:'준비', step:'준비 단계',  fg:'var(--cBlue,#54aaff)', bg:'rgba(84,170,255,.12)', border:'rgba(84,170,255,.6)', sub:'var(--cBlue,#54aaff)' },
-      { rank:2, name:'주의', step:'비상 1단계', fg:'var(--lv1Fg)', bg:'var(--lv1Bg)', border:'var(--lv1Bd)', sub:'var(--lv1Sub)' },
-      { rank:3, name:'경계', step:'비상 2단계', fg:'var(--lv2Fg)', bg:'var(--lv2Bg)', border:'var(--lv2Bd)', sub:'var(--lv2Sub)' },
-      { rank:4, name:'심각', step:'비상 3단계', fg:'var(--lv3Fg)', bg:'var(--lv3Bg)', border:'var(--lv3Bd)', sub:'var(--lv3Sub)' }
+      { rank:0, name:'평상', fg:'var(--lv0Fg)', bg:'var(--lv0Bg)', border:'var(--lv0Bd)', sub:'var(--lv0Sub)' },
+      { rank:1, name:'주의', fg:'var(--lv1Fg)', bg:'var(--lv1Bg)', border:'var(--lv1Bd)', sub:'var(--lv1Sub)' },
+      { rank:2, name:'경계', fg:'var(--lv2Fg)', bg:'var(--lv2Bg)', border:'var(--lv2Bd)', sub:'var(--lv2Sub)' },
+      { rank:3, name:'심각', fg:'var(--lv3Fg)', bg:'var(--lv3Bg)', border:'var(--lv3Bd)', sub:'var(--lv3Sub)' }
     ];
-    const d = defs[Math.max(0, Math.min(4, rank))];
-    const reason = g ? ((d.step ? '재대본 '+d.step+' · ' : '')+g.reason) : (d.step ? '재대본 '+d.step+' (시연)' : '대설·호우·태풍 특보 없음');
-    return Object.assign({}, d, { reason, why: g ? g.reason : '시연' });
+    const reason = (w && w.length) ? w.map(x=>x.type).slice(0,2).join(' · ')+' 발효' : '발효 특보 없음';
+    return Object.assign({}, defs[rank], { reason });
   }
+  /* 충북 재대본 비상단계(도 전체) — 관서가 바뀌어도 같은 값. 크게 '1단계', 옆에 '주의 · 호우 주의보 3개 시·군' */
+  dob(){
+    const g = EXT().stage || { rank:0, big:'평상', name:'평상', short:'발효 특보 없음', color:'safe' };
+    const C = { safe:'var(--cSafe,#aeb8c8)', brand:'var(--cBlue,#54aaff)', caution:'var(--cAmber,#ffb020)', warn:'var(--cOrange,#ff9a3c)', severe:'var(--cRed,#ff5a5a)' };
+    const B = { safe:'rgba(142,155,176,.07)', brand:'rgba(84,170,255,.12)', caution:'rgba(255,176,32,.14)', warn:'rgba(255,122,47,.16)', severe:'rgba(255,77,77,.20)' };
+    return { rank:g.rank, big:g.big, line:g.short, color:C[g.color]||C.safe, bg:B[g.color]||B.safe };   // 줄에는 기준만 — '준비·경계' 같은 이름은 큰 글자와 겹친다
+  }
+  /* 붉은 배경·가장자리 점멸·경보 띠 — 이 관서가 심각(경보)이거나 도 재대본 3단계(심각) */
+  isAlert(){ return this.level().rank >= 3 || this.dob().rank >= 4; }
 
   renderVals(){
     const s = this.st(), lv = this.level(), now = this.state.now, dark = this.state.theme !== 'light';
@@ -2132,7 +2134,7 @@ class Component extends DCLogic {
       if (lv==='danger'){ color='var(--cRed,#ff5a5a)'; status='위험'; }
       else if (lv==='warning'){ color='var(--cAmber,#ffb020)'; status='주의보'; }
       else if (isDam){ color='var(--cBlue,#54aaff)'; status=(d1==null?'관측':(d1>=0.05?'수위 상승':(d1<=-0.05?'수위 하강':'안정'))); }
-      else { color='var(--cGreen,#2ad19a)'; status='정상'; }
+      else { color='var(--cSafe,#aeb8c8)'; status='정상'; }
       const useRate = isDam && rate!=null && rate>=0 && rate<=100;
       const pctNum = useRate ? rate : Math.min(100, Math.max(0, ratio*100));
       const fmt = v => (v==null ? '-' : (Math.abs(v)>=100 ? String(Math.round(v)) : v.toFixed(1)));
@@ -2152,16 +2154,16 @@ class Component extends DCLogic {
     imp.push({ icon:'🪜', title:'고가·굴절 사다리차 운용',
       level: s.gust>10 ? '전개 제한' : (s.gust>8 ? '주의' : '정상'),
       note: '순간풍속 '+s.gust+'m/s · 10m/s 초과 시 전개 제한',
-      color: s.gust>10 ? 'var(--cRed,#ff5a5a)' : (s.gust>8 ? 'var(--cAmber,#ffb020)' : 'var(--cGreen,#2ad19a)'),
-      bg: s.gust>10 ? 'rgba(255,77,77,.12)' : (s.gust>8 ? 'rgba(255,176,32,.1)' : 'rgba(42,209,154,.08)') });
+      color: s.gust>10 ? 'var(--cRed,#ff5a5a)' : (s.gust>8 ? 'var(--cAmber,#ffb020)' : 'var(--cSafe,#aeb8c8)'),
+      bg: s.gust>10 ? 'rgba(255,77,77,.12)' : (s.gust>8 ? 'rgba(255,176,32,.1)' : 'rgba(142,155,176,.07)') });
     const fireRisk = s.fireRisk;
     imp.push({ icon:'🔥', title:'산불·화재 확산',
       level:['낮음','주의','높음'][fireRisk],
       note:'실효습도 '+s.effHum+'% · 풍속 '+s.wind+'m/s · 풍향 '+(s.windDeg==null ? '—' : ['북','북동','동','남동','남','남서','서','북서'][Math.floor(((s.windDeg+22.5)%360)/45)]),
-      color:['var(--cGreen,#2ad19a)','var(--cAmber,#ffb020)','var(--cRed,#ff5a5a)'][fireRisk], bg:['rgba(42,209,154,.08)','rgba(255,176,32,.1)','rgba(255,77,77,.12)'][fireRisk] });
+      color:['var(--cSafe,#aeb8c8)','var(--cAmber,#ffb020)','var(--cRed,#ff5a5a)'][fireRisk], bg:['rgba(142,155,176,.07)','rgba(255,176,32,.1)','rgba(255,77,77,.12)'][fireRisk] });
     /* 체감온도 카드 — 구급 전용 어휘 대신 모든 직원이 읽는 말로(2026-10-30). 지도.html tempCard 와 같은 기준.
        체감 30° 이상 온열질환 주의(기상청 폭염 영향예보 31·33·35·38) · 10° 미만 한파 주의(체감온도 0·-10·-25) · 그 사이 일교차 */
-    const _C=['var(--cGreen,#2ad19a)','var(--cAmber,#ffb020)','var(--cRed,#ff5a5a)'], _B=['rgba(42,209,154,.08)','rgba(255,176,32,.1)','rgba(255,77,77,.12)'];
+    const _C=['var(--cSafe,#aeb8c8)','var(--cAmber,#ffb020)','var(--cRed,#ff5a5a)'], _B=['rgba(142,155,176,.07)','rgba(255,176,32,.1)','rgba(255,77,77,.12)'];
     const _f=s.feels, _rg=(s.tmax!=null&&s.tmin!=null)?(s.tmax-s.tmin):null;
     let tc;
     if(_f!=null && _f>=30){ const k=_f>=35?2:1;
@@ -2177,10 +2179,14 @@ class Component extends DCLogic {
     const _rw = rv.filter(x=>!x.isDam).map(r=>parseFloat(r.pct));
     const worst = _rw.length ? Math.max.apply(null,_rw) : 0;
     const fl = s.rain1h>=20 || worst>=88 ? 2 : (s.rain1h>=8 || worst>=70 ? 1 : 0);
-    imp.push({ icon:'🌊', title:'침수·수난 출동',
+    /* 눈이 오거나 올 때는 같은 자리에 ❄️ 대설·결빙(stage.js cbSnow). 비·하천 쪽이 더 높으면 침수·수난을 그대로 둔다 */
+    const _snow = window.cbSnow ? window.cbSnow(this.warnsOf(s).map(x=>x.type), s.snowHr, (EXT().ultra||{})[s.name]) : null;
+    if (_snow && _snow.k >= fl) imp.push({ icon:'❄️', title:'대설·결빙', level:_snow.level, note:_snow.note,
+      color:['var(--cSafe,#aeb8c8)','var(--cAmber,#ffb020)','var(--cRed,#ff5a5a)'][_snow.k], bg:['rgba(142,155,176,.07)','rgba(255,176,32,.1)','rgba(255,77,77,.12)'][_snow.k] });
+    else imp.push({ icon:'🌊', title:'침수·수난 출동',
       level:['평시','주의','경계'][fl],
       note:'시간당 '+s.rain1h+'mm · 최고 하천 위험수위 대비 '+worst+'%',
-      color:['var(--cGreen,#2ad19a)','var(--cAmber,#ffb020)','var(--cRed,#ff5a5a)'][fl], bg:['rgba(42,209,154,.08)','rgba(255,176,32,.1)','rgba(255,77,77,.12)'][fl] });
+      color:['var(--cSafe,#aeb8c8)','var(--cAmber,#ffb020)','var(--cRed,#ff5a5a)'][fl], bg:['rgba(142,155,176,.07)','rgba(255,176,32,.1)','rgba(255,77,77,.12)'][fl] });
 
     // messages — 강수 중인 관서는 호우 문자, 그 외는 폭염 문자
     const hh = n => String((n+24)%24).padStart(2,'0');
@@ -2225,14 +2231,20 @@ class Component extends DCLogic {
       return { name:n, temp:ss.temp.toFixed(1), tag: ws.length ? ws[0].type.replace(/경보|주의보/,'') : '평상',
         rainTxt: _wetR ? (_narrow ? ('일 ' + _rd.toFixed(1) + 'mm')
                : ('시간당 ' + _r1.toFixed(1) + ' · 일 ' + _rd.toFixed(1) + 'mm')) : '—',
-        rainColor: cur ? '#12161d' : (_wetR ? 'var(--cBlue,#54aaff)' : 'var(--dim,#8e9bb0)'),
+        rainColor: cur ? (sev ? '#12161d' : 'var(--bg,#0d1118)') : (_wetR ? 'var(--cBlue,#54aaff)' : 'var(--dim,#8e9bb0)'),
         rainWeight: _wetR ? 800 : 600,
         rainOpacity: _wetR ? 1 : 0.35,
-        dot: sev>=3 ? 'var(--cRed,#ff5a5a)' : (sev===2 ? 'var(--cOrange,#ff9a3c)' : (sev===1 ? 'var(--cAmber,#ffb020)' : 'var(--cGreen,#2ad19a)')),
-        bg: cur ? (this.props.accent||'#ff7a2f') : 'var(--panel,#151b26)',
-        border: cur ? (this.props.accent||'#ff7a2f') : 'var(--line,#28313f)',
-        fg: cur ? '#12161d' : 'var(--fg,#f2f5fa)',
-        sub: cur ? 'rgba(18,22,29,.7)' : 'var(--dim,#8e9bb0)',
+        /* 칸 전체를 관서 상황단계 색으로(동그라미만으론 한눈에 안 들어온다, 2026-10-30).
+           지금 보고 있는 관서는 색을 바꾸지 않고 굵은 강조 테두리로 표시한다(단계 색과 섞이지 않게). */
+        /* 다른 관서는 연한 단계 색, 지금 보는 관서는 그 단계 색으로 진하게 꽉 채운다(평상이면 글자색으로 반전 —
+           어두운 화면은 흰 칸, 밝은 화면은 진한 칸). 강조색(초록)은 여기 쓰지 않는다 — 단계 색과 섞여 어색했다 */
+        bg: cur ? ['var(--fg,#f2f5fa)','var(--cAmber,#ffb020)','var(--cOrange,#ff9a3c)','var(--cRed,#ff5a5a)'][sev]
+                : ['var(--panel,#151b26)','rgba(255,176,32,.10)','rgba(255,122,47,.13)','rgba(255,77,77,.16)'][sev],
+        border: cur ? ['var(--fg,#f2f5fa)','var(--cAmber,#ffb020)','var(--cOrange,#ff9a3c)','var(--cRed,#ff5a5a)'][sev]
+                    : ['var(--line,#28313f)','rgba(255,176,32,.55)','rgba(255,154,60,.6)','rgba(255,90,90,.65)'][sev],
+        bw: '3px', glow: 'none',
+        fg: cur ? (sev ? '#12161d' : 'var(--bg,#0d1118)') : 'var(--fg,#f2f5fa)',
+        sub: cur ? (sev ? 'rgba(18,22,29,.72)' : 'var(--bg,#0d1118)') : 'var(--dim,#8e9bb0)',
         go: ()=> this.setState({ idx:k, started:Date.now() }) };
     });
 
@@ -2250,7 +2262,7 @@ class Component extends DCLogic {
     const _RC = (typeof window!=='undefined' && window.REGION_CONF) || {};
     const _kraw = (EXT().keyRivers) || [];
     const _kf = (v,d) => (v==null ? '-' : (+v).toFixed(d==null?1:d));
-    const _kcol = lv => (lv==='danger' ? 'var(--cRed,#ff5a5a)' : (lv==='warning' ? 'var(--cAmber,#ffb020)' : 'var(--cGreen,#2ad19a)'));
+    const _kcol = lv => (lv==='danger' ? 'var(--cRed,#ff5a5a)' : (lv==='warning' ? 'var(--cAmber,#ffb020)' : 'var(--cSafe,#aeb8c8)'));
     const keyRivers = _kraw.map(k => {
       const col = _kcol(k.level);
       if (k.isDam) {
@@ -2268,7 +2280,7 @@ class Component extends DCLogic {
     const _kworst = _kraw.some(k=>k.level==='danger') ? 'danger'
                   : (_kraw.some(k=>k.level==='warning') ? 'warning' : 'safe');
     const _TOPBAR = 'height:290px;flex:none;display:grid;gap:36px;align-items:stretch;grid-template-columns:'
-      + (keyRivers.length ? '700px 1fr 860px auto auto' : '700px 1fr auto auto');
+      + (keyRivers.length ? '700px 1fr 860px auto auto' : '700px 1fr auto auto');   // 날씨가 남는 폭을 쓰고, 단계 카드는 글자 길이만큼(두 칸 같은 폭)
     return {
       stageRef: (this.stageRef = this.stageRef || React.createRef()),
       keyRivers, hasKeyRivers: keyRivers.length > 0, topBarStyle: _TOPBAR,
@@ -2282,11 +2294,8 @@ class Component extends DCLogic {
       dateText: now.getFullYear()+'.'+pad(now.getMonth()+1)+'.'+pad(now.getDate())+' ('+days[now.getDay()]+')',
       updatedLabel: pad(now.getHours())+':'+pad(Math.floor(now.getMinutes()/5)*5),
       obsTime: pad(now.getHours())+':00',
+      dobBig: this.dob().big, dobLine: this.dob().line, dobColor: this.dob().color, dobBg: this.dob().bg,
       levelName: lv.name, levelFg: lv.fg, levelBg: lv.bg, levelBorder: lv.border, levelSub: lv.sub, levelReason: lv.reason,
-      isAlert: lv.rank >= 4,
-      alertHead: '충북 재대본 비상 3단계 · 심각',
-      alertSub: lv.why,
-      alertAction: '비상 3단계',
       rain1h: s.rain1h.toFixed(1), humid: s.humid, effHum: s.effHum,
       effHumColor: s.effHum<=35 ? 'var(--cRed,#ff5a5a)' : (s.effHum<=45 ? 'var(--cAmber,#ffb020)' : 'var(--fg,#f2f5fa)'),
       wind: s.wind.toFixed(1), gust: s.gust.toFixed(1),
@@ -2295,7 +2304,9 @@ class Component extends DCLogic {
       windArrow: (s.windDeg==null ? '' : '↑'),
       acc1: s.rain1h.toFixed(1), acc3: (s.rain1h*2.4).toFixed(1), acc6: (s.rain1h*4.1).toFixed(1), acc12: (s.rain1h*5.6).toFixed(1),
       hours: hourList, tMax, tMin, meteo: this.meteoEl(hours, tMin, tMax), pop: Math.max.apply(null, hours.map(function(h){return h.pop||0;})),
-      warns: warnList, noWarn: warnList.length === 0, warnCount: warnList.length, prelimCount: warnList.length ? 1 : 0,
+      warns: warnList, warnCount: warnList.length, prelimCount: warnList.length ? 1 : 0,
+      prelimRows: ((EXT().prelim||{})[s.name]||[]).slice(0,2), noWarn: warnList.length === 0 && !((EXT().prelim||{})[s.name]||[]).length,
+      warnHead: '발효 '+warnList.length+'건'+(((EXT().prelim||{})[s.name]||[]).length ? ' · 예비 '+((EXT().prelim||{})[s.name]||[]).length+'건' : '')+' · 기상청',
       warnBorder: warnList.length ? (warnList[0].color) : 'var(--line,#28313f)',
       rivers: rv, impacts: imp,
       msgs: msgs.slice(0,3), noMsg: msgs.length === 0, msgCount: msgs.length,
@@ -2311,9 +2322,9 @@ class Component extends DCLogic {
         return (t>0? ('6시간 '+t.toFixed(1)+'mm') : '강수 없음')+' \u00b7 최대확률 '+p+'%'+(g?' \u00b7 \u26a1낙뢰':''); })
         ((EXT().ultra||{})[s.name]),
       fireLevel: ['낮음','주의','경계'][s.fireRisk],
-      fireColor: ['var(--cGreen,#2ad19a)','var(--cAmber,#ffb020)','var(--cRed,#ff5a5a)'][s.fireRisk],
+      fireColor: ['var(--cSafe,#aeb8c8)','var(--cAmber,#ffb020)','var(--cRed,#ff5a5a)'][s.fireRisk],
       pm10: s.pm10, pmGrade: s.pm10<=30?'좋음':(s.pm10<=80?'보통':'나쁨'),
-      pmColor: s.pm10<=30 ? 'var(--cGreen,#2ad19a)' : (s.pm10<=80 ? 'var(--cBlue,#54aaff)' : 'var(--cOrange,#ff9a3c)'),
+      pmColor: s.pm10<=30 ? 'var(--cSafe,#aeb8c8)' : (s.pm10<=80 ? 'var(--cBlue,#54aaff)' : 'var(--cOrange,#ff9a3c)'),
       sunrise:'05:32', sunset:'19:44',
       rail, rotSec, progressPct: prog.toFixed(1)+'%',
       playIcon: this.state.playing ? '❚❚' : '▶',
@@ -2333,25 +2344,26 @@ class Component extends DCLogic {
 <script src="./risk-zones.js"></script>
 <script src="./stage.js"></script>
 <script>
-/* ▶ 시연 — 재대본 비상단계를 골라 화면을 미리 본다(2026-10-30). 주소의 ?stage= 값만 바꾼다:
-   level() 가 매 렌더(0.5초)마다 읽으므로 새로고침 없이 바뀐다. 실제 데이터는 그대로 두고 단계만 덮어쓴다. */
+/* ▶ 시연 — 단계를 고르면 그 단계의 가상 특보·재난문자·강수·하천 수위가 채워진다(주소 ?demo=, 2026-10-30).
+   실제 자료는 건드리지 않는다 — 화면에만 얹는다. '■ 시연 중'을 누르면 실제 자료로 돌아간다. */
 (function(){
-  var STAGES=[['평상','평상','#2ad19a'],['준비','준비','#54aaff'],['주의','1단계','#ffb020'],['경계','2단계','#ff7a2f'],['심각','3단계','#ff5a5a']];
-  function cur(){ try{ return new URLSearchParams(location.search).get('stage'); }catch(e){ return null; } }
-  function set(v){ try{ var u=new URL(location.href); if(v) u.searchParams.set('stage',v); else u.searchParams.delete('stage'); history.replaceState(null,'',u); }catch(e){} draw(); }
+  var STAGES=[['normal','평상','#aeb8c8'],['ready','준비','#54aaff'],['caution','1단계','#ffb020'],['warn','2단계','#ff7a2f'],['severe','3단계','#ff5a5a']];
+  function cur(){ try{ return new URLSearchParams(location.search).get('demo'); }catch(e){ return null; } }
+  function set(v){ try{ var u=new URL(location.href); u.searchParams.delete('stage'); if(v) u.searchParams.set('demo',v); else u.searchParams.delete('demo'); history.replaceState(null,'',u); }catch(e){}
+    if(window.wallReapply) window.wallReapply(); draw(); }
   var box, open=false;
   function btn(txt, css, fn, title){ var b=document.createElement('a'); b.textContent=txt; if(title) b.title=title;
     b.style.cssText='cursor:pointer;padding:6px 11px;border-radius:9px;font:700 12px system-ui,sans-serif;white-space:nowrap;'+css; b.onclick=fn; return b; }
   function draw(){
     if(!box){ box=document.createElement('div'); box.style.cssText='position:fixed;left:50%;top:8px;transform:translateX(-50%);z-index:30;display:flex;gap:6px;align-items:center;'; document.body.appendChild(box); }
-    var c=cur(); box.innerHTML='';
+    var c=cur(), lbl=null; STAGES.forEach(function(st){ if(st[0]===c) lbl=st[1]; }); box.innerHTML='';
     var base='border:1px solid var(--line,#28313f);background:var(--panel,#151b26);color:var(--fg,#f2f5fa);';
-    var main=btn(c?('■ 시연 중 · '+c):'▶ 시연', base+(c?'opacity:1;border-color:#ff5a5a;color:#ff5a5a;':'opacity:.28;'), function(){ if(c){ set(null); open=false; } else { open=!open; draw(); } },
-      c?'시연 끝내기 — 실제 단계로 돌아갑니다':'재대본 비상단계를 골라 화면이 어떻게 바뀌는지 봅니다(3단계 = 붉은 점멸)');
+    var main=btn(c?('■ 시연 중 · '+(lbl||c)):'▶ 시연', base+(c?'opacity:1;border-color:#ff5a5a;color:#ff5a5a;':'opacity:.28;'), function(){ if(c){ set(null); open=false; } else { open=!open; draw(); } },
+      c?'시연 끝내기 — 실제 자료로 돌아갑니다':'가상 호우 상황(특보·재난문자·강수·하천)으로 화면이 어떻게 바뀌는지 봅니다');
     if(!c){ main.onmouseenter=function(){ main.style.opacity=1; }; main.onmouseleave=function(){ if(!open) main.style.opacity=.28; }; }
     box.appendChild(main);
     if(open || c){ STAGES.forEach(function(st){ var on=(c===st[0]);
-      box.appendChild(btn(st[1], 'border:1.5px solid '+st[2]+';background:'+(on?st[2]:'var(--panel,#151b26)')+';color:'+(on?'#0b1220':'var(--fg,#f2f5fa)')+';', function(){ set(st[0]); }, '재대본 '+st[1])); }); }
+      box.appendChild(btn(st[1], 'border:1.5px solid '+st[2]+';background:'+(on?st[2]:'var(--panel,#151b26)')+';color:'+(on?'#0b1220':'var(--fg,#f2f5fa)')+';', function(){ set(st[0]); }, '시연 '+st[1])); }); }
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', draw); else draw();
 })();
@@ -2468,6 +2480,7 @@ class Component extends DCLogic {
         rday:nv(a.rnday),
         feels:nv(det.feels_like!=null?det.feels_like:r.feels), eff:nv(r.effHumid),
         tmax:nv(r.tmax), tmin:nv(r.tmin), rn12:nv(a.rn12h),   /* 체감온도 카드(일교차)·자동 위험구역(집중호우) */
+        snowHr:((det.hourly)||[]).slice(0,24).map(function(o){ return { snow:nv(o.snow_cm), weather:o.weather||'' }; }),   /* 대설·결빙 카드(24시간 적설 예보) */
         hourly:(hrs.length?hrs:null) };
     });
     /* 하천 → 관서. sigun 없으면 이름에서 시군 추출(가장 긴 매칭 우선: '남양주'가 '양주'보다 먼저).
@@ -2571,13 +2584,61 @@ class Component extends DCLogic {
       });
     });
     cctv.sort(function(a,b){ return (a.rank-b.rank)||(a.si-b.si)||(b.ratio-a.ratio); });
+    /* 관서별 예비특보 — 기상특보 카드에 발효 특보 아래 노란 줄로(2026-10-30). 그 관서 시·군이 들어간 항목만.
+       시·군 없이 '충청북도'만 있으면 전 관서. 한 줄 = 종류 · 걸린 충북 시·군들 · 시각 */
+    var ADM=(RC.admin||{}), prelim={}; NAMES.forEach(function(nm){ prelim[nm]=[]; });
+    (D.prelim_warnings||[]).forEach(function(g){
+      var its=(g.items||[]).filter(function(it){ return it.north_match||it.north; }); if(!its.length) return;
+      var areaOf=function(it){ return String(it.area||'').split('(')[0].trim(); };
+      var names=[]; its.forEach(function(it){ var a=areaOf(it); if(a && names.indexOf(a)<0) names.push(a); });
+      NAMES.forEach(function(nm){
+        var keys=[nm, sig(nm), String(ADM[nm]||'').replace(/(시|군)$/,'')].filter(Boolean);
+        var hit=its.some(function(it){ var a=String(it.area||''); return keys.some(function(kk){ return a.indexOf(kk)>=0; }) || /^(충청북도|충북)\s*(\(|$)/.test(a.trim()); });
+        if(hit) prelim[nm].push({ type:String(g.type||'예비특보'), areas:names.join('·'), time:String((its[0]||{}).time||'') });
+      });
+    });
     var stage = window.cbStage ? window.cbStage((D.warnings||[]).map(function(w){ return { type:w.type||w.title||w.name||'', area:w.area||w.region||w.regions||'', level:w.level||'' }; }), D.prelim_warnings||[], D.typhoon||[]) : null;
-    return { stations:stations, rivers:rivers, msgs:msgs, warns:warnsByStation(D.warnings), cctv:cctv, risks:risks, stage:stage,
+    return { stations:stations, rivers:rivers, msgs:msgs, warns:warnsByStation(D.warnings), cctv:cctv, risks:risks, stage:stage, prelim:prelim,
              keyRivers:keyRivers, ultra:ultra, updated:D.updated,
              /* 새 카드 3장(레이더·태풍·물때, 2026-09-18) 원시 데이터 통과 */
              kmaImages:(D.kma_images||{}), typhoon:(D.typhoon||[]), tide:(D.tide||null) };
   }
-  function apply(D){ var w=build(D); if(!w) return; window.WALL_DATA=w; }
+  /* ▶ 시연 — 주소 ?demo=normal|ready|caution|warn|severe. 실제 자료 위에 그 단계의 가상 특보·예비특보·재난문자·
+     강수·하천 수위를 얹는다(지도.html 시연과 같은 시나리오). 관서 상황단계·재대본 단계·특보/문자 카드·알림이 함께 바뀐다. */
+  function demoKey(){ try{ return new URLSearchParams(location.search).get('demo'); }catch(e){ return null; } }
+  function demoize(D, key){
+    var c=JSON.parse(JSON.stringify(D)); c.prelim_warnings=[]; c.flood_forecast=[]; c.typhoon=[]; c.warnings=[]; c.messages=[];
+    var rain=function(names, h1, h12){ c.aws=c.aws||{}; names.forEach(function(nm){ c.aws[nm]=Object.assign({}, c.aws[nm]||{}, {rn60:h1, rn12h:h12, rnday:h12, ok:1}); }); };
+    var bump=function(word, val, d1){ (c.rivers||[]).forEach(function(r){ if(String(r.name||'').indexOf(word)<0) return; r.value=val; r.delta_1h=d1;
+      r.level=(r.danger!=null && val>=r.danger)?'danger':((r.warning!=null && val>=r.warning)?'warning':'safe'); }); };
+    var msg=function(sender, time, text, region){ c.messages.push({sender:sender, time:time, text:text, region:region}); };
+    if(key==='ready'){
+      c.prelim_warnings=[{type:'호우 예비특보', north_count:3, total_count:3, items:['청주','증평','진천'].map(function(a){ return {time:'오늘 밤(18시~24시)', area:a+' (충청북도)', north_match:true}; })}];
+    } else if(key==='caution'){
+      c.warnings=[{type:'호우주의보', area:'청주동부, 청주서부, 증평, 진천', level:'warning', time:'15:08'}];
+      rain(['청주동부','청주서부','증평','진천'],15,62); bump('팔결교',4.6,0.21); bump('석남천',2.6,0.15);
+      msg('청주시','15:12','[청주시] 호우주의보 발효. 하천변·지하차도 이용을 자제하고 저지대 주민은 기상정보에 유의하시기 바랍니다.','청주동부');
+    } else if(key==='warn'){
+      c.warnings=[{type:'호우경보', area:'청주동부, 청주서부, 증평, 진천', level:'severe', time:'15:42'}, {type:'호우주의보', area:'괴산, 음성', level:'warning', time:'15:08'}];
+      rain(['청주동부','청주서부','증평','진천'],34,128); rain(['괴산','음성'],15,64); bump('팔결교',5.4,0.32); bump('미호강교',6.1,0.28); bump('석남천',2.9,0.2);
+      msg('청주시','15:44','[청주시] 호우경보 발효. 하천변·지하차도 통행을 금지하고 저지대 주민은 안전한 곳으로 이동하시기 바랍니다.','청주동부');
+      msg('충청북도','15:05','[충청북도] 호우경보 발효. 차량 침수에 주의하고 지하차도·급경사지 통행을 자제해 주세요.','충청북도');
+    } else if(key==='severe'){
+      c.warnings=[{type:'호우경보', area:'청주동부, 청주서부, 증평, 진천, 괴산, 음성, 충주', level:'severe', time:'15:42'},
+                  {type:'호우주의보', area:'보은, 옥천', level:'warning', time:'15:08'}, {type:'강풍주의보', area:'충청북도 전역', level:'warning', time:'14:30'}];
+      rain(['청주동부','청주서부','증평','진천','괴산','음성','충주'],42,196); rain(['보은','옥천'],15,70);
+      bump('팔결교',6.6,0.44); bump('미호강교',7.2,0.38); bump('석남천',3.1,0.26); bump('반탄교',2.3,0.19); bump('목도교',4.5,0.21);
+      msg('청주시','15:44','[청주시] 미호강 수위 급상승. 하천변 지하차도를 전면 통제합니다. 저지대 주민은 즉시 안전한 곳으로 대피하시기 바랍니다.','청주동부');
+      msg('증평군','15:31','[증평군] 보강천 수위 상승. 하천변 산책로와 둔치 주차장 이용을 금지합니다.','증평');
+      msg('충청북도','15:05','[충청북도] 호우경보 발효. 차량 침수에 주의하고 지하차도·급경사지 통행을 자제해 주세요.','충청북도');
+      msg('괴산군','14:52','[괴산군] 괴산댐 방류가 예정되어 있습니다. 달천 하류 하천변 접근을 자제해 주세요.','괴산');
+    }
+    return c;
+  }
+  function apply(D){ apply._raw=D; var key=demoKey(), src=key?demoize(D,key):D;
+    var w=build(src); if(!w) return; window.WALL_DATA=w;
+    /* 화면 팝업 알림(alerts.js)은 지도 화면에서만 — 벽면 상황실은 띄우지 않는다(2026-10-30) */ }
+  window.wallReapply=function(){ if(apply._raw) apply(apply._raw); };
   if(window.DASHBOARD_DATA) apply(window.DASHBOARD_DATA);
   setInterval(function(){
     fetch('data.js?_t='+Date.now(),{cache:'no-store'})
