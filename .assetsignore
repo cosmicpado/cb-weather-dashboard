@@ -20,9 +20,6 @@ token.json
 # === GitHub Actions / 워크플로우 ===
 .github/
 
-# === 직원 의견 원본(개인 정보) ===
-feedback/
-
 # === 빌드 도구 / 운영 폴더 ===
 .tmp/
 .claude/

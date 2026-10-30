@@ -10,7 +10,6 @@
 - 내 PC에서 운영 데이터로 화면을 보려면 **`로컬서버.bat` 더블클릭** → `http://localhost:8000/지도.html`
   (= `python tools/live_local.py --port 8000`. 8000 을 이미 다른 서버가 쓰면 데이터만 받는다. 데이터만: `--no-serve`).
 - 내부망에서 다른 PC 도 보게 하려면 **`내부망서버.bat`** (= `--port 8000 --lan`) → 다른 PC 는 `http://<이 PC IP>:8000/지도.html`.
-- 직원 의견(💬 버튼)은 이 서버 PC 의 `feedback/feedback.jsonl` 에 쌓이고, 이 PC 에서 `http://localhost:8000/의견함.html` 로 본다(커밋하지 않음).
   서버가 올린 최신 데이터를 1분마다 받아 오고 웹서버도 같이 띄운다(API 호출 없음, 받아 온 데이터 파일은 커밋하지 말 것).
 - API 를 직접 불러 시험하려면 `python tools/update_data.py --no-push` (푸시 모드는 서버 커밋과 엇갈리니 쓰지 말 것).
 

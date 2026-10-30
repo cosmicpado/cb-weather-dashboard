@@ -208,7 +208,7 @@
         <!-- 📱 쉬운 화면(쉬운.html, 휴대폰용) 버튼은 내부망 배포에선 휴대폰 접속이 안 돼 숨겼다. 다시 쓰려면 이 자리에 쉬운.html 링크 버튼(style 은 utilBtnStyle, 글자 📱)을 넣는다. -->
         <a href="도움말.html" title="사용설명서 — 화면 보는 법과 색·기호, 자동 판단 기준" aria-label="설명서" style="{{utilBtnStyle}}" style-hover="color:var(--ink);border-color:var(--border2)">❓</a>
         <button onClick="{{toggleDemo}}" title="{{demoTitle}}" aria-label="시연" style="{{demoBtnStyle}}" style-hover="filter:brightness(1.06)">{{demoBtnLabel}}</button>
-        <button onClick="{{openFeedback}}" title="의견 보내기 — 오류 신고·기능 개선" aria-label="의견 보내기" style="{{utilBtnStyle}}" style-hover="color:var(--ink);border-color:var(--border2)">💬</button>
+        <button onClick="{{openFeedback}}" title="기능 개선·오류 신고 문의" aria-label="문의" style="{{utilBtnStyle}}" style-hover="color:var(--ink);border-color:var(--border2)">💬</button>
         <button onClick="{{toggleMute}}" title="{{muteTitle}}" aria-label="경보음" style="{{utilBtnStyle}}" style-hover="color:var(--ink);border-color:var(--border2)">{{muteLabel}}</button>
         <button onClick="{{toggleBlink}}" title="{{blinkTitle}}" aria-label="테두리 점멸" style="{{blinkBtnStyle}}" style-hover="color:var(--ink);border-color:var(--border2)">🚨</button>
         <button onClick="{{toggleTheme}}" title="{{themeTitle}}" aria-label="화면 색" style="{{utilBtnStyle}}" style-hover="color:var(--ink);border-color:var(--border2)">{{themeLabel}}</button>
@@ -2447,7 +2447,7 @@ class Component extends DCLogic {
       toggleBlink:()=>{ const v=!this.state.noBlink; try{ if(typeof localStorage!=='undefined') localStorage.setItem('ggNoBlink', v?'1':'0'); }catch(e){} this.setState({noBlink:v}); },
       toggleDemo:()=>this.setState({demo:!this.state.demo}, ()=>this.fitMap()),
       openWarnAll:()=>{ if(rawWarns.length) this.setState({modal:{kind:'warn'}}); },
-      openFeedback:()=>{ if(window.cbFeedbackOpen) window.cbFeedbackOpen({page:'지도', station:(this.state.myStation||'')}); },
+      openFeedback:()=>{ if(window.cbFeedbackOpen) window.cbFeedbackOpen(); },
       ribbonCursor: rawWarns.length ? 'pointer' : 'default',   // 특보가 있을 때만 눌러서 전체 특보 창을 연다
       ribbonTitle: rawWarns.length ? '눌러서 발효 중인 특보 전체 보기' : '',
       closeModal:()=>this.setState({modal:null}),
