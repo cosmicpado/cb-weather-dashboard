@@ -8,7 +8,7 @@
 <title>쉬운 화면 — 기상·재난 상황</title>
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg">
-<!-- 쉬운 화면 (2026-09-21 사장님 "갤럭시 쉬운 모드처럼 — 최대한 단순하게, 내 지역 상황을 아이콘으로")
+<!-- 쉬운 화면
      · 한 화면, 큰 글씨, 타일 5개(특보·비·하천·재난문자·기온). 색 하나(🟢🟠🔴)로 지금 상태.
      · 지도·호우 화면과 같은 기억값(ggMyStation·ggScope·ggSido)을 쓴다 — 여기서 고르면 다른 화면도 따라온다.
      · 데이터는 다른 화면과 같은 data.js(작업장 빌드가 운영 주소로 바꿔 준다), 60초마다 새로 읽는다.
@@ -85,7 +85,7 @@
 </div>
 <div class="grid">
   <a class="tile" id="tWarn" href="지도.html?focus=my"><div class="ic">⚠️</div><div class="lb">기상특보</div><div class="v">없음</div><div class="d">—</div></a>
-  <a class="tile" id="tRain" href="호우.html"><div class="ic">🌧️</div><div class="lb">비 (1시간)</div><div class="v">0<small>mm</small></div><div class="d">—</div></a>
+  <a class="tile" id="tRain" href="재해.html?mode=rain"><div class="ic">🌧️</div><div class="lb">비 (1시간)</div><div class="v">0<small>mm</small></div><div class="d">—</div></a>
   <a class="tile" id="tRiver" href="지도.html?focus=my"><div class="ic">🌊</div><div class="lb">하천</div><div class="v">—</div><div class="d">—</div></a>
   <a class="tile" id="tMsg" href="지도.html?focus=my"><div class="ic">📱</div><div class="lb">재난문자</div><div class="v">0<small>건</small></div><div class="d">—</div></a>
   <a class="tile wide" id="tTemp" href="지도.html?focus=my"><div style="display:flex; align-items:center; gap:16px;"><div class="ic">🌡️</div><div><div class="lb" id="tempL">기온 · 체감 · 바람</div><div class="v" id="tempV">—</div><div class="d" id="tempD">—</div></div></div></a>

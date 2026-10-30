@@ -200,7 +200,7 @@ PM_STATIONS = P['pm_stations']
 SIGUN_SET = {r['name'] for r in REGIONS}
 # 시(市)가 아니라 군(郡)인 곳 — 재난문자 발신처 표기('연천군' vs '파주시')에 쓴다.
 GUN_NAMES = set(P.get('gun_names') or ['연천', '가평', '양평']) & SIGUN_SET
-# ── 시도 상수 (전국 확장 1단계, 2026-09-18) ─────────────────────────────
+# ── 시도 상수 (전국 확장 1단계) ─────────────────────────────
 # 경기 전용으로 박혀 있던 값들. 손으로 쓴 경기 프로파일에는 이 키가 없으므로 기본값이
 # 경기 값이다 — 운영(북부·남부) 동작은 한 글자도 안 바뀐다. 생성 프로파일(tools/profiles/*.json)은
 # 자기 시도 값을 들고 온다.
@@ -1810,18 +1810,12 @@ class _SkipSatellite(Exception):
 
 
 def download_kma_images():
-    """기상청 API 허브에서 특보 발효 이미지·초단기 강수예측 이미지를 받아 images/ 폴더에 저장.
-
-    - nph-wrn7: 전국 특보 발효 현황 컬러맵 (tm 필요)
-    - nph-qpf_ana_img: 초단기 강수예측 분석 이미지
-
-    Returns: {wrn: {ok, ts, path}, qpf: {ok, ts, path}}
-    키가 URL에 포함되므로 사용자 브라우저에 노출되지 않도록 — 사장님 PC만 호출,
-    이미지 파일만 git push되어 사이트에 노출.
-    """
+    """기상청 API 허브 이미지(충북 특보 발효현황·레이더·천리안 위성)를 images/ 에 저장한다.
+    인증키가 주소에 들어가므로 서버에서만 받고, 사이트에는 그림 파일만 올린다.
+    Returns: {wrn|radar|satellite: {ok, ts, ...}}"""
     import os
     if not KMA_APIHUB_KEY:
-        return {'wrn': {'ok': False}, 'qpf': {'ok': False}}
+        return {'wrn': {'ok': False}}
 
     # 프로젝트 루트의 images/ 폴더
     proj_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -1853,82 +1847,16 @@ def download_kma_images():
     except Exception as e:
         result['wrn'] = {'ok': False, 'err': _redact(e)}
 
-    # 2) nph-qpf_ana_img (초단기 강수예측 분석)
-    # KMA가 데이터 미생산 시점에는 PNG로 "err = -11" 텍스트만 그려서 응답함
-    # → IHDR 청크의 bit_depth + color_type으로 정상 이미지 검증
     def _is_real_image_png(content):
-        """PNG 헤더(IHDR) 분석으로 KMA 에러 이미지를 걸러낸다.
-
-        실측(2026-07-15, 9개 시각 조사):
-          · 에러 이미지(err=-11) : 835x820 **1-bit** colormap, 877~883 bytes
-          · 정상 강수예측        : 835x820 **8-bit** indexed, 20,324~24,591 bytes
-        → bit_depth 하나로 완전히 갈린다(1 vs 8). 크기는 보조 하한일 뿐이다.
-
-        ⚠ 과거 버그: 크기 하한이 30KB였다. 이 값은 '비가 많이 오던 때'(색이 많아
-          PNG가 50KB+로 커짐)를 보고 잡은 것이라, 비가 적어 이미지가 20~25KB로
-          작아지면 **정상 이미지를 전부 에러로 오판**해 폴백 8개가 모두 실패하고
-          예측영상이 몇 시간씩 옛 그림에 멈춰 있었다(실측: 6시간 13분 정지).
-          '비가 적을 때 갱신이 죽는' 구조라 호우 초입에 특히 위험했다.
-        """
-        if not content.startswith(b'\x89PNG'):
+        """기상청이 자료가 없을 때 주는 'err = -11' 글자 그림(1-bit, 1KB 미만)을 걸러낸다.
+        정상 그림은 8-bit 이상이다. 크기 하한은 잘린 응답 방어용으로만 둔다(정상은 비가 적으면 20KB대까지 작아진다)."""
+        if not content.startswith(b'\x89PNG') or len(content) < 26:
             return False
-        # IHDR: bytes 16=width, 20=height, 24=bit_depth, 25=color_type
-        if len(content) < 26:
+        if content[24] < 4:          # IHDR bit_depth
             return False
-        bit_depth = content[24]
-        # 정상 KMA 이미지는 8-bit indexed 또는 24-bit RGB / 에러 이미지는 1-bit 단색
-        if bit_depth < 4:
-            return False
-        # 잘린 응답 방어용 하한만 둔다. 에러 883B vs 정상 20KB+ 사이라 여유가 크다.
-        if len(content) < 5000:
-            return False
-        return True
+        return len(content) >= 5000
 
-    try:
-        path = os.path.join(img_dir, 'kma_qpf.png')
-        ok = False
-        # 강수예측은 tm 파라미터 없으면 최신 자동. 데이터 미생산 시 폴백을 위해
-        # 명시적 tm으로 1시간씩 과거로 폴백 (KMA는 매 10분 생산이지만 처리 지연)
-        for back_min in (0, 10, 20, 30, 60, 90, 120, 180):
-            if back_min == 0:
-                url = f'https://apihub.kma.go.kr/api/typ03/cgi/dfs/nph-qpf_ana_img?authKey={KMA_APIHUB_KEY}'
-            else:
-                qpf_dt = now - timedelta(minutes=back_min)
-                qpf_dt = qpf_dt.replace(minute=(qpf_dt.minute // 10) * 10, second=0, microsecond=0)
-                qpf_tm = qpf_dt.strftime('%Y%m%d%H%M')
-                url = f'https://apihub.kma.go.kr/api/typ03/cgi/dfs/nph-qpf_ana_img?tm={qpf_tm}&authKey={KMA_APIHUB_KEY}'
-            try:
-                r = requests.get(url, timeout=15)
-            except Exception:
-                continue
-            if r.status_code == 200 and _is_real_image_png(r.content):
-                with open(path, 'wb') as f:
-                    f.write(r.content)
-                result['qpf'] = {'ok': True, 'ts': ts, 'bytes': len(r.content),
-                                 'back_min': back_min}
-                ok = True
-                break
-        if not ok:
-            # 예측(dfs) 영상은 API허브 목록에서 새로 신청할 수 없다(원작자는 예전 신청분으로 받았다).
-            # 우리 키는 같은 이름의 레이더 '강수실황'(rdr)만 승인돼 있어, 예측이 안 되면 실황으로 대신한다.
-            # src 로 어느 영상인지 화면에 알린다 — 실황을 '예측'이라고 띄우면 안 된다.
-            try:
-                r = requests.get(f'https://apihub.kma.go.kr/api/typ03/cgi/rdr/nph-qpf_ana_img?authKey={KMA_APIHUB_KEY}', timeout=15)
-                if r.status_code == 200 and _is_real_image_png(r.content):
-                    with open(path, 'wb') as f:
-                        f.write(r.content)
-                    result['qpf'] = {'ok': True, 'ts': ts, 'bytes': len(r.content), 'src': 'rdr'}
-                    ok = True
-            except Exception:
-                pass
-        if not ok:
-            # 모든 시점 fail — 기존 정상 PNG 파일이 있으면 보존, 에러 이미지면 삭제 X
-            # (사장님 PC 또는 다음 회차에서 정상 받을 때까지)
-            result['qpf'] = {'ok': False, 'err': 'KMA 데이터 미생산 (err -11)'}
-    except Exception as e:
-        result['qpf'] = {'ok': False, 'err': _redact(e)}
-
-    # 3) 레이더 합성영상 (rdr_cmp_file.php) — 5분 주기. 발표 지연 감안해 15분 전 + 5분배수로 정렬
+    # 2) 레이더 합성영상    # 3) 레이더 합성영상 (rdr_cmp_file.php) — 5분 주기. 발표 지연 감안해 15분 전 + 5분배수로 정렬
     try:
         radar_dt = now - timedelta(minutes=15)
         # 분을 5의 배수로 내림
@@ -3785,20 +3713,82 @@ def detect_and_notify(prev, data):
         _save_sent_messages(sent_log)
 
 
-EFF_HUMID_PATH = TMP / 'humid_daily.json'
+EFF_HUMID_PATH = TMP / 'humid_hourly.json'
+EFF_OFFICIAL_PATH = TMP / 'eff_humid_official.json'
+EFF_R = 0.7
+
+
+def fetch_eff_humid_official():
+    """기상청 공식 실효습도 — 기상자료개방포털(data.kma.go.kr) '실효습도' 표가 부르는 주소 (2026-10-30).
+    ASOS(종관) 관측소만 있고, 시각별로 he(실효습도)와 hm0~hm4(같은 시각 오늘~4일 전 상대습도)를 준다.
+    인증키·로그인 없이 POST 한 번. 포털 반영이 몇 시간 늦어 '마지막 시각' 값을 쓴다. 30분 캐시.
+    실패하면 직전 캐시(없으면 {}) — 공식값은 참고 표시용이라 없어도 화면은 돈다."""
+    stns = sorted({int(v) for v in (P.get('eff_humid_asos') or {}).values()})
+    if not stns:
+        return {}
+    try:
+        cache = json.loads(EFF_OFFICIAL_PATH.read_text(encoding='utf-8')) if EFF_OFFICIAL_PATH.exists() else {}
+    except Exception:
+        cache = {}
+    if cache.get('_ts') and _time.time() - cache['_ts'] < 1800:
+        return cache.get('data', {})
+    out = {}
+    # 오늘·어제 둘 다 받는다 — 포털은 몇 시간 늦게 올라와 '지금 시각' 행이 없을 때가 많은데,
+    #   어제 같은 시각 행의 hm0~hm3 이 곧 1~4일 전 습도라 그것으로 빈 날을 채울 수 있다.
+    for day in (datetime.now(), datetime.now() - timedelta(days=1)):
+        try:
+            r = requests.post('https://data.kma.go.kr/climate/ehum/selectEhumChartAjax.do', timeout=20,
+                              headers={'User-Agent': 'Mozilla/5.0', 'X-Requested-With': 'XMLHttpRequest'},
+                              data={'serviceSe': 'F00101', 'selectType': '2', 'mddlClssCd': 'SFC01',
+                                    'schStnId': ','.join(map(str, stns)), 'startDt': day.strftime('%Y%m%d')})
+            j = r.json()
+        except Exception as e:
+            print(f'  · 공식 실효습도 수집 실패: {type(e).__name__}')
+            break
+        if j.get('code') != '00':
+            continue
+        for it in j.get('data') or []:
+            try:
+                sid = str(it['stnId']); he = float(str(it.get('he', '')).strip())
+            except (KeyError, ValueError):
+                continue
+            rec = out.setdefault(sid, {'nm': it.get('stnNm', ''), 'hours': {}})
+            rec['hours'][str(it.get('tmHh', ''))] = {'he': round(he, 1), 'hm': [it.get('hm%d' % i) for i in range(5)]}
+    if not out:
+        return cache.get('data', {})
+    for rec in out.values():   # 마지막 시각 값을 따로 꺼내 둔다
+        last = max(rec['hours'])
+        rec['tm'], rec['he'] = last, rec['hours'][last]['he']
+    try:
+        _atomic_write_text(EFF_OFFICIAL_PATH, json.dumps({'_ts': _time.time(), 'data': out}, ensure_ascii=False))
+    except Exception:
+        pass
+    return out
 
 
 def apply_effective_humidity(regions):
-    """실효습도(effective humidity) — 산불·화재 위험 지표. 상황실 v2 '출동 영향 판단'에 사용.
-    기상청식: 최근 며칠 '일별 최저습도'의 가중합(비율 r=0.7, 오늘 가중치 최대). 이력이 짧으면
-    가중평균(Σr^n·H / Σr^n)으로 안정 추정 — 하루치면 오늘 최저습도, 며칠 쌓이면 정확해진다.
-    일별 최저습도를 .tmp/humid_daily.json에 누적(당일은 갱신), 최근 7일만 유지."""
-    today = datetime.now().strftime('%Y-%m-%d')
+    """실효습도(effective humidity) — 건조특보·산불 위험 지표. 기상청과 같은 식으로 계산한다:
+        He = (1-r)·(H0 + r·H1 + r²·H2 + r³·H3 + r⁴·H4),  r = 0.7
+        H0~H4 = '같은 시각'의 상대습도 — 오늘, 1~4일 전 (기상청 포털의 hm0~hm4)
+      ⚠ 2026-10-30 전까지는 '하루 최저습도'로 계산해서 공식값보다 20~30%p 낮게(더 메마르게) 나왔다
+        (충주 공식 57.8% ↔ 우리 30%). 그 방식은 버렸다.
+    관서별 매 시각 습도(AWS 실측)를 .tmp/humid_hourly.json 에 쌓는다(5일 유지).
+    이력이 모자란 날은 같은 시각의 가까운 ASOS 관측소 습도(공식 자료의 hm1~hm4)로 채우고,
+    그것도 없으면 있는 날만으로 가중평균한 뒤 5일 가중합 비율(0.832)을 곱한다.
+    공식 ASOS 값은 reg['effHumidOfficial'] 로 같이 실어 화면이 나란히 보여준다."""
+    now = datetime.now()
     try:
         store = json.loads(EFF_HUMID_PATH.read_text(encoding='utf-8')) if EFF_HUMID_PATH.exists() else {}
     except Exception:
         store = {}
-    R = 0.7
+    try:
+        official = fetch_eff_humid_official()
+    except Exception as e:
+        print(f'  · 공식 실효습도 건너뜀: {type(e).__name__}')
+        official = {}
+    asos = P.get('eff_humid_asos') or {}
+    full = sum(EFF_R ** n for n in range(5))
+    keep = (now - timedelta(days=5)).strftime('%Y-%m-%d %H')
     for reg in regions or []:
         nm = reg.get('name')
         h = reg.get('humid')
@@ -3808,15 +3798,45 @@ def apply_effective_humidity(regions):
             h = float(h)
         except (TypeError, ValueError):
             continue
-        rec = store.get(nm, {})
-        rec[today] = min(float(rec.get(today, h)), h)          # 당일 최저 갱신
-        days = sorted(rec.keys(), reverse=True)[:7]            # 최근 7일
-        rec = {dk: rec[dk] for dk in days}
+        # 관측 시각(HH:MM)을 가까운 정시로 — 기상청 값은 정시 관측이다
+        bt = str(((reg.get('detail') or {}).get('observation') or {}).get('base_time') or '')
+        t = now
+        try:
+            hh, mm = int(bt[:2]), int(bt[3:5])
+            t = now.replace(hour=hh, minute=0, second=0, microsecond=0) + timedelta(hours=1 if mm >= 30 else 0)
+            if t > now + timedelta(hours=1):
+                t -= timedelta(days=1)
+        except (ValueError, IndexError):
+            pass
+        rec = {k: v for k, v in store.get(nm, {}).items() if k >= keep}
+        rec[t.strftime('%Y-%m-%d %H')] = h
         store[nm] = rec
-        vals = [rec[dk] for dk in days]                         # 최신순(오늘=index 0)
-        s = sum((R ** n) * hv for n, hv in enumerate(vals))
-        w = sum(R ** n for n in range(len(vals)))
-        reg['effHumid'] = round(s / w) if w else round(h)
+        off = official.get(str(asos.get(nm, '')), {})
+        oh = off.get('hours') or {}
+
+        def asos_hm(day_t):
+            # day_t 시각의 ASOS 습도 — 그날부터 k일 뒤 같은 시각 행의 hm[k] 에 들어 있다
+            for k in range(5):
+                row = oh.get((day_t + timedelta(days=k)).strftime('%Y-%m-%d %H:00'))
+                if row and row['hm'][k] is not None:
+                    return float(row['hm'][k])
+            return None
+        vals, used = [], 0
+        for n in range(5):
+            v = rec.get((t - timedelta(days=n)).strftime('%Y-%m-%d %H'))
+            if v is not None:
+                used += 1                            # 우리 관서 실측
+            elif n:
+                v = asos_hm(t - timedelta(days=n))   # 이력이 없으면 같은 시각 가까운 ASOS 습도로
+            if v is not None:
+                vals.append((n, v))
+        if vals:
+            wsum = sum(EFF_R ** n for n, _ in vals)
+            he = (1 - EFF_R) * full * sum((EFF_R ** n) * v for n, v in vals) / wsum
+            reg['effHumid'] = round(he)
+            reg['effHumidDays'] = used
+        if off.get('he') is not None:
+            reg['effHumidOfficial'] = {'stn': off.get('nm', ''), 'he': off['he'], 'tm': off.get('tm', '')}
     try:
         _atomic_write_text(EFF_HUMID_PATH, json.dumps(store, ensure_ascii=False))
     except Exception:
@@ -4006,7 +4026,7 @@ def main():
                 data['regions'][i] = pr
                 print(f'  · {r.get("name")} 수집 실패 → 이전 값 보존')
 
-    # 실효습도 — 최근 며칠 일별최저습도 가중합(산불·화재 위험). 이력이 쌓일수록 정확.
+    # 실효습도 — 기상청 식(같은 시각 5일 습도 가중합, r=0.7) + 기상청 공식 ASOS 값
     try:
         apply_effective_humidity(data['regions'])
     except Exception as e:
@@ -4077,9 +4097,8 @@ def main():
         try:
             data['kma_images'] = download_kma_images()
             # 이미지가 ok=False면 이전 정상 메타데이터 보존
-            # (GitHub Actions가 받은 에러 이미지가 사장님 PC의 정상 이미지 표시를 막지 않게)
             prev_imgs = prev.get('kma_images') or {}
-            for key in ('wrn', 'qpf', 'radar', 'satellite'):
+            for key in ('wrn', 'radar', 'satellite'):
                 cur = data['kma_images'].get(key, {})
                 prev_meta = prev_imgs.get(key, {})
                 if not cur.get('ok') and prev_meta.get('ok'):
@@ -4090,10 +4109,9 @@ def main():
                     data['kma_images'][key] = prev_meta
                     print(f'  · {key}: {why} → 이전 이미지·메타 유지')
             wrn_ok = data['kma_images'].get('wrn', {}).get('ok')
-            qpf_ok = data['kma_images'].get('qpf', {}).get('ok')
             radar_ok = data['kma_images'].get('radar', {}).get('ok')
             sat_ok = data['kma_images'].get('satellite', {}).get('ok')
-            print(f'  특보발효도:{"✓" if wrn_ok else "✗"}  강수예측:{"✓" if qpf_ok else "✗"}  레이더:{"✓" if radar_ok else "✗"}  위성:{"✓" if sat_ok else "✗"}')
+            print(f'  특보발효도:{"✓" if wrn_ok else "✗"}  레이더:{"✓" if radar_ok else "✗"}  위성:{"✓" if sat_ok else "✗"}')
         except Exception as e:
             print(f'  ✗ {e}')
             data['kma_images'] = prev.get('kma_images') or {}

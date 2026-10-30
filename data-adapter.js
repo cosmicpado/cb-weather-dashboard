@@ -31,6 +31,7 @@
         name: nm, sigun: (ALIAS[nm] || nm),
         temp: src.temp, weather: src.weather, icon: icon(src.weather),
         rain: src.rain, wind: src.wind, humid: src.humid, effHumid: src.effHumid,
+        effHumidOff: src.effHumidOfficial || null,   // 기상청 공식 실효습도(가까운 ASOS 관측소) {stn, he, tm}
         feels: round(det.feels_like),
         cum1h: cum['1h']||0, cum3h: cum['3h']||0, cum6h: cum['6h']||0, cum12h: cum['12h']||0,
         // AWS 실측(기상청 공식 누적) — 자체누적(cum*)보다 신뢰도가 높다.
@@ -115,10 +116,7 @@
     var kmaImages = {
       radar:     { file:'images/kma_radar.png',     ts:(ki.radar&&ki.radar.ts)||'' , ok:!(ki.radar&&ki.radar.ok===false) },
       satellite: { file:'images/kma_satellite.png', ts:(ki.satellite&&ki.satellite.ts)||'', ok:!(ki.satellite&&ki.satellite.ok===false) },
-      warn:      { file:'images/kma_warn.png',      ts:(ki.wrn&&ki.wrn.ts)||'', ok:!(ki.wrn&&ki.wrn.ok===false) },
-      qpf:       { file:'images/kma_qpf.png',       ts:(ki.qpf&&ki.qpf.ts)||'', ok:!(ki.qpf&&ki.qpf.ok===false),
-                   // src 'rdr' = 예측 영상을 못 받아 레이더 강수실황으로 대신한 것(update_data.py)
-                   title:((ki.qpf&&ki.qpf.src)==='rdr') ? '레이더 강수실황' : '초단기 강수예측' }
+      warn:      { file:'images/kma_warn.png',      ts:(ki.wrn&&ki.wrn.ts)||'', ok:!(ki.wrn&&ki.wrn.ok===false) }
     };
 
     window.DASH = {

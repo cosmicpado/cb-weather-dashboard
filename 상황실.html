@@ -317,7 +317,7 @@
 
 </script>
 <script>
-/* 상황실 벽면 — 시도 바꾸기 (전국판, 2026-09-19 사장님 지시 "상황실도 시도 바꾸게")
+/* 상황실 벽면 — 시도 바꾸기 (전국판,)
    · region.js 에 sidoList 가 주입된 화면(작업장/전국판)에서만 나타난다. 경기 전용 사이트엔 없다.
    · 좌상단 오버레이 둘째 줄에 '🗺 시도 · 강원도' 배지. 누르면 시도 칩이 뜨고, 고르면 그 시도
      폴더의 상황실로 이동한다(시도마다 데이터·지도·설정 파일이 달라 한 화면 안에서는 못 바꾼다).
@@ -2004,7 +2004,7 @@ class Component extends DCLogic {
       R('div',{style:{fontSize:'24px',fontWeight:520,color:DIM,textAlign:'right'}},
         (td.target||'')+' · '+(td.station||'')+' +'+(td.shift_min!=null?Math.round(td.shift_min/60):2)+'h · 물때 '+(td.spring||'-')));
   }
-  /* ── 하천 CCTV 카드(2026-09-22) — 권역 전역 목록을 60초마다 한 지점씩. 관서 순환(6~15초)과는 따로 돈다(통제소 스트림이
+  /* ── 하천 CCTV 카드 — 권역 전역 목록을 60초마다 한 지점씩. 관서 순환(6~15초)과는 따로 돈다(통제소 스트림이
      켜지는 데 몇 초 걸려 관서마다 바꾸면 늘 '연결 중'만 보인다). 경보·주의보 지점이 있으면 그것만 돌리고(상황 집중),
      순환을 멈춰 둔(❚❚) 관서에 지점이 있으면 그 관서 것만 돌린다. 스트림은 스스로 멈추지 않는다(stopAfter:0). */
   cctvPick(s){
@@ -2059,7 +2059,7 @@ class Component extends DCLogic {
     return out;
   }
 
-  /* 관서 상황단계 — 순환 중인 관서에 발효 중인 특보로 정한다(관서별 현황판이라 관서 기준이 맞다, 2026-10-30 되돌림).
+  /* 관서 상황단계 — 순환 중인 관서에 발효 중인 특보로 정한다(관서별 현황판이라 관서 기준이 맞다).
      폭염·한파·건조·황사·오존(며칠 이어지는 특보)=주의 · 그 밖의 주의보=경계 · 경보=심각.
      도 전체 기준인 충북 재대본 비상단계(stage.js)는 같은 카드 아래 줄에 따로 보여 준다(dob()). */
   level(){
@@ -2161,7 +2161,7 @@ class Component extends DCLogic {
       level:['낮음','주의','높음'][fireRisk],
       note:'실효습도 '+s.effHum+'% · 풍속 '+s.wind+'m/s · 풍향 '+(s.windDeg==null ? '—' : ['북','북동','동','남동','남','남서','서','북서'][Math.floor(((s.windDeg+22.5)%360)/45)]),
       color:['var(--cSafe,#aeb8c8)','var(--cAmber,#ffb020)','var(--cRed,#ff5a5a)'][fireRisk], bg:['rgba(142,155,176,.07)','rgba(255,176,32,.1)','rgba(255,77,77,.12)'][fireRisk] });
-    /* 체감온도 카드 — 구급 전용 어휘 대신 모든 직원이 읽는 말로(2026-10-30). 지도.html tempCard 와 같은 기준.
+    /* 체감온도 카드 — 구급 전용 어휘 대신 모든 직원이 읽는 말로. 지도.html tempCard 와 같은 기준.
        체감 30° 이상 온열질환 주의(기상청 폭염 영향예보 31·33·35·38) · 10° 미만 한파 주의(체감온도 0·-10·-25) · 그 사이 일교차 */
     const _C=['var(--cSafe,#aeb8c8)','var(--cAmber,#ffb020)','var(--cRed,#ff5a5a)'], _B=['rgba(142,155,176,.07)','rgba(255,176,32,.1)','rgba(255,77,77,.12)'];
     const _f=s.feels, _rg=(s.tmax!=null&&s.tmin!=null)?(s.tmax-s.tmin):null;
@@ -2234,7 +2234,7 @@ class Component extends DCLogic {
         rainColor: cur ? (sev ? '#12161d' : 'var(--bg,#0d1118)') : (_wetR ? 'var(--cBlue,#54aaff)' : 'var(--dim,#8e9bb0)'),
         rainWeight: _wetR ? 800 : 600,
         rainOpacity: _wetR ? 1 : 0.35,
-        /* 칸 전체를 관서 상황단계 색으로(동그라미만으론 한눈에 안 들어온다, 2026-10-30).
+        /* 칸 전체를 관서 상황단계 색으로(동그라미만으론 한눈에 안 들어온다).
            지금 보고 있는 관서는 색을 바꾸지 않고 굵은 강조 테두리로 표시한다(단계 색과 섞이지 않게). */
         /* 다른 관서는 연한 단계 색, 지금 보는 관서는 그 단계 색으로 진하게 꽉 채운다(평상이면 글자색으로 반전 —
            어두운 화면은 흰 칸, 밝은 화면은 진한 칸). 강조색(초록)은 여기 쓰지 않는다 — 단계 색과 섞여 어색했다 */
@@ -2341,10 +2341,9 @@ class Component extends DCLogic {
 
 
 
-<script src="./risk-zones.js"></script>
 <script src="./stage.js"></script>
 <script>
-/* ▶ 시연 — 단계를 고르면 그 단계의 가상 특보·재난문자·강수·하천 수위가 채워진다(주소 ?demo=, 2026-10-30).
+/* ▶ 시연 — 단계를 고르면 그 단계의 가상 특보·재난문자·강수·하천 수위가 채워진다(주소 ?demo=).
    실제 자료는 건드리지 않는다 — 화면에만 얹는다. '■ 시연 중'을 누르면 실제 자료로 돌아간다. */
 (function(){
   var STAGES=[['normal','평상','#aeb8c8'],['ready','준비','#54aaff'],['caution','1단계','#ffb020'],['warn','2단계','#ff7a2f'],['severe','3단계','#ff5a5a']];
@@ -2368,7 +2367,7 @@ class Component extends DCLogic {
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', draw); else draw();
 })();
 </script>
-<!-- 하천 CCTV 카드(2026-09-22): 장치번호표·부산 목록·등록표·KBS 토큰(서버가 운영 저장소에 올림) — data.js 보다 먼저(변환기가 판정에 쓴다) -->
+<!-- 하천 CCTV 카드: 장치번호표·부산 목록·등록표·KBS 토큰(서버가 운영 저장소에 올림) — data.js 보다 먼저(변환기가 판정에 쓴다) -->
 <script src="./cctv-hrfco.js"></script>
 <script src="./cctv-links.js"></script>
 <script src="data-cctv.js"></script>
@@ -2567,7 +2566,7 @@ class Component extends DCLogic {
                  pty:(o.pty_txt||''), lgt:(nv(o.lgt)||0)>0, temp:nv(o.temp) };
       });
     });
-    /* 하천 CCTV 순환 목록(벽면 카드, 2026-09-22) — 관서 순환과 무관한 권역 전역 목록. 화면 안에서 틀 수 있는 것만:
+    /* 하천 CCTV 순환 목록(벽면 카드) — 관서 순환과 무관한 권역 전역 목록. 화면 안에서 틀 수 있는 것만:
        ① 홍수통제소 관측소 CCTV(장치번호표 cctv-hrfco.js) ② 외부 등록(cctv-links.js: KBS·포항·부산 안전ON HLS·춘천 iframe).
        순서: 경보→주의보 지점 먼저(rank 0·1), 그다음 관서 순, 같은 관서 안에선 위험수위 대비 높은 순. 같은 지점은 한 번만. */
     var cctv=[], _seen={};
@@ -2584,7 +2583,7 @@ class Component extends DCLogic {
       });
     });
     cctv.sort(function(a,b){ return (a.rank-b.rank)||(a.si-b.si)||(b.ratio-a.ratio); });
-    /* 관서별 예비특보 — 기상특보 카드에 발효 특보 아래 노란 줄로(2026-10-30). 그 관서 시·군이 들어간 항목만.
+    /* 관서별 예비특보 — 기상특보 카드에 발효 특보 아래 노란 줄로. 그 관서 시·군이 들어간 항목만.
        시·군 없이 '충청북도'만 있으면 전 관서. 한 줄 = 종류 · 걸린 충북 시·군들 · 시각 */
     var ADM=(RC.admin||{}), prelim={}; NAMES.forEach(function(nm){ prelim[nm]=[]; });
     (D.prelim_warnings||[]).forEach(function(g){
@@ -2600,7 +2599,7 @@ class Component extends DCLogic {
     var stage = window.cbStage ? window.cbStage((D.warnings||[]).map(function(w){ return { type:w.type||w.title||w.name||'', area:w.area||w.region||w.regions||'', level:w.level||'' }; }), D.prelim_warnings||[], D.typhoon||[]) : null;
     return { stations:stations, rivers:rivers, msgs:msgs, warns:warnsByStation(D.warnings), cctv:cctv, risks:risks, stage:stage, prelim:prelim,
              keyRivers:keyRivers, ultra:ultra, updated:D.updated,
-             /* 새 카드 3장(레이더·태풍·물때, 2026-09-18) 원시 데이터 통과 */
+             /* 새 카드 3장(레이더·태풍·물때) 원시 데이터 통과 */
              kmaImages:(D.kma_images||{}), typhoon:(D.typhoon||[]), tide:(D.tide||null) };
   }
   /* ▶ 시연 — 주소 ?demo=normal|ready|caution|warn|severe. 실제 자료 위에 그 단계의 가상 특보·예비특보·재난문자·
@@ -2637,7 +2636,7 @@ class Component extends DCLogic {
   }
   function apply(D){ apply._raw=D; var key=demoKey(), src=key?demoize(D,key):D;
     var w=build(src); if(!w) return; window.WALL_DATA=w;
-    /* 화면 팝업 알림(alerts.js)은 지도 화면에서만 — 벽면 상황실은 띄우지 않는다(2026-10-30) */ }
+    /* 화면 팝업 알림(alerts.js)은 지도 화면에서만 — 벽면 상황실은 띄우지 않는다 */ }
   window.wallReapply=function(){ if(apply._raw) apply(apply._raw); };
   if(window.DASHBOARD_DATA) apply(window.DASHBOARD_DATA);
   setInterval(function(){

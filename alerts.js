@@ -107,7 +107,7 @@
     } catch (e) { return; }
     var el = document.createElement('div');
     el.style.cssText = 'position:fixed;left:16px;bottom:60px;z-index:9600;max-width:min(420px,calc(100vw - 32px));background:#0f1b2d;color:#fff;border-radius:12px;padding:10px 12px;font:600 12.5px/1.5 Pretendard,system-ui,sans-serif;box-shadow:0 10px 30px -8px rgba(0,0,0,.4);display:flex;gap:10px;align-items:center;flex-wrap:wrap;';
-    el.innerHTML = '<span>🔔 새 특보·재난문자를 <b>Windows 알림</b>으로도 받을까요? (화면 팝업은 이미 켜져 있습니다)</span>'
+    el.innerHTML = '<span>🔔 새 특보·재난문자를 <b>기기 알림</b>(Windows·휴대폰)으로도 받을까요? (화면 팝업은 이미 켜져 있습니다)</span>'
       + '<span style="display:flex;gap:6px;margin-left:auto"><button data-y style="border:0;border-radius:8px;padding:5px 11px;background:#2563eb;color:#fff;font:700 12px inherit;cursor:pointer">켜기</button>'
       + '<button data-n style="border:1px solid #4b5b78;border-radius:8px;padding:5px 11px;background:transparent;color:#cfd7e6;font:700 12px inherit;cursor:pointer">괜찮아요</button></span>';
     el.querySelector('[data-y]').onclick = function () { try { Notification.requestPermission(); localStorage.setItem(ASK, '1'); } catch (e) {} el.remove(); };

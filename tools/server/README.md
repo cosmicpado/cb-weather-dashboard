@@ -38,5 +38,5 @@ df -h /                                         # 디스크(10GB)
 - **히스토리 압축**: `.git` 이 600MB 를 넘으면 `update.sh` 가 기록을 1커밋으로 눌러 강제 푸시한다(약 2~3주마다).
   그 뒤 개발 PC 의 작업 브랜치는 공통 조상이 없어져 PR 이 꼬일 수 있다 — 압축 전에 PR 을 Merge 해 두는 게 좋다.
 - **개발 PC 에서는 푸시 모드로 돌리지 않는다**: `update_data.py` 는 현재 브랜치를 `main` 으로 밀어 올린다.
-  개발 폴더에서는 `--no-push`(상황판열기.bat)만 쓴다.
+  개발 PC에서는 `python tools/update_data.py --no-push` 만 쓴다.
 - **Cloudflare**: 저장소 Secrets `CLOUDFLARE_API_TOKEN` · `CLOUDFLARE_ACCOUNT_ID` 가 있어야 배포가 성공한다.
