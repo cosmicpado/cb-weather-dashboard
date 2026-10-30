@@ -88,6 +88,7 @@
   .hoGlow-warn{   --hoG:rgba(239,108,26,.6); animation:hoGlow 1.9s ease-in-out infinite; border-color:var(--warn) !important;   color:var(--warn) !important; }
   .hoGlow-severe{ --hoG:rgba(212,42,47,.65); animation:hoGlow 1.6s ease-in-out infinite; border-color:var(--severe) !important; color:var(--severe) !important; }
   @media (prefers-reduced-motion: reduce){ .hoGlow-rain,.hoGlow-warn,.hoGlow-severe{ animation:none; } }
+  .hoStill{ animation:none !important; }
   /* 지도 관서 라벨 — 고정 픽셀이라 지도가 작아지는 좁은 화면에서 서로 겹친다.
      화면폭에 따라 --lblbase로 비례 축소해 라벨끼리 간격을 벌린다. (줌용 --lblinv와 곱해짐) */
   .mapLbl{ --lblbase:1; }
@@ -192,7 +193,7 @@
         <!-- 헤더 버튼은 2단계 체계다: '강조 링크'(알림받기 — 컬러 테두리+글자, 흰 배경, w800)와
              '유틸 버튼'(경보음·테마 — 회색, w700). 호우는 강조 링크 급이므로 알림받기와 같은 꼴로 맞춘다.
              배경을 채우면(brandSoft) 혼자 세 번째 스타일이 되어 과하게 튄다. -->
-        <a href="호우.html" class="{{hoBtnCls}}" title="호우 전용 화면 — 관서별 실측 강수(기상청 AWS)·6시간/24시간 강수예보·강풍·하천수위·레이더" style="height:36px; padding:0 13px; border-radius:10px; border:1px solid var(--brand); background:var(--surface); color:var(--brand); font-size:12.5px; font-weight:800; font-family:inherit; text-decoration:none; display:flex; align-items:center; gap:6px; white-space:nowrap;">🌧 호우</a>
+        <a href="{{boardHref}}" class="{{boardCls}}" title="재해 상황판 — 🌧 호우(실측 강수·6시간 예측·강풍·하천) / ❄ 대설·한파(예상 적설·최저기온·결빙 위험) 탭. 특보가 있으면 그 특보에 맞는 탭으로 열립니다" style="height:36px; padding:0 13px; border-radius:10px; border:1px solid var(--brand); background:var(--surface); color:var(--brand); font-size:12.5px; font-weight:800; font-family:inherit; text-decoration:none; display:flex; align-items:center; gap:6px; white-space:nowrap;">{{boardLabel}}</a>
         <a href="상황실.html" title="상황실(벽면) 모드 — 관할 전 관서를 15초마다 순차 표출. 대형 화면에 띄우고 F11 전체화면으로 사용" style="height:36px; padding:0 13px; border-radius:10px; border:1px solid var(--brand); background:var(--surface); color:var(--brand); font-size:12.5px; font-weight:800; font-family:inherit; text-decoration:none; display:flex; align-items:center; gap:6px; white-space:nowrap;" style-hover="background:var(--surface2)">🖥 상황실</a>
         <!-- 알림받기(텔레그램) — 숨김. 원작자의 경기북부 봇이라 충북 알림이 아니다.
              충북용 봇을 만들면 href 를 그 봇 주소(https://t.me/<봇이름>)로 바꾸고 이 주석을 풀 것.
@@ -2087,14 +2088,24 @@ class Component extends DCLogic {
     const stations = this.placed(d.stations);
     // ── 호우 버튼 글로우 — 비 오거나 기상특보 있을 때 (working() 기준이라 시연 모드에서도 동작) ──
     //   경보>주의보>비(무특보) 순으로 색·속도가 다르다. 무상황이면 기본 클래스만(정적).
-    const _rainNow = (stations||[]).some(s=> (s.rain||0) > 0 || (s.obs && s.obs.pty && s.obs.pty!=='0' && s.obs.pty!==0));
+    //   비는 '보통 비' 이상(1시간 3mm↑ 또는 3시간 10mm↑)일 때만. 전엔 한 관서라도 0.5mm만 와도 맥동해서
+    //   지나가는 소나기(2026-10-30 청주금천 2.5mm)에 상시 깜빡이는 것처럼 보였다.
+    const _rainNow = (stations||[]).some(s=> (s.rain||0) >= 3 || (s.cum3h||0) >= 10);
     // 🌧 호우 버튼은 '풍수해' 화면 진입구다 → 풍수해 관련 특보에만 글로우한다.
     //   폭염·건조·한파·황사경보는 이 버튼(비)과 무관하다. 그런 경보에 빨강(홍수 급박색)으로
     //   맥동하면 운영자가 호우 급박으로 오인한다(한여름 충청북도 폭염경보 상시 → 오정보).
     const _hazWarns = rawWarns.filter(w=> /호우|태풍|강풍|풍랑|해일|홍수/.test(String(w.type||'')));
     const _sevWarn = _hazWarns.some(w=> w.level==='severe' || String(w.type||'').indexOf('경보')>=0);
     const _anyWarn = _hazWarns.length > 0;
-    const hoBtnCls = 'hoBtn' + (_sevWarn ? ' hoGlow-severe' : _anyWarn ? ' hoGlow-warn' : _rainNow ? ' hoGlow-rain' : '');
+    const hoBtnCls = 'hoBtn' + (_sevWarn ? ' hoGlow-severe' : _anyWarn ? ' hoGlow-warn' : _rainNow ? ' hoGlow-rain' : '') + (st.noBlink ? ' hoStill' : '');   // 🚨 점멸 끄기면 색만 남기고 맥동은 멈춤
+    // 재해 상황판 버튼(하나) — 대설·한파 특보면 ❄ 탭, 호우 쪽 특보·보통 비 이상이면 🌧 탭으로 열고 빛나게 한다.
+    //   아무 일 없으면 재해.html 이 스스로 고르는 탭(마지막으로 고른 탭 → 계절)과 같은 이름을 단다.
+    const _snWarns = rawWarns.filter(w=> /대설|한파/.test(String(w.type||'')));
+    const _snCls = 'hoBtn' + (_snWarns.some(w=> String(w.type||'').indexOf('경보')>=0) ? ' hoGlow-severe' : ' hoGlow-warn') + (st.noBlink ? ' hoStill' : '');
+    const _calmMode = (function(){ try{ const v=localStorage.getItem('cbBoardMode'); if(v==='rain'||v==='snow') return v; }catch(e){} const m=new Date().getMonth()+1; return (m>=11||m<=3) ? 'snow' : 'rain'; })();
+    const _board = (_snWarns.length && !rawWarns.some(w=> /호우|태풍/.test(String(w.type||'')))) ? {href:'재해.html?mode=snow', label:'❄ 대설·한파', cls:_snCls}
+                 : (_anyWarn || _rainNow) ? {href:'재해.html?mode=rain', label:'🌧 호우', cls:hoBtnCls}
+                 : {href:'재해.html', label:(_calmMode==='snow' ? '❄ 대설·한파' : '🌧 호우'), cls:'hoBtn'};
     // 관서별 현재 기상 카드: 선택 관서를 맨 앞으로(나머지는 기존 지리 순서, stable)
     const stationOrder = stations.slice().sort((a,b)=> (a.name===pickLabel?0:1)-(b.name===pickLabel?0:1));
     // 기상영상 src: 운영 절대URL + ts 캐시버스터 (상대경로=자기 브랜치 고착 문제 해결)
@@ -2224,7 +2235,7 @@ class Component extends DCLogic {
           style:'height:30px; min-width:52px; padding:0 12px; border-radius:9px; border:1.5px solid '+col+'; background:'+(on?col:'var(--surface)')+'; color:'+(on?'#fff':'var(--ink)')+'; font-size:12.5px; font-weight:800; font-family:inherit; cursor:pointer;' }; }),
       demoTitle: st.demo?'시연 종료':'시연 모드 — 가상 호우 상황으로 화면 동작 보기',
       demoBtnStyle: 'width:34px; height:34px; padding:0; border-radius:10px; border:1px solid '+(st.demo?'var(--severe)':'var(--border)')+'; background:'+(st.demo?'var(--severe)':'var(--surface2)')+'; color:'+(st.demo?'#fff':'var(--ink2)')+'; font-size:13px; line-height:1; font-family:inherit; cursor:pointer; display:inline-flex; align-items:center; justify-content:center;',
-      hoBtnCls,
+      boardHref:_board.href, boardLabel:_board.label, boardCls:_board.cls,
       // ribbon
       statusLabel:rib.label, statusHead:rib.head, pageBlink:!!(status.blink || rib.blink) && !st.wall && !st.noBlink,
       statusSub: this.statusSub(isWide ? null : status, (isWide ? groupedWarns : this.groupWarns(_myWarns)), (isWide ? rivers : rivers.filter(_isMine)), prelimNorth),   // 관서 화면은 관할 하천만
