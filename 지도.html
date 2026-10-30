@@ -1854,7 +1854,7 @@ class Component extends DCLogic {
     const stage=[{t:'평상',c:C.safe,soft:CSFT.safe},{t:'주의',c:C.caution||C.warn,soft:CSFT.caution||CSFT.warn},{t:'경계',c:C.warn,soft:CSFT.warn},{t:'심각',c:C.severe,soft:CSFT.severe}][_orank];
     stage.blink=(_orank>=3); const _sg=this.stageStatus(d);
     const warnSummary = myWarns.length? (myWarns.map(g=>g.type).join(' · ')+' 발효') : '발효 중인 특보 없음';
-    const sunR=this.sunRiseSet(now, 37.9, 127.0, 9, 'rise'), sunS=this.sunRiseSet(now, 37.9, 127.0, 9, 'set');
+    const _sun=(window.cbSun ? window.cbSun(now, f) : {}), sunR=_sun.riseMin, sunS=_sun.setMin;   // 그 관서 시·군청 좌표(stage.js)
 
     // ── 출동 영향 판단 (현재 기상값 기반 자동) — 위험별 어휘·색(틴트 배경) ──
     const SFT={safe:'var(--safeSoft)',caution:'var(--cautionSoft)',warn:'var(--warnSoft)',severe:'var(--severeSoft)',brand:'var(--brandSoft)'};

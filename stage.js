@@ -115,3 +115,43 @@
     return { k: k, level: lv, note: w + amt + ' · 제설·빙판·고립 유의' };
   };
 })();
+
+/* 일출·일몰 — 한국천문연구원 공식값(서버가 하루 한 번 받아 data.js 의 sun)을 먼저 쓰고,
+   없거나 날짜가 다르면 같은 관서(시·군청) 좌표로 계산한다(NOAA 간이식, 정밀 계산과 1분 이내).
+   window.cbSun(date, 관서명) → { rise:'06:52', set:'17:35', riseMin, setMin, src:'kasi'|'calc' } */
+(function () {
+  var LL = {
+    '청주동부': [36.642, 127.489], '청주서부': [36.642, 127.489], '충주': [36.991, 127.926], '제천': [37.132, 128.191],
+    '보은': [36.489, 127.729], '옥천': [36.306, 127.571], '영동': [36.175, 127.783], '증평': [36.785, 127.581],
+    '진천': [36.855, 127.436], '괴산': [36.815, 127.787], '음성': [36.940, 127.690], '단양': [36.985, 128.366]
+  };
+  function calc(date, lat, lng, rise) {
+    var rad = Math.PI / 180, deg = 180 / Math.PI, y = date.getFullYear(), mo = date.getMonth(), da = date.getDate();
+    var N = Math.round((Date.UTC(y, mo, da) - Date.UTC(y, 0, 0)) / 86400000), lngHour = lng / 15;
+    var t = rise ? N + ((6 - lngHour) / 24) : N + ((18 - lngHour) / 24);
+    var M = 0.9856 * t - 3.289;
+    var L = M + 1.916 * Math.sin(rad * M) + 0.020 * Math.sin(rad * 2 * M) + 282.634; L = ((L % 360) + 360) % 360;
+    var RA = deg * Math.atan(0.91764 * Math.tan(rad * L)); RA = ((RA % 360) + 360) % 360;
+    RA = (RA + (Math.floor(L / 90) * 90 - Math.floor(RA / 90) * 90)) / 15;
+    var sinDec = 0.39782 * Math.sin(rad * L), cosDec = Math.cos(Math.asin(sinDec));
+    var cosH = (Math.cos(rad * 90.833) - sinDec * Math.sin(rad * lat)) / (cosDec * Math.cos(rad * lat));
+    if (cosH > 1 || cosH < -1) return null;
+    var H = (rise ? 360 - deg * Math.acos(cosH) : deg * Math.acos(cosH)) / 15;
+    var UT = (((H + RA - 0.06571 * t - 6.622 - lngHour) % 24) + 24) % 24;
+    return Math.round((((UT + 9) % 24) + 24) % 24 * 60);   // 한국 표준시(서머타임 없음)
+  }
+  function hm(m) { return m == null ? '--:--' : (String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0')); }
+  function toMin(t) { var m = /^(\d\d):(\d\d)$/.exec(String(t || '')); return m ? (+m[1]) * 60 + (+m[2]) : null; }
+  window.cbSun = function (date, name) {
+    var d = date || new Date();
+    var ymd = d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0');
+    var K = (window.DASHBOARD_DATA || {}).sun;
+    var o = K && K.date === ymd && K.by && (K.by[name] || K.by['청주동부']);
+    if (o && toMin(o.rise) != null && toMin(o.set) != null) {
+      return { rise: o.rise, set: o.set, riseMin: toMin(o.rise), setMin: toMin(o.set), src: 'kasi' };
+    }
+    var ll = LL[name] || LL['청주동부'];
+    var r = calc(d, ll[0], ll[1], true), s = calc(d, ll[0], ll[1], false);
+    return { rise: hm(r), set: hm(s), riseMin: r, setMin: s, src: 'calc' };
+  };
+})();

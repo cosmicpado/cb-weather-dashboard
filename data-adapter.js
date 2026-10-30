@@ -137,7 +137,8 @@
       bulletins: { warnings_full: (SRC.bulletins && SRC.bulletins.warnings_full) || [], stn: (SRC.bulletins && SRC.bulletins.stn) || 131,
                    info_full: (SRC.bulletins && SRC.bulletins.info_full) || [], commentary: (SRC.bulletins && SRC.bulletins.commentary) || null },
       // 물때(조석) — 파주 임진강 두포리(강화대교 예보 +2h). 없으면 null(파주 외엔 카드 미표시).
-      tide: SRC.tide || null
+      tide: SRC.tide || null,
+      sun: SRC.sun || null   // 한국천문연구원 출몰시각 {date, src, by:{관서:{rise,set}}}
     };
     return true;
   };
