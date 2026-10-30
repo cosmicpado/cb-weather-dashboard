@@ -673,7 +673,7 @@
 
   <!-- ============ FOOTER ============ -->
   <footer style="margin:26px 22px 0; padding-top:16px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;">
-    <div style="font-size:11px; color:var(--ink3); line-height:1.6;">데이터 : 기상청 · 행정안전부 · 한강홍수통제소 · 에어코리아 · 국립산림과학원<br>제작 : 소방위 한경승 · 동두천소방서 &nbsp;|&nbsp; 도움 : 소방장 온재웅, 이국신 &nbsp;|&nbsp; 자동 갱신 5분</div>
+    <div style="font-size:11px; color:var(--ink3); line-height:1.6;">데이터 : 기상청 · 행정안전부 · 한강홍수통제소 · 에어코리아 · 국립산림과학원 &nbsp;|&nbsp; 자동 갱신 5분</div>
     <div style="font-size:11px; color:var(--ink3); text-align:right;">마지막 업데이트<br><span style="font-weight:700; color:var(--ink2);">{{updatedTxt}}</span></div>
   </footer>
 
@@ -1941,7 +1941,7 @@ class Component extends DCLogic {
         R('div',{style:{display:'flex', alignItems:'baseline', justifyContent:'center', gap:'5px', marginTop:'1px'}}, R('span',{style:{fontSize:'clamp(12px,1.1vw,16px)', fontWeight:700, color:'var(--ink2)'}}, (s2.temp!=null?Math.round(s2.temp)+'°':'')), R('span',{style:{fontSize:'11px', fontWeight:700, color:col2c}}, w2?String(w2.type).replace(/(주의보|경보|특보)$/,''):'평상'))); }));
 
     const footer=R('div',{style:{display:'flex', alignItems:'center', gap:'14px', padding:'2px 26px 10px', fontSize:'11.5px', color:'var(--ink3)', whiteSpace:'nowrap'}},
-      R('span',{style:{overflow:'hidden', textOverflow:'ellipsis'}}, '데이터 · 기상청 / 행정안전부 / 한강홍수통제소 / 에어코리아 / 국립산림과학원   ·   제작 · 소방위 한경승 · 동두천소방서   ·   도움 · 소방장 온재웅, 이국신'),
+      R('span',{style:{overflow:'hidden', textOverflow:'ellipsis'}}, '데이터 · 기상청 / 행정안전부 / 한강홍수통제소 / 에어코리아 / 국립산림과학원'),
       R('span',{style:{marginLeft:'auto', flexShrink:0}}, '관서 자동 순환 14초 · 데이터 자동 갱신 5분 · 마지막 갱신 '+String(d.updated||'').replace(/^\d{4}-/,'').replace(/:\d\d$/,'')));
 
     return R('div',{style:{width:'100%', height:'100%', display:'flex', flexDirection:'column', position:'relative'}},
