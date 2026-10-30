@@ -6,6 +6,9 @@
 credentials.json
 token.json
 
+# 직원 의견(로컬서버·내부망서버가 받은 것) — 개인 이름이 들어 있을 수 있어 커밋하지 않는다
+feedback/
+
 # 임시 작업 공간 (단, 누적 강수 기록은 깃에 포함시켜 GitHub Actions에서도 누적 유지)
 .tmp/*
 !.tmp/rain_history.json

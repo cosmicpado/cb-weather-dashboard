@@ -3,6 +3,10 @@
     python tools/live_local.py              # 데이터 받기 + 웹서버 http://localhost:8765/지도.html
     python tools/live_local.py --port 8000  # 웹서버 포트 바꾸기
     python tools/live_local.py --no-serve   # 데이터만 받기(화면은 이미 띄운 다른 서버로 볼 때)
+    python tools/live_local.py --lan        # 다른 PC 에서도 접속(내부망 배포) — http://<이 PC IP>:8000/
+
+- 직원 의견(💬 버튼, feedback.js)을 받아 feedback/feedback.jsonl 에 한 줄씩 쌓는다.
+  목록은 이 PC 에서만 http://localhost:<포트>/의견함.html 로 본다(다른 PC 는 보내기만 된다).
 
 - 1분마다 git fetch 로 origin/main 의 data.js · data-cctv.js · images/*.png 를 작업 폴더에 덮어쓴다
   (지금 브랜치·커밋·스테이지는 건드리지 않는다. 바뀐 데이터 파일은 커밋하지 말 것).
@@ -12,6 +16,7 @@
 import argparse
 import functools
 import http.server
+import json
 import subprocess
 import sys
 import threading
@@ -20,6 +25,8 @@ from datetime import datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+FEEDBACK = ROOT / 'feedback' / 'feedback.jsonl'
+_fb_lock = threading.Lock()
 FILES = ['data.js', 'data-cctv.js']
 
 
@@ -56,6 +63,7 @@ def main():
     ap.add_argument('--port', type=int, default=8765)
     ap.add_argument('--every', type=int, default=60, help='가져오기 간격(초)')
     ap.add_argument('--no-serve', action='store_true', help='데이터만 받아 오고 웹서버는 띄우지 않는다(이미 다른 서버를 쓸 때)')
+    ap.add_argument('--lan', action='store_true', help='다른 PC 에서도 접속하게 연다(기본은 이 PC 만)')
     a = ap.parse_args()
     if a.no_serve:
         try:
@@ -66,11 +74,58 @@ def main():
     class Quiet(http.server.SimpleHTTPRequestHandler):
         def log_message(self, *x):                 # 요청 로그는 끈다(가져오기 기록만 보이게)
             pass
+
+        def _json(self, code, obj):
+            body = json.dumps(obj, ensure_ascii=False).encode('utf-8')
+            self.send_response(code)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.send_header('Content-Length', str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def _local(self):
+            return self.client_address[0] in ('127.0.0.1', '::1')
+
+        def do_POST(self):
+            if self.path.split('?')[0] != '/api/feedback':
+                return self._json(404, {'ok': False})
+            n = int(self.headers.get('Content-Length') or 0)
+            if n <= 0 or n > 20000:
+                return self._json(413, {'ok': False})
+            try:
+                d = json.loads(self.rfile.read(n).decode('utf-8'))
+            except ValueError:
+                return self._json(400, {'ok': False})
+            rec = {k: str(d.get(k, ''))[:4000] for k in ('kind', 'text', 'name', 'page', 'station', 'url', 'ua', 'at')}
+            if not rec['text'].strip():
+                return self._json(400, {'ok': False})
+            rec['received'] = datetime.now().strftime('%Y-%m-%d %H:%M')
+            rec['ip'] = self.client_address[0]
+            with _fb_lock:
+                FEEDBACK.parent.mkdir(parents=True, exist_ok=True)
+                with FEEDBACK.open('a', encoding='utf-8') as f:
+                    f.write(json.dumps(rec, ensure_ascii=False) + '\n')
+            print(f'[{datetime.now():%H:%M:%S}] 💬 의견 접수: {rec["kind"]} · {rec["name"] or "이름 없음"} · {rec["text"][:40]}', flush=True)
+            return self._json(200, {'ok': True})
+
+        def do_GET(self):
+            if self.path.split('?')[0] == '/api/feedback':
+                if not self._local():                 # 목록은 서버 PC 에서만
+                    return self._json(403, {'ok': False})
+                items = []
+                if FEEDBACK.exists():
+                    for line in FEEDBACK.read_text(encoding='utf-8').splitlines():
+                        try:
+                            items.append(json.loads(line))
+                        except ValueError:
+                            pass
+                return self._json(200, {'ok': True, 'items': items})
+            return super().do_GET()
     handler = functools.partial(Quiet, directory=str(ROOT))
     class Server(http.server.ThreadingHTTPServer):
         allow_reuse_address = False                # Windows 는 켜 두면 이미 쓰는 포트에도 겹쳐 붙는다
     try:
-        srv = Server(('127.0.0.1', a.port), handler)
+        srv = Server(('0.0.0.0' if a.lan else '127.0.0.1', a.port), handler)
     except OSError:
         # 이미 그 포트로 띄운 서버가 있으면(같은 폴더를 보고 있을 테니) 데이터만 받는다
         print(f'{a.port} 포트는 이미 사용 중 — 데이터만 받습니다. 화면은 쓰던 서버로 보세요. (끄기: Ctrl+C)', flush=True)
@@ -79,7 +134,14 @@ def main():
                 time.sleep(3600)
         except KeyboardInterrupt:
             sys.exit(0)
-    print(f'열기: http://localhost:{a.port}/지도.html   (끄기: 이 창 닫기 또는 Ctrl+C)', flush=True)
+    print(f'열기: http://localhost:{a.port}/지도.html   의견함: http://localhost:{a.port}/의견함.html   (끄기: 이 창 닫기 또는 Ctrl+C)', flush=True)
+    if a.lan:
+        import socket
+        try:
+            ip = socket.gethostbyname(socket.gethostname())
+        except OSError:
+            ip = '<이 PC IP>'
+        print(f'다른 PC 에서: http://{ip}:{a.port}/지도.html', flush=True)
     try:
         srv.serve_forever()
     except KeyboardInterrupt:
