@@ -46,13 +46,11 @@ ok "main @ $(git log --oneline -1)"
 say "5. API 키 (.env)"
 if [ ! -f .env ]; then
   cat > .env <<'EOF'
-# 충청북도 기상·재난 상황판 — 운영 서버 API 키 (깃에 올라가지 않는다)
+# 충북소방 기상종합상황판 — 운영 서버 API 키 (깃에 올라가지 않는다)
 DATA_GO_KR_KEY=
 KMA_APIHUB_KEY=
 HRFCO_KEY=
 SAFETY_DATA_KEY=
-TELEGRAM_BOT_TOKEN=
-TELEGRAM_CHAT_ID=
 EOF
   chmod 600 .env
 fi

@@ -43,7 +43,7 @@ def main():
         ok_js = ok_map and run(['tools/build_region_js.py', key], f'{key} 화면설정')
         ok_data = None
         if collect and ok_js:
-            ok_data = run(['tools/update_data.py', '--profile', key, '--no-push', '--no-notify'], f'{key} 수집')
+            ok_data = run(['tools/update_data.py', '--profile', key, '--no-push'], f'{key} 수집')
         rows.append((prof['label'], key, len(prof['regions']), len(prof['river_stations']),
                      len(prof['pm_stations']), len(prof['reg_map']), ok_map, ok_js, ok_data))
     print(f'{"시도":6s} {"키":10s} {"단위":>4s} {"하천":>4s} {"미세":>4s} {"특보":>4s}  지도 설정 수집')

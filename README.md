@@ -1,4 +1,4 @@
-# 충청북도 기상·재난 상황판
+# 충북소방 기상종합상황판
 
 충청북도 11개 시군(12개 관서 — 청주는 동부·서부)의 기상·특보·재난문자·하천 수위·산불위험을 한 화면에 모아 보는 상황판.
 
@@ -7,9 +7,9 @@
 - 네이버클라우드 서버가 5분마다 `tools/update_data.py` 로 수집해 `main` 에 커밋·푸시한다(`update.sh`, 설치는 `tools/server/README.md`).
 - 배포가 필요하면 서버가 `deploy-trigger` 브랜치를 밀고, GitHub Actions 가 Cloudflare Workers 로 배포한다.
 - PR 을 Merge 하면 서버가 다음 회차에 새 코드를 받아 바로 배포한다.
-- 내 PC에서 운영 데이터로 화면을 보려면 **`로컬서버.bat` 더블클릭** → `http://localhost:8000/지도.html`
-  (= `python tools/live_local.py --port 8000`. 8000 을 이미 다른 서버가 쓰면 데이터만 받는다. 데이터만: `--no-serve`).
-- 내부망에서 다른 PC 도 보게 하려면 **`내부망서버.bat`** (= `--port 8000 --lan`) → 다른 PC 는 `http://<이 PC IP>:8000/지도.html`.
+- 운영 데이터로 화면을 보려면 **`서버.bat` 더블클릭** (= `python tools/live_local.py --port 8000 --lan`)
+  → 이 PC 는 `http://localhost:8000/지도.html`, 내부망의 다른 PC 는 `http://<이 PC IP>:8000/지도.html`.
+  이 PC 에서만 볼 때는 `--lan` 을 빼면 된다(8000 을 이미 다른 서버가 쓰면 데이터만 받는다. 데이터만: `--no-serve`).
   서버가 올린 최신 데이터를 1분마다 받아 오고 웹서버도 같이 띄운다(API 호출 없음, 받아 온 데이터 파일은 커밋하지 말 것).
 - API 를 직접 불러 시험하려면 `python tools/update_data.py --no-push` (푸시 모드는 서버 커밋과 엇갈리니 쓰지 말 것).
 
@@ -21,6 +21,47 @@ HRFCO_KEY=...           # 한강홍수통제소 수문 API
 SAFETY_DATA_KEY=...     # 행정안전부 재난안전데이터
 KMA_APIHUB_KEY=...      # 기상청 API 허브 (AWS·특보)
 ```
+
+## 사용하는 API
+
+모두 `tools/update_data.py` 가 서버에서 부르고, 결과를 `data.js`·`data-cctv.js`·`images/*.png` 에 담는다(화면은 API 를 직접 부르지 않는다).
+
+### 공공데이터포털 (`DATA_GO_KR_KEY`)
+
+| 기관 | API | 쓰는 곳 |
+|---|---|---|
+| 기상청 | 단기예보 `VilageFcstInfoService_2.0` — 초단기실황 `getUltraSrtNcst`, 초단기예보 `getUltraSrtFcst`, 단기예보 `getVilageFcst` | 관서별 현재 날씨, 시간대별 예보 |
+| 기상청 | 중기예보 `MidFcstInfoService/getMidFcst` | 중기 전망 문구 |
+| 기상청 | 기상특보 `WthrWrnInfoService` — `getPwnStatus`, `getWthrWrnList`, `getWthrWrnMsg`, `getWthrInfoList` | 특보 현황, 통보문 전문, 기상정보 |
+| 한국천문연구원 | 출몰시각 `RiseSetInfoService/getLCRiseSetInfo` | 관서별 일출·일몰 (하루 1회, 실패하면 화면에서 계산) |
+| 한국환경공단 | 에어코리아 `ArpltnInforInqireSvc/getCtprvnRltmMesureDnsty` | 미세먼지 |
+| 산림청 | 산불발생통계 `forestStusService/getfirestatsservice` | 최근 1년 산불 발생 |
+| 국립산림과학원 | 산불위험예보 `forestPointV2/forestPointListSigunguSearchV2` | 시군별 산불위험도 |
+
+### 기상청 API 허브 (`KMA_APIHUB_KEY`)
+
+| API | 쓰는 곳 |
+|---|---|
+| `nph-aws2_min` AWS 분자료 | 관측소별 실시간 강수 |
+| `wrn_now_data_new.php`, `nph-wrn7` | 현재 특보·예비특보, 특보 구역 그림 |
+| `typ_lst.php`, `typ_data.php` | 태풍 목록·경로·예측 |
+| `rdr_cmp_file.php` | 레이더 합성 영상 → `images/kma_radar.png` |
+| `GK2A/LE1B/IR105` | 천리안 2A 위성 영상 → `images/kma_satellite.png` |
+
+### 그 밖의 기관
+
+| 기관 | API | 인증 | 쓰는 곳 |
+|---|---|---|---|
+| 한강홍수통제소 | `api.hrfco.go.kr` 수위·우량·댐, 홍수예보 `fldfct` | `HRFCO_KEY` | 하천 수위, 홍수특보 |
+| 행정안전부 | 재난안전데이터 `DSSP-IF-00247` 긴급재난문자 | `SAFETY_DATA_KEY` | 재난문자 |
+| 기상청 기상자료개방포털 | 실효습도 표 (`data.kma.go.kr/climate/ehum`) | 없음 | 공식 실효습도 (참고 표시) |
+| 기상청 날씨누리 | 통보문 화면 (`weather.go.kr/w/special-report`) | 없음 | 지방청 날씨해설 (공개 API 없음) |
+| 홍수통제소 | 홍수정보 CCTV 목록 (`n.flood.go.kr`) | 없음 | 하천 CCTV → `data-cctv.js` (6시간 캐시) |
+| KBS | 재난 CCTV 목록 (`d.kbs.co.kr`) | 없음 | 도로·재난 CCTV → `data-cctv.js` (6시간 캐시) |
+
+인증이 없는 곳은 웹 화면이 부르는 주소를 그대로 쓰는 것이라 기관이 화면을 바꾸면 끊길 수 있다. 끊겨도 직전 값이나 빈 값으로 화면은 계속 돈다.
+
+화면에서 직접 쓰는 외부 자원은 브이월드 배경지도(`지도.html` 의 `VWORLD_KEY`)와 CCTV 영상 재생 주소뿐이다.
 
 ## 화면
 
@@ -63,7 +104,7 @@ python tools/check_pages.py                             # 화면이 region.js �
 ### 지도 경계 원본
 
 `tools/geo/chungbuk.geojson` 은 최신 행정동 경계([vuski/admdongkor](https://github.com/vuski/admdongkor))를
-시군구로 합친 것이다(현재 ver20261001). 기본 원본(통계청 2013)에는 서원구·청원구가 없어 청주 관할을 그릴 수 없다.
+시군구로 합친 것이다(현재 ver20261001). 
 행정구역이 바뀌어 다시 만들 때 (사내망은 raw.githubusercontent.com 이 막혀 git 으로 한 파일만 받는다):
 
 ```

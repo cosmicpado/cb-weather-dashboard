@@ -1261,7 +1261,7 @@ def build_sido(key, with_cctv=True, refresh=False):
         'host': '',
         'data_file': 'data.js', 'map_file': 'map-geo.js',
         'combined_file': '상황판.html',
-        'notify': False, 'tide': False, 'share_images_from': None,
+        'tide': False, 'share_images_from': None,
         'wrn_stn': sd['wrn_stn'], 'wrn_prefix': [u[:4] for u in sd['wrn_up']],
         'wide_label': wide_label, 'wide_names': wide_names,
         'pm_sido': sd['pm_sido'], 'sido_words': words,

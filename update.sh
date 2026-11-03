@@ -36,16 +36,11 @@ fi
 # push 목적지(upstream) 자동복구 — .git이 재생성돼 upstream이 날아가도 다음 push 정상화
 git branch --set-upstream-to=origin/main main 2>/dev/null || true
 
-# ── check_warnings.py(1분 즉시 특보 알리미) cron 자가등록 ─────────────
-# SSH 없이 서버가 스스로 1분 알림 cron을 등록한다. crontab에 update.sh 라인이
-# 있을 때만(=정상 crontab이 읽힌 것 확인 → 오토트레이딩 등 기존 cron 안전) +
-# check_warnings가 아직 없을 때만 전체 crontab 뒤에 한 줄 추가한다.
-# 텔레그램 봇 토큰이 .env 에 있을 때만 — 알림을 안 쓰면 1분마다 API 를 부를 이유가 없다.
+# ── 옛 check_warnings.py(1분 텔레그램 알리미) cron 정리 ─────────────
+# 텔레그램 알림을 없애면서 파일도 지웠다. 예전에 자가등록된 줄이 남아 있으면 매분 오류가 나므로 뺀다.
 CRON_NOW=$(crontab -l 2>/dev/null)
-if grep -qE '^TELEGRAM_BOT_TOKEN=.+' .env 2>/dev/null \
-   && echo "$CRON_NOW" | grep -q 'update.sh' && ! echo "$CRON_NOW" | grep -qF 'check_warnings.py'; then
-  ( echo "$CRON_NOW"; echo "* * * * * cd $REPO && /usr/bin/python3 tools/check_warnings.py >> warn.log 2>&1" ) | crontab - \
-    && echo "🔔 check_warnings 1분 cron 자가등록 $(date '+%F %R')" >> cron.log
+if echo "$CRON_NOW" | grep -qF 'check_warnings.py'; then
+  echo "$CRON_NOW" | grep -vF 'check_warnings.py' | crontab -     && echo "🧹 check_warnings cron 제거 $(date '+%F %R')" >> cron.log
 fi
 
 # ── 히스토리 자동 압축 ──────────────────────────────────────────────
