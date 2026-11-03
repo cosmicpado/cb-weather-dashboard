@@ -82,7 +82,6 @@ def _atomic_write_text(path, text):
 #
 #   python tools/update_data.py                  → 충청북도 (data.js)
 #   ... --no-push     : 깃 푸시·배포 생략 (여러 지역을 연달아 돌릴 때 마지막 회차만 푸시)
-#   ... --no-notify   : 텔레그램 알림 생략
 #
 # 지역마다 다른 값(시군 목록·관측소·특보구역)은 전부 tools/region_profiles.py에 있다.
 # 아래 상수들은 그 프로파일에서 꺼내 쓰는 것이고, 함수 본문은 지역을 가리지 않는다.
@@ -102,7 +101,6 @@ def _argval(flag, default=None):
 PROFILE_NAME = _argval('--profile', _rp.DEFAULT)
 P = _rp.get(PROFILE_NAME)
 NO_PUSH = '--no-push' in sys.argv
-NO_NOTIFY = '--no-notify' in sys.argv or not P['notify']
 
 ENV_PATH = ROOT / '.env'
 OUTPUT_PATH = ROOT / P['data_file']
@@ -127,8 +125,7 @@ def load_env(path=ENV_PATH):
                     env[k.strip()] = v.strip()
     # GitHub Actions 등 .env 없는 환경에서는 OS 환경변수로 fallback
     import os
-    for key in ('DATA_GO_KR_KEY', 'HRFCO_KEY', 'SAFETY_DATA_KEY', 'KMA_APIHUB_KEY',
-                'TELEGRAM_BOT_TOKEN', 'TELEGRAM_CHAT_ID'):
+    for key in ('DATA_GO_KR_KEY', 'HRFCO_KEY', 'SAFETY_DATA_KEY', 'KMA_APIHUB_KEY'):
         env.setdefault(key, os.environ.get(key, ''))
     return env
 
@@ -138,8 +135,6 @@ DATA_KEY = ENV.get('DATA_GO_KR_KEY', '')
 HRFCO_KEY = ENV.get('HRFCO_KEY', '')
 SAFETY_KEY = ENV.get('SAFETY_DATA_KEY', '')
 KMA_APIHUB_KEY = ENV.get('KMA_APIHUB_KEY', '')  # 기상청 API 허브 (apihub.kma.go.kr)
-TELEGRAM_BOT_TOKEN = ENV.get('TELEGRAM_BOT_TOKEN', '')  # 텔레그램 봇 (급변 알림)
-TELEGRAM_CHAT_ID = ENV.get('TELEGRAM_CHAT_ID', '')
 
 # ───────────────────────────────────────────────────────────────
 # 보안: 로그(cron.log)에 API 키가 평문으로 남는 것을 차단.
@@ -152,8 +147,7 @@ TELEGRAM_CHAT_ID = ENV.get('TELEGRAM_CHAT_ID', '')
 import re as _re
 
 # .env에서 읽은 실제 비밀값 (빈 값은 제외 — ''.replace는 모든 위치에 끼어듦)
-_SECRETS = [v for v in (DATA_KEY, HRFCO_KEY, SAFETY_KEY, KMA_APIHUB_KEY,
-                        TELEGRAM_BOT_TOKEN) if v]
+_SECRETS = [v for v in (DATA_KEY, HRFCO_KEY, SAFETY_KEY, KMA_APIHUB_KEY) if v]
 # URL 자격증명 패턴 — 값이 .env와 안 맞아도(또는 git 원격 URL의 토큰까지) 잡음
 _CRED_QUERY = _re.compile(r'(?i)(serviceKey|authKey)=[^&\s\'"]+')
 _CRED_TOKEN = _re.compile(r'(?:ghp_[A-Za-z0-9]{20,}'
@@ -265,7 +259,6 @@ def _aws_num(v):
 #   · 프로파일들이 동시에 뜨므로 파일 잠금으로 '먼저 온 쪽이 받고 나머지는 기다렸다 읽는다'.
 #   · 응답 원문(바이트)만 저장 — 파싱·관할 판정은 프로파일마다 지금처럼 각자 한다.
 #   · 실패 응답은 저장하지 않는다(호출측이 예외를 받아 이전 값 보존).
-#   · 1분 알리미(check_warnings.py)는 SHARED_MAX_AGE=0 으로 항상 새로 받고 캐시도 갱신해 준다.
 # ============================================================
 import base64 as _b64
 import os as _os
@@ -374,17 +367,6 @@ def _aws_request():
     return f'aws_min_{bucket}', url
 
 
-def prefetch_aws():
-    """1분 알리미용 — AWS 매분자료를 미리 받아 공유 캐시에 넣기만 한다(파싱 없음).
-    5분 수집기는 ≤4분 캐시를 그대로 쓰므로 API허브가 그 순간 멈춰도(간헐적 15~30초 무응답) 이전 값 보존으로 빠지지 않고,
-    자료도 '지금−10분'에 최대 1분 더 늦은 정도. 실패하면 다음 분에 다시. 알리미는 SHARED_MAX_AGE=0 이라 매분 새로 받는다."""
-    if not KMA_APIHUB_KEY:
-        return False
-    key, url = _aws_request()
-    r = shared_get(key, url, timeout=15, max_age=240)
-    return r.status_code == 200
-
-
 def fetch_aws_rain():
     """AWS 매분자료 1회 호출로 전 관서 실측 강수·돌풍 수집.
 
@@ -396,7 +378,7 @@ def fetch_aws_rain():
     """
     if not KMA_APIHUB_KEY:
         return {}
-    key, url = _aws_request()     # 평소엔 1분 알리미(prefetch_aws)가 방금 넣어 둔 캐시를 그대로 쓴다
+    key, url = _aws_request()
     r = shared_get(key, url, timeout=15, max_age=240)
     r.raise_for_status()
     r.encoding = 'euc-kr'
@@ -2785,32 +2767,6 @@ def fetch_rivers():
     return result
 
 
-def fetch_rivers_light():
-    """하천 '현재 수위·단계'만 가볍게 수집 — 1분 알리미(check_warnings.py)용.
-    예전엔 관측소마다 최근 3시간을 불렀다(매분 58회). 지금은 일괄 최신값 1~2회로 끝난다.
-    실패한 관측소는 결과에서 제외(omit) → notify_rivers가 이전 상태를 보존해 오알림을 막는다."""
-    if not HRFCO_KEY or not RIVER_STATIONS:
-        return []
-    sess = _hrfco_session()
-    latest = {}
-    for kind in sorted({st.get('api', 'waterlevel') for st in RIVER_STATIONS}):
-        try:
-            latest[kind] = fetch_hrfco_bulk(kind, '10M', sess)
-        except Exception:
-            latest[kind] = {}      # 그 종류 전부 제외 → 이전 상태 보존
-    out = []
-    for st in RIVER_STATIONS:
-        api = st.get('api', 'waterlevel')
-        row = latest.get(api, {}).get(st['code'])
-        if not row:
-            continue
-        out.append({'name': st['name'], 'code': st['code'], 'value': round(row['value'], 3),
-                    'warning': st.get('warning'), 'danger': st.get('danger'),
-                    'level': river_level(row['value'], st.get('warning'), st.get('danger')),
-                    'api': api})
-    return out
-
-
 # ============================================================
 # 7. 재난문자 (행안부 — 키 발급 시 활성화)
 # ============================================================
@@ -3139,7 +3095,7 @@ def _deploy_sig(data):
     risky = sorted((str(r.get('code', '')) + ':' + str(r.get('level', '')))
                    for r in (data.get('rivers') or []) if r.get('level') in ('warning', 'danger'))
     # ⚠ 홍수예보 발령·태풍·새 재난문자도 화면을 빨리 갱신해야 한다. 예전엔 sig에 없어서,
-    #   특보 변화가 없으면 이것들이 새로 떠도 화면이 최대 40분 늦었다(텔레그램만 즉시 나감).
+    #   특보 변화가 없으면 이것들이 새로 떠도 화면이 최대 40분 늦었다.
     flood = sorted(str(f.get('river', '')) + '!' + str(f.get('kind', '')) for f in (data.get('flood_forecast') or []))
     typ = sorted(str(t.get('seq', '')) + '!' + str(t.get('eff', '')) for t in (data.get('typhoon') or []))
     _sns = [str(m.get('sn', '')) for m in (data.get('messages') or []) if m.get('sn')]
@@ -3161,8 +3117,7 @@ def _deploy_sig(data):
 
 
 def run_deploy(reason, sig, mins):
-    """배포 트리거 실행 — deploy-trigger 브랜치 push(cloudflare-deploy.yml).
-    긴급 알림은 별개(1분 텔레그램)."""
+    """배포 트리거 실행 — deploy-trigger 브랜치 push(cloudflare-deploy.yml)."""
     if _trigger_deploy():
         _save_deploy_state(datetime.now().isoformat(timespec='seconds'), sig)
         print(f'  ✈ Cloudflare 배포 트리거 ({reason}, 이전 배포 {mins:.0f}분 전)')
@@ -3237,142 +3192,8 @@ def load_previous_data(path=None):
 
 
 # ============================================================
-# 텔레그램 급변 알림
+# 허브 특보 병합
 # ============================================================
-
-SUBSCRIBERS_PATH = TMP / 'telegram_subscribers.json'
-SENT_MESSAGES_PATH = TMP / 'sent_disaster_msgs.json'
-
-
-def _load_sent_messages():
-    """이미 텔레그램으로 보낸 재난문자 키 기록 {key: 최초발송시각ISO}.
-    prev(data.js)가 수집 실패 등으로 비어도 재발송을 막는 영구 기록
-    (.tmp, git 미추적 → 서버 git reset에도 보존)."""
-    try:
-        if SENT_MESSAGES_PATH.exists():
-            return json.loads(SENT_MESSAGES_PATH.read_text(encoding='utf-8'))
-    except Exception:
-        pass
-    return {}
-
-
-def _save_sent_messages(log):
-    """2일 지난 키는 정리(무한 증가 방지) 후 저장."""
-    try:
-        cutoff = datetime.now() - timedelta(days=2)
-        pruned = {}
-        for k, v in log.items():
-            try:
-                if datetime.fromisoformat(v) >= cutoff:
-                    pruned[k] = v
-            except Exception:
-                pruned[k] = v   # 시각 파싱 실패 키는 안전하게 보존
-        _atomic_write_text(SENT_MESSAGES_PATH, json.dumps(pruned, ensure_ascii=False))
-    except Exception:
-        pass
-
-
-def send_telegram_to(chat_id, text):
-    """특정 chat_id로 텔레그램 메시지 발송."""
-    if not TELEGRAM_BOT_TOKEN or not chat_id:
-        return False
-    try:
-        r = requests.post(
-            f'https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage',
-            json={'chat_id': chat_id, 'text': text,
-                  'parse_mode': 'HTML', 'disable_web_page_preview': True},
-            timeout=10)
-        return r.status_code == 200
-    except Exception as e:
-        print(f'    텔레그램 발송 오류: {type(e).__name__}')
-        return False
-
-
-def send_telegram(text):
-    """사장님(.env CHAT_ID)에게만 발송 — 연결 테스트·하위호환용."""
-    return send_telegram_to(TELEGRAM_CHAT_ID, text)
-
-
-def _load_subscribers():
-    try:
-        if SUBSCRIBERS_PATH.exists():
-            return json.loads(SUBSCRIBERS_PATH.read_text(encoding='utf-8'))
-    except Exception:
-        pass
-    return {'subscribers': {}, 'offset': 0}
-
-
-def _save_subscribers(state):
-    try:
-        _atomic_write_text(SUBSCRIBERS_PATH, json.dumps(state, ensure_ascii=False))
-    except Exception:
-        pass
-
-
-def sync_telegram_subscribers():
-    """봇에 온 메시지를 확인해 구독자 명단을 관리.
-    /start·구독 → 추가(환영 메시지), /stop·해제 → 제거.
-    getUpdates의 offset으로 같은 메시지를 두 번 처리하지 않음.
-    반환: 현재 구독자 chat_id 리스트."""
-    if not TELEGRAM_BOT_TOKEN:
-        return []
-    state = _load_subscribers()
-    subs = state.get('subscribers', {})   # {chat_id(str): 이름}
-    offset = state.get('offset', 0)
-    try:
-        r = requests.get(
-            f'https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/getUpdates',
-            params={'offset': offset + 1, 'timeout': 0}, timeout=15)
-        for upd in (r.json().get('result') or []):
-            offset = max(offset, upd.get('update_id', 0))
-            msg = upd.get('message') or {}
-            chat = msg.get('chat') or {}
-            cid = str(chat.get('id', '') or '')
-            text = (msg.get('text') or '').strip().lower()
-            name = chat.get('first_name') or chat.get('username') or cid
-            if not cid:
-                continue
-            if text in ('/start', '/subscribe', '구독'):
-                if cid not in subs:
-                    subs[cid] = name
-                    send_telegram_to(cid,
-                        f'✅ <b>{P["label"]} 기상·재난 알림</b> 구독 완료\n'
-                        '특보·하천수위·재난문자 급변 시 이곳으로 알려드립니다.\n'
-                        '구독 해제는 /stop')
-            elif text in ('/stop', '/unsubscribe', '해제'):
-                if cid in subs:
-                    subs.pop(cid, None)
-                    send_telegram_to(cid, '🔕 알림 구독이 해제되었습니다.\n다시 받으려면 /start')
-    except Exception as e:
-        print(f'    구독자 동기화 오류: {type(e).__name__}')
-    state['subscribers'] = subs
-    state['offset'] = offset
-    _save_subscribers(state)
-    return list(subs.keys())
-
-
-NOTIFY_OFF_PATH = ROOT / 'NOTIFY_OFF'
-
-
-def send_telegram_all(text):
-    """사장님(.env CHAT_ID) + 모든 구독자에게 발송. (성공수, 전체수) 반환.
-
-    긴급 차단 스위치: 저장소 루트에 NOTIFY_OFF 파일이 있으면 모든 방송 알림을
-    무조건 건너뛴다(0,0 반환). 상태파일·디스크와 무관하게 동작하므로, 서버 접속
-    없이 main에 NOTIFY_OFF를 커밋하는 것만으로 반복 알림 폭주를 즉시 멈출 수 있다.
-    (재개하려면 NOTIFY_OFF를 지우고 커밋하면 됨.)"""
-    if NOTIFY_OFF_PATH.exists():
-        print('  ⏸ NOTIFY_OFF 존재 — 방송 알림 일시 중단')
-        return 0, 0
-    targets = set()
-    if TELEGRAM_CHAT_ID:
-        targets.add(str(TELEGRAM_CHAT_ID))
-    targets.update(_load_subscribers().get('subscribers', {}).keys())
-    ok = 0
-    for cid in targets:
-        if send_telegram_to(cid, text):
-            ok += 1
-    return ok, len(targets)
 
 
 def merge_apihub_warnings(d):
@@ -3411,7 +3232,7 @@ def merge_apihub_warnings(d):
         typ = f"{w.get('wrn_name')}{'경보' if w.get('lvl_name') == '경보' else '주의보'}"
         # ⚠ 허브는 특보가 아닌 '현상'도 같이 보낸다(실측: 폭염 91·열대야 63·강풍 19·풍랑 10건).
         #   '열대야'에 주의보를 갖다붙이면 '열대야주의보'라는 없는 특보가 만들어지고,
-        #   warnings에 섞여 텔레그램 알림까지 나간다. 정식 특보명만 통과시킨다.
+        #   warnings에 섞여 화면에 뜬다. 정식 특보명만 통과시킨다.
         if typ not in WRN_TYPES:
             continue
         area = _expand_areas(w.get('region_name') or w.get('reg_ko'))
@@ -3425,336 +3246,11 @@ def merge_apihub_warnings(d):
         d['warnings'] = (d.get('warnings') or []) + add
 
 
-WARN_STATE_PATH = TMP / 'notified_warnings.json'
-
-
-def _load_warn_state():
-    try:
-        if WARN_STATE_PATH.exists():
-            return json.loads(WARN_STATE_PATH.read_text(encoding='utf-8'))
-    except Exception:
-        pass
-    return {'active': [], 'prelim': []}
-
-
-def _save_warn_state(state):
-    try:
-        _atomic_write_text(WARN_STATE_PATH, json.dumps(state, ensure_ascii=False))
-    except Exception:
-        pass
-
-
-NOTIFY_RESET_PATH = ROOT / 'NOTIFY_RESET'
-RESET_DONE_PATH = TMP / 'notify_reset_done'
-
-
-def apply_notify_reset():
-    """NOTIFY_RESET(토큰 파일)로 특보 알림 상태를 1회 초기화한다.
-    NOTIFY_OFF 차단 중 발효돼 '발송함'으로 잘못 기록된 특보를, 차단 해제 후 현재 발효분으로
-    다시 감지·발송시키기 위한 복구 스위치. 처리 토큰을 .tmp/notify_reset_done(git 미추적)에
-    따로 남겨, 원격에 NOTIFY_RESET 파일이 남아 매 회차 복원돼도 같은 토큰이면 건너뛴다(폭주 방지).
-    상태파일 본체(active/sent_prelim)와 분리하므로 notify_warnings의 저장과 충돌하지 않는다."""
-    try:
-        if not NOTIFY_RESET_PATH.exists():
-            return
-        try:
-            token = NOTIFY_RESET_PATH.read_text(encoding='utf-8').strip()
-        except Exception:
-            token = ''
-        done = ''
-        try:
-            if RESET_DONE_PATH.exists():
-                done = RESET_DONE_PATH.read_text(encoding='utf-8').strip()
-        except Exception:
-            done = ''
-        if token and done == token:
-            return
-        st = _load_warn_state()
-        st['active_regions'] = {}
-        st.pop('active', None)      # 구버전 키 정리
-        st['sent_prelim'] = {}
-        _save_warn_state(st)
-        _atomic_write_text(RESET_DONE_PATH, token or 'reset')
-        print(f'  🔄 NOTIFY_RESET 적용(token={token!r}) — 특보 상태 초기화(현재 발효분 재발송)')
-    except Exception as e:
-        print(f'  NOTIFY_RESET 처리 오류: {e}')
-
-
 def _safe_dt(s):
     try:
         return datetime.fromisoformat(s)
     except Exception:
         return None
-
-
-_REGION_ORDER = P['region_order']
-
-
-def _canon_region(name):
-    """지역명을 시군 단위로 정규화 — 묶음형/개별형·세부구역 중복 제거용.
-    가평군→가평, 고양시→고양, 파주시남부→파주, 양주시동북부→양주.
-    광역어(경기북부·경기도·수도권)→'경기도'. 알림 판정을 '종류별 시군 집합'으로 하기 위한 것."""
-    import re as _re
-    n = (name or '').strip()
-    if not n:
-        return None
-    if (n in ('경기북부', '경기남부', '경기도', '수도권', '경기') or n in SIDO_WORDS
-            or n in (WIDE_LABEL, P.get('full'))):
-        return WIDE_LABEL
-    if n in SIGUN_SET:          # 관서 이름 그대로면 그대로 — 광역시 '중구'를 '중'으로, 강원 '양구'를 '양'으로 깎지 않게
-        return n
-    n = _re.sub(r'(동북부|서북부|동남부|서남부|남부|북부|동부|서부|중부|내륙|산지|앞바다|해안)', '', n)
-    n = _re.sub(r'(특별자치시|특별자치도|특별시|광역시|자치시|자치도)', '', n)
-    if n in SIGUN_SET:
-        return n
-    n = _re.sub(r'(시|군|구|도)$', '', n)
-    return n.strip() or None
-
-
-def _sort_regions(regs):
-    return sorted(regs, key=lambda r: (_REGION_ORDER.index(r) if r in _REGION_ORDER else 99, r))
-
-
-def notify_warnings(warnings, prelim):
-    """기상특보 발효/해제·예비특보 알림 — 누적상태(.tmp/notified_warnings.json) 공유.
-    check_warnings.py(1분)와 update_data.py(5분)가 상태를 공유한다.
-    - 발효특보: 종류별 '발효 시군 집합'을 저장하고, 회차마다 집합에 '추가된 시군(=발효)'과
-      '빠진 시군(=해제)'만 알린다. 기상청이 지역을 재편해도(예: 가평 경보→주의보) 바뀐 시군만
-      알리고 안 바뀐 지역은 조용. 묶음형("경기도, 가평, …")과 개별형("가평군")의 중복은 시군
-      정규화(_canon_region)로 제거. 화면 데이터(data['warnings'])는 건드리지 않음.
-    - 예비특보: '이미 발표한 것'(sent_prelim) 누적기록으로 판정(반복 발송 차단).
-    봇 미설정·첫 실행·NOTIFY_OFF는 발송 없이 기록만(폭주 방지)."""
-    if not TELEGRAM_BOT_TOKEN:
-        return
-    if NOTIFY_OFF_PATH.exists():
-        return   # 알림 차단 중엔 상태를 건드리지 않는다 — 해제 후 현재 발효분을 정상 감지·발송
-    import re as _re
-    first_run = not WARN_STATE_PATH.exists()
-    state = _load_warn_state()
-    # 구버전 상태 이관: sent_prelim 없으면 예비특보 이관, active_regions 없으면 발효/해제 발송 억제(1회)
-    prelim_migrating = (not first_run) and ('sent_prelim' not in state)
-    active_migrating = (not first_run) and ('active_regions' not in state)
-
-    # 현재 발효특보 → 종류별 시군 집합 (묶음/개별 중복 제거)
-    cur_regions = {}      # {종류: set(시군)}
-    type_time = {}        # {종류: 대표 발효시각}
-    for w in (warnings or []):
-        t = (w.get('type', '') or '').strip()
-        if not t:
-            continue
-        regs = set()
-        for part in str(w.get('area', '') or '').split(','):
-            c = _canon_region(part)
-            if c:
-                regs.add(c)
-        if regs:
-            cur_regions.setdefault(t, set()).update(regs)
-            if not type_time.get(t) and w.get('time'):
-                type_time[t] = w.get('time')
-    prev_regions = {k: set(v) for k, v in (state.get('active_regions') or {}).items()}
-
-    # 예비특보 종류 정규화(공백 흔들림 제거)
-    cur_prelim = {_re.sub(r'\s+', ' ', (g.get('type', '') or '').strip())
-                  for g in (prelim or []) if g.get('type')}
-    sent_prelim = dict(state.get('sent_prelim', {}))   # {종류: 최초 발표 ISO}
-
-    now_iso = datetime.now().isoformat(timespec='seconds')
-    if prelim_migrating:
-        for t in cur_prelim:
-            sent_prelim.setdefault(t, now_iso)
-
-    msgs = []
-    # 발효특보: 종류별 시군 집합의 델타(추가=발효 / 제거=해제)만 알림
-    if not (first_run or active_migrating):
-        for t in cur_regions:
-            added = cur_regions[t] - prev_regions.get(t, set())
-            if added:
-                msgs.append(f"🚨 <b>기상특보 발효</b>\n{t} · {', '.join(_sort_regions(added))}"
-                            + (f"\n발효 {type_time.get(t, '')}" if type_time.get(t) else ''))
-        for t in prev_regions:
-            removed = prev_regions[t] - cur_regions.get(t, set())
-            if removed:
-                msgs.append(f"✅ <b>기상특보 해제</b>\n{t} · {', '.join(_sort_regions(removed))}")
-
-    new_prelim = [t for t in cur_prelim if t not in sent_prelim]
-    for t in new_prelim:
-        msgs.append(f"⚠️ <b>예비특보 발표</b>\n{t}")
-
-    # sent_prelim 정리: 2일 지났고 현재 목록에도 없는 종류만 제거(무한 증가 방지)
-    cutoff = datetime.now() - timedelta(days=2)
-    sent_prelim = {t: v for t, v in sent_prelim.items()
-                   if (t in cur_prelim) or ((_safe_dt(v) or cutoff) >= cutoff)}
-
-    cur_saved = {k: _sort_regions(v) for k, v in cur_regions.items()}
-
-    def _save(record_new_prelim):
-        sp = dict(sent_prelim)
-        if record_new_prelim:
-            for t in new_prelim:
-                sp[t] = now_iso
-        _save_warn_state({'active_regions': cur_saved, 'sent_prelim': sp})
-
-    if first_run:
-        # 첫 실행: 현재 발효·예비를 '이미 알림'으로 기록만(발송 억제)
-        _save_warn_state({'active_regions': cur_saved,
-                          'sent_prelim': {t: now_iso for t in cur_prelim}})
-        return
-    if not msgs:
-        _save(False)   # active_migrating이면 여기서 새 형식으로 조용히 이관됨
-        return
-    header = f"📡 <b>{P['label']} 기상특보</b>\n"
-    body = "\n\n".join(msgs[:8])
-    if len(msgs) > 8:
-        body += f"\n\n…외 {len(msgs) - 8}건"
-    sent, total = send_telegram_all(header + body)
-    print(f"  ✓ 특보 알림 {len(msgs)}건 → {sent}/{total}명")
-    # 발송 성공(또는 대상 0명) 시에만 상태 확정 — 실패 시 다음 회차 재시도
-    if sent > 0 or total == 0:
-        _save(True)
-
-
-RIVER_STATE_PATH = TMP / 'notified_rivers.json'
-
-
-def _load_river_state():
-    try:
-        if RIVER_STATE_PATH.exists():
-            return json.loads(RIVER_STATE_PATH.read_text(encoding='utf-8'))
-    except Exception:
-        pass
-    return {}
-
-
-def _save_river_state(state):
-    try:
-        _atomic_write_text(RIVER_STATE_PATH, json.dumps(state, ensure_ascii=False))
-    except Exception:
-        pass
-
-
-def notify_rivers(rivers):
-    """하천 수위 주의/위험 단계 '진입' 알림 — 누적상태(.tmp/notified_rivers.json) 기반.
-    check_warnings.py(1분, 주 담당)와 update_data.py(5분, 백업)가 상태를 공유해 중복 발송이 없다.
-    관측소별 '마지막으로 인지한 단계'를 저장하고, 현재 단계가 그보다 높아질 때만(=상승 진입) 알린다.
-    단계가 내려가면 상태도 내려 기록(재상승 시 다시 알림). 이번 회차에 수집 못한 관측소는 이전
-    상태를 그대로 보존해(수집 실패로 사라진 관측소를 '해소'로 오판하지 않음) 재알림·오알림을 막는다.
-    봇 미설정·NOTIFY_OFF·첫 실행은 발송 없이 기록만(배포 직후·차단 중 폭주 방지)."""
-    if not TELEGRAM_BOT_TOKEN:
-        return
-    if NOTIFY_OFF_PATH.exists():
-        return   # 알림 차단 중엔 상태 미변경 (해제 후 정상 감지)
-    rank_map = {'safe': 0, 'normal': 0, 'warning': 1, 'danger': 2}
-    stage_name = {1: '주의', 2: '위험'}
-    first_run = not RIVER_STATE_PATH.exists()
-    state = _load_river_state()
-    new_state = {}
-    msgs = []
-    for r in (rivers or []):
-        code = r.get('code')
-        if not code:
-            continue
-        cur = rank_map.get(r.get('level'), 0)
-        prev_rank = int(state.get(code, 0) or 0)
-        new_state[str(code)] = cur
-        if cur > prev_rank and cur >= 1:
-            stage = stage_name.get(cur, '')
-            val = r.get('value')
-            thr = r.get('danger') if cur == 2 else r.get('warning')
-            msgs.append(f"🌊 <b>하천 수위 {stage}단계 진입</b>\n{r.get('name', '')}"
-                        + (f"\n현재 {val}m / {stage}수위 {thr}m" if val is not None else ''))
-    # 이번 회차에 수집 못한 관측소는 이전 단계 그대로 보존
-    for code, rk in state.items():
-        new_state.setdefault(str(code), rk)
-    if first_run:
-        _save_river_state(new_state)   # 첫 실행: 현재 단계 기록만(발송 억제 — 배포 직후 폭주 방지)
-        return
-    if not msgs:
-        _save_river_state(new_state)
-        return
-    header = f"🌊 <b>{P['label']} 하천 수위</b>\n"
-    body = "\n\n".join(msgs[:8])
-    if len(msgs) > 8:
-        body += f"\n\n…외 {len(msgs) - 8}건"
-    sent, total = send_telegram_all(header + body)
-    print(f"  ✓ 하천 수위 알림 {len(msgs)}건 → {sent}/{total}명")
-    # 발송 성공(또는 대상 0명) 시에만 상태 확정 — 실패 시 상태 미저장 → 다음 회차 재시도
-    if sent > 0 or total == 0:
-        _save_river_state(new_state)
-
-
-def detect_and_notify(prev, data):
-    """이전 데이터(prev)와 현재(data)를 비교해 급변 시 텔레그램 알림.
-    조건: ③-2 댐 방류량 급증 ④재난문자 신규. (①②특보=notify_warnings, ③하천수위=notify_rivers 전담)
-    - 봇 미설정이면 skip. 첫 실행(prev 없음)도 skip(알림 폭주 방지).
-    - 사장님(.env) + 구독자 전원에게 발송."""
-    if not TELEGRAM_BOT_TOKEN:
-        return
-    if NOTIFY_OFF_PATH.exists():
-        return   # 알림 차단 중엔 상태를 건드리지 않는다(해제 후 정상 감지)
-    if not prev:
-        return
-
-    msgs = []
-
-    # ①② 기상특보·예비특보 = notify_warnings(), ③ 하천 수위 주의/위험 = notify_rivers()가 전담한다.
-    #    (둘 다 check_warnings.py 1분 주기 + 여기 5분 백업, 공유 상태로 중복 방지) → 여기선 ③-2·④만 처리.
-    prev_r = {r.get('code'): r for r in (prev.get('rivers') or [])}
-
-    # ③-2 댐 방류량 급증 (홍수 조절 방류 → 임진강·신천 하류 수난 위험 직결)
-    for r in (data.get('rivers') or []):
-        if r.get('api') != 'dam':
-            continue
-        pr = prev_r.get(r.get('code'))
-        if not pr:
-            continue
-        cur_out = (r.get('dam_info') or {}).get('outflow')
-        prev_out = (pr.get('dam_info') or {}).get('outflow')
-        if cur_out is None or prev_out is None:
-            continue
-        # 급증: 현재 200㎥/s 이상 + 이전 대비 1.5배 이상 + 절대 100㎥/s 이상 증가
-        if cur_out >= 200 and cur_out >= prev_out * 1.5 and (cur_out - prev_out) >= 100:
-            msgs.append(f"🚨 <b>댐 방류량 급증</b>\n{r.get('name', '')}\n"
-                        f"{prev_out:.0f} → {cur_out:.0f} ㎥/s\n하류 수위 상승 주의")
-
-    # ④ 재난문자 신규 — 누적 발송기록(.tmp)으로 판정해 재발송을 원천 차단.
-    #    prev(직전 data.js)가 수집 실패 등으로 비어도 이미 보낸 문자는 다시 안 보냄.
-    def mkey(m):
-        # 고유번호(SN) 우선 + 날짜·발신자·시각·본문 — 본문 절단·크로스데이 충돌 방지
-        return (f"{m.get('sn','')}|{m.get('date','')}|{m.get('sender','')}"
-                f"|{m.get('time','')}|{(m.get('text','') or '')[:40]}")
-    first_run = not SENT_MESSAGES_PATH.exists()   # 최초 1회는 발송 없이 기록만(폭주 방지)
-    sent_log = _load_sent_messages()
-    now_iso = datetime.now().isoformat(timespec='seconds')
-    new_disaster = []   # 이번에 새로 보낼 (키, 메시지) — 발송 성공 후에만 기록(유실 방지)
-    for m in (data.get('messages') or []):
-        k = mkey(m)
-        if k in sent_log:
-            sent_log[k] = now_iso   # last-seen 갱신 — 보존 중인 문자가 prune돼 재발송되는 것 방지
-            continue
-        if first_run:
-            sent_log[k] = now_iso   # 첫 실행은 발송 없이 기록만
-        else:
-            text = (m.get('text', '') or '')[:200]
-            new_disaster.append((k, f"📢 <b>재난문자</b> · {m.get('sender', '')}\n{text}"))
-    for _k, _block in new_disaster:
-        msgs.append(_block)
-    _save_sent_messages(sent_log)   # last-seen·first_run 갱신분 저장(재난문자 키는 발송 성공 후)
-
-    if not msgs:
-        return
-
-    # 여러 건이면 묶어 발송 (최대 8건, 초과 시 요약) — 사장님 + 구독자 전원
-    header = f"📡 <b>{P['label']} 기상·재난 상황판</b>\n"
-    body = "\n\n".join(msgs[:8])
-    if len(msgs) > 8:
-        body += f"\n\n…외 {len(msgs) - 8}건"
-    sent, total = send_telegram_all(header + body)
-    print(f"  ✓ 텔레그램 알림 {len(msgs)}건 → {sent}/{total}명 발송")
-    # 재난문자 키는 발송 성공(최소 1명 또는 구독자 0명)일 때만 기록 — 실패 시 다음 회차 재시도
-    if new_disaster and (sent > 0 or total == 0):
-        for _k, _block in new_disaster:
-            sent_log[_k] = now_iso
-        _save_sent_messages(sent_log)
 
 
 EFF_HUMID_PATH = TMP / 'humid_hourly.json'
@@ -3994,7 +3490,6 @@ def main():
         push_only()
         return
     print(f'[{now_str()}] 데이터 수집 시작 — {P["label"]}')
-    apply_notify_reset()   # NOTIFY_RESET 스위치 — 특보 알림 상태 복구(1회)
     # 이전 data.js — hrfco 실패 시 폴백용
     prev = load_previous_data()
     data = {
@@ -4103,7 +3598,6 @@ def main():
         print(f'  ✗ {e}')
         data['forecast'] = prev.get('forecast', [])
 
-    warn_ok = False
     print('[기상특보]')
     try:
         w_result = fetch_warnings()
@@ -4111,22 +3605,19 @@ def main():
         data['warnings'] = w_result['active']
         # 예비특보는 별도 키로 저장
         data['prelim_warnings'] = w_result['prelim']
-        warn_ok = True
         print(f'  ✓ 발효 {len(data["warnings"])}건 / 예비 {len(data["prelim_warnings"])}그룹')
     except Exception as e:
         print(f'  ✗ {e}'); traceback.print_exc()
-        # 수집 실패 — 이전 값 보존 (특보 해제→재발효 오알림 방지)
+        # 수집 실패 — 이전 값 보존 (특보 해제→재발효 깜빡임 방지)
         data['warnings'] = prev.get('warnings', [])
         data['prelim_warnings'] = prev.get('prelim_warnings', [])
         if data['warnings'] or data['prelim_warnings']:
             print(f'  · 이전 특보 {len(data["warnings"])}건/예비 '
                   f'{len(data["prelim_warnings"])}그룹 보존')
 
-    apihub_ok = False
     print('[기상청 API허브 특보자료]')
     try:
         aw = fetch_apihub_warnings()   # 실패 시 None, 성공 시 list(정상 0건이면 [])
-        apihub_ok = aw is not None     # 특보 알림 핑퐁 방지 — 허브 성공 시에만 알림 판정
         # 수집 실패(None)일 때만 이전 값 보존 — 정상 0건([])은 그대로 저장해 특보 해제 반영
         if aw is None and prev.get('apihub_warnings'):
             data['apihub_warnings'] = prev['apihub_warnings']
@@ -4297,22 +3788,6 @@ def main():
     except Exception as e:
         print(f'  · 허브 특보 병합 오류: {e}')
 
-    # 급변 감지 → 텔레그램 알림 (봇 미설정 시 자동 skip)
-    print('[텔레그램 급변 알림]')
-    if NO_NOTIFY:
-        print('  · 이 회차는 알림 대상 아님 — 건너뜀')
-    else:
-        try:
-            subs = sync_telegram_subscribers()   # 새 /start·/stop 반영 후
-            # 특보 알림 — getPwnStatus·허브 모두 성공(완전 목록)일 때만 → 1분 알리미와 일관(핑퐁 방지)
-            if warn_ok and apihub_ok:
-                notify_warnings(data.get('warnings'), data.get('prelim_warnings'))  # ①②특보(공유상태)
-            notify_rivers(data.get('rivers'))    # ③하천 수위 주의/위험(공유상태, 1분 알리미 백업)
-            detect_and_notify(prev, data)        # ③-2 댐방류 ④재난문자
-            if subs:
-                print(f'  · 구독자 {len(subs)}명')
-        except Exception as e:
-            print(f'  ✗ {e}')
 
     save_data(data)
     save_combined_html(data)

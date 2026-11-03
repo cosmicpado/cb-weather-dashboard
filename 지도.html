@@ -17,7 +17,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="기상상황판">
+<meta name="apple-mobile-web-app-title" content="기상종합상황판">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg">
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('service-worker.js').catch(function(){});});}</script>
@@ -140,7 +140,7 @@
       </div>
       <div style="min-width:0;">
         <div style="display:flex; align-items:center; gap:9px;">
-          <h1 style="font-size:19px; font-weight:800; letter-spacing:-.5px; color:var(--ink); white-space:nowrap;">충청북도 기상·재난 상황판</h1>
+          <h1 style="font-size:19px; font-weight:800; letter-spacing:-.5px; color:var(--ink); white-space:nowrap;">충북소방 기상종합상황판</h1>
           <span style="display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:800; color:var(--brand); background:var(--brandSoft); padding:3px 9px; border-radius:999px; white-space:nowrap;">
             <span style="width:6px; height:6px; border-radius:50%; background:var(--safe); animation:dashBlink 1.6s infinite;"></span>LIVE
           </span>
@@ -196,11 +196,7 @@
              배경을 채우면(brandSoft) 혼자 세 번째 스타일이 되어 과하게 튄다. -->
         <a href="{{boardHref}}" class="{{boardCls}}" title="재해 상황판 — 🌧 호우 / ❄ 대설·한파 / 🔥 건조·산불 탭. 특보가 있으면 그 특보에 맞는 탭으로 열립니다" style="height:36px; padding:0 13px; border-radius:10px; border:1px solid var(--brand); background:var(--surface); color:var(--brand); font-size:12.5px; font-weight:800; font-family:inherit; text-decoration:none; display:flex; align-items:center; gap:6px; white-space:nowrap;">{{boardLabel}}</a>
         <a href="상황실.html" title="상황실(벽면) 모드 — 관할 전 관서를 차례로 표출(한 바퀴 약 3분 — 충북 12관서면 관서당 14초). 대형 화면에 띄우고 F11 전체화면으로 사용" style="height:36px; padding:0 13px; border-radius:10px; border:1px solid var(--brand); background:var(--surface); color:var(--brand); font-size:12.5px; font-weight:800; font-family:inherit; text-decoration:none; display:flex; align-items:center; gap:6px; white-space:nowrap;" style-hover="background:var(--surface2)">🖥 상황실</a>
-        <!-- 알림받기(텔레그램) — 숨김. 원작자의 경기북부 봇이라 충북 알림이 아니다.
-             충북용 봇을 만들면 href 를 그 봇 주소(https://t.me/<봇이름>)로 바꾸고 이 주석을 풀 것.
-        <a href="https://t.me/gg_bukbu_weather_bot" target="_blank" rel="noopener" title="텔레그램 급변 알림 구독 — 봇 채팅에서 /start 한 번이면 끝. 특보·하천 위험·재난문자를 실시간으로 알려드립니다" style="height:36px; padding:0 13px; border-radius:10px; border:1px solid #229ED9; background:var(--surface); color:#229ED9; font-size:12.5px; font-weight:800; font-family:inherit; text-decoration:none; display:flex; align-items:center; gap:6px; white-space:nowrap;" style-hover="background:var(--surface2)">📲 알림받기</a>
-        -->
-        <!-- 유틸 4개(설명서·시연·경보음·테마)는 아이콘만, 오른쪽 끝 한 묶음 — 이동 링크(호우·상황실·알림받기)와 구분
+        <!-- 유틸 4개(설명서·시연·경보음·테마)는 아이콘만, 오른쪽 끝 한 묶음 — 이동 링크(호우·상황실)와 구분
              (2026-09-21 사장님 "아이콘으로만 해서 한쪽으로"). 뜻은 title(마우스 올리면)로. -->
         <span style="display:inline-flex; align-items:center; gap:5px;">
         <span style="width:1px; height:22px; background:var(--border2); margin:0 4px;"></span>
@@ -683,7 +679,7 @@
 
   <!-- ============ FOOTER ============ -->
   <footer style="margin:26px 22px 0; padding-top:16px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;">
-    <div style="font-size:11px; color:var(--ink3); line-height:1.6;">데이터 : 기상청 · 행정안전부 · 한강홍수통제소 · 에어코리아 · 국립산림과학원 &nbsp;|&nbsp; 자동 갱신 5분</div>
+    <div style="font-size:11px; color:var(--ink3); line-height:1.6;">데이터 : 기상청 · 행정안전부 · 한강홍수통제소 · 에어코리아 · 국립산림과학원 &nbsp;|&nbsp; 자동 갱신 5분<br>문의 : 충북소방본부 소방정보통신팀</div>
     <div style="font-size:11px; color:var(--ink3); text-align:right; margin-left:auto;">마지막 업데이트<br><span style="font-weight:700; color:var(--ink2);">{{updatedTxt}}</span></div>
   </footer>
 

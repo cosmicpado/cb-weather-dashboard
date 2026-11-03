@@ -40,3 +40,47 @@ df -h /                                         # 디스크(10GB)
 - **개발 PC 에서는 푸시 모드로 돌리지 않는다**: `update_data.py` 는 현재 브랜치를 `main` 으로 밀어 올린다.
   개발 PC에서는 `python tools/update_data.py --no-push` 만 쓴다.
 - **Cloudflare**: 저장소 Secrets `CLOUDFLARE_API_TOKEN` · `CLOUDFLARE_ACCOUNT_ID` 가 있어야 배포가 성공한다.
+
+---
+
+# 행정망 운영 서버 (Rocky Linux)
+
+행정망 안에서 데이터를 모으고 화면도 직접 띄우는 서버. GitHub 에 올리지 않고(`--no-push`) Cloudflare 도 쓰지 않는다.
+행정망 PC 는 `http://<서버IP>/지도.html` 로 본다.
+
+| 항목 | 값 |
+|---|---|
+| OS | Rocky Linux 9 또는 10 (10 은 2013년 이후 CPU(x86-64-v3) 필요 — 오래된 가상서버면 9) |
+| 저장소 위치 | `/opt/cbweather` (계정 `cbweather` 소유, 항상 `main`) |
+| 수집 | systemd 타이머 `cbweather-collect.timer` — 5분마다 `update_data.py --no-push` |
+| 화면 | nginx 80 포트, 화면 파일(html·js·png 등)만 연다 — `.env`·`.git`·`tools/` 는 404 |
+| 나가는 주소 | `github.com`(소스 받을 때만) · `apis.data.go.kr` · `apihub.kma.go.kr` · `data.kma.go.kr` · `www.weather.go.kr` · `api.hrfco.go.kr` · `n.flood.go.kr` · `www.safetydata.go.kr` · `d.kbs.co.kr` (모두 443) |
+
+## 처음 설치
+
+```bash
+dnf install -y git
+git clone https://github.com/cosmicpado/cb-weather-dashboard.git /opt/cbweather
+bash /opt/cbweather/tools/server/setup-rocky.sh
+```
+
+첫 단계에서 나가는 주소를 확인하고, `.env` 에 키가 없으면 멈춘다 — `vi /opt/cbweather/.env` 로 키를 넣고 다시 실행.
+
+## 소스 반영 (직접 실행할 때만)
+
+개발 PC 에서 고친 것을 GitHub `main` 에 올린 뒤 서버에서:
+
+```bash
+bash /opt/cbweather/tools/server/update-code.sh            # 최신 main 반영
+bash /opt/cbweather/tools/server/update-code.sh <커밋>     # 문제가 생기면 이전 커밋으로 되돌리기
+```
+
+수집기가 만든 데이터(`data.js`·기상영상·강수 누적)는 그대로 두고 코드만 바꾼다. 화면은 F5 로 바로 반영.
+
+## 평소 확인
+
+```bash
+journalctl -u cbweather-collect -n 50     # 최근 수집 기록
+systemctl list-timers cbweather-collect   # 다음 실행 시각
+df -h /
+```

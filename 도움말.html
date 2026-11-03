@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>상황판 사용설명서</title>
+<title>충북소방 기상종합상황판 사용설명서</title>
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <!-- 지역 설정 — 관할 이름·관서 수를 여기서 읽는다. -->
 <script src="region.js"></script>
@@ -118,7 +118,7 @@ td.n{white-space:nowrap;font-weight:700}
 <div class="wrap">
 
   <div class="lead">
-    <p><b id="leadWho">충청북도 기상·재난 상황판</b>의 두 화면 사용법입니다.</p>
+    <p><b id="leadWho">충북소방 기상종합상황판</b>의 두 화면 사용법입니다.</p>
     <p><b>지도 상황판</b>은 평소에 보는 화면, <b>상황실 벽면판</b>은 대형 화면에 띄워두는 화면입니다.
        데이터는 <b>5분마다 자동으로 갱신</b>되므로 새로고침할 필요가 없습니다.</p>
   </div>
@@ -411,9 +411,9 @@ td.n{white-space:nowrap;font-weight:700}
 
   // 지역 이름 반영
   if (C.label) {
-    document.title = C.label + ' 상황판 사용설명서';
+    document.title = '충북소방 기상종합상황판 사용설명서';
     var w = document.getElementById('leadWho');
-    if (w) w.textContent = C.label + ' 기상·재난 상황판';
+    if (w) w.textContent = '충북소방 기상종합상황판';
   }
 
   // 관서 개수 — region.js 에서 (예시에 숫자를 박아두지 않는다)
