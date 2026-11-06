@@ -153,7 +153,7 @@
     <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; box-shadow:var(--sh2); padding:15px 17px;">
       <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:12px;">
         <div style="display:flex; align-items:baseline; gap:8px;">
-          <span style="font-size:15px; font-weight:900; color:var(--ink);">관서별 {{rankTitle}}</span>
+          <span style="font-size:15px; font-weight:900; color:var(--ink); cursor:help;" title="{{rankTip}}">관서별 {{rankTitle}}</span>
           <span style="font-size:11.5px; color:var(--ink3);">{{rankSrcTxt}}</span>
         </div>
         <div style="display:flex; gap:5px;">
@@ -183,27 +183,28 @@
       <sc-if value="{{rankEmpty}}">
         <div style="font-size:12.5px; color:var(--ink3); padding:10px 2px;">{{rankEmptyTxt}}</div>
       </sc-if>
+      {{rankLegend}}
     </div>
 
     <!-- ── ③ 우리 관할 세 장 — 호우: 지금·6시간 예측·강풍 / 대설·한파: 지금·결빙 위험·한파 ── -->
     <div style="display:grid; grid-template-columns:{{midCols}}; gap:13px;">
       <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; box-shadow:var(--sh2); padding:15px 17px; min-width:0;">
         <div style="display:flex; align-items:baseline; justify-content:space-between; gap:8px; margin-bottom:11px; flex-wrap:wrap;">
-          <span style="font-size:15px; font-weight:900; color:var(--ink);">{{c1Title}}</span>
+          <span style="font-size:15px; font-weight:900; color:var(--ink); cursor:help;" title="{{c1Tip}}">{{c1Title}}</span>
           <span style="font-size:11.5px; color:var(--ink3);">{{c1Sub}}</span>
         </div>
         {{c1Body}}
       </div>
       <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; box-shadow:var(--sh2); padding:15px 17px; min-width:0;">
         <div style="display:flex; align-items:baseline; justify-content:space-between; gap:8px; margin-bottom:11px; flex-wrap:wrap;">
-          <span style="font-size:15px; font-weight:900; color:var(--ink);">{{c2Title}}</span>
+          <span style="font-size:15px; font-weight:900; color:var(--ink); cursor:help;" title="{{c2Tip}}">{{c2Title}}</span>
           <span style="font-size:11.5px; color:var(--ink3);">{{c2Sub}}</span>
         </div>
         {{c2Body}}
       </div>
       <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; box-shadow:var(--sh2); padding:15px 17px; min-width:0;">
         <div style="display:flex; align-items:baseline; justify-content:space-between; gap:8px; margin-bottom:11px; flex-wrap:wrap;">
-          <span style="font-size:15px; font-weight:900; color:var(--ink);">{{c3Title}}</span>
+          <span style="font-size:15px; font-weight:900; color:var(--ink); cursor:help;" title="{{c3Tip}}">{{c3Title}}</span>
           <span style="font-size:11.5px; color:var(--ink3);">{{c3Sub}}</span>
         </div>
         {{c3Body}}
@@ -214,7 +215,7 @@
     <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; box-shadow:var(--sh2); padding:15px 17px;">
       <div style="display:flex; align-items:baseline; justify-content:space-between; gap:8px; margin-bottom:4px; flex-wrap:wrap;">
         <div style="display:flex; align-items:baseline; gap:8px;">
-          <span style="font-size:15px; font-weight:900; color:var(--ink);">{{f24Title}}</span>
+          <span style="font-size:15px; font-weight:900; color:var(--ink); cursor:help;" title="{{f24Tip}}">{{f24Title}}</span>
           <span style="font-size:11.5px; color:var(--ink3);">{{cardName}} · 앞으로 24시간</span>
         </div>
         <span style="font-size:11.5px; color:var(--ink3);">옆으로 밀어서 보기 →</span>
@@ -226,7 +227,7 @@
     <sc-if value="{{isRain}}">
       <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; box-shadow:var(--sh2); padding:15px 17px;">
         <div style="display:flex; align-items:baseline; gap:8px; margin-bottom:11px;">
-          <span style="font-size:15px; font-weight:900; color:var(--ink);">하천 수위</span>
+          <span style="font-size:15px; font-weight:900; color:var(--ink); cursor:help;" title="한강홍수통제소 수위 관측소의 10분 자료입니다. 관심 = 관심수위 이상, 경계 = 경계수위 이상(기준값은 관측소별로 홍수통제소가 정한 값).">하천 수위</span>
           <span style="font-size:11.5px; color:var(--ink3);">{{riverSub}}</span>
         </div>
         {{riverBody}}
@@ -237,7 +238,7 @@
     <sc-if value="{{isFire}}">
       <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; box-shadow:var(--sh2); padding:15px 17px;">
         <div style="display:flex; align-items:baseline; gap:8px; margin-bottom:11px;">
-          <span style="font-size:15px; font-weight:900; color:var(--ink);">올해 충북 산불</span>
+          <span style="font-size:15px; font-weight:900; color:var(--ink); cursor:help;" title="산림청 산불발생통계 중 올해 충북 발생 건입니다.">올해 충북 산불</span>
           <span style="font-size:11.5px; color:var(--ink3);">{{fireListSub}}</span>
         </div>
         {{fireListBody}}
@@ -249,7 +250,7 @@
     <div style="display:grid; grid-template-columns:{{radarCols}}; gap:13px;">
       <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; box-shadow:var(--sh2); padding:15px 17px;">
         <div style="display:flex; align-items:baseline; justify-content:space-between; gap:8px; margin-bottom:9px; flex-wrap:wrap;">
-          <span style="font-size:15px; font-weight:900; color:var(--ink);">충북 특보 발효현황</span>
+          <span style="font-size:15px; font-weight:900; color:var(--ink); cursor:help;" title="기상청 특보 구역 그림입니다.">충북 특보 발효현황</span>
           <span style="font-size:11.5px; font-weight:800; color:{{warnImgAgeColor}};">{{warnImgAge}}</span>
         </div>
         <div style="font-size:11.5px; color:var(--ink2); margin-bottom:9px; line-height:1.5;">지금 충청북도에 발효 중인 특보 구역입니다. 그림을 누르면 날씨누리 충북 특보 통보문이 열립니다.</div>
@@ -257,7 +258,7 @@
       </div>
       <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; box-shadow:var(--sh2); padding:15px 17px;">
         <div style="display:flex; align-items:baseline; justify-content:space-between; gap:8px; margin-bottom:9px; flex-wrap:wrap;">
-          <span style="font-size:15px; font-weight:900; color:var(--ink);">{{radarTitle}}</span>
+          <span style="font-size:15px; font-weight:900; color:var(--ink); cursor:help;" title="{{radarTip}}">{{radarTitle}}</span>
           <span style="font-size:11.5px; font-weight:800; color:{{radarAgeColor}};">{{radarAge}}</span>
         </div>
         <div style="font-size:11.5px; color:var(--ink2); margin-bottom:9px; line-height:1.5;">{{radarDesc}}</div>
@@ -269,7 +270,7 @@
     <!-- ── ⑦ 기상청 해설 ────────────────────────────────────── -->
     <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; box-shadow:var(--sh2); padding:15px 17px;">
       <div style="display:flex; align-items:baseline; justify-content:space-between; gap:8px; margin-bottom:10px; flex-wrap:wrap;">
-        <span style="font-size:15px; font-weight:900; color:var(--ink);">기상청 해설</span>
+        <span style="font-size:15px; font-weight:900; color:var(--ink); cursor:help;" title="기상청이 발표한 기상정보와 청주기상지청 날씨해설입니다.">기상청 해설</span>
         <span style="font-size:11.5px; color:var(--ink3);">{{infoTs}}</span>
       </div>
       {{infoBody}}
@@ -277,7 +278,7 @@
 
     <!-- ── ⑧ 재난문자 ───────────────────────────────────────── -->
     <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; box-shadow:var(--sh2); padding:15px 17px;">
-      <div style="font-size:15px; font-weight:900; color:var(--ink); margin-bottom:11px;">재난문자</div>
+      <div style="font-size:15px; font-weight:900; color:var(--ink); margin-bottom:11px; cursor:help;" title="행정안전부 긴급재난문자입니다. 오늘 날짜로 조회해 수신 지역이 충북 전역이거나 충북 시군인 문자만 보여 줍니다. 이 탭과 관련된 낱말이 든 문자를 먼저 보여 주고, 없으면 최근 문자를 보여 줍니다.">재난문자</div>
       {{msgBody}}
     </div>
 
@@ -300,9 +301,10 @@ class Component extends DCLogic {
       demo: !!props.demo,
       now: new Date(),
       w: (typeof window !== 'undefined' ? window.innerWidth : 1440),
-      rankTab: '12h',
-      snowTab: 'snow',
-      fireTab: 'eff',
+      // 순위 탭 — null 이면 지금 상황에 맞게 자동, 직원이 누르면 그 탭 유지
+      rankTab: null,
+      snowTab: null,
+      fireTab: null,
       // 탭 — 주소 ?mode=rain|snow 가 있으면 그것(호우.html·대설.html 옛 주소가 넘겨줌), 없으면 null = 자동
       mode: (function(){ try{ var m=new URLSearchParams(location.search).get('mode'); return (m==='rain'||m==='snow'||m==='fire') ? m : null; }catch(e){ return null; } })(),
       myStation: (function(){ var RC=(window.REGION_CONF||{}); var h=RC.home||'동두천'; try{ var sv=(typeof localStorage!=='undefined' && localStorage.getItem('ggMyStation')) || h;
@@ -354,15 +356,18 @@ class Component extends DCLogic {
   working(){ const b=this.getData(); return this.scoped(this.state.demo ? this.applyDemo(b) : b); }
 
   /* ── 탭(호우 / 대설·한파 / 건조·산불) ───────────────────────────────
-     직원이 고르지 않았으면 자동: ① 발효 중인 특보 ② 이 PC에서 마지막으로 고른 탭 ③ 계절.
+     직원이 고르지 않았으면 자동: ① 발효 중인 특보 ② 24시간 안 눈 예보 ③ 지금 내리는 비 ④ 이 PC에서 마지막으로 고른 탭 ⑤ 계절.
      특보가 둘 이상 겹치면 호우·태풍 → 대설·한파 → 건조 순(인명 피해가 빠른 쪽 먼저).
      강풍은 어느 탭에나 같이 붙는 특보라 자동 선택에 쓰지 않는다.
+     비는 지도 화면 버튼과 같은 '보통 비'(1시간 3mm 이상)부터 본다.
      계절: 3~5월 건조·산불(봄철 산불조심기간) · 6~10월 호우 · 11~2월 대설·한파. */
   autoMode(b){
-    const w=(this.scoped(b||{}).warnings||[]).map(x=>String(x.type||'')).join(' ');
+    const sc=this.scoped(b||{}), w=(sc.warnings||[]).map(x=>String(x.type||'')).join(' '), ss=sc.stations||[];
     if(/호우|태풍/.test(w)) return 'rain';
     if(/대설|한파/.test(w)) return 'snow';
     if(/건조/.test(w)) return 'fire';
+    if(ss.some(s=>this.snowSum(s)>0)) return 'snow';
+    if(ss.some(s=>(this.num((s.aws||{}).rn60)||0)>=3)) return 'rain';
     try{ const v=localStorage.getItem('cbBoardMode'); if(v==='rain'||v==='snow'||v==='fire') return v; }catch(e){}
     const m=new Date().getMonth()+1;
     return (m>=3 && m<=5) ? 'fire' : (m>=6 && m<=10) ? 'rain' : 'snow';
@@ -430,28 +435,27 @@ class Component extends DCLogic {
       {type:'호우주의보', area:'증평, 진천, 괴산', level:'warning', time:'15:08'},
       {type:'강풍주의보', area:'충청북도 전역', level:'warning', time:'14:30'}
     ];
-    // 관서별 AWS 실측 — [1시간, 12시간, 일누적, 순간최대풍속, 강수대표소, 돌풍풍향(도), 바람최강소]
+    // 관서별 AWS 실측 — [1시간, 12시간, 일누적, 순간최대풍속, 강수 지점(대표 관측소), 돌풍풍향(도), 바람최강소]
     // 지점명은 프로파일 aws_stations 의 실제 관측소. 강풍도 경보 상황으로: 청주서부 27m/s(경보급 26↑), 괴산 21m/s(주의보급 20↑)
     const D = {
       '청주서부': [74, 198, 216, 27.1, '서청주',   295, '청주'],
-      '청주동부': [52, 186, 201, 19.4, '오창가곡', 280, '청주(공)'],
+      '청주동부': [52, 186, 201, 19.4, '청주금천', 280, '오창가곡'],
       '증평':     [33, 142, 151, 18.2, '증평',     300, '증평'],
       '진천':     [28, 126, 134, 17.0, '진천',     270, '위성센터'],
-      '괴산':     [24, 115, 123, 21.3, '청천',     265, '괴산'],
-      '음성':     [17,  94, 102, 14.6, '금왕',     285, '음성'],
-      '보은':     [14,  72,  79, 12.1, '속리산',   250, '보은'],
-      '충주':     [11,  57,  62, 10.4, '노은',     245, '충주'],
+      '괴산':     [24, 115, 123, 21.3, '괴산',     265, '칠성'],
+      '음성':     [17,  94, 102, 14.6, '음성',     285, '금왕'],
+      '보은':     [14,  72,  79, 12.1, '보은',     250, '속리산'],
+      '충주':     [11,  57,  62, 10.4, '충주',     245, '노은'],
       '옥천':     [ 9,  46,  51,  9.2, '옥천',     275, '옥천청산'],
-      '영동':     [ 7,  35,  39,  8.1, '가곡',     240, '추풍령'],
-      '제천':     [ 6,  31,  34,  7.6, '백운',     240, '제천'],
-      '단양':     [ 4,  22,  25,  6.9, '영춘',     235, '단양']
+      '영동':     [ 7,  35,  39,  8.1, '영동',     240, '추풍령'],
+      '제천':     [ 6,  31,  34,  7.6, '제천',     240, '백운'],
+      '단양':     [ 4,  22,  25,  6.9, '단양',     235, '영춘']
     };
     (c.stations||[]).forEach(s=>{
       const v = D[s.name]; if(!v) return;
       s.aws = { rn15:+(v[0]/4).toFixed(1), rn60:v[0], rn12h:v[1], rnday:v[2], wss:v[3],
                 station:v[4], ok:3, total:3 };
-      // 강풍은 별도 지점 — 실측에서도 11개 중 8개 관서가 '비 최다'와 '바람 최강'이 다르다.
-      // 시연도 일부러 다른 지점 이름을 넣어 그 사실이 화면에서 드러나게 한다.
+      // 강풍은 관할 최강 지점이라 강수 지점(대표 관측소)과 다를 수 있다. 시연도 다른 지점 이름을 넣어 그 사실이 드러나게 한다.
       s.aws.wind = { wss:v[3], ws10:+(v[3]*0.62).toFixed(1), wds:v[5], station:v[6] };
       s.rain = v[0]; s.weather='비'; s.icon='🌧';
       s.level = v[1]>=180 ? 'danger' : (v[1]>=110 ? 'warning' : 'normal');
@@ -526,7 +530,7 @@ class Component extends DCLogic {
       const [snow24, low, now, pty] = v;
       s.temp = now; s.feels = +(now - 5.5).toFixed(1); s.humid = (pty==='0' ? 72 : 92);
       s.weather = (pty==='3' ? '눈' : pty==='2' ? '비/눈' : '흐림'); s.icon = (pty==='0' ? '☁' : '🌨');
-      s.tmin = +(now - 2).toFixed(0); s.tmax = +(now + 2).toFixed(0);
+      s.tmin = low; s.tmax = +(now + 2).toFixed(0);   // 순위·배너가 오늘 최저 기준이라 시연의 한파 수준이 보이게
       s.obs = Object.assign({}, s.obs, {t1h:now, pty:pty, reh:s.humid, base_time:'06:00'});
       s.forecast = shape.map((k,i)=>{
         const h = (hh+i+1)%24;
@@ -605,7 +609,7 @@ class Component extends DCLogic {
     const clockTime = p2(n.getHours())+':'+p2(n.getMinutes())+':'+p2(n.getSeconds());
 
     // ── 위험 배너 ①공식특보 ─────────────────────────────
-    const warns = (d.warnings||[]).filter(w=>/호우|태풍/.test(w.type||''));
+    const warns = this.mineWarns(d, me).filter(w=>/호우|태풍/.test(w.type||''));
     const sev = warns.filter(w=>w.level==='severe').length>0;
     const warnText = warns.length
       ? warns.map(w=>(w.type||'')+' '+(w.area||'')).join(' · ')
@@ -648,7 +652,9 @@ class Component extends DCLogic {
 
     // ── 관서별 랭킹 ─────────────────────────────────────
     const TABS = [{k:'60',label:'1시간'},{k:'12h',label:'12시간'},{k:'day',label:'일누적'}];
-    const key = st.rankTab;
+    // 고르지 않았으면 비가 실제로 있는 가장 짧은 기간부터 (지금 비 → 12시간 → 오늘 누적)
+    const anyRn = f => stations.some(s=>(this.num((s.aws||{})[f])||0)>0);
+    const key = st.rankTab || (anyRn('rn60') ? '60' : anyRn('rn12h') ? '12h' : anyRn('rnday') ? 'day' : '12h');
     const pickVal = (a)=> key==='60' ? a.rn60 : (key==='day' ? a.rnday : a.rn12h);
     let rows = stations.map(s=>{
       const a = s.aws || {};
@@ -666,7 +672,6 @@ class Component extends DCLogic {
       else {
         sub = r.a.station || '';
         if(r.a.alt) sub += ' (' + r.a.alt + ' 대체)';
-        if(r.a.ok && r.a.total && r.a.ok < r.a.total) sub += ' · ' + r.a.ok + '/' + r.a.total + '소';
       }
       return {
         name: r.s.name,
@@ -683,9 +688,9 @@ class Component extends DCLogic {
     });
     const rankTabs = TABS.map(t=>({
       label: t.label,
-      bg: (st.rankTab===t.k ? 'var(--brand)' : 'var(--surface)'),
-      fg: (st.rankTab===t.k ? '#fff' : 'var(--ink2)'),
-      bd: (st.rankTab===t.k ? 'var(--brand)' : 'var(--border2)'),
+      bg: (key===t.k ? 'var(--brand)' : 'var(--surface)'),
+      fg: (key===t.k ? '#fff' : 'var(--ink2)'),
+      bd: (key===t.k ? 'var(--brand)' : 'var(--border2)'),
       pick: ()=>this.setState({rankTab:t.k})
     }));
     const anyAws = stations.filter(s=>(s.aws||{}).ok).length;
@@ -712,14 +717,17 @@ class Component extends DCLogic {
       demoText: '▶ 시연 모드 — 아래 숫자는 전부 가짜입니다 (호우경보 상황 연습용)',
       obsTag: '실측 최다',
       noteTxt: '※ 기상청 특보는 예상 기준이라 실측이 앞설 수 있습니다. 특보가 없어도 실측이 기준을 넘으면 대응하십시오. 호우주의보=3시간 60mm 또는 12시간 110mm · 경보=3시간 90mm 또는 12시간 180mm',
+      rankTip: '기상청 AWS 실측 강수량입니다. 관서 대표 기상 관측소 값이며, 탭에서 1시간·12시간·일누적을 고릅니다.',
+      c1Tip: '기상청 AWS 실측값입니다.', c2Tip: '기상청 초단기예보입니다. 실측이 아니라 앞으로의 예측입니다.',
+      c3Tip: '기상청 AWS 실측 순간최대풍속입니다. 관서 안에서 바람이 가장 센 지점 값입니다.', f24Tip: '날씨누리 메인의 시간별 예보(1시간 간격)와 같은 값입니다. 적설만 기상청 단기예보입니다.',
       rankTitle: '강수량', rankEmptyTxt: '강수 자료를 불러오는 중입니다.',
       c1Title: myStation+' 지금', c1Sub: '', c1Body: this.myNowBody(me),
       c2Title: '앞으로 6시간', c2Sub: '초단기예보', c2Body: this.fcst6Body(me),
       c3Title: '강풍', c3Sub: myStation+' · 순간최대', c3Body: this.windBody(me, stations, myStation),
       f24Title: '시간대별 강수 예보',
-      radarTitle: '비구름 (레이더)', radarDesc: '지금 실제로 내리는 비를 레이더로 관측한 것입니다.',
+      radarTip: '기상청 레이더 합성 영상입니다. 예보가 아니라 지금 관측한 강수입니다.', radarTitle: '비구름 (레이더)', radarDesc: '지금 실제로 내리는 비를 레이더로 관측한 것입니다.',
       footA: '충청북도 호우 집중 감시 · 강수량은 기상청 AWS 실측(자동기상관측) 기준',
-      footB: '관서 대표값은 관할 안에서 가장 많이 온 관측소 값입니다 (평균은 국지호우를 놓칩니다)',
+      footB: '관서 강수량은 대표 기상 관측소 값입니다. 관할 다른 지점 값은 종합 현황 상세 지도의 ▲ 에 마우스를 올리면 보입니다',
       clockTime, myStation,
       updatedTxt:(d.updated||'--').replace(/:\d\d$/,''),
       // 관서 선택
@@ -782,6 +790,7 @@ class Component extends DCLogic {
       obsText, obsSub, obsBg:(obsLv.k>=2?obsLv.bg:'var(--surface)'),
       obsBorder:(obsLv.k>=2?obsLv.c:'var(--border)'), obsTagBg:(obsLv.k>=2?obsLv.c:'var(--ink3)'),
       // 랭킹
+      rankLegend: null,
       rankTabs, rankRows, rankEmpty: rankRows.length===0,
       rankSrcTxt: anyAws ? ('기상청 AWS 실측 · ' + anyAws + '개 관서') : '자료 수신 대기',
       // 본문 블록
@@ -818,8 +827,8 @@ class Component extends DCLogic {
     if(mode==='snow'){
       const sn=by(s=>this.snowSum(s));
       if(sn && sn.v>0) return {s:sn.s, why:'적설 최다'};
-      const lo=by(s=>this.minOf(s,'temp'), true);
-      return lo ? {s:lo.s, why:'최저기온'} : {s:list[0], why:''};
+      const lo=by(s=>this.num(s.tmin), true);
+      return lo ? {s:lo.s, why:'오늘 최저기온'} : {s:list[0], why:''};
     }
     if(mode==='fire'){
       const dr=by(s=>this.num(s.effHumid), true);
@@ -855,6 +864,14 @@ class Component extends DCLogic {
     return 'var(--severe)';
   }
   // ── 색 읽는 법 (그림에도 범례가 있지만 작아서 안 보인다) ──
+  /* 순위 막대 색 범례 — items=[[색, 글], …] */
+  rankLegend(items, note){
+    const R=React.createElement;
+    return R('div',{style:{display:'flex', flexWrap:'wrap', alignItems:'center', gap:'4px 12px', marginTop:'10px', paddingTop:'9px', borderTop:'1px solid var(--border)', fontSize:'11px', color:'var(--ink3)'}},
+      items.map((x,i)=>R('span',{key:i, style:{display:'inline-flex', alignItems:'center', gap:'4px', whiteSpace:'nowrap'}},
+        R('span',{style:{width:'10px', height:'10px', borderRadius:'3px', background:x[0]}}), x[1])),
+      note ? R('span',{key:'note', style:{marginLeft:'auto'}}, note) : null);
+  }
   legendBody(){
     const R=React.createElement;
     const L=[['#40a0ff','1~5','약한 비'],['#00b050','5~10','보통'],['#ffd400','10~20','다소 강함'],
@@ -895,8 +912,7 @@ class Component extends DCLogic {
     const a=s.aws||{}, obs=s.obs||{};
     if(!a.ok){
       return R('div',{style:{fontSize:'13px', color:'var(--ink3)', lineHeight:1.6}},
-        '이 관서의 AWS 관측 자료가 없습니다.',
-        R('br'), '자체 집계 12시간 ' + (s.cum12h!=null?s.cum12h:'—') + 'mm');
+        '이 관서의 AWS 관측 자료가 없습니다.');
     }
     const lv=this.rainLevel(a.rn60, a.rn12h);
     const row=(label,val,unit)=>R('div',{style:{display:'flex', justifyContent:'space-between', alignItems:'baseline', padding:'6px 0', borderBottom:'1px solid var(--border)'}},
@@ -913,8 +929,7 @@ class Component extends DCLogic {
       row('돌풍', this.mm(a.wss), 'm/s'),
       R('div',{style:{fontSize:'11px', color:'var(--ink3)', marginTop:'8px', lineHeight:1.5}},
         '관측소 ' + (a.station||'?') + (a.alt ? ' · ⚠ ' + a.alt + ' 관측소로 대체' : '') +
-        (a.total ? ' · 관할 ' + a.ok + '/' + a.total + '개소 수신' : ''),
-        R('br'), '자체 집계 12시간 ' + (s.cum12h!=null?s.cum12h:'—') + 'mm (참고)'));
+        (a.total ? ' · 관할 ' + a.ok + '/' + a.total + '개소 수신' : '')));
   }
 
   // ── 앞으로 6시간 ────────────────────────────────────────
@@ -1219,7 +1234,7 @@ class Component extends DCLogic {
       others.length ? R('div',{style:{marginTop:'12px'}},
         R('div',{onClick:()=>this.setState({riverOthersOpen:!open}), style:{display:'flex', alignItems:'center', justifyContent:'center', gap:'8px', padding:'8px', borderRadius:'9px', cursor:'pointer', fontSize:'12px', fontWeight:800, color:'var(--brand)', background:'var(--brandSoft)'}},
           (open?'다른 지역 접기 ▴':'다른 지역 참고 '+others.length+'곳 보기 ▾'),
-          othersAlert ? R('span',{style:{fontSize:'11px', fontWeight:900, color:'#fff', background:'var(--warn)', padding:'1px 7px', borderRadius:'999px'}}, '주의 이상 '+othersAlert+'곳') : null),
+          othersAlert ? R('span',{style:{fontSize:'11px', fontWeight:900, color:'#fff', background:'var(--warn)', padding:'1px 7px', borderRadius:'999px'}}, '관심 이상 '+othersAlert+'곳') : null),
         open ? R('div',{style:{display:'grid', gridTemplateColumns:cols, gap:'8px', marginTop:'8px', opacity:.92}}, others.map(card)) : null) : null);
   }
 
@@ -1305,7 +1320,7 @@ class Component extends DCLogic {
     const st = this.state;
     // ── 위험 배너 ①공식특보 — 대설·한파만 (호우·폭염 등은 이 화면과 무관) ──
     const RX=/대설|한파/;
-    const warns = (d.warnings||[]).filter(w=>RX.test(w.type||''));
+    const warns = this.mineWarns(d, me).filter(w=>RX.test(w.type||''));
     const sev = warns.some(w=>w.level==='severe' || String(w.type||'').indexOf('경보')>=0);
     const prelimHit = (d.prelim||[]).filter(p=>RX.test(p.type||'') && (p.north||0)>0);
     const warnText = warns.length
@@ -1316,7 +1331,7 @@ class Component extends DCLogic {
     const warnTone = warns.length ? (sev?'severe':'warn') : (prelimHit.length ? 'caution' : '');
 
     // ── 위험 배너 ②예보 최다 — 눈이 오면 적설 최다, 아니면 가장 추운 곳 ──
-    const rowsAll = stations.map(s=>({ s, snow:this.snowSum(s), low:this.minOf(s,'temp'), feel:this.minOf(s,'feels') }));
+    const rowsAll = stations.map(s=>{ const m=this.morningLow(s); return { s, snow:this.snowSum(s), low:this.num(s.tmin), feel:this.minOf(s,'feels'), morn:m.t, mornNext:m.tomorrow }; });
     const snowTop = rowsAll.slice().sort((a,b)=>b.snow-a.snow)[0];
     const coldTop = rowsAll.filter(r=>r.low!==null).sort((a,b)=>a.low-b.low)[0];
     const meRow = rowsAll.find(r=>r.s.name===myStation) || {snow:0, low:null};
@@ -1326,15 +1341,20 @@ class Component extends DCLogic {
       topText = snowTop.s.name+' 24시간 예상 '+this.cm(snowTop.snow)+(topLv.t?(' — '+topLv.t):'');
       topSub = this._wide ? '충청북도 관서 중 최다' : (snowTop.s.name===myStation) ? '충청북도 관서 중 최다 — 내 관서입니다' : ('내 관서 '+myStation+' '+this.cm(meRow.snow));
     } else if(coldTop){
-      topLv = this.coldLevel(coldTop.low); topTag='최저 기온';
-      topText = coldTop.s.name+' 24시간 최저 '+this.deg(coldTop.low)+'℃'+(topLv.t?(' — '+topLv.t):'');
-      topSub = '눈 예보 없음' + (this._wide ? '' : ' · ' + ((coldTop.s.name===myStation) ? '충청북도 관서 중 가장 추운 곳이 내 관서입니다' : ('내 관서 '+myStation+' 최저 '+this.deg(meRow.low)+'℃')));
+      topLv = this.coldLevel(coldTop.low); topTag='오늘 최저';
+      topText = coldTop.s.name+' 오늘 최저 '+this.deg(coldTop.low)+'℃'+(topLv.t?(' — '+topLv.t):'');
+      topSub = '눈 예보 없음' + (this._wide ? '' : ' · ' + ((coldTop.s.name===myStation) ? '충청북도 관서 중 가장 추운 곳이 내 관서입니다' : ('내 관서 '+myStation+' 오늘 최저 '+this.deg(meRow.low)+'℃')));
     } else { topLv={k:0}; topTag='예보'; topText='예보 자료를 불러오는 중입니다'; topSub=''; }
 
     // ── 관서별 순위 ─────────────────────────────────────
-    const TABS = [{k:'snow',label:'적설'},{k:'low',label:'최저기온'},{k:'feel',label:'체감'}];
-    const key = st.snowTab;
-    const val = r => key==='snow' ? r.snow : (key==='low' ? r.low : r.feel);
+    // 눈 예보도 대설특보도 없으면 오늘 최저부터 보여 준다. 적설 탭은 그대로 두어 언제든 누를 수 있다.
+    const snowOn = (snowTop && snowTop.snow>0) || (d.warnings||[]).some(w=>/대설/.test(w.type||''));
+    // 한파특보가 있을 때만 다음 아침 최저 탭 — 한파는 다음 아침 예보로 대비하는데 오늘 최저 순위엔 안 보인다
+    const coldOn = (d.warnings||[]).some(w=>/한파/.test(w.type||''));
+    const mornLabel = (rowsAll.some(r=>r.mornNext) ? '내일' : '오늘')+' 아침';
+    const TABS = [{k:'snow',label:'적설'},{k:'low',label:'오늘 최저'}].concat(coldOn ? [{k:'morn',label:mornLabel}] : []).concat([{k:'feel',label:'체감'}]);
+    const key = (st.snowTab && (st.snowTab!=='morn' || coldOn)) ? st.snowTab : (snowOn ? 'snow' : 'low');
+    const val = r => key==='snow' ? r.snow : key==='low' ? r.low : key==='morn' ? r.morn : r.feel;
     const rows = rowsAll.slice().sort((a,b)=>{
       const x=val(a), y=val(b); if(x===null) return 1; if(y===null) return -1;
       return key==='snow' ? (y-x) : (x-y); });
@@ -1349,14 +1369,14 @@ class Component extends DCLogic {
         ? (v>0 ? Math.max(3, Math.round(v/maxSnow*100)) : 0)
         : Math.max(3, Math.min(100, Math.round((warmEnd - v)/Math.max(1, warmEnd - coldEnd)*100))));
       const sub = key==='snow'
-        ? ((r.snow>0 && lv.t ? lv.t+' · ' : '') + '최저 '+this.deg(r.low)+'℃')
-        : (key==='low' ? ('체감 '+this.deg(r.feel)+'℃') : ('기온 '+this.deg(r.low)+'℃')) + (lv.t ? ' · '+lv.t : '');
+        ? ((r.snow>0 && lv.t ? lv.t+' · ' : '') + '오늘 최저 '+this.deg(r.low)+'℃')
+        : (key==='low' ? ('24시간 최저 체감 '+this.deg(r.feel)+'℃') : ('오늘 최저 '+this.deg(r.low)+'℃')) + (lv.t ? ' · '+lv.t : '');
       return {
         name: r.s.name,
         valTxt: (v===null ? '—' : (key==='snow' ? this.cm(v) : this.deg(v)+'℃')),
         valColor: (v===null ? 'var(--ink3)' : (lv.k ? lv.c : 'var(--ink2)')),
         barW: pct+'%',
-        barColor: (v===null ? 'var(--border2)' : (lv.k ? lv.c : 'var(--border2)')),
+        barColor: (v===null ? 'var(--border2)' : (lv.k ? lv.c : 'var(--ink3)')),
         sub,
         rowBg: (isMine ? 'var(--brandSoft)' : (lv.k>=3 ? lv.bg : 'transparent')),
         rowBd: (isMine ? 'var(--brand)' : 'transparent'),
@@ -1366,9 +1386,9 @@ class Component extends DCLogic {
     });
     const rankTabs = TABS.map(t=>({
       label: t.label,
-      bg: (st.snowTab===t.k ? 'var(--brand)' : 'var(--surface)'),
-      fg: (st.snowTab===t.k ? '#fff' : 'var(--ink2)'),
-      bd: (st.snowTab===t.k ? 'var(--brand)' : 'var(--border2)'),
+      bg: (key===t.k ? 'var(--brand)' : 'var(--surface)'),
+      fg: (key===t.k ? '#fff' : 'var(--ink2)'),
+      bd: (key===t.k ? 'var(--brand)' : 'var(--border2)'),
       pick: ()=>this.setState({snowTab:t.k})
     }));
 
@@ -1380,15 +1400,21 @@ class Component extends DCLogic {
       warnText, warnBg:wT.bg, warnBorder:wT.bd, warnTagBg:wT.tag,
       obsTag:topTag, obsText:topText, obsSub:topSub, obsBg:tT.bg, obsBorder:tT.bd, obsTagBg:tT.tag,
       noteTxt: '※ 적설은 기상청 단기예보의 예상 신적설입니다(실측 적설이 아님). 대설주의보=24시간 신적설 5cm · 경보=20cm(산지 30cm) · 한파주의보=아침 최저 −12℃ 이하 2일 이상 또는 전날보다 10℃ 이상 하강 · 경보=−15℃ 이하 2일 이상 또는 15℃ 이상 하강',
-      rankTitle: (key==='snow' ? '예상 적설' : key==='low' ? '최저기온' : '최저 체감온도'),
-      rankSrcTxt: (key==='snow' ? '기상청 단기예보 · 앞으로 24시간 신적설 합계' : '기상청 단기예보 · 앞으로 24시간 중 가장 낮은 값'),
+      rankTip: (key==='snow' ? '기상청 단기예보의 앞으로 24시간 예상 신적설 합계입니다. 실측 적설이 아닙니다.' : key==='low' ? '오늘 최저기온 예보입니다. 날씨누리 값이 비면 기상청 단기예보를 씁니다. 내일 아침 예보는 아래 한파 칸에 있습니다.' : key==='morn' ? '날씨누리 시간별 예보의 다음 아침(3~9시) 중 가장 낮은 값입니다. 실측이 아닙니다.' : '날씨누리 시간별 예보의 앞으로 24시간 중 가장 낮은 체감온도입니다. 실측이 아닙니다.'),
+      c1Tip: '기온은 이 관서 대표 기상 관측소의 실측입니다.', c2Tip: '날씨누리 시간별 예보로 판단합니다. 앞으로 24시간 중 0도 이하이면서 앞뒤로 비·눈이 있는 시간을 결빙 위험으로 봅니다.',
+      c3Tip: '날씨누리 메인의 시간별 예보 기준 아침(3~9시) 최저기온입니다.', f24Tip: '날씨누리 메인의 시간별 예보(1시간 간격)와 같은 값입니다. 적설만 기상청 단기예보입니다.',
+      rankTitle: (key==='snow' ? '예상 적설' : key==='low' ? '오늘 최저기온' : key==='morn' ? mornLabel+' 최저기온' : '최저 체감온도'),
+      rankSrcTxt: (key==='snow' ? '기상청 단기예보 · 앞으로 24시간 신적설 합계' : key==='low' ? '날씨누리 · 기상청 단기예보 · 오늘 최저' : key==='morn' ? '날씨누리 시간별 예보 · 3~9시 중 가장 낮은 값' : '날씨누리 시간별 예보 · 앞으로 24시간 중 가장 낮은 값'),
+      rankLegend: key==='snow'
+        ? this.rankLegend([['var(--brand)','1cm 미만 눈'],['var(--caution)','1cm 이상'],['var(--warn)','5cm 이상 주의보급'],['var(--severe)','20cm 이상 경보급']], '막대가 길수록 많음')
+        : this.rankLegend([['var(--ink3)','영상'],['var(--brand)','0℃ 이하 영하'],['var(--caution)','−5℃ 이하 강추위'],['var(--warn)','−12℃ 이하 주의보급'],['var(--severe)','−15℃ 이하 경보급']], '막대가 길수록 추움 · 지금 가장 추운 곳이 끝까지'),
       rankTabs, rankRows, rankEmpty: !stations.length, rankEmptyTxt: '예보 자료를 불러오는 중입니다.',
       midCols: wide ? 'minmax(0,1fr) minmax(0,1.3fr) minmax(0,1fr)' : 'minmax(0,1fr)',
       c1Title: myStation+' 지금', c1Sub: '', c1Body: this.snowNowBody(me),
       c2Title: '결빙 위험', c2Sub: myStation+' · 앞으로 24시간', c2Body: this.iceBody(me),
-      c3Title: '한파', c3Sub: myStation+' · 아침 최저기온', c3Body: this.coldBody(me),
+      c3Title: '한파', c3Sub: myStation+' · 다음 아침 예보', c3Body: this.coldBody(me),
       f24Title: '시간대별 눈·기온 예보', fcst24Body: this.snowFcst24Body(me),
-      radarTitle: '눈·비구름 (레이더)',
+      radarTip: '기상청 레이더 합성 영상입니다. 예보가 아니라 지금 관측한 강수입니다.', radarTitle: '눈·비구름 (레이더)',
       radarDesc: '지금 내리는 눈·비를 레이더로 관측한 것입니다. 눈은 같은 양의 비보다 약한 색으로 보이니, 옅은 색이라도 눈이면 적설이 빠르게 쌓일 수 있습니다.',
       legendBody: null,
       infoBody: this.snowInfoBody(d),
@@ -1420,7 +1446,7 @@ class Component extends DCLogic {
       row('바람', (s.wind!=null? s.wind+' m/s' : '—')),
       row('오늘 최저 / 최고', this.deg(s.tmin)+' / '+this.deg(s.tmax)+'℃'),
       R('div',{style:{fontSize:'11px', color:'var(--ink3)', marginTop:'8px', lineHeight:1.5}},
-        '기온·강수형태는 기상청 실측(' + (obs.base_time||'시각 미상') + '), 최저·최고는 단기예보'));
+        '기온은 대표 관측소 실측(' + (obs.base_time||'시각 미상') + '), 오늘 최고는 날씨누리, 오늘 최저는 날씨누리 값이 비면 단기예보'));
   }
 
   // ── 결빙 위험 ───────────────────────────────────────────
@@ -1490,12 +1516,12 @@ class Component extends DCLogic {
     if(!list.length) return R('div',{style:{fontSize:'13px', color:'var(--ink3)'}}, '시간대별 예보를 불러오는 중입니다.');
     const ice=this.iceHours(s);
     const snows=list.map(x=>this.num(x.snow)||0), maxS=Math.max(1, ...snows), total=snows.reduce((a,b)=>a+b,0);
-    const snowH=snows.filter(v=>v>0).length, low=this.minOf(s,'temp');
+    const snowH=snows.filter(v=>v>0).length, low=this.num(s.tmin);
     const peak=Math.max(...snows), peakAt=peak>0 ? list[snows.indexOf(peak)].hour : null;
     const lv=this.snowLevel(total);
     const summary = total<=0
-      ? ('앞으로 24시간 눈 예보 없음 · 최저 '+this.deg(low)+'℃')
-      : ('앞으로 24시간 예상 적설 '+this.cm(total)+' · 눈 오는 시간 '+snowH+'시간 · 가장 많을 때 '+peakAt+' '+this.cm(peak)+' · 최저 '+this.deg(low)+'℃');
+      ? ('앞으로 24시간 눈 예보 없음 · 오늘 최저 '+this.deg(low)+'℃')
+      : ('앞으로 24시간 예상 적설 '+this.cm(total)+' · 눈 오는 시간 '+snowH+'시간 · 가장 많을 때 '+peakAt+' '+this.cm(peak)+' · 오늘 최저 '+this.deg(low)+'℃');
     const col=v=> v>=3 ? 'var(--severe)' : v>=1 ? 'var(--warn)' : v>0 ? 'var(--brand)' : 'var(--border2)';
     return R('div',null,
       R('div',{style:{fontSize:'12.5px', fontWeight:800, color:(lv.k>=3?lv.c:'var(--ink2)'), marginBottom:'10px'}}, summary),
@@ -1571,6 +1597,15 @@ class Component extends DCLogic {
   pct(v){ const a=this.num(v); return a===null ? '—' : Math.round(a)+'%'; }
   ms(v){ const a=this.num(v); return a===null ? '—' : a.toFixed(1).replace(/\.0$/,'')+'m/s'; }
   // 산불위험예보 권역 — 관서 이름으로 찾고, 없으면 같은 시(청주서부 → '청주…' 권역)로
+  // 특보 띠 — 충청북도를 고르면 도 전체, 관서를 고르면 그 관서에 걸린 특보만
+  mineWarns(d, me){
+    const RC=window.REGION_CONF||{}, base=n=>String(n||'').replace(/(시|군)$/,''), seen={};
+    const names=[me.name, me.sigun, (RC.admin||{})[me.name]].filter(Boolean).map(base);
+    const all=(d.warnings||[]).filter(w=>{ const k=w.type+'|'+base(w.area); if(seen[k]) return false; seen[k]=1; return true; });   // '영동'·'영동군' 두 줄을 한 줄로
+    if(this._wide) return all;
+    return all.filter(w=>String(w.area||'').split(/[,·\/()]/).some(p=>{ p=p.trim(); if(!p) return false;
+      return p.indexOf('전역')>=0 || (RC.wideNames||[]).indexOf(p)>=0 || names.indexOf(base(p))>=0; }));
+  }
   fireGroupOf(d, s){
     const list=(d.fire||[]), nm=String(s.name||''), sg=String(s.sigun||nm);
     return list.find(f=>String(f.region||'').split('·').some(x=>x===nm || x===sg))
@@ -1634,7 +1669,7 @@ class Component extends DCLogic {
   fireVals(d, me, myStation, stations, wide){
     const st=this.state, R=React.createElement;
     // ①공식특보 — 건조·강풍(강풍은 산불 확산 조건)
-    const warns=(d.warnings||[]).filter(w=>/건조|강풍/.test(w.type||''));
+    const warns=this.mineWarns(d, me).filter(w=>/건조|강풍/.test(w.type||''));
     const sev=warns.some(w=>w.level==='severe' || String(w.type||'').indexOf('경보')>=0);
     const pre=(d.prelim||[]).filter(p=>/건조|강풍/.test(p.type||'') && (p.north||0)>0);
     const warnText = warns.length ? warns.map(w=>(w.type||'')+' '+(w.area||'')).join(' · ')
@@ -1650,7 +1685,9 @@ class Component extends DCLogic {
     const obsSub = (dry && this._wide) ? '충청북도 관서 중 가장 메마름' : dry ? ((dry.s.name===myStation) ? '충청북도 관서 중 가장 메마름 — 내 관서입니다' : ('내 관서 '+myStation+' 실효습도 '+this.pct(meR.eff)+' · 지금 습도 '+this.pct(meR.hum))) : '';
     // 순위
     const TABS=[{k:'eff',label:'실효습도'},{k:'hum',label:'지금 습도'},{k:'wind',label:'바람'}];
-    const key=st.fireTab;
+    // 강풍특보만 있으면 바람부터, 그 밖에는 실효습도부터
+    const _wt=(d.warnings||[]).map(w=>String(w.type||'')).join(' ');
+    const key=st.fireTab || ((/강풍/.test(_wt) && !/건조/.test(_wt)) ? 'wind' : 'eff');
     const val=r=> key==='eff' ? r.eff : key==='hum' ? r.hum : r.wss;
     const rows=rows0.slice().sort((a,b)=>{ const x=val(a), y=val(b); if(x===null) return 1; if(y===null) return -1; return key==='wind' ? y-x : x-y; });
     const maxW=Math.max(1, ...rows0.map(r=>r.wss||0));
@@ -1662,7 +1699,7 @@ class Component extends DCLogic {
                 : key==='hum' ? ('실효 '+this.pct(r.eff)+' · 바람 '+this.ms(r.wss))
                 : ((this.dirTxt(r.wds)?this.dirTxt(r.wds)+'풍 · ':'')+'실효 '+this.pct(r.eff));
       return { name:r.s.name, valTxt:(v===null?'—':(key==='wind'?this.ms(v):this.pct(v))),
-        valColor:(v===null?'var(--ink3)':(lv.k?lv.c:'var(--ink2)')), barW:pct+'%', barColor:(v===null?'var(--border2)':(lv.k?lv.c:'var(--border2)')),
+        valColor:(v===null?'var(--ink3)':(lv.k?lv.c:'var(--ink2)')), barW:pct+'%', barColor:(v===null?'var(--border2)':(lv.k?lv.c:'var(--ink3)')),
         sub:(lv.t?lv.t+' · ':'')+sub, rowBg:(isMine?'var(--brandSoft)':(lv.k>=3?lv.bg:'transparent')), rowBd:(isMine?'var(--brand)':'transparent'),
         nameW:(isMine?900:700), nameColor:(isMine?'var(--brand)':'var(--ink)') };
     });
@@ -1679,8 +1716,14 @@ class Component extends DCLogic {
       warnText, warnBg:wT.bg, warnBorder:wT.bd, warnTagBg:wT.tag,
       obsTag:'가장 메마름', obsText, obsSub, obsBg:oT.bg, obsBorder:oT.bd, obsTagBg:oT.tag,
       noteTxt:'※ 건조주의보=실효습도 35% 이하가 2일 이상 지속 예상 · 경보=25% 이하 2일 이상(기상청) — 오후 한때 35% 아래로 내려가는 것만으로는 특보 수준이 아닙니다. 여기 실효습도는 기상청과 같은 식(같은 시각 습도 5일치 가중합)으로 관서 AWS 습도에서 계산한 실시간 값이며, 하루 중 오후에 가장 낮습니다. 기상청 공식값(ASOS)은 관서 칸에 함께 적었습니다. 강풍은 작은 불씨도 크게 번지게 하므로 함께 봅니다.',
+      rankTip:(key==='eff'?'관서 AWS 습도를 쌓아 최근 5일 가중으로 계산한 값입니다. 기상청 공식값(ASOS 5곳)과 다를 수 있고, 이력이 모자라면 가까운 ASOS 자료로 채웁니다.':key==='hum'?'기상청 AWS 실측 습도입니다.':'기상청 AWS 실측 순간최대풍속입니다.'),
+      c1Tip:'기상청 AWS 실측값과, AWS 습도로 계산한 실효습도입니다.', c2Tip:'국립산림과학원 산불위험예보입니다. 권역 안에 더 높은 단계가 1%라도 있으면 그 단계로 표시합니다.',
+      c3Tip:'날씨누리 메인의 시간별 예보 기준 앞으로 24시간 습도·바람·비입니다.', f24Tip:'날씨누리 메인의 시간별 예보(1시간 간격)와 같은 값입니다.',
       rankTitle:(key==='eff'?'실효습도':key==='hum'?'지금 습도':'순간 최대풍속'),
       rankSrcTxt:(key==='wind'?'기상청 AWS 실측 · 센 순':'낮을수록 메마름 · 메마른 순'),
+      rankLegend: key==='wind'
+        ? this.rankLegend([['var(--ink3)','순간 10m/s 미만'],['var(--brand)','10m/s 이상'],['var(--caution)','14m/s 이상'],['var(--warn)','20m/s 이상 주의보급'],['var(--severe)','26m/s 이상 경보급']], '막대가 길수록 강함')
+        : this.rankLegend([['var(--ink3)','45% 초과'],['var(--caution)','45% 이하 다소 건조'],['var(--warn)','35% 이하 건조'],['var(--severe)','25% 이하 매우 건조']], '막대가 길수록 메마름'),
       rankTabs, rankRows, rankEmpty:!stations.length, rankEmptyTxt:'습도 자료를 불러오는 중입니다.',
       midCols: wide ? 'minmax(0,1fr) minmax(0,1fr) minmax(0,1fr)' : 'minmax(0,1fr)',
       c1Title:myStation+' 지금', c1Sub:'', c1Body:this.fireNowBody(me),
@@ -1688,7 +1731,7 @@ class Component extends DCLogic {
       c3Title:'앞으로 24시간', c3Sub:myStation+' · 습도·바람·비', c3Body:this.fireAheadBody(me),
       f24Title:'시간대별 습도·바람 예보', fcst24Body:this.fireFcst24Body(me),
       fireListSub:'올해 '+inc.length+'건 · 최근 순', fireListBody:this.fireListBody(inc),
-      radarTitle:'위성 (천리안)', radarImg:'images/kma_satellite.png'+(((ki.satellite||{}).ts)?('?v='+encodeURIComponent(ki.satellite.ts)):''),
+      radarTip:'천리안 2A호(GK2A) 적외 위성 영상입니다. 구름 분포를 보여 줍니다.', radarTitle:'위성 (천리안)', radarImg:'images/kma_satellite.png'+(((ki.satellite||{}).ts)?('?v='+encodeURIComponent(ki.satellite.ts)):''),
       radarAge:this.ageTxt(satMin)+' 자료', radarAgeColor:this.ageColor(satMin, 30),
       radarDesc:'구름 없이 맑은 날이 이어지면 메마름이 깊어집니다. 큰 산불은 위성 영상에 연기가 보이기도 합니다.',
       legendBody:null,
