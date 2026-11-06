@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>재해 상황판 · 충청북도</title>
+<title>재해별 집중 감시 · 충청북도</title>
 <!-- support.js = dc-runtime 본체. 없으면 페이지가 부팅되지 않는다(템플릿이 글자로 노출).
      반드시 진짜 head 안에 둘 것 — helmet에 넣으면 첫 렌더 뒤에 로드돼 부팅이 안 된다.
      leaflet은 이 페이지가 지도를 안 그리므로 생략.
@@ -21,7 +21,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="재해상황판">
+<meta name="apple-mobile-web-app-title" content="재해별 집중 감시">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg">
 <!-- 순서 고정: data.js → data-adapter.js → dashboard-data.js(폴백은 반드시 어댑터 뒤).
@@ -66,7 +66,7 @@
   <div style="position:sticky; top:0; z-index:50; background:var(--headerBg); backdrop-filter:blur(12px); border-bottom:1px solid var(--border); padding:10px 16px;">
     <div style="max-width:1280px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
       <div style="display:flex; align-items:center; gap:8px 12px; flex-wrap:wrap; min-width:0;">
-        <a href="지도.html" style="display:flex; align-items:center; gap:5px; height:36px; padding:0 12px; border-radius:10px; border:1px solid var(--border2); background:var(--surface); color:var(--ink2); font-size:12.5px; font-weight:800; text-decoration:none;">← 상황판</a>
+        <a href="지도.html" style="display:flex; align-items:center; gap:5px; height:36px; padding:0 12px; border-radius:10px; border:1px solid var(--border2); background:var(--surface); color:var(--ink2); font-size:12.5px; font-weight:800; text-decoration:none;">← 종합 현황</a>
         <!-- 재해 종류 탭 — 호우 / 대설·한파. 처음 열 때는 발효 특보 → 마지막으로 고른 탭 → 계절 순으로 자동 선택 -->
         <div style="display:flex; gap:3px; padding:3px; border-radius:12px; background:var(--surface3); border:1px solid var(--border);">
           <sc-for list="{{modeTabs}}" as="t">
@@ -342,7 +342,7 @@ class Component extends DCLogic {
     this.syncTitle();
   }
   // 브라우저 탭 제목도 지금 탭에 맞춘다 (창을 여러 개 띄워 둘 때 구분용)
-  syncTitle(){ try{ const m=this.curMode(), t=(m==='snow'?'대설·한파':m==='fire'?'건조·산불':'호우')+' 상황판 · 충청북도'; if(document.title!==t) document.title=t; }catch(e){} }
+  syncTitle(){ try{ const m=this.curMode(), t=(m==='snow'?'대설·한파':m==='fire'?'건조·산불':'호우')+' 집중 감시 · 충청북도'; if(document.title!==t) document.title=t; }catch(e){} }
   // ⚠ 이 메서드는 단 한 번만 정의할 것 (중복 정의로 타이머가 누수된 전례가 있음)
   componentWillUnmount(){
     clearInterval(this._clock); clearInterval(this._poll); clearInterval(this._upd); this._upd=null;
@@ -718,7 +718,7 @@ class Component extends DCLogic {
       c3Title: '강풍', c3Sub: myStation+' · 순간최대', c3Body: this.windBody(me, stations, myStation),
       f24Title: '시간대별 강수 예보',
       radarTitle: '비구름 (레이더)', radarDesc: '지금 실제로 내리는 비를 레이더로 관측한 것입니다.',
-      footA: '충청북도 호우 상황판 · 강수량은 기상청 AWS 실측(자동기상관측) 기준',
+      footA: '충청북도 호우 집중 감시 · 강수량은 기상청 AWS 실측(자동기상관측) 기준',
       footB: '관서 대표값은 관할 안에서 가장 많이 온 관측소 값입니다 (평균은 국지호우를 놓칩니다)',
       clockTime, myStation,
       updatedTxt:(d.updated||'--').replace(/:\d\d$/,''),
@@ -1393,7 +1393,7 @@ class Component extends DCLogic {
       legendBody: null,
       infoBody: this.snowInfoBody(d),
       msgBody: this.snowMsgBody(d, me),
-      footA: '충청북도 대설·한파 상황판 · 적설·기온은 기상청 단기예보, 현재 기온은 AWS 실측',
+      footA: '충청북도 대설·한파 집중 감시 · 적설·기온은 기상청 단기예보, 현재 기온은 AWS 실측',
       footB: "결빙 위험은 '기온 0℃ 이하 + 앞 6시간 안에 비·눈' 시간을 예보에서 골라낸 참고 표시입니다 (노면온도 관측이 아님)"
     };
   }
@@ -1694,7 +1694,7 @@ class Component extends DCLogic {
       legendBody:null,
       infoBody:this.snowInfoBody(d, '※ 기상청이 발표한 기상정보 전문입니다. 건조·강풍 때는 건조 현황·전망이 실립니다.'),
       msgBody:this.fireMsgBody(d, me),
-      footA:'충청북도 건조·산불 상황판 · 습도·바람은 기상청 AWS 실측, 산불위험은 국립산림과학원',
+      footA:'충청북도 건조·산불 집중 감시 · 습도·바람은 기상청 AWS 실측, 산불위험은 국립산림과학원',
       footB:'산불 발생 이력은 산림청 산불통계(진화 완료 건 위주)입니다'
     };
   }

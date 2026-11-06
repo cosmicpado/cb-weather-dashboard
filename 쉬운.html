@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f3f5f9">
 <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0b1220">
-<title>쉬운 화면 — 충북소방 기상종합상황판</title>
+<title>큰 글씨 보기 — 충북소방 기상재난 상황판</title>
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg">
 <!-- 쉬운 화면
@@ -194,7 +194,7 @@
       var stb=$('stale'); stb.textContent='⚠ 자료를 못 읽었습니다 — 통신 확인 후 새로고침'; stb.style.display='block';
       $('status').className='status stale'; $('s1').textContent='확인 중'; $('s2').textContent='자료를 아직 못 받았습니다';
       ['tWarn','tRain','tRiver','tMsg','tTemp'].forEach(function(id){ var el=$(id); el.className=el.className.replace(/\b(safe|warn|severe|info)\b/g,'').replace(/\s+/g,' ').trim(); var v=el.querySelector('.v'); if(v) v.textContent='—'; });
-      $('upd').textContent=''; document.title=(name||'')+' 확인 중 — 쉬운 화면'; return;
+      $('upd').textContent=''; document.title=(name||'')+' 확인 중 — 큰 글씨 보기'; return;
     }
 
     /* 특보 */
@@ -292,7 +292,7 @@
     var stb=$('stale'); stb.style.display = stale ? 'block' : 'none';
     if(stale){ stb.textContent = failN>=3 ? '⚠ 새 자료를 못 받고 있습니다 — 통신 확인 후 새로고침' : '⚠ 자료가 ' + age + '분 전 것입니다 — 새로고침 해 보세요';
       s.className='status stale'; $('s1').textContent='자료 오래됨'; $('s2').textContent=(age!=null ? age + '분 전 자료 · ' : '') + '아래 내용은 그때 상황'; }
-    document.title = (name||'') + ' ' + $('s1').textContent + ' — 쉬운 화면';
+    document.title = (name||'') + ' ' + $('s1').textContent + ' — 큰 글씨 보기';
   }
 
   var curItem=null;
