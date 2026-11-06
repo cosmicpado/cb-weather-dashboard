@@ -231,6 +231,7 @@ def now_str():
 #   ※ 지점'명'으로 매칭하면 오탐남(포항시남구 → '구리'로 걸림). 코드로만 매칭할 것.
 #   ※ 이 매핑 덕에 고양(덕양 41281)과 일산(41285/41287)이 처음으로 진짜 분리된다.
 AWS_STATIONS = P['aws_stations']
+AWS_REP = P.get('aws_rep') or {}   # 관서 대표 관측소(기온·습도·바람) — 네이버 '지역 날씨'가 보여 주는 지점과 같게 정했다
 # 일산은 관측소가 1개뿐 → 그게 결측이면 인접 관서로 대체하고 화면에 대체 사실을 표기한다
 AWS_FALLBACK = P['aws_fallback']
 
@@ -407,23 +408,24 @@ def fetch_aws_rain():
         raise RuntimeError('AWS 응답에 관측 지점 없음')
 
     def pick(area):
-        """관서 안에서 '가장 많이 온 지점'을 고른다.
-        평균을 내면 국지호우가 묻힌다 — 소방은 관할 내 최악지점이 기준."""
-        best, ok = None, 0
+        """강수 지점 — 기온·습도와 같은 대표 관측소(aws_rep). 값을 여러 지점에서 섞으면 헷갈린다(2026-11-06 결정).
+        대표 관측소 강수 자료가 없을 때만 관할에서 가장 많이 온 지점으로 대신한다."""
+        best, ok, rep = None, 0, None
         for stn, sname in AWS_STATIONS.get(area, []):
             o = obs.get(stn)
             if not o or all(o[k] is None for k in ('rn15', 'rn60', 'rn12h', 'rnday')):
                 continue
             ok += 1
             key = (o['rn60'] or 0, o['rn12h'] or 0, o['rnday'] or 0)
+            if stn == AWS_REP.get(area):
+                rep = (key, stn, sname, o)
             if best is None or key > best[0]:
                 best = (key, stn, sname, o)
-        return best, ok
+        return rep or best, ok
 
     def pick_wind(area):
         """관서 안에서 '바람이 가장 센 지점'을 따로 고른다.
-        ⚠ 비가 제일 많은 지점과 바람이 제일 센 지점은 다르다. 강수 대표지점의 돌풍을
-          그대로 쓰면 관할 최대 돌풍을 놓친다 — 강풍은 별도로 뽑아야 한다."""
+        ⚠ 대표 관측소의 돌풍을 그대로 쓰면 관할 최대 돌풍을 놓친다 — 강풍은 별도로 뽑아야 한다."""
         best = None
         for stn, sname in AWS_STATIONS.get(area, []):
             o = obs.get(stn)
@@ -438,10 +440,9 @@ def fetch_aws_rain():
                 'station': sname, 'stn': stn}
 
     def pick_obs(area):
-        """기온·습도·풍향의 대표 지점 — 목록의 첫 지점(대표 관측소)부터, 기온이 있는 곳.
-        강수 대표(가장 많이 온 곳)와 다를 수 있다 — 기온은 국지 최악값이 아니라 대표값이 맞다."""
+        """기온·습도·풍향의 대표 지점 — 프로파일 aws_rep 지점 먼저, 없으면 목록 순서로 기온이 있는 곳."""
         po = None
-        for stn, sname in AWS_STATIONS.get(area, []):
+        for stn, sname in sorted(AWS_STATIONS.get(area, []), key=lambda x: x[0] != AWS_REP.get(area)):
             o = obs.get(stn)
             if not o:
                 continue
@@ -484,9 +485,14 @@ def fetch_aws_rain():
             out[area]['wind'] = w
         po = pick_obs(alt or area)
         if po:
+            po['feels'] = feels_like(po['ta'], po.get('hm'), po.get('ws10'))   # 시를 나눠 맡는 관서(청주서부)가 자기 체감온도를 쓴다
             out[area]['obs'] = po                      # 실황 대체용(기온·습도·풍향) — 아래 fetch_all_regions 참조
         if alt:
             out[area]['alt'] = alt                     # 대체 관서 — 화면에 반드시 표기
+    # 지점별 실측 — 관서 상세 지도의 ▲ 에 마우스를 올리면 보인다
+    for area, row in out.items():
+        row['stations'] = {str(stn): {k: obs[stn].get(k) for k in ('ta', 'hm', 'rn60', 'rn12h', 'rnday', 'ws10', 'wss', 'wd10', 'tm')}
+                           for stn, _ in AWS_STATIONS.get(area, []) if stn in obs}
     return out
 
 
@@ -606,6 +612,281 @@ def _vilage_cache_load():
         return {}
 
 
+def _sky_icon(pty, sky, hour):
+    """강수형태·하늘상태 → (아이콘, 글자). 아이콘은 밤/낮 구분."""
+    pty_map = {'1': '비', '2': '비/눈', '3': '눈', '4': '소나기',
+               '5': '빗방울', '6': '진눈깨비', '7': '눈날림'}
+    sky_map = {'1': '맑음', '3': '구름많음', '4': '흐림'}
+    if pty in ('1', '4', '5'):        icon = '🌧'
+    elif pty in ('2', '3', '6', '7'): icon = '🌨'
+    elif sky == '4':                  icon = '☁'
+    elif sky == '3':                  icon = '🌥'
+    else:
+        icon = '🌙' if (hour < 6 or hour >= 19) else '☀'
+    return icon, (pty_map.get(pty) if pty != '0' else None) or sky_map.get(sky, '맑음')
+
+
+def blend_hourly(hourly, area, obs):
+    """시간대별 예보의 앞부분을 더 새 자료로 덮는다 — 날씨누리 시간별 예보와 같은 방식.
+    단기예보는 3시간마다 나와 낮 기온이 3~4도 빗나가기도 한다(2026-11-06 청주 11시: 단기 7도, 초단기 11도).
+    지금 칸 = 실측, 앞 6시간 = 초단기예보(1시간마다 발표), 그 뒤 = 단기예보. 강수확률은 초단기에 없어 단기 값을 둔다."""
+    ultra = {u['time'][:2]: u for u in (_ULTRA_CACHE.get(area) or [])}
+    now_key = datetime.now().strftime('%Y%m%d%H')
+    # 새 발표분은 다음 시각부터라(11시 발표 → 12시~) 표에 지금 칸이 없으면 만든다 — 없으면 화면이 12시 값을 '지금'으로 보여 준다
+    if hourly and hourly[0]['time'][:10] != now_key and obs.get('t1h') is not None:
+        hourly.insert(0, {**hourly[0], 'time': now_key + '00', 'hour': f'{datetime.now().hour}시'})
+        del hourly[24:]
+
+    def wind(h, ms, deg):
+        if ms is not None:
+            h['wind_ms'] = round(float(ms), 1)
+        if deg is not None:
+            h['wind_deg'] = float(deg)
+            h['wind_dir'] = deg_to_dir(deg)
+
+    for h in hourly[:7]:
+        if h['time'][:10] == now_key:
+            if obs.get('t1h') is None:
+                continue
+            h['temp'] = round(float(obs['t1h']), 1)
+            if obs.get('reh') is not None:
+                h['humid'] = int(float(obs['reh']))
+            if obs.get('rn1') is not None:
+                h['rain_mm'] = float(obs['rn1'])
+            wind(h, obs.get('wsd'), obs.get('vec'))
+        else:
+            u = ultra.get(h['time'][8:10])
+            if not u or u.get('temp') is None:
+                continue
+            h['temp'] = round(float(u['temp']), 1)
+            if u.get('reh') is not None:
+                h['humid'] = int(u['reh'])
+            if u.get('rain_mm') is not None:
+                h['rain_mm'] = u['rain_mm']
+            wind(h, u.get('wsd'), u.get('vec'))
+            if u.get('sky') is not None:
+                h['icon'], h['weather'] = _sky_icon(str(int(u.get('pty') or 0)), str(int(u['sky'])), int(h['time'][8:10]))
+        fl = feels_like(h['temp'], h['humid'], h['wind_ms'])
+        h['feels_like'] = round(fl, 1) if fl is not None else h['temp']
+
+
+# 날씨누리 메인(https://www.weather.go.kr/w/index.do)이 동을 고르면 부르는 화면 조각.
+# 공개 API 가 아니라 화면이 바뀌면 끊길 수 있다 — 끊기면 blend_hourly(초단기·단기예보) 값으로 그대로 돈다.
+WNURI_MAIN = 'https://www.weather.go.kr/w/wnuri-fct2021/main/'
+WNURI_HEADERS = {'User-Agent': 'Mozilla/5.0', 'Referer': 'https://www.weather.go.kr/w/index.do'}
+_DIR16 = ['북', '북북동', '북동', '동북동', '동', '동남동', '남동', '남남동',
+          '남', '남남서', '남서', '서남서', '서', '서북서', '북서', '북북서']
+
+
+def _wnuri_num(v):
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return None
+
+
+def _wnuri_dir_deg(name):
+    return _DIR16.index(name) * 22.5 if name in _DIR16 else None
+
+
+def _parse_wnuri_current(t):
+    """current-weather.do → 메인 '현재 날씨' 칸의 값. 기온이 없으면 None."""
+    import re as _re
+    m = _re.search(r'class="tmp">\s*(-?[\d.]+)', t)
+    if not m:
+        return None
+    out = {'temp': float(m.group(1))}
+    m = _re.search(r'updated-at[^>]*>\s*<span>[^<]*?(\d{1,2}:\d{2})\s*</span>', t)
+    out['time'] = m.group(1) if m else ''
+    m = _re.search(r'체감\((-?[\d.]+)', t)
+    out['feels'] = float(m.group(1)) if m else None
+    m = _re.search(r'<span>최저</span>\s*<span>([^<]*)</span>\s*<span>최고</span>\s*<span>([^<]*)</span>', t)
+    out['tmin'] = _wnuri_num(m.group(1).replace('℃', '')) if m else None
+    out['tmax'] = _wnuri_num(m.group(2).replace('℃', '')) if m else None
+    m = _re.search(r'ic-hm.*?class="val">\s*(\d+)', t, _re.S)
+    out['humid'] = int(m.group(1)) if m else None
+    m = _re.search(r'ic-wind.*?class="val">\s*([가-힣]*)\s*(-?[\d.]+)', t, _re.S)
+    out['wind_dir'] = m.group(1) if m else None
+    out['wind'] = float(m.group(2)) if m else None
+    return out
+
+
+def _parse_wnuri_hourly(t):
+    """digital-forecast.do → {'YYYYMMDDHHMM': 시각별 값}. 메인 '시간별 예보' 1시간 간격 표."""
+    import re as _re
+    rows = {}
+    for m in _re.finditer(r'<ul class="item (?:vs|s)-item[^"]*"[^>]*?data-date="([\d-]+)"\s+data-time="(\d\d):00"[^>]*>(.*?)</ul>', t, _re.S):
+        d, hh, b = m.groups()
+        tm = _re.search(r'class="hid feel">\s*(-?\d+(?:\.\d+)?)℃\s*<span class="chill">\((-?\d+(?:\.\d+)?)℃', b)
+        if not tm:
+            continue
+        row = {'temp': float(tm.group(1)), 'feels_like': float(tm.group(2))}
+        x = _re.search(r'class="wic [^"]*" title="([^"]*)"', b)
+        if x:
+            row['weather'] = x.group(1)
+        x = _re.search(r'강수량: </span><span>([^<]*)</span>', b)
+        if x:
+            row['rain_mm'] = parse_pcp(x.group(1))
+        x = _re.search(r'강수확률: </span><span>(\d+)%', b)
+        if x:
+            row['rain_pop'] = int(x.group(1))
+        x = _re.search(r'class="wdic [^"]*" title="([가-힣]+?)풍?"', b)
+        if x:
+            row['wind_dir'] = x.group(1)
+            row['wind_deg'] = _wnuri_dir_deg(x.group(1))
+        x = _re.search(r'class="wspd">\s*(-?[\d.]+)', b)
+        if x:
+            row['wind_ms'] = float(x.group(1))
+        x = _re.search(r'습도: </span><span>(\d+)%', b)
+        if x:
+            row['humid'] = int(x.group(1))
+        rows[d.replace('-', '') + hh + '00'] = row
+    return rows
+
+
+def fetch_wnuri_local():
+    """관서별 날씨누리 메인 값 — 프로파일 wnuri_dong 의 동 기준. 반환 {관서: {now, hourly}}. 실패한 관서는 빠진다."""
+    out = {}
+    for nm, d in (P.get('wnuri_dong') or {}).items():
+        q = {'code': d['code'], 'unit': 'm/s', 'lat': d['lat'], 'lon': d['lon']}
+        try:
+            r = shared_get(f"wnuri_cur_{d['code']}", WNURI_MAIN + 'current-weather.do', max_age=240,
+                           params={**q, 'aws': 'N'}, timeout=15, headers=WNURI_HEADERS)
+            r.raise_for_status()
+            now = _parse_wnuri_current(r.content.decode('utf-8', 'replace'))
+            if not now:
+                print(f'    날씨누리 {nm}: 현재값 없음')
+                continue
+            r = shared_get(f"wnuri_dig_{d['code']}", WNURI_MAIN + 'digital-forecast.do', max_age=540,
+                           params={**q, 'hr1': 'Y'}, timeout=20, headers=WNURI_HEADERS)
+            r.raise_for_status()
+            out[nm] = {'now': now, 'hourly': _parse_wnuri_hourly(r.content.decode('utf-8', 'replace'))}
+        except Exception as e:
+            print(f'    날씨누리 {nm}: {type(e).__name__}')
+    return out
+
+
+def _wnuri_merge_hourly(hourly, wn):
+    """시간대별 표를 날씨누리 값으로 덮는다. 지금 칸은 대표 관측소 실측을 두고,
+    적설(snow_cm)은 날씨누리 표에 숫자가 없어 단기예보 값을 둔다."""
+    now_key = datetime.now().strftime('%Y%m%d%H')
+    for h in hourly:
+        row = wn['hourly'].get(h['time'])
+        if not row or h['time'][:10] == now_key:
+            continue
+        h.update(row)
+        w = row.get('weather') or ''
+        hr = int(h['time'][8:10])
+        if any(k in w for k in ('비', '소나기')):
+            h['icon'] = '🌧'
+        elif '눈' in w:
+            h['icon'] = '🌨'
+        elif w == '흐림':
+            h['icon'] = '☁'
+        elif w == '구름많음':
+            h['icon'] = '🌥'
+        elif w:
+            h['icon'] = '🌙' if (hr < 6 or hr >= 19) else '☀'
+
+
+def _today_tmn(nx, ny):
+    """그 격자의 오늘 최저(TMN). 오늘 02시 발표분에 들어 있어 낮에 불러도 받을 수 있다(자정~02시엔 전날 23시 발표분)."""
+    now = datetime.now()
+    today = now.strftime('%Y%m%d')
+    if now.hour >= 3:
+        base_date, base_time = today, '0200'
+    else:
+        base_date, base_time = (now - timedelta(days=1)).strftime('%Y%m%d'), '2300'
+    r = requests.get('https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst',
+                     params={'serviceKey': DATA_KEY, 'pageNo': 1, 'numOfRows': 1000, 'dataType': 'JSON',
+                             'base_date': base_date, 'base_time': base_time, 'nx': nx, 'ny': ny}, timeout=15)
+    r.raise_for_status()
+    for it in r.json()['response']['body']['items']['item']:
+        if it['category'] == 'TMN' and it['fcstDate'] == today:
+            return float(it['fcstValue'])
+    return None
+
+
+def _wnuri_today_minmax(wn):
+    """날씨누리의 오늘 최고·최저를 자정까지 유지한다. 날씨누리는 때가 지나면 값을 '-' 로 비우기 때문이다.
+    시를 나눠 맡는 관서는 비었을 때 자기 격자의 단기예보 TMN 으로 채운다(본 관서 값을 빌려 쓰지 않게)."""
+    path = TMP / 'today_wnuri_minmax.json'
+    today = datetime.now().strftime('%Y%m%d')
+    try:
+        store = json.loads(path.read_text(encoding='utf-8'))
+    except Exception:
+        store = {}
+    if store.get('date') != today:
+        store = {'date': today, 'regions': {}}
+    recs = store['regions']
+    for nm, w in wn.items():
+        rec = recs.setdefault(nm, {})
+        for k in ('tmax', 'tmin'):
+            if w['now'].get(k) is not None:
+                rec[k] = w['now'][k]
+    for nm in (P.get('alias') or {}):
+        d = (P.get('wnuri_dong') or {}).get(nm) or {}
+        rec = recs.setdefault(nm, {})
+        if rec.get('tmin') is None and d.get('nx') is not None:
+            try:
+                rec['tmin'] = _today_tmn(d['nx'], d['ny'])
+            except Exception as e:
+                print(f'    {nm} 오늘 최저 수집 실패(본 관서 값 사용): {type(e).__name__}')
+    try:
+        _atomic_write_text(path, json.dumps(store, ensure_ascii=False))
+    except Exception as e:
+        print(f'    오늘 최고·최저 저장 실패(무시): {type(e).__name__}')
+    return recs
+
+
+def apply_wnuri_local(data):
+    """시간대별 예보와 오늘 최고·최저를 날씨누리 메인 값으로 맞춘다. 현재값은 대표 관측소(AWS_REP) 실측 그대로.
+    시를 나눠 맡는 관서(청주서부)는 regions 에 없어 현재값·예보를 data['local'] 로 따로 싣는다."""
+    import copy as _copy
+    wn = fetch_wnuri_local()
+    print(f'  ✓ 날씨누리 {len(wn)}/{len(P.get("wnuri_dong") or {})}개 관서')
+    day = _wnuri_today_minmax(wn)
+    by = {r.get('name'): r for r in data.get('regions') or []}
+    for r in data.get('regions') or []:
+        w = wn.get(r.get('name'))
+        rec = day.get(r.get('name')) or {}
+        det = r.setdefault('detail', {})
+        for k in ('tmax', 'tmin'):
+            if rec.get(k) is not None:
+                r[k] = rec[k]
+                det[k] = rec[k]
+        if w:
+            _wnuri_merge_hourly(det.get('hourly') or [], w)
+
+    local = {}
+    now_key = datetime.now().strftime('%Y%m%d%H')
+    for nm, sg in (P.get('alias') or {}).items():
+        base, w = by.get(sg), wn.get(nm)
+        po = ((data.get('aws') or {}).get(nm) or {}).get('obs') or {}
+        if not base or po.get('ta') is None:
+            continue
+        hourly = _copy.deepcopy((base.get('detail') or {}).get('hourly') or [])
+        if w:
+            _wnuri_merge_hourly(hourly, w)
+        humid = round(po['hm']) if po.get('hm') is not None else None
+        for h in hourly:
+            if h['time'][:10] == now_key:
+                h['temp'] = po['ta']
+                if po.get('feels') is not None:
+                    h['feels_like'] = po['feels']
+                if humid is not None:
+                    h['humid'] = humid
+                if po.get('ws10') is not None:
+                    h['wind_ms'] = po['ws10']
+        tm = str(po.get('tm') or '')
+        local[nm] = {'temp': po['ta'], 'humid': humid, 'wind': po.get('ws10'),
+                     'wind_dir': deg_to_dir(po['wd10']) if po.get('wd10') is not None else None, 'vec': po.get('wd10'),
+                     'feels': po.get('feels'), 'time': tm[8:10] + ':' + tm[10:12] if len(tm) >= 12 else '',
+                     'station': po.get('station', ''), 'src': 'aws',
+                     'tmax': (day.get(nm) or {}).get('tmax'), 'tmin': (day.get(nm) or {}).get('tmin'), 'hourly': hourly}
+    data['local'] = local
+
+
 def fetch_one_region_forecast(region):
     """단기예보(3일치). 발표시각(base_time)이 같으면 응답도 같으므로 캐시한다.
 
@@ -669,10 +950,6 @@ def fetch_one_region_forecast(region):
         future = [(d, t, datetime.strptime(d + t, '%Y%m%d%H%M'))]
 
     # 24시간 hourly 상세 데이터 구성
-    pty_map = {'1': '비', '2': '비/눈', '3': '눈', '4': '소나기',
-               '5': '빗방울', '6': '진눈깨비', '7': '눈날림'}
-    sky_map = {'1': '맑음', '3': '구름많음', '4': '흐림'}
-
     hourly = []
     for d, t, dt in future[:24]:
         cats = by_time[(d, t)]
@@ -687,15 +964,7 @@ def fetch_one_region_forecast(region):
         try: vec = float(cats.get('VEC', 0))
         except: vec = 0
 
-        # 아이콘 (밤/낮 구분)
-        if pty in ('1', '4', '5'):       icon = '🌧'
-        elif pty in ('2', '3', '6', '7'): icon = '🌨'
-        elif sky == '4':                  icon = '☁'
-        elif sky == '3':                  icon = '🌥'
-        else:
-            icon = '🌙' if (dt.hour < 6 or dt.hour >= 19) else '☀'
-
-        weather_text = (pty_map.get(pty) if pty != '0' else None) or sky_map.get(sky, '맑음')
+        icon, weather_text = _sky_icon(pty, sky, dt.hour)
         feel = feels_like(temp, humid, wind)
 
         hourly.append({
@@ -841,6 +1110,7 @@ def fetch_ultra_short_fcst_all():
                 'pty_txt': PTY_TXT.get(pty, '?'),
                 'sky': _num('SKY'),
                 'temp': _num('T1H'),
+                'reh': _num('REH'),
                 'lgt': _num('LGT'),          # 낙뢰
                 'wsd': _num('WSD'),          # 풍속 — 응답에 이미 오는데 안 읽고 있었다
                 'vec': _num('VEC'),          # 풍향(도)
@@ -1360,7 +1630,7 @@ def _obs_from_aws(area, aws):
     po = a.get('obs')
     if not po or po.get('ta') is None:
         return None
-    o = {'t1h': float(po['ta']), 'base_time': '', 'src': 'aws'}
+    o = {'t1h': float(po['ta']), 'base_time': '', 'src': 'aws', 'station': po.get('station', '')}
     if po.get('hm') is not None:
         o['reh'] = int(round(po['hm']))
     if po.get('ws10') is not None:
@@ -1445,6 +1715,8 @@ def fetch_all_regions(aws=None):
             item['humid'] = int(float(obs['reh']))
         if obs.get('wsd') is not None:
             item['wind'] = round(float(obs['wsd']), 1)
+        if obs.get('vec') is not None:
+            item['vec'] = float(obs['vec'])
         if obs.get('rn1') is not None:
             item['rain'] = round(float(obs['rn1']), 1)
             # 실측 강수로 위험도·태그 재산정 (카드 숫자와 태그 일치; 예보 기반 잔재 제거)
@@ -1480,12 +1752,17 @@ def fetch_all_regions(aws=None):
 
         # 24시간 hourly를 detail로 옮김 (단기예보에서 추출한 것)
         detail['hourly'] = item.pop('_hourly', [])
+        blend_hourly(detail['hourly'], r['name'], obs)
 
         # 오늘 최고/최저 — 저녁이 되면 단기예보(TMX/TMN)에서 사라지므로
         # 낮에 받은 값을 파일에 저장해 자정까지 유지. 저장값도 없으면(서버 첫 가동 등)
         # hourly(향후 24h) 기온으로 근사 → 빈 값(-) 방지.
         tmx, tmn = persist_today_minmax(r['name'], item.get('tmax'),
                                         item.get('tmin'), detail['hourly'])
+        # 오늘 최고가 초단기예보·실측보다 낮게 나오지 않게(최저 TMN 은 아침 기준이라 그대로)
+        _today = [h['temp'] for h in detail['hourly'] if h['time'][:8] == datetime.now().strftime('%Y%m%d')]
+        if _today and tmx is not None:
+            tmx = max(tmx, *_today)
         detail['tmax'] = tmx
         detail['tmin'] = tmn
         item['tmax'] = tmx
@@ -3583,6 +3860,13 @@ def main():
         apply_effective_humidity(data['regions'])
     except Exception as e:
         print(f'  · 실효습도 계산 건너뜀: {type(e).__name__}')
+
+    print('[날씨누리 시간별 예보]')
+    try:
+        apply_wnuri_local(data)
+    except Exception as e:
+        data.setdefault('local', {})
+        print(f'  ✗ 날씨누리 건너뜀: {type(e).__name__}')
 
     print(f'[시간대별 예보 - {P["home"]}]')
     try:

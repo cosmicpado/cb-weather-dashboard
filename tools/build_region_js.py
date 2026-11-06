@@ -123,6 +123,12 @@ def build(key):
         'topRivers': [],
         'meteoV2': True,
         'riverMeta': prof['river_meta'],
+        'wnuriDong': {a: d['name'] for a, d in (prof.get('wnuri_dong') or {}).items()},
+        'awsRep': {a: {'stn': stn, 'name': dict((x[0], x[1]) for x in prof['aws_stations'][a]).get(stn, '')}
+                   for a, stn in (prof.get('aws_rep') or {}).items()},
+        'awsStations': {a: [{'stn': stn, 'name': nm, **prof['aws_meta'][str(stn)]}
+                            for stn, nm in lst if str(stn) in prof.get('aws_meta', {})]
+                        for a, lst in prof['aws_stations'].items()},
     }
     body = json.dumps(conf, ensure_ascii=False, indent=1)
     out = (f'// ===== {wide} 화면 설정 =====\n'

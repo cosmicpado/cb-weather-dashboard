@@ -90,8 +90,9 @@
     var hazard = /태풍/.test(best.reason) ? '태풍' : (best.rank ? '대설·호우' : '');
     return { rank: s.rank, key: s.key, name: s.name, step: s.step, color: s.color, hazard: hazard,
              big: ['평상', '준비', '1단계', '2단계', '3단계'][s.rank],          // 크게 쓰는 글자
-             short: best.rank ? best.short : '발효 특보 없음',                 // 단계 이름 옆 한 줄 기준
-             reason: best.rank ? (hazard === '태풍' ? best.reason : '대설·호우 ' + best.reason) : '발효 특보 없음', blink: s.rank >= 4 };
+             // 한파·폭염 등 단계에 안 넣는 특보만 있을 때 '발효 특보 없음'이라 쓰면 사실과 다르다
+             short: best.rank ? best.short : ((warnings || []).length ? '호우·대설·태풍 특보 없음' : '발효 특보 없음'),   // 단계 이름 옆 한 줄 기준
+             reason: best.rank ? (hazard === '태풍' ? best.reason : '대설·호우 ' + best.reason) : ((warnings || []).length ? '호우·대설·태풍 특보 없음' : '발효 특보 없음'), blink: s.rank >= 4 };
   };
   window.cbStage.STAGES = STAGES;
 
@@ -113,6 +114,36 @@
     var w = /대설경보/.test(T) ? '대설경보 발효 · ' : (/대설주의보/.test(T) ? '대설주의보 발효 · ' : '');
     var amt = sum > 0 ? ('24시간 예상 적설 ' + (sum < 1 ? '1cm 미만' : (Math.round(sum * 10) / 10) + 'cm')) : '눈 예보';
     return { k: k, level: lv, note: w + amt + ' · 제설·빙판·고립 유의' };
+  };
+
+  /* 다음 아침(03~09시) 최저 — 시간별 [{hour:'6시', temp}] 에서. { t, tomorrow:자정을 넘긴 뒤의 아침인가 } */
+  window.cbMorningLow = function (hourly) {
+    var best = null, tomorrow = false, crossed = false, prev = null;
+    (hourly || []).slice(0, 24).some(function (h) {
+      var n = parseInt(h && h.hour, 10), t = h ? +h.temp : NaN;
+      if (isNaN(n)) return false;
+      if (prev !== null && n < prev) crossed = true;
+      prev = n;
+      if (n >= 3 && n <= 9) { if (!isNaN(t) && (best === null || t < best)) { best = t; tomorrow = crossed; } }
+      else if (best !== null && n > 9) return true;
+      return false;
+    });
+    return { t: best, tomorrow: tomorrow };
+  };
+
+  /* 폭우 안전장치 — 관서 강수는 대표 관측소 값이라 관할 다른 지점의 집중호우가 안 보인다.
+     화면에 쓰는 지점(aws.stn) 말고 다른 지점이 집중호우 기준을 넘으면 돌려준다. 심한 순.
+     기준: 1시간 50mm·12시간 180mm 이상 경계, 1시간 30mm·12시간 110mm 이상 주의(자동 위험구역과 같다).
+     aws: data.aws[관서] · meta: REGION_CONF.awsStations[관서] [{stn,name,lat,lon}] */
+  window.cbRainHot = function (aws, meta) {
+    var st = (aws && aws.stations) || {}, out = [];
+    (meta || []).forEach(function (m) {
+      var o = st[m.stn]; if (!o || m.stn === aws.stn) return;
+      var h1 = +o.rn60 || 0, h12 = +o.rn12h || 0;
+      var k = (h1 >= 50 || h12 >= 180) ? 2 : ((h1 >= 30 || h12 >= 110) ? 1 : 0);
+      if (k) out.push({ stn: m.stn, name: m.name, lat: m.lat, lon: m.lon, h1: h1, h12: h12, k: k, level: k === 2 ? '경계' : '주의' });
+    });
+    return out.sort(function (a, b) { return (b.k - a.k) || (b.h1 - a.h1) || (b.h12 - a.h12); });
   };
 })();
 

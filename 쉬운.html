@@ -84,11 +84,11 @@
   <div><div class="t1" id="s1">정상</div><div class="t2" id="s2">특보 없음 · 하천 안전</div></div>
 </div>
 <div class="grid">
-  <a class="tile" id="tWarn" href="지도.html?focus=my"><div class="ic">⚠️</div><div class="lb">기상특보</div><div class="v">없음</div><div class="d">—</div></a>
-  <a class="tile" id="tRain" href="재해.html?mode=rain"><div class="ic">🌧️</div><div class="lb">비 (1시간)</div><div class="v">0<small>mm</small></div><div class="d">—</div></a>
-  <a class="tile" id="tRiver" href="지도.html?focus=my"><div class="ic">🌊</div><div class="lb">하천</div><div class="v">—</div><div class="d">—</div></a>
-  <a class="tile" id="tMsg" href="지도.html?focus=my"><div class="ic">📱</div><div class="lb">재난문자</div><div class="v">0<small>건</small></div><div class="d">—</div></a>
-  <a class="tile wide" id="tTemp" href="지도.html?focus=my"><div style="display:flex; align-items:center; gap:16px;"><div class="ic">🌡️</div><div><div class="lb" id="tempL">기온 · 체감 · 바람</div><div class="v" id="tempV">—</div><div class="d" id="tempD">—</div></div></div></a>
+  <a class="tile" id="tWarn" href="지도.html?focus=my"><div class="ic">⚠️</div><div class="lb" style="cursor:help;" title="기상청이 발표해 지금 발효 중인 특보·예비특보 중 내 관서에 해당하는 것입니다.">기상특보</div><div class="v">없음</div><div class="d">—</div></a>
+  <a class="tile" id="tRain" href="재해.html?mode=rain"><div class="ic">🌧️</div><div class="lb" style="cursor:help;" title="기상청 AWS 실측 1시간 강수입니다. 아래 작은 글씨의 6시간 값은 기상청 초단기예보입니다.">비 (1시간)</div><div class="v">0<small>mm</small></div><div class="d">—</div></a>
+  <a class="tile" id="tRiver" href="지도.html?focus=my"><div class="ic">🌊</div><div class="lb" style="cursor:help;" title="한강홍수통제소 10분 자료입니다. 관심 = 관심수위 이상, 경계 = 경계수위 이상, %는 경계수위 대비입니다.">하천</div><div class="v">—</div><div class="d">—</div></a>
+  <a class="tile" id="tMsg" href="지도.html?focus=my"><div class="ic">📱</div><div class="lb" style="cursor:help;" title="행정안전부 긴급재난문자 중 충북 전역과 내 관서 시군 수신분입니다(오늘·어제).">재난문자</div><div class="v">0<small>건</small></div><div class="d">—</div></a>
+  <a class="tile wide" id="tTemp" href="지도.html?focus=my"><div style="display:flex; align-items:center; gap:16px;"><div class="ic">🌡️</div><div><div class="lb" style="cursor:help;" title="기온은 이 관서 대표 기상 관측소의 실측, 체감은 그 값으로 계산한 값입니다. 순간풍속은 관할 관측소 중 가장 센 지점의 실측입니다." id="tempL">기온 · 체감 · 바람</div><div class="v" id="tempV">—</div><div class="d" id="tempD">—</div></div></div></a>
 </div>
 <div id="cctv" style="display:none; margin-top:10px; background:var(--card); border:2px solid var(--line); border-radius:18px; padding:14px 16px;">
   <div class="lb" style="font-size:13px; font-weight:800; color:var(--ink3);">📹 관할 하천 실시간 CCTV</div>
@@ -185,7 +185,8 @@
     var name = stationNow(), sg = ALIAS[name] || name;
     var reg = (D.regions||[]).filter(function(r){ return r.name===sg; })[0] || {};
     var aws = (D.aws||{})[name] || (D.aws||{})[sg] || {};
-    var det = reg.detail || {}, hourly = det.hourly || [];
+    var own = (name!==sg && D.local && D.local[name]) || null;   /* 시를 나눠 맡는 관서(청주서부)는 자기 동 기준 */
+    var det = reg.detail || {}, hourly = (own && own.hourly) || det.hourly || [];
 
     $('stName').textContent = name || '—';
     var scLabel = (SCOPES && scopeNow()!=='전체') ? scopeNow() : (RC.label || '');
@@ -234,8 +235,8 @@
     mine.sort(function(a,b){ return b.pct-a.pct; });
     var top = mine[0]; var rLv = mine.some(function(x){ return x.lv==='danger'; }) ? 'danger' : mine.some(function(x){ return x.lv==='warning'; }) ? 'warning' : 'safe';
     var tRv=$('tRiver'); tRv.className='tile ' + (!mine.length ? '' : rLv==='danger'?'severe': rLv==='warning'?'warn':'safe');
-    tRv.querySelector('.v').textContent = top ? (rLv==='danger'?'위험': rLv==='warning'?'주의':'안전') : '없음';
-    tRv.querySelector('.d').textContent = top ? (shortName(top.r.name) + ' ' + num(top.r.value,2) + 'm · 위험수위의 ' + Math.round(top.pct*100) + '%') : '관할 하천 관측소 없음';
+    tRv.querySelector('.v').textContent = top ? (rLv==='danger'?'경계': rLv==='warning'?'관심':'안전') : '없음';
+    tRv.querySelector('.d').textContent = top ? (shortName(top.r.name) + ' ' + num(top.r.value,2) + 'm · 경계수위의 ' + Math.round(top.pct*100) + '%') : '관할 하천 관측소 없음';
 
     /* 관할 하천 CCTV — 홍수통제소 실시간 화면(다른 화면의 하천 상세와 같은 출처). 있는 곳만, 최대 6곳 */
     var cc = mine.filter(function(x){ return x.r.has_cctv || (window.hrfcoCam && window.hrfcoCam(x.r.code)); }).slice(0,6);
@@ -265,20 +266,22 @@
     tM.querySelector('.d').textContent = msgs.length ? (((msgs[0].date && msgs[0].date!==TODAY) ? msgs[0].date.slice(5) + ' ' : '') + (msgs[0].time||'') + ' ' + String(msgs[0].text||'').slice(0,34) + (String(msgs[0].text||'').length>34?'…':'')) : '최근 재난문자 없음';
 
     /* 기온·체감·바람 */
-    var ta = reg.temp!=null ? reg.temp : ((aws.obs && aws.obs.ta!=null) ? aws.obs.ta : null);   /* 시군 대표값 — 체감·습도와 같은 지점(지도와 같음) */
-    var feels = det.feels_like!=null ? det.feels_like : (hourly[0] ? hourly[0].feels_like : null);
+    var ta = own ? own.temp : reg.temp!=null ? reg.temp : ((aws.obs && aws.obs.ta!=null) ? aws.obs.ta : null);   /* 시군 대표값 — 체감·습도와 같은 지점(지도와 같음) */
+    var feels = (own && own.feels!=null) ? own.feels : det.feels_like!=null ? det.feels_like : (hourly[0] ? hourly[0].feels_like : null);
     var gust = (aws.wind && aws.wind.wss!=null) ? aws.wind.wss : (aws.wss!=null ? aws.wss : null);   /* 관할 최강 순간풍속(사다리차 기준과 같은 값) */
     var hot = (feels!=null && feels>=33);
     $('tempL').textContent = '기온 · 체감 · ' + (gust!=null ? '순간풍속' : '바람') + (hot ? ' · 더위 주의' : '');
     $('tempV').innerHTML = num(ta,1) + '<small>°</small>' + (feels!=null ? ' <span style="font-size:18px;color:var(--ink3);font-weight:800;">체감 ' + num(feels,1) + '°</span>' : '');
-    $('tempD').textContent = (reg.weather||'') + (gust!=null ? ' · 순간풍속 ' + num(gust,1) + 'm/s' : (reg.wind!=null ? ' · 바람 ' + num(reg.wind,1) + 'm/s' : '')) + (reg.humid!=null ? ' · 습도 ' + num(reg.humid,0) + '%' : '') + (reg.tmax!=null ? ' · 최고 ' + num(reg.tmax,0) + '° 최저 ' + num(reg.tmin,0) + '°' : '');
+    var _wind = (own && own.wind!=null) ? own.wind : reg.wind, _humid = (own && own.humid!=null) ? own.humid : reg.humid,
+        _tmax = (own && own.tmax!=null) ? own.tmax : reg.tmax, _tmin = (own && own.tmin!=null) ? own.tmin : reg.tmin;
+    $('tempD').textContent = (reg.weather||'') + (gust!=null ? ' · 순간풍속 ' + num(gust,1) + 'm/s' : (_wind!=null ? ' · 바람 ' + num(_wind,1) + 'm/s' : '')) + (_humid!=null ? ' · 습도 ' + num(_humid,0) + '%' : '') + (_tmax!=null ? ' · 오늘 최고 ' + num(_tmax,0) + '° 최저 ' + num(_tmin,0) + '°' : '');
     $('tTemp').className = 'tile wide ' + (hot ? 'warn' : '');
 
     /* 한 줄 상태 */
     var lv = (sev || rLv==='danger' || rn>=30) ? 'severe' : (warns.length || rLv==='warning' || rn>=10) ? 'warn' : 'safe';
     var s=$('status'); s.className='status ' + lv;
     $('s1').textContent = lv==='severe' ? '경보' : lv==='warn' ? '주의' : '정상';
-    var parts=[]; if(warns.length) parts.push(types.join('·')); if(rLv!=='safe') parts.push('하천 ' + (rLv==='danger'?'위험':'주의')); if(rn>=10) parts.push('시간당 ' + num(rn,1) + 'mm (' + rainWord + ')');
+    var parts=[]; if(warns.length) parts.push(types.join('·')); if(rLv!=='safe') parts.push('하천 ' + (rLv==='danger'?'경계':'관심')); if(rn>=10) parts.push('시간당 ' + num(rn,1) + 'mm (' + rainWord + ')');
     $('s2').textContent = parts.length ? parts.join(' · ') : ('특보 없음' + (mine.length ? ' · 하천 안전' : '') + (pre.length ? ' · 예비특보 ' + pre.length + '건' : '') + (msgs.length ? ' · 재난문자 ' + msgs.length + '건' : ''));
 
     /* 하천이 주의·위험이면 CCTV 상자를 상태 카드 바로 아래로(스크롤 없이 보이게), 안전이면 원래 자리. 제자리면 손대지 않는다(재생 유지) */

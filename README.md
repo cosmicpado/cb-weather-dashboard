@@ -57,6 +57,7 @@ KMA_APIHUB_KEY=...      # 기상청 API 허브 (AWS·특보)
 | 행정안전부 | 재난안전데이터 `DSSP-IF-00247` 긴급재난문자 | `SAFETY_DATA_KEY` | 재난문자 |
 | 기상청 기상자료개방포털 | 실효습도 표 (`data.kma.go.kr/climate/ehum`) | 없음 | 공식 실효습도 (참고 표시) |
 | 기상청 날씨누리 | 통보문 화면 (`weather.go.kr/w/special-report`) | 없음 | 지방청 날씨해설 (공개 API 없음) |
+| 기상청 날씨누리 | 메인 화면 조각 (`wnuri-fct2021/main/current-weather.do`, `digital-forecast.do`) | 없음 | 관서별 시간별 예보, 오늘 최고·최저 (끊기면 초단기·단기예보로 대체) |
 | 홍수통제소 | 홍수정보 CCTV 목록 (`n.flood.go.kr`) | 없음 | 하천 CCTV → `data-cctv.js` (6시간 캐시) |
 | KBS | 재난 CCTV 목록 (`d.kbs.co.kr`) | 없음 | 도로·재난 CCTV → `data-cctv.js` (6시간 캐시) |
 
@@ -100,6 +101,10 @@ python tools/check_pages.py                             # 화면이 region.js �
 | `region_order` | 충청북도, 청주동부, 청주서부, 충주, 제천, 보은, 옥천, 영동, 증평, 진천, 괴산, 음성, 단양 | 관서 표시 순서(화면·특보 목록 공통) |
 | `map_alias` | 청주동부 = 상당구·청원구, 청주서부 = 흥덕구·서원구 | 청주 두 소방서 관할 |
 | `map_source` | `tools/geo/chungbuk.geojson` | 2014 청주·청원 통합 이후 경계 (아래) |
+| `wnuri_dong` | 관서별 날씨누리 동 코드 | `stations_all` 좌표의 동. 청주서부(복대1동)·영동(영동읍)은 직접 지정. 시간별 예보가 이 동의 날씨누리 값과 같다 |
+| `aws_rep` | 관서별 대표 관측소 | 현재 기온·습도·바람·강수의 지점(순간풍속만 관할 최대). 2026-11-06 네이버 '지역 날씨'의 온도·습도와 대조해 정했다 (네이버는 약 50분 전 관측값으로 보였다) |
+| `aws_meta` | AWS 좌표·주소 | 관서 상세 지도의 ▲ 표시 |
+| `river_stations` 의 `name`·`sigun` | 흥덕교(3011645)·환희교(3011660)·미호강교(3011665) = 청주서부, 3011663 이름 = 청주서부 석남천(`nearby` 삭제) | 흥덕구 소재라 `map_alias` 관할대로 옮겼다. 생성기는 앞 3곳을 청주동부로, 석남천을 '인근'으로 넣는다. 고친 뒤 `build_region_js.py` 로 `riverCodes` 다시 생성 |
 | `map_simplify` | `0.0008` | 상세 경계를 지도용으로 단순화하는 허용오차(경위도, 약 0.7px) |
 
 ### 지도 경계 원본

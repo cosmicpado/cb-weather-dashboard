@@ -23,16 +23,18 @@
       if(!src) return { name:nm, sigun:nm, level:'normal' };
       var det = src.detail || {}, cum = det.rain_cumul || {};
       // 관서별 시간대별 예보 — 선택 관서 전환 시 그 관서 예보를 쓰기 위해 각 station에 포함
-      var fc = ((det.hourly)||[]).map(function(h){
+      // 시를 나눠 맡는 관서(청주서부)는 현재값·예보를 자기 동 기준으로(서버가 data.local 에 싣는다)
+      var a0 = (SRC.aws && SRC.aws[nm]) || {}, own = (nm !== (ALIAS[nm] || nm) && SRC.local && SRC.local[nm]) || null;
+      var fc = ((own && own.hourly) || (det.hourly)||[]).map(function(h){
         return { hour:h.hour, icon:h.icon || icon(h.weather), weather:h.weather, temp:h.temp,
           feels:h.feels_like, rain:h.rain_mm, snow:h.snow_cm, pop:h.rain_pop, wind:h.wind_ms, dir:h.wind_dir, deg:h.wind_deg, humid:h.humid };
       });
       return {
         name: nm, sigun: (ALIAS[nm] || nm),
-        temp: src.temp, weather: src.weather, icon: icon(src.weather),
-        rain: src.rain, wind: src.wind, humid: src.humid, effHumid: src.effHumid,
+        temp: own ? own.temp : src.temp, weather: src.weather, icon: icon(src.weather),
+        rain: (own && a0.rn60 != null) ? a0.rn60 : src.rain, wind: (own && own.wind != null) ? own.wind : src.wind, humid: (own && own.humid != null) ? own.humid : src.humid, effHumid: src.effHumid,
         effHumidOff: src.effHumidOfficial || null,   // 기상청 공식 실효습도(가까운 ASOS 관측소) {stn, he, tm}
-        feels: round(det.feels_like),
+        feels: (own && own.feels != null) ? round(own.feels) : round(det.feels_like),
         cum1h: cum['1h']||0, cum3h: cum['3h']||0, cum6h: cum['6h']||0, cum12h: cum['12h']||0,
         // AWS 실측(기상청 공식 누적) — 자체누적(cum*)보다 신뢰도가 높다.
         //  · 실측 격차 예: 남양주 12시간 자체 10.0mm vs AWS 27.0mm. 자체누적은 서버가 멈춘
@@ -44,8 +46,9 @@
         aws: (SRC.aws && SRC.aws[nm]) || det.aws || {},
         // 6시간 강수예측(초단기예보) — 1~6시간 앞. 없으면 빈 배열.
         fcst6: (SRC.ultra_fcst && SRC.ultra_fcst[ALIAS[nm] || nm]) || [],
-        obs: det.observation || {}, windDir: det.wind_dir_name || '',
-        pop: src.pop, tmax: src.tmax, tmin: src.tmin, level: src.level || 'normal',
+        obs: own ? Object.assign({}, det.observation, {t1h:own.temp, reh:own.humid, wsd:own.wind, vec:own.vec, base_time:own.time, src:own.src, station:own.station, rn1:(a0.rn60 != null ? a0.rn60 : (det.observation||{}).rn1)}) : (det.observation || {}),
+        windDir: (own && own.wind_dir) || det.wind_dir_name || '',
+        pop: src.pop, tmax: (own && own.tmax != null) ? own.tmax : src.tmax, tmin: (own && own.tmin != null) ? own.tmin : src.tmin, level: src.level || 'normal',
         forecast: fc
       };
     });

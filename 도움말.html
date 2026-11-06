@@ -25,6 +25,7 @@ html[data-theme="dark"]{
   --sh:0 1px 3px rgba(0,0,0,.4), 0 8px 22px -10px rgba(0,0,0,.6);
 }
 *{box-sizing:border-box}
+html{scroll-behavior:smooth}
 body{margin:0;background:var(--bg);color:var(--ink);
   font-family:'Pretendard Variable',Pretendard,-apple-system,BlinkMacSystemFont,system-ui,'Malgun Gothic',sans-serif;
   font-size:15px;line-height:1.72;-webkit-text-size-adjust:100%}
@@ -45,19 +46,28 @@ header.top{position:sticky;top:0;z-index:10;background:var(--bg);
   background:var(--surface);color:var(--ink2);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
 .top button:hover{background:var(--surface2)}
 
-h2{margin:38px 0 12px;font-size:21px;font-weight:800;letter-spacing:-.4px;
+h2{margin:42px 0 12px;font-size:21px;font-weight:800;letter-spacing:-.4px;
   padding-bottom:9px;border-bottom:2px solid var(--border2);scroll-margin-top:70px}
 h2 .u{font-size:13px;font-weight:700;color:var(--ink3);margin-left:8px}
-h3{margin:26px 0 9px;font-size:16px;font-weight:800;letter-spacing:-.2px}
+h3{margin:26px 0 9px;font-size:16px;font-weight:800;letter-spacing:-.2px;scroll-margin-top:70px}
 p{margin:0 0 11px}
-ul{margin:0 0 12px;padding-left:20px}
+ul,ol{margin:0 0 12px;padding-left:20px}
 li{margin:4px 0}
 code{background:var(--surface2);border:1px solid var(--border);border-radius:5px;
   padding:1px 6px;font-size:13px;font-family:ui-monospace,Menlo,Consolas,monospace}
 
 .lead{background:var(--surface);border:1px solid var(--border);border-radius:14px;
-  padding:16px 18px;box-shadow:var(--sh);margin-bottom:8px}
+  padding:16px 18px;box-shadow:var(--sh);margin-bottom:14px}
 .lead p:last-child{margin-bottom:0}
+
+/* 화면 고르기 카드 */
+.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0 0 14px}
+.card{display:block;background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  padding:13px 15px;box-shadow:var(--sh);color:inherit;text-decoration:none}
+a.card:hover{border-color:var(--brand)}
+.card b{display:block;font-size:15.5px;font-weight:800;margin-bottom:2px}
+.card span{display:block;font-size:13.5px;color:var(--ink2);line-height:1.55}
+@media (max-width:620px){ .cards{grid-template-columns:minmax(0,1fr)} }
 
 /* 좁은 화면에서 표가 본문을 밀어내지 않도록 표만 따로 가로 스크롤시킨다.
    (본문 자체가 좌우로 밀리면 글을 읽을 수가 없다) */
@@ -75,6 +85,8 @@ td.n{white-space:nowrap;font-weight:700}
 .p-caution{background:var(--cautionSoft);color:var(--caution)}
 .p-warn{background:var(--warnSoft);color:var(--warn)}
 .p-severe{background:var(--severeSoft);color:var(--severe)}
+.p-grey{background:var(--surface2);color:var(--ink2)}
+.p-blue{background:var(--brandSoft);color:var(--brand)}
 
 .note{border-left:4px solid var(--brand);background:var(--brandSoft);
   border-radius:0 10px 10px 0;padding:12px 15px;margin:14px 0;font-size:14px}
@@ -83,10 +95,12 @@ td.n{white-space:nowrap;font-weight:700}
 .note p:last-child{margin-bottom:0}
 
 .toc{background:var(--surface);border:1px solid var(--border);border-radius:14px;
-  padding:14px 18px;box-shadow:var(--sh);margin:18px 0 6px}
-.toc ol{margin:0;padding-left:20px}
+  padding:14px 18px;box-shadow:var(--sh);margin:0 0 6px}
+.toc ol{margin:0;padding-left:20px;columns:2;column-gap:28px}
+.toc li{break-inside:avoid}
 .toc a{color:var(--brand);text-decoration:none;font-weight:700}
 .toc a:hover{text-decoration:underline}
+@media (max-width:620px){ .toc ol{columns:1} }
 
 .foot{margin-top:44px;padding-top:16px;border-top:1px solid var(--border);
   color:var(--ink3);font-size:12.5px;line-height:1.7}
@@ -99,7 +113,7 @@ td.n{white-space:nowrap;font-weight:700}
   h3{page-break-after:avoid}
   .tw{overflow:visible;box-shadow:none}
   table{min-width:0}
-  table,.note,.lead,.toc{page-break-inside:avoid;box-shadow:none}
+  table,.note,.lead,.toc,.card{page-break-inside:avoid;box-shadow:none}
   .toc{display:none}
   a{color:#000;text-decoration:none}
 }
@@ -118,286 +132,319 @@ td.n{white-space:nowrap;font-weight:700}
 <div class="wrap">
 
   <div class="lead">
-    <p><b id="leadWho">충북소방 기상재난 상황판</b>의 두 화면 사용법입니다.</p>
-    <p><b>종합 현황</b>은 평소에 보는 화면, <b>119종합상황실 화면</b>은 대형 화면에 띄워두는 화면입니다.
-       데이터는 <b>5분마다 자동으로 갱신</b>되므로 새로고침할 필요가 없습니다.</p>
+    <p><b id="leadWho">충북소방 기상재난 상황판</b>은 충청북도 <span class="cnt">12</span>개 소방관서의 기상·특보·하천 자료를 한곳에 모아 보여 줍니다.
+       자료는 <b>5분마다 자동으로 갱신</b>되니 새로고침할 필요가 없습니다.
+       화면의 칸 제목에 <b>마우스를 올리면</b> 그 값의 기준이 나옵니다.</p>
   </div>
 
-  <div class="toc">
+  <div class="cards">
+    <a class="card" href="#map"><b>🗺 종합 현황</b><span>평소에 보는 기본 화면. 도 전체 지도와 내 관서 상세.</span></a>
+    <a class="card" href="#dis"><b>🎯 재해별 집중 감시</b><span>호우·대설·한파·건조·산불 때 관서끼리 비교.</span></a>
+    <a class="card" href="#wall"><b>🖥 119종합상황실</b><span>벽면 화면에 켜 두는 화면. 관서가 자동으로 넘어감.</span></a>
+    <a class="card" href="#easy"><b>🔤 큰 글씨 보기</b><span>내 관서만 큰 글씨로 간단히.</span></a>
+  </div>
+
+  <nav class="toc">
     <ol>
-      <li><a href="#map">종합 현황 <span style="color:var(--ink3);font-weight:600">— 평소 보는 화면</span></a></li>
-      <li><a href="#wall">119종합상황실 화면 <span style="color:var(--ink3);font-weight:600">— 대형 화면용</span></a></li>
-      <li><a href="#rule">색·기호 한눈에 보기</a></li>
-      <li><a href="#judge">자동 판단 기준값</a></li>
-      <li><a href="#faq">알아두면 좋은 것</a></li>
+      <li><a href="#map">종합 현황</a></li>
+      <li><a href="#dis">재해별 집중 감시</a></li>
+      <li><a href="#wall">119종합상황실</a></li>
+      <li><a href="#easy">큰 글씨 보기</a></li>
+      <li><a href="#source">숫자는 어디서 오나요</a></li>
+      <li><a href="#rule">단계와 색</a></li>
+      <li><a href="#judge">출동 영향 판단 기준</a></li>
+      <li><a href="#risk">위험구역</a></li>
+      <li><a href="#demo">시연 모드</a></li>
+      <li><a href="#faq">자주 묻는 것</a></li>
     </ol>
-  </div>
+  </nav>
 
-  <!-- ============ 1. 지도 상황판 ============ -->
+  <!-- ============ 1. 종합 현황 ============ -->
   <h2 id="map">1. 종합 현황 <span class="u">주소 뒤에 /지도</span></h2>
+  <p>처음 쓰신다면 맨 위 <b>📍 관서 선택</b>에서 내 관서를 고르세요. 이 컴퓨터에 기억됩니다. <b>충청북도</b>를 고르면 도 전체를 봅니다.</p>
 
-  <p>관할 전체를 지도 한 장으로 보는 기본 화면입니다. 위에서부터 이런 순서입니다.</p>
-
+  <h3>맨 위 버튼</h3>
   <div class="tw"><table>
-    <tr><th style="width:150px">위치</th><th>내용</th></tr>
-    <tr><td class="n">맨 위 줄</td><td>내 관서 선택(📍), 현재 시각, 그리고 버튼들</td></tr>
-    <tr><td class="n">종합 상태 띠</td><td>충청북도를 고르면 <b>충북 재대본 비상단계</b>(평상·준비·1·2·3단계), 관서를 고르면 <b>그 관서의 상황단계</b>(3장)</td></tr>
-    <tr><td class="n">숫자 5칸</td><td>발효특보 · 예비특보 · 재난문자 · 최고수위 · 최고체감온도</td></tr>
-    <tr><td class="n">관서 상황도</td><td>지도. <b>지역을 누르면 확대되고 상세가 열립니다</b></td></tr>
+    <tr><th style="width:170px">버튼</th><th>하는 일</th></tr>
+    <tr><td class="n">🎯 재해별 집중 감시</td><td><a href="#dis">재해별 화면</a>으로 이동. 특보가 있거나 비가 오면 버튼 이름이 🌧 호우처럼 바뀌고, 특보가 있거나 어느 관서든 1시간 3mm·3시간 10mm 이상이면 은은하게 빛납니다.</td></tr>
+    <tr><td class="n">🖥 119종합상황실</td><td><a href="#wall">벽면 화면</a>으로 이동. 띄운 뒤 <b>F11</b>을 누르면 전체화면이 됩니다.</td></tr>
+    <tr><td class="n">?</td><td>이 설명서</td></tr>
+    <tr><td class="n">▶ 시연</td><td><a href="#demo">교육·훈련용 가짜 상황</a>을 띄웁니다. 같은 버튼으로 끕니다.</td></tr>
+    <tr><td class="n">🔔 경보음</td><td>경보 소리 켜기·끄기. 설정이 기억됩니다.</td></tr>
+    <tr><td class="n">🚨 테두리 점멸</td><td>재대본 3단계나 고른 관서가 심각일 때 화면 가장자리가 붉게 깜빡입니다. 끄면 버튼의 빛 맥동도 멈춥니다. 경보음과 따로 켜고 끕니다.</td></tr>
+    <tr><td class="n">☾ 다크</td><td>밝은 화면과 어두운 화면 전환</td></tr>
+  </table></div>
+
+  <h3>화면 구성 (위에서 아래로)</h3>
+  <div class="tw"><table>
+    <tr><th style="width:170px">칸</th><th>내용</th></tr>
+    <tr><td class="n">상태 띠</td><td>충청북도를 고르면 <b>재대본 비상단계</b>, 관서를 고르면 <b>관서 상황단계</b>(<a href="#rule">6장</a>)</td></tr>
+    <tr><td class="n">숫자 5칸</td><td>발효특보 · 예비특보 · 재난문자 · 최고수위 · 최고체감</td></tr>
+    <tr><td class="n">관서 상황도</td><td>지도. <b>지역을 누르면</b> 확대되고 오른쪽에 관서 상세가 열립니다.</td></tr>
+    <tr><td class="n">기상특보</td><td>고른 관서에 해당하는 특보만 나옵니다. <b>누르면</b> 통보문이 창으로 열립니다.</td></tr>
     <tr><td class="n">재난문자</td><td>관할 시군에 발송된 긴급재난문자</td></tr>
-    <tr><td class="n">기상특보</td><td>지금 발효 중인 특보와 해당 시군, 최근 특보 통보문(누르면 통보문 그림)</td></tr>
-    <tr><td class="n">기상정보 · 날씨해설</td><td>청주기상지청이 낸 기상정보·날씨해설(누르면 전문과 그림)</td></tr>
-    <tr><td class="n">하천 수위</td><td>위험에 가까운 순서로 정렬됨</td></tr>
-    <tr><td class="n">관서별 현재 기상</td><td>전 관서의 기온·강수·풍속·습도를 한 줄씩</td></tr>
-    <tr><td class="n">선택 관서 상세</td><td>실황 + 24시간 시간대별 예보표</td></tr>
-    <tr><td class="n">산불 / 미세먼지</td><td>권역별 산불위험, 시군별 PM10</td></tr>
-    <tr><td class="n">기상 이미지</td><td>충북 특보 발효현황(확대 창에서 그림을 누르면 날씨누리 충북 통보문) · 레이더 합성 · 천리안 위성 (눌러서 확대) — 날씨해설 그림은 아래 날씨해설 칸</td></tr>
+    <tr><td class="n">기상정보 · 날씨해설</td><td>청주기상지청 발표문. 누르면 전문과 그림, 창 오른쪽 위에 PDF 버튼</td></tr>
+    <tr><td class="n">하천 수위</td><td>경계수위에 가까운 순서</td></tr>
+    <tr><td class="n">관서별 현재 기상</td><td>전 관서 기온·강수·풍속·습도</td></tr>
+    <tr><td class="n">선택 관서 상세</td><td>실황과 24시간 시간대별 예보</td></tr>
+    <tr><td class="n">산불 · 미세먼지</td><td>권역별 산불위험, 시군별 PM10</td></tr>
+    <tr><td class="n">기상 이미지</td><td>특보 발효현황 · 레이더 · 천리안 위성 (눌러서 확대)</td></tr>
     <tr><td class="n">맨 아래</td><td>중기전망, 기상정보 전문</td></tr>
   </table></div>
 
-  <h3>맨 위 버튼들</h3>
-  <div class="tw"><table>
-    <tr><th style="width:150px">버튼</th><th>하는 일</th></tr>
-    <tr><td class="n">📍 관서 이름</td><td>내 관서를 바꿉니다. 한 번 고르면 이 컴퓨터에 기억됩니다.</td></tr>
-    <tr><td class="n">🎯 재해별 집중 감시</td><td><b>재해별 집중 감시</b>로 갑니다. 한 화면 위쪽 탭으로 <b>🌧 호우</b>, <b>❄ 대설·한파</b>, <b>🔥 건조·산불</b>을 오갑니다. 처음 열 때 탭은 ① 발효 중인 특보(호우·태풍 → 대설·한파 → 건조 순) ② 이 PC에서 마지막으로 고른 탭 ③ 계절(3~5월 건조·산불, 6~10월 호우, 11~2월 대설·한파) 순으로 자동으로 고릅니다. 버튼은 평상시 <b>🎯 재해별 집중 감시</b>이고, 해당 특보가 있거나 비가 오면 그 탭 이름(🌧 호우·❄ 대설·한파·🔥 건조·산불)으로 바뀝니다. 특보가 있거나 <b>보통 비 이상</b>(어느 관서든 1시간 3mm 또는 3시간 10mm 이상)이 오면 은은하게 빛납니다. 약한 소나기에는 빛나지 않습니다.</td></tr>
-    <tr><td class="n">🖥 119종합상황실</td><td>119종합상황실 화면(벽면용)으로 이동. <b>띄운 뒤 F11</b>을 누르면 전체화면이 됩니다.</td></tr>
-    <tr><td class="n">▶ 시연 모드</td><td><b>교육·훈련용 가짜 상황</b>을 띄웁니다. 실제 상황이 아니며, 같은 버튼을 다시 누르면 꺼집니다.</td></tr>
-    <tr><td class="n">🔔 경보음</td><td>경보 시 소리. 누르면 음소거되고 그 상태가 기억됩니다.</td></tr>
-    <tr><td class="n">🚨 테두리 점멸</td><td>재대본 3단계·고른 관서 심각일 때 화면 가장자리 붉은 점멸. 누르면 꺼지고(아이콘이 흐려짐) 그 상태가 기억됩니다. 꺼 두면 호우·대설 버튼의 빛 맥동도 멈춥니다(색은 남음). 경보음과 따로 켜고 끕니다.</td></tr>
-    <tr><td class="n">☾ 다크</td><td>밝은 화면 / 어두운 화면 전환</td></tr>
-  </table></div>
-
-  <h3>재해별 집중 감시 (🌧 호우 · ❄ 대설·한파 · 🔥 건조·산불)</h3>
-  <div class="tw"><table>
-    <tr><th style="width:150px">탭</th><th>보여주는 것</th></tr>
-    <tr><td class="n">🌧 호우</td><td>관서별 <b>실측 강수량</b>(1시간·12시간·일누적) 순위, 내 관서 지금 강수, 앞으로 6시간 예측, 강풍, 24시간 강수 예보, <b>하천 수위</b>(관할 먼저), 진행 중인 태풍, 특보 그림·레이더, 기상청 해설, 비 관련 재난문자.</td></tr>
-    <tr><td class="n">❄ 대설·한파</td><td>관서별 <b>24시간 예상 적설</b>·최저기온·체감온도 순위, 내 관서 지금 기온·강수형태, <b>결빙 위험 시간</b>(기온 0℃ 이하 + 앞 6시간 안에 비·눈 → 빨강, 0℃ 이하 + 습도 90% 이상 → 노랑), 다음 아침 최저기온과 한파 기준, 시간대별 눈·기온 예보, 특보 그림·레이더, 기상청 해설(기온·강수 전망), 눈·한파 관련 재난문자.</td></tr>
-    <tr><td class="n">🔥 건조·산불</td><td>관서별 <b>실효습도</b>·지금 습도·순간 최대풍속 순위, 내 관서 습도·바람·풍향(불이 번지는 쪽 안내), 국립산림과학원 <b>산불위험예보</b>(4권역), 앞으로 24시간 가장 메마를 때·바람 셀 때·비 예보, 시간대별 습도·바람, <b>올해 충북 산불</b> 발생 목록(원인별 건수), 특보 그림·위성, 산불·건조 관련 재난문자.</td></tr>
-  </table></div>
-  <p>▶ 시연은 열려 있는 탭의 가상 상황을 띄웁니다(호우경보·태풍 / 대설경보·한파주의보 / 건조경보·산불). 대설·한파 탭의 적설은 기상청 단기예보 <b>예상값</b>이고, 결빙 시간은 노면 관측이 아닌 <b>참고 표시</b>입니다. 한파는 '2일 이상 지속'·'평년 대비' 조건을 판정할 수 없어 <b>주의보급·경보급</b>으로만 표시합니다. 건조·산불 탭의 실효습도는 45%·35%·25% 이하를 <b>다소 건조·건조·매우 건조</b>로 표시합니다(계산 방법은 5장 「실효습도가 뭔가요」). 옛 주소(호우.html)로 들어와도 호우 탭으로 넘어갑니다. 관서 선택에서 <b>충청북도</b>를 고르면 하천·재난문자는 도 전체로 보여 주고, 관서 카드는 그 탭에서 가장 위험한 관서(강수 최다·적설 최다·가장 메마름 등)를 대표로 보여 줍니다.</p>
-
   <h3>지도 보는 법</h3>
-  <ul>
-    <li><b>지역 색</b> = 지금 발효 중인 <b>기상특보</b> 기준입니다. 강수량이 아닙니다.
-        <span class="pill p-severe">경보</span> <span class="pill p-warn">주의보</span>
-        <span class="pill p-safe">평상(옅은 색)</span></li>
-    <li><b>🌧️ 표시</b> = 지금 실제로 비가 오는 곳 (시간당 1mm 이상). 특보와는 별개입니다.</li>
-    <li><b>⚠ 숫자</b> = 그 관서에 <b>자동 등록된 위험지역</b> 개수(5장 마지막 항목)</li>
-    <li><b>지역을 누르면</b> 그 관서 지도(일반·위성)에 하천 수위·CCTV·위험지역이 표시되고 상세 기상이 열립니다.</li>
-  </ul>
+  <div class="tw"><table>
+    <tr><th style="width:170px">표시</th><th>뜻</th></tr>
+    <tr><td class="n">지역 색</td><td><b>기상특보</b> 기준입니다. 강수량이 아닙니다. <span class="pill p-severe">경보</span> <span class="pill p-warn">주의보</span> <span class="pill p-grey">평상</span></td></tr>
+    <tr><td class="n">🌧️</td><td>지금 실제로 비가 오는 곳 (시간당 1mm 이상)</td></tr>
+    <tr><td class="n">⚠ 숫자</td><td>그 관서의 <a href="#risk">위험구역</a> 개수</td></tr>
+    <tr><td class="n">▲ 진한 파랑</td><td>관서 <b>대표 관측소</b> (확대 지도). 화면의 현재 기온·습도·바람·강수가 이 지점 값입니다.</td></tr>
+    <tr><td class="n">▲ 연한 파랑</td><td>관할의 다른 관측소. <b>마우스를 올리면</b> 그 지점의 기온·습도·강수·바람이 나옵니다.</td></tr>
+    <tr><td class="n">📹 · 🔴 · ●</td><td>CCTV · 위험구역 · 수위 지점 (<span class="pill p-safe">안전</span> <span class="pill p-caution">관심</span> <span class="pill p-severe">경계</span>)</td></tr>
+  </table></div>
 
   <h3>하천 수위 보는 법</h3>
   <ul>
-    <li>목록은 <b>위험에 가까운 순서</b>로 정렬됩니다. 맨 위가 가장 신경 쓸 곳입니다.</li>
-    <li><b>▲ +0.35m/h</b> 처럼 표시되는 건 <b>최근 1시간 동안의 수위 변화</b>입니다.
-        수치보다 <b>올라가는 속도</b>가 더 중요할 때가 많습니다.</li>
-    <li>단계는 홍수통제소(한강·금강) 공식 기준입니다 →
-        <span class="pill p-safe">안전</span>
-        <span class="pill p-caution">주의 (관심수위 이상)</span>
-        <span class="pill p-severe">위험 (경계수위 이상)</span></li>
+    <li><b>▲ +0.35m/h</b>는 최근 1시간 수위 변화입니다. 수치보다 <b>올라가는 속도</b>가 더 중요할 때가 많습니다.</li>
+    <li>기준은 홍수통제소(한강·금강) 공식값입니다. 관심수위 이상이면 <span class="pill p-caution">관심</span>, 경계수위 이상이면 <span class="pill p-severe">경계</span>입니다.</li>
+    <li>댐은 가득 채워 두는 것이 정상이라 <b>저수율·유입량·방류량</b>으로 표시하고, 침수 판단에서 뺍니다.</li>
+    <li>관측소는 주소의 행정구 기준으로 관서에 나눕니다. 청주동부 = 상당구·청원구, 청주서부 = 흥덕구·서원구.</li>
   </ul>
 
-  <!-- ============ 2. 상황실 벽면판 ============ -->
-  <h2 id="wall">2. 119종합상황실 화면 <span class="u">주소 뒤에 /상황실</span></h2>
+  <!-- ============ 2. 재해별 집중 감시 ============ -->
+  <h2 id="dis">2. 재해별 집중 감시 <span class="u">주소 뒤에 /재해</span></h2>
+  <p>한 재해를 관서끼리 비교하는 화면입니다. 위쪽에서 탭을 고르고, 관서를 <b>충청북도</b>로 두면 가장 위험한 관서를 대표로 보여 줍니다.</p>
 
+  <div class="tw"><table>
+    <tr><th style="width:130px">탭</th><th style="width:230px">관서별 순위</th><th>함께 나오는 것</th></tr>
+    <tr><td class="n">🌧 호우</td><td>실측 강수량<br>(1시간 · 12시간 · 일누적)</td><td>지금 강수, 6시간 예측, 강풍, 24시간 예보, 하천 수위, 태풍, 레이더, 재난문자</td></tr>
+    <tr><td class="n">❄ 대설·한파</td><td>예상 적설 · 오늘 최저 · 체감<br><small>한파특보가 있으면 <b>내일 아침</b> 탭 추가</small></td><td>결빙 위험 시간, 다음 아침 최저와 한파 기준, 시간대별 눈·기온, 레이더, 재난문자</td></tr>
+    <tr><td class="n">🔥 건조·산불</td><td>실효습도 · 지금 습도 · 바람</td><td>산불위험예보, 앞으로 24시간 습도·바람, 올해 충북 산불, 위성, 재난문자</td></tr>
+  </table></div>
+
+  <h3>어떤 탭이 먼저 열리나요</h3>
+  <p>직접 누르면 그 탭이 유지됩니다. 누르지 않았으면 아래 순서로 자동으로 고릅니다.</p>
+  <ol>
+    <li>발효 중인 특보 (호우·태풍 → 대설·한파 → 건조 순)</li>
+    <li>24시간 안 눈 예보</li>
+    <li>지금 내리는 비 (1시간 3mm 이상)</li>
+    <li>이 컴퓨터에서 마지막으로 고른 탭</li>
+    <li>계절 (3~5월 건조·산불, 6~10월 호우, 11~2월 대설·한파)</li>
+  </ol>
+  <div class="tw"><table>
+    <tr><th style="width:130px">순위 탭</th><th>먼저 보이는 항목</th></tr>
+    <tr><td class="n">호우</td><td>비가 있는 가장 짧은 기간: 1시간 → 12시간 → 일누적</td></tr>
+    <tr><td class="n">대설·한파</td><td>눈 예보나 대설특보가 있으면 적설, 없으면 오늘 최저</td></tr>
+    <tr><td class="n">건조·산불</td><td>강풍특보만 있으면 바람, 그 밖에는 실효습도</td></tr>
+  </table></div>
+
+  <h3>순위 막대 읽는 법</h3>
+  <p>막대 아래에 색 기준이 함께 나옵니다. 위험 정도는 <b>색</b>으로 보세요. 기온 막대는 그 시점에 가장 추운 곳이 항상 끝까지 차므로, <b>막대가 길다고 위험한 것은 아닙니다.</b></p>
+  <div class="tw"><table>
+    <tr><th style="width:110px">항목</th><th><span class="pill p-grey">회색</span></th><th><span class="pill p-blue">파랑</span></th><th><span class="pill p-caution">노랑</span></th><th><span class="pill p-warn">주황</span></th><th><span class="pill p-severe">빨강</span></th></tr>
+    <tr><td class="n">기온·체감</td><td>영상</td><td>0℃ 이하</td><td>−5℃ 이하</td><td>−12℃ 이하<br>주의보급</td><td>−15℃ 이하<br>경보급</td></tr>
+    <tr><td class="n">적설</td><td>없음</td><td>1cm 미만</td><td>1cm 이상</td><td>5cm 이상<br>주의보급</td><td>20cm 이상<br>경보급</td></tr>
+    <tr><td class="n">실효습도</td><td>45% 초과</td><td>—</td><td>45% 이하</td><td>35% 이하</td><td>25% 이하</td></tr>
+    <tr><td class="n">순간풍속</td><td>10m/s 미만</td><td>10m/s 이상</td><td>14m/s 이상</td><td>20m/s 이상<br>주의보급</td><td>26m/s 이상<br>경보급</td></tr>
+  </table></div>
+  <p style="font-size:13.5px;color:var(--ink2)">적설은 실측이 아닌 예상값이고, 결빙 시간은 노면 관측이 아닌 참고 표시입니다. '…급'은 숫자만 본 표시로, 특보 발표 여부는 공식특보 칸에서 확인하세요.</p>
+
+  <!-- ============ 3. 119종합상황실 ============ -->
+  <h2 id="wall">3. 119종합상황실 <span class="u">주소 뒤에 /상황실</span></h2>
   <div class="note">
-    <p><b>쓰는 법</b> — 대형 화면(TV·모니터)에 띄우고 <b>F11</b>을 눌러 전체화면으로 둡니다.
-       관서가 <b>14초마다 자동으로 넘어가고</b>(한 바퀴 약 3분이 되도록 관서 수에 맞춰 정해집니다), 데이터는 5분마다 저절로 갱신됩니다.
-       하루 종일 켜두는 화면입니다.</p>
+    <p><b>쓰는 법</b> — 대형 화면에 띄우고 <b>F11</b>로 전체화면을 켭니다. 관서가 <b>14초마다</b> 자동으로 넘어가고, 자료는 5분마다 저절로 갱신됩니다.</p>
   </div>
 
-  <h3>맨 위 줄 (상단바)</h3>
   <div class="tw"><table>
-    <tr><th style="width:150px">칸</th><th>내용</th></tr>
-    <tr><td class="n">① 관서명</td><td>지금 보여주는 관서. 아래에 <code>6 / <span class="cnt">11</span></code>(몇 번째인지)과 다음 관서</td></tr>
-    <tr><td class="n">② 날씨</td><td>기온 · 하늘상태 · 체감온도. <b>LIVE</b> 옆 시각은 관측 시각</td></tr>
-    <tr><td class="n">③ 단계 카드</td><td>왼쪽 <b>충북 재대본 비상단계</b>(도 전체 — 관서가 바뀌어도 같음) · 오른쪽 <b>그 관서의 상황단계</b>(평상 / 주의 / 경계 / 심각)와 이유</td></tr>
-    <tr><td class="n">④ 시계</td><td>현재 시각과 조작 버튼</td></tr>
+    <tr><th style="width:170px">칸</th><th>내용</th></tr>
+    <tr><td class="n">관서명 · 날씨</td><td>지금 보여 주는 관서(<code>6 / <span class="cnt">12</span></code>)와 기온·하늘 상태·체감</td></tr>
+    <tr><td class="n">단계 카드</td><td>왼쪽 <b>재대본 비상단계</b>(도 전체), 오른쪽 <b>관서 상황단계</b>(<a href="#rule">6장</a>)</td></tr>
+    <tr><td class="n">현재 실황</td><td>대표 관측소의 강수·습도·풍향, 관할 최강 순간풍속, 1시간·12시간·일누적 강수</td></tr>
+    <tr><td class="n">시간대별 예보</td><td>앞으로 12시간. 제목 오른쪽은 <b>오늘</b> 최고·최저</td></tr>
+    <tr><td class="n">기상특보 · 재난문자</td><td>그 관서에 해당하는 것만</td></tr>
+    <tr><td class="n">하천 수위 · 관할</td><td>관내 하천·댐. 막대의 눈금이 관심수위·경계수위</td></tr>
+    <tr><td class="n">출동 영향 판단</td><td>지금 값으로 자동 판정한 4가지(<a href="#judge">7장</a>)</td></tr>
+    <tr><td class="n">산불·PM10·일출일몰</td><td>산불위험, 미세먼지(측정소 장애 시 '자료 없음'), 일출·일몰</td></tr>
+    <tr><td class="n">6시간 강수예측</td><td>기상청 초단기예보</td></tr>
+    <tr><td class="n">맨 아래 줄</td><td>전 관서 기온과 상황단계. 지금 비가 오는 관서만 <code>시간당 · 일</code> 강수가 나오고, 비가 그치면 <code>—</code>로 바뀝니다.</td></tr>
   </table></div>
 
-  <h3>조작 버튼 (시계 칸 아래)</h3>
   <div class="tw"><table>
-    <tr><th style="width:110px">버튼</th><th>하는 일</th></tr>
-    <tr><td class="n">❚❚ / ▶</td><td>자동 순환 <b>멈춤 / 다시 시작</b>. 한 관서를 오래 봐야 할 때 멈춥니다.</td></tr>
-    <tr><td class="n">‹ &nbsp; ›</td><td>이전 / 다음 관서로 직접 이동</td></tr>
-    <tr><td class="n">☀ / ☾</td><td>밝은 화면 / 어두운 화면 전환</td></tr>
-    <tr><td class="n">▶ 시연 <small>(맨 위 가운데)</small></td><td>평상·준비·1·2·3단계를 고르면 그 단계의 <b>가상 특보·재난문자·강수·하천 수위</b>로 화면이 바뀝니다(실제 자료는 건드리지 않음). <b>■ 시연 중</b>을 누르면 실제 자료로 돌아갑니다.</td></tr>
+    <tr><th style="width:170px">버튼</th><th>하는 일</th></tr>
+    <tr><td class="n">❚❚ / ▶</td><td>자동 순환 멈춤·다시 시작</td></tr>
+    <tr><td class="n">‹ ›, 맨 아래 관서 칸</td><td>다른 관서로 직접 이동</td></tr>
+    <tr><td class="n">☀ / ☾</td><td>밝은 화면·어두운 화면</td></tr>
+    <tr><td class="n">▶ 시연 (맨 위 가운데)</td><td><a href="#demo">단계별 가상 상황</a></td></tr>
+    <tr><td class="n">✎ 배치 편집 (왼쪽 위)</td><td>칸의 위치·크기를 바꾸고 이 컴퓨터에 저장</td></tr>
   </table></div>
 
-  <h3>가운데 카드들</h3>
+  <!-- ============ 4. 큰 글씨 보기 ============ -->
+  <h2 id="easy">4. 큰 글씨 보기 <span class="u">주소 뒤에 /쉬운</span></h2>
+  <p>내 관서만 큰 글씨로 간단히 보여 주는 화면입니다. 상태, 기상특보, 비, 하천, 재난문자, 기온·체감·바람, 관할 하천 CCTV가 나옵니다. 칸을 누르면 자세한 화면으로 넘어갑니다.
+     종합 현황에 바로 가는 버튼은 없으니 주소로 들어오세요.</p>
+
+  <!-- ============ 5. 숫자의 출처 ============ -->
+  <h2 id="source">5. 숫자는 어디서 오나요</h2>
   <div class="tw"><table>
-    <tr><th style="width:170px">카드</th><th>내용</th></tr>
-    <tr><td class="n">현재 실황</td><td>기상청 AWS <b>실측값</b>. 강수·습도·실효습도·풍속/순간풍속·풍향과 누적강수(1·3·6·12시간)</td></tr>
-    <tr><td class="n">시간대별 예보</td><td>앞으로 12시간. 선은 기온, 점선은 체감, 막대는 강수</td></tr>
-    <tr><td class="n">기상특보</td><td>그 관서에 발효 중인 특보</td></tr>
-    <tr><td class="n">하천 수위 · 관할</td><td>관내 하천·댐. 막대의 눈금이 관심수위·경계수위 위치</td></tr>
-    <tr><td class="n"><b>출동 영향 판단</b></td><td>지금 기상값으로 <b>자동 판정</b>한 4가지 (아래 기준표 참고)</td></tr>
-    <tr><td class="n">재난문자</td><td>관할 시군에 발송된 문자</td></tr>
-    <tr><td class="n">체감온도 · 대설·결빙</td><td>계절에 따라 온열질환 주의 / 한파 주의 / 일교차, 눈이 오면 대설·결빙(4장)</td></tr>
-    <tr><td class="n">산불 / 미세먼지 / 일출·일몰</td><td>산불위험 등급, PM10, 그 관서의 일출·일몰(한국천문연구원)</td></tr>
-    <tr><td class="n">관할 위험구역</td><td>실측으로 자동 등록된 위험지역(5장 마지막 항목)</td></tr>
-    <tr><td class="n">맨 아래 줄</td><td>전 관서의 기온과 상황단계. 칸 색이 그 관서 단계이고, 지금 보는 관서는 진하게 표시</td></tr>
+    <tr><th style="width:170px">값</th><th>기준</th></tr>
+    <tr><td class="n">현재 기온·습도·바람</td><td>관서 <b>대표 관측소</b> 실측 (약 10분 전 값)</td></tr>
+    <tr><td class="n">강수량</td><td>1시간·12시간·일누적 모두 <b>같은 대표 관측소</b> 값. 일누적은 0시부터 지금까지 합계입니다. 대표 관측소 자료가 없을 때만 관할에서 가장 많이 온 지점을 쓰고, 지점 이름을 함께 적습니다.</td></tr>
+    <tr><td class="n">순간풍속</td><td>관할 관측소 중 <b>가장 센 지점</b>. 사다리차 전개 판단에 쓰는 값이라 이 값만 관할 최대입니다.</td></tr>
+    <tr><td class="n">시간대별 예보</td><td><b>날씨누리 메인</b>과 같은 값(최대 10분 늦을 수 있음). '지금' 칸만 대표 관측소 실측. 적설만 기상청 단기예보.</td></tr>
+    <tr><td class="n">오늘 최고</td><td>날씨누리 값. 날씨누리가 비워도 자정까지 유지합니다.</td></tr>
+    <tr><td class="n">오늘 최저</td><td>날씨누리 값, 비어 있으면 기상청 단기예보</td></tr>
+    <tr><td class="n">내일 아침 최저</td><td>날씨누리 시간별 예보의 3~9시 중 가장 낮은 값. 한파 칸·내일 아침 탭에만 나옵니다. 화면의 다른 "최고·최저"는 모두 <b>오늘</b> 값입니다.</td></tr>
+    <tr><td class="n">6시간 강수예측</td><td>기상청 초단기예보 (매시간 발표)</td></tr>
+    <tr><td class="n">기상특보</td><td>기상청 특보현황과 기상청 API 허브</td></tr>
+    <tr><td class="n">하천 수위</td><td>한강·금강 홍수통제소 10분 자료</td></tr>
+    <tr><td class="n">산불위험</td><td>국립산림과학원 예보 (권역별)</td></tr>
+    <tr><td class="n">미세먼지 · 일출몰</td><td>에어코리아 · 한국천문연구원</td></tr>
+    <tr><td class="n">재난문자</td><td>행정안전부 긴급재난문자</td></tr>
   </table></div>
 
-  <div class="note warnbox">
-    <p><b>댐은 하천과 기준이 다릅니다.</b> 댐은 물을 가득 채워 두는 게 정상이라 '위험수위 대비 몇 %'가
-       의미 없습니다. 그래서 댐 카드는 <b>저수율 · 유입량 · 방류량</b>으로 보여주고,
-       아래 '침수·수난 출동' 판정에서도 <b>댐은 빼고</b> 계산합니다.</p>
+  <h3>관서별 대표 관측소</h3>
+  <div class="tw"><table>
+    <tr><th>관서</th><th>관측소</th><th>관서</th><th>관측소</th><th>관서</th><th>관측소</th></tr>
+    <tr><td class="n">청주동부</td><td>청주금천</td><td class="n">보은</td><td>보은</td><td class="n">진천</td><td>진천</td></tr>
+    <tr><td class="n">청주서부</td><td>서청주</td><td class="n">옥천</td><td>옥천</td><td class="n">괴산</td><td>괴산</td></tr>
+    <tr><td class="n">충주</td><td>충주</td><td class="n">영동</td><td>영동</td><td class="n">음성</td><td>음성</td></tr>
+    <tr><td class="n">제천</td><td>제천</td><td class="n">증평</td><td>증평</td><td class="n">단양</td><td>단양</td></tr>
+  </table></div>
+  <div class="note">
+    <p><b>다른 사이트와 숫자가 조금 다를 수 있습니다.</b> 대표 관측소는 2026-11-06 네이버 지역 날씨의 기온·습도와 대조해 정했습니다. 그때 네이버 값은 약 50분 전 관측값이었으므로, 같은 순간에 보면 이 상황판이 더 최신일 수 있습니다.
+       날씨누리 메인의 현재 기온은 관측소가 아닌 <b>동 단위 값</b>이라 차이가 날 수 있습니다.</p>
   </div>
 
-  <!-- ============ 3. 색·기호 ============ -->
-  <h2 id="rule">3. 색·기호 한눈에 보기</h2>
+  <!-- ============ 6. 단계와 색 ============ -->
+  <h2 id="rule">6. 단계와 색</h2>
 
-  <h3>관서 상황단계 <small>(119종합상황실 큰 카드 · 관서별 화면)</small></h3>
-  <p>지금 그 관서에 발효 중인 <b>기상특보</b>로 정해집니다.</p>
+  <h3>관서 상황단계 — 그 관서의 특보로 정합니다</h3>
   <div class="tw"><table>
-    <tr><th style="width:110px">단계</th><th>이럴 때 뜹니다</th></tr>
+    <tr><th style="width:110px">단계</th><th>이럴 때</th></tr>
     <tr><td class="n"><span class="pill p-safe">평상</span></td><td>발효 중인 특보 없음</td></tr>
-    <tr><td class="n"><span class="pill p-caution">주의</span></td><td><b>폭염 · 한파 · 건조 · 황사 · 오존</b> 특보 — 며칠씩 이어지는 종류</td></tr>
-    <tr><td class="n"><span class="pill p-warn">경계</span></td><td><b>호우 · 강풍 · 대설 · 태풍 · 풍랑</b> 등의 <b>주의보</b></td></tr>
+    <tr><td class="n"><span class="pill p-caution">주의</span></td><td>폭염·한파·건조·황사·오존 특보</td></tr>
+    <tr><td class="n"><span class="pill p-warn">경계</span></td><td>호우·강풍·대설·태풍·풍랑 등의 <b>주의보</b></td></tr>
     <tr><td class="n"><span class="pill p-severe">심각</span></td><td>위 급성 재해의 <b>경보</b></td></tr>
   </table></div>
 
-  <h3>충북 재대본 비상단계 <small>(종합 현황 맨 위 띠 · 119종합상황실 단계 카드 왼쪽)</small></h3>
-  <p>충청북도 재난안전대책본부의 <b>기상특보 단계별 비상근무체계</b>를 그대로 따릅니다. 관서가 아니라 <b>도 전체</b>에서
-     몇 개 시·군에 특보가 났는지로 정해지므로 관서를 바꿔도 같은 값이고, 청주동부·청주서부는 '청주' 한 개 시로 셉니다.
-     화면에는 <b>1단계</b>처럼 크게, 옆에 <b>주의 · 호우 주의보 3개 시·군</b>처럼 발령 기준이 한 줄로 나옵니다.</p>
+  <h3>충북 재대본 비상단계 — 도 전체로 정합니다</h3>
+  <p>몇 개 시·군에 특보가 났는지로 정하므로 관서를 바꿔도 같습니다. 청주동부·청주서부는 '청주' 한 개 시로 셉니다.</p>
   <div class="tw"><table>
     <tr><th style="width:110px">단계</th><th>대설·호우</th><th>태풍</th></tr>
     <tr><td class="n"><span class="pill p-safe">평상</span></td><td colspan="2">해당 특보 없음</td></tr>
-    <tr><td class="n"><span class="pill" style="background:#e8f1ff;color:#2b6fd6">준비</span></td><td>예비특보 3개 시·군 (주의보 1~2개 시·군 포함)</td><td>태풍정보 발표(한반도 영향)</td></tr>
-    <tr><td class="n"><span class="pill p-caution">주의</span><br><small>비상 1단계</small></td><td>주의보 3개 시·군 · 경보 1개 시·군</td><td>예비특보</td></tr>
-    <tr><td class="n"><span class="pill p-warn">경계</span><br><small>비상 2단계</small></td><td>경보 3개 시·군 이상</td><td>주의보 및 경보</td></tr>
-    <tr><td class="n"><span class="pill p-severe">심각</span><br><small>비상 3단계</small></td><td colspan="2">광역적 경보 — 경보 6개 시·군 이상(도내 11개 시·군의 과반) 또는 도 전역</td></tr>
+    <tr><td class="n"><span class="pill p-blue">준비</span></td><td>예비특보 3개 시·군 (주의보 1~2개 시·군 포함)</td><td>태풍정보 발표(한반도 영향)</td></tr>
+    <tr><td class="n"><span class="pill p-caution">1단계</span> <small>주의</small></td><td>주의보 3개 시·군 · 경보 1개 시·군</td><td>예비특보</td></tr>
+    <tr><td class="n"><span class="pill p-warn">2단계</span> <small>경계</small></td><td>경보 3개 시·군 이상</td><td>주의보 및 경보</td></tr>
+    <tr><td class="n"><span class="pill p-severe">3단계</span> <small>심각</small></td><td colspan="2">광역적 경보 — 경보 6개 시·군 이상(도내 11개 시·군의 과반) 또는 도 전역</td></tr>
   </table></div>
-  <p style="font-size:13.5px;color:var(--ink2)">폭염·한파·강풍·건조 같은 다른 특보는 단계에 넣지 않고 기상특보 카드에서 봅니다.
-     하천 경계수위는 단계와 별개로 경보음을 울립니다.</p>
-  <p style="font-size:13.5px;color:var(--ink2)">재대본 <b>3단계(심각)</b>가 되면 화면 가장자리가 <b>붉게 깜빡이고</b> 경보음이 울립니다
-     (119종합상황실 화면은 깜빡임 대신 <b>배경이 옅은 붉은색</b>으로 바뀝니다. 순환 중인 관서가 심각일 때도 같습니다). 미리 보려면 종합 현황의 ▶(시연) → <b>3단계</b>를 누르거나,
-     119종합상황실 화면 <b>맨 위 가운데 ▶ 시연</b> 버튼 → <b>3단계</b>를 누르세요(다시 누르면 시연 끝).</p>
+  <div class="note warnbox">
+    <p><b>한파주의보가 있는데 재대본이 평상인 것은 정상입니다.</b> 폭염·한파·강풍·건조 특보는 재대본 단계에 넣지 않습니다. 이때 칸에는 "호우·대설·태풍 특보 없음"이 나오고, 특보 자체는 기상특보 칸과 관서 상황단계에서 봅니다.</p>
+  </div>
+  <p style="font-size:13.5px;color:var(--ink2)">재대본 3단계가 되면 종합 현황은 가장자리가 붉게 깜빡이고 경보음이 울립니다. 119종합상황실은 깜빡임 대신 배경이 옅은 붉은색으로 바뀌며, 순환 중인 관서가 심각일 때도 같습니다. 하천 경계수위는 단계와 별개로 경보음을 울립니다.</p>
 
   <h3>공통 색</h3>
   <div class="tw"><table>
     <tr><th style="width:120px">색</th><th>지도</th><th>하천</th><th>출동 영향 판단</th></tr>
     <tr><td class="n"><span class="pill p-safe">초록·옅은색</span></td><td>특보 없음</td><td>안전</td><td>정상 · 평시 · 낮음</td></tr>
-    <tr><td class="n"><span class="pill p-caution">노랑</span></td><td>—</td><td>주의(관심수위↑)</td><td>주의 · 증가</td></tr>
+    <tr><td class="n"><span class="pill p-caution">노랑</span></td><td>—</td><td>관심</td><td>주의</td></tr>
     <tr><td class="n"><span class="pill p-warn">주황</span></td><td>주의보</td><td>—</td><td>—</td></tr>
-    <tr><td class="n"><span class="pill p-severe">빨강</span></td><td>경보</td><td>위험(경계수위↑)</td><td>운용 제한 · 급증 경계 · 높음</td></tr>
+    <tr><td class="n"><span class="pill p-severe">빨강</span></td><td>경보</td><td>경계</td><td>전개 제한 · 경계</td></tr>
   </table></div>
 
-  <!-- ============ 4. 판단 기준값 ============ -->
-  <h2 id="judge">4. 자동 판단 기준값 <span class="u">출동 영향 판단</span></h2>
-
-  <p>119종합상황실 화면의 <b>출동 영향 판단</b>은 사람이 입력하는 게 아니라 <b>지금 기상값으로 자동 계산</b>됩니다.
-     기준은 아래와 같습니다.</p>
+  <!-- ============ 7. 판단 기준값 ============ -->
+  <h2 id="judge">7. 출동 영향 판단 기준</h2>
+  <p>사람이 입력하지 않고 <b>지금 값으로 자동 계산</b>합니다. 119종합상황실과 종합 현황의 순환 화면에 나옵니다.</p>
 
   <div class="tw"><table>
-    <tr>
-      <th style="width:180px">항목</th>
-      <th><span class="pill p-safe">낮은 단계</span></th>
-      <th><span class="pill p-caution">가운데</span></th>
-      <th><span class="pill p-severe">높은 단계</span></th>
-    </tr>
-    <tr>
-      <td class="n">🪜 고가·굴절 사다리차</td>
-      <td>정상<br><small>순간풍속 8m/s 이하</small></td>
-      <td>주의<br><small>순간풍속 8~10m/s</small></td>
-      <td>전개 제한<br><small>순간풍속 10m/s 초과</small></td>
-    </tr>
-    <tr>
-      <td class="n">🔥 산불·화재 확산</td>
-      <td colspan="3">국립산림과학원 <b>권역별 산불위험지수</b> 그대로(낮음·보통·높음·매우높음). 함께 적히는 실효습도·풍속·풍향은 참고</td>
-    </tr>
-    <tr>
-      <td class="n">🌊 침수·수난 출동</td>
-      <td>평시</td>
-      <td>주의<br><small>시간당 8mm 이상<br>또는 하천이 경계수위의 70% 이상<br>(종합 현황: 10mm · 50%)</small></td>
-      <td>경계<br><small>시간당 20mm 이상<br>또는 하천이 경계수위의 88% 이상<br>(종합 현황: 30mm · 80%, 하천 '위험'이면 바로 경계)</small></td>
-    </tr>
+    <tr><th style="width:170px">항목</th><th><span class="pill p-safe">낮음</span></th><th><span class="pill p-caution">가운데</span></th><th><span class="pill p-severe">높음</span></th></tr>
+    <tr><td class="n">🪜 고가·굴절 사다리차</td><td>정상<br><small>순간풍속 8m/s 이하</small></td><td>주의<br><small>8m/s 초과~10m/s</small></td><td>전개 제한<br><small>10m/s 초과</small></td></tr>
+    <tr><td class="n">🔥 산불·화재 확산</td><td colspan="3">국립산림과학원 <b>산불위험예보</b> 그대로 (낮음·보통·높음·매우높음)</td></tr>
+    <tr><td class="n">🌊 침수·수난 출동<br><small>119종합상황실</small></td><td>평시</td><td>주의<br><small>시간당 8mm 또는 하천 경계수위의 70% 이상</small></td><td>경계<br><small>시간당 20mm 또는 88% 이상</small></td></tr>
+    <tr><td class="n">🌊 침수·수난 출동<br><small>종합 현황</small></td><td>평시</td><td>주의<br><small>시간당 10mm 또는 50% 이상</small></td><td>경계<br><small>시간당 30mm 또는 80% 이상, 하천 경계수위 초과</small></td></tr>
   </table></div>
+  <ul>
+    <li><b>하천 %</b>는 관내 하천 중 가장 위험한 한 곳 기준입니다(댐 제외).</li>
+    <li>119종합상황실의 침수·수난 칸은 <a href="#risk">폭우 안전장치</a>도 반영합니다.</li>
+    <li>눈이 오거나 올 때는 같은 자리에 <b>❄️ 대설·결빙</b>이 뜹니다. 눈 예보만 있으면 <span class="pill p-caution">관심</span>, 대설주의보나 24시간 5cm 이상이면 <span class="pill p-caution">주의</span>, 대설경보나 20cm 이상이면 <span class="pill p-severe">경계</span>입니다. 비·하천 쪽 단계가 더 높으면 침수·수난이 그대로 나옵니다.</li>
+  </ul>
 
-  <h3>🌊 침수·수난 출동 ↔ ❄️ 대설·결빙</h3>
-  <p>눈이 오거나 올 때(그 관서 대설특보, 앞으로 24시간 적설 예보, 6시간 안 눈 예보)는 같은 자리에 <b>❄️ 대설·결빙</b> 카드가 뜹니다.
-     비·하천 쪽 단계가 더 높으면 침수·수난 카드를 그대로 둡니다.</p>
+  <h3>체감온도 칸</h3>
+  <p><b>그 관서에 한파·폭염 특보가 있으면</b> 체감온도와 상관없이 특보 이름이 나옵니다(주의보 노랑, 경보 빨강). 한파 칸에는 다음 아침 최저도 함께 적습니다. 지금 체감이 영상이어도 한파 칸이 뜨는 것은, 한파특보가 다음 아침 추위를 예상해 나오기 때문입니다.</p>
+  <p>특보가 없으면 체감온도로 정합니다.</p>
   <div class="tw"><table>
-    <tr><th style="width:110px">단계</th><th>대설·결빙</th></tr>
-    <tr><td class="n"><span class="pill p-caution">관심</span></td><td>눈 예보만 있을 때</td></tr>
-    <tr><td class="n"><span class="pill p-caution">주의</span></td><td>대설주의보 또는 24시간 예상 적설 5cm 이상</td></tr>
-    <tr><td class="n"><span class="pill p-severe">경계</span></td><td>대설경보 또는 24시간 예상 적설 20cm 이상</td></tr>
+    <tr><th style="width:110px">체감온도</th><th style="width:150px">칸</th><th>단계</th></tr>
+    <tr><td class="n">30° 이상</td><td>🌡️ 온열질환 주의</td><td>31 관심 · 33 주의 · 35 경고 · 38 위험</td></tr>
+    <tr><td class="n">10° 미만</td><td>🥶 한파 주의</td><td>0~10 쌀쌀 · 0 이하 관심 · −10 이하 주의 · −25 이하 경고</td></tr>
+    <tr><td class="n">10~30°</td><td>🌤️ 일교차</td><td>오늘 최고·최저 차이가 10° 이상이면 일교차 큼, 아니면 쾌적</td></tr>
   </table></div>
-
-  <h3>🌡️ 체감온도 카드 — 계절에 따라 카드가 바뀝니다</h3>
-  <p>관서의 <b>체감온도</b>를 보고 세 가지 중 하나를 띄웁니다. 단계는 기상청 기준을 따릅니다.</p>
-  <div class="tw"><table>
-    <tr><th style="width:110px">체감온도</th><th style="width:150px">카드</th><th>단계</th></tr>
-    <tr><td class="n">30° 이상</td><td>🌡️ <b>온열질환 주의</b></td><td>31 관심 · 33 주의 · 35 경고 · 38 위험 <small>(기상청 폭염 영향예보 기준)</small></td></tr>
-    <tr><td class="n">10° 미만</td><td>🥶 <b>한파 주의</b></td><td>0~10 쌀쌀 · 0 이하 관심 · -10 이하 주의 · -25 이하 경고 <small>(기상청 체감온도 단계)</small></td></tr>
-    <tr><td class="n">10~30°</td><td>🌤️ <b>일교차</b></td><td>오늘 최고·최저 차이가 10° 이상이면 <b>일교차 큼</b>, 아니면 <b>쾌적</b></td></tr>
-  </table></div>
-
-  <p><b>침수·수난</b>의 '하천 %'는 관내 하천 중 <b>가장 위험한 한 곳</b> 기준입니다(댐 제외).
-     사다리차·체감온도·대설·결빙은 종합 현황과 119종합상황실 화면이 같은 기준이고, 침수·수난만 위 표처럼 다릅니다.</p>
 
   <div class="note">
-    <p><b>사다리차는 순간풍속으로 판정합니다.</b> 평균풍속이 아니라 순간적으로 가장 세게 분
-       바람이 전개 가부를 좌우하기 때문입니다. 다만 이 값도 <b>관측소</b> 기준이므로,
-       <b>최종 판단은 현장 풍속</b>으로 하시기 바랍니다.</p>
+    <p><b>사다리차는 순간풍속으로 판정합니다.</b> 이 값도 관측소 기준이므로 <b>최종 판단은 현장 풍속</b>으로 하세요.</p>
   </div>
 
-  <!-- ============ 5. FAQ ============ -->
-  <h2 id="faq">5. 알아두면 좋은 것</h2>
+  <!-- ============ 8. 위험구역 ============ -->
+  <h2 id="risk">8. 위험구역</h2>
+  <p>사람이 등록하지 않고 <b>5분마다 들어오는 실측으로 자동 등록</b>됩니다. 조건이 풀리면 사라집니다. 평소에 0곳인 것이 정상입니다.
+     종합 현황의 지도와 관서 상세에 나옵니다.</p>
+  <div class="tw"><table>
+    <tr><th style="width:150px">종류</th><th><span class="pill p-caution">낮은 단계</span></th><th><span class="pill p-severe">높은 단계</span></th><th>표시 위치</th></tr>
+    <tr><td class="n">하천</td><td>1시간 0.3m 이상 급상승(관심) · 관심수위 이상</td><td>경계수위 이상</td><td>관측소</td></tr>
+    <tr><td class="n">집중호우</td><td>1시간 30mm 또는 12시간 110mm 이상(주의)</td><td>1시간 50mm 또는 12시간 180mm 이상(경계)</td><td>대표 관측소 값이면 관서 중심</td></tr>
+  </table></div>
+  <div class="note warnbox">
+    <p><b>폭우 안전장치</b> — 화면의 강수량은 대표 관측소 값이라, 관할 다른 곳에 내리는 폭우가 숫자에 드러나지 않을 수 있습니다. 그래서 <b>관할 다른 관측소가 집중호우 기준을 넘으면</b> 종합 현황에는 "영춘 집중호우"처럼 그 지점 이름의 위험구역으로, 119종합상황실에는 침수·수난 칸에 지점 이름과 함께 올립니다. 평소 화면에는 값을 섞지 않습니다.</p>
+  </div>
+  <p>하천 핀을 누르면 수위 그래프와 CCTV가 열립니다.</p>
 
-  <h3>숫자가 <code>-</code> 로 나올 때</h3>
-  <p><b>자료가 없다</b>는 뜻입니다. <b>0이 아닙니다.</b> 관측소 고장이나 통신 장애로 값이 안 들어오면
-     0으로 채우지 않고 <code>-</code>를 찍습니다. 호우 상황에서 '자료 없음'을 '비 안 옴'으로
-     보여주는 것이 가장 위험한 오표시이기 때문입니다.</p>
+  <!-- ============ 9. 시연 ============ -->
+  <h2 id="demo">9. 시연 모드</h2>
+  <p>교육·훈련이나 화면 점검용으로 <b>가짜 상황</b>을 화면에만 띄웁니다. 실제 자료는 바뀌지 않으며, 끄면 바로 돌아옵니다.</p>
+  <div class="tw"><table>
+    <tr><th style="width:170px">화면</th><th style="width:170px">켜는 곳</th><th>내용</th></tr>
+    <tr><td class="n">종합 현황</td><td>맨 위 ▶ → 지도 아래 단계 버튼</td><td>평상·준비·1·2·3단계 호우 상황</td></tr>
+    <tr><td class="n">119종합상황실</td><td>맨 위 가운데 ▶ 시연</td><td>평상·준비·1·2·3단계 호우 상황 (종합 현황과 같은 수치)</td></tr>
+    <tr><td class="n">재해별 집중 감시</td><td>맨 위 ▶</td><td>열린 탭의 상황: 호우경보·태풍 / 대설경보·한파주의보 / 건조경보·산불</td></tr>
+  </table></div>
+  <ul>
+    <li><b>바뀌는 것</b>(종합 현황·119종합상황실): 특보, 재난문자, 강수, 시간대별 예보의 비, 6시간 강수예측, 하천 일부. <b>그대로인 것</b>: 기온, 습도, 바람, 미세먼지, 산불위험은 실제 값입니다. 재해별 화면은 해당 탭의 숫자가 전부 가짜입니다.</li>
+    <li><b>3단계</b>에서 단양을 보면 <a href="#risk">폭우 안전장치</a>가 작동하는 모습(관할 영춘 집중호우)을 볼 수 있습니다.</li>
+    <li>시연 중 뜨는 알림 카드에는 <b>[시연]</b>이 붙고, Windows 알림은 보내지 않습니다.</li>
+  </ul>
+  <div class="note warnbox"><p><b>시연을 켠 채 자리를 비우지 마세요.</b> 화면에 표시가 남지만, 벽면 화면에서는 실제 상황으로 오해할 수 있습니다.</p></div>
+
+  <!-- ============ 10. FAQ ============ -->
+  <h2 id="faq">10. 자주 묻는 것</h2>
+
+  <h3>숫자가 <code>-</code> 또는 <code>—</code>로 나옵니다</h3>
+  <p><b>자료가 없다</b>는 뜻이고, 0이 아닙니다. 관측소 고장이나 통신 장애 때 0으로 채우지 않습니다. 맨 아래 관서 칸의 <code>—</code>만 예외로, 지금 비가 안 온다는 뜻입니다.</p>
+
+  <h3>비가 안 오는데 일누적이 있습니다</h3>
+  <p>일누적은 0시부터 지금까지 합계입니다. 새벽에 왔다 그친 비도 자정까지 남습니다.</p>
+
+  <h3>시간대별 예보와 6시간 강수예측이 다릅니다</h3>
+  <p>서로 다른 예보입니다. 시간대별은 <b>날씨누리</b> 값, 6시간 강수예측은 매시간 나오는 <b>기상청 초단기예보</b>입니다. 기상청은 강수량을 구간으로 내기도 해서('1mm 미만', '30~50mm'), 화면은 0.5mm, 40mm처럼 대표값으로 바꿉니다.</p>
 
   <h3>실효습도가 뭔가요</h3>
-  <p>지금 습도가 아니라 <b>최근 며칠간의 건조 정도가 누적된 값</b>입니다. 낮을수록 나무·건축물이 말라 있다는 뜻이라
-     <b>산불과 화재 확산 위험</b>을 볼 때 씁니다. 건조특보도 이 값으로 냅니다(35% 이하 2일 이상 지속 예상 → 주의보, 25% → 경보).</p>
+  <p>최근 며칠간의 건조가 누적된 값입니다. 낮을수록 산불·화재가 번지기 쉽습니다. 건조특보도 이 값으로 냅니다(35% 이하 2일 이상 예상 → 주의보, 25% → 경보).</p>
   <ul>
-    <li>계산은 <b>기상청과 같은 식</b>입니다. 같은 시각의 습도를 오늘·1일 전…4일 전까지 5일치 모아, 오래된 날일수록 0.7배씩 줄여 더합니다.
-        관서 AWS 습도로 계산해 12개 관서 모두 실시간으로 나옵니다.</li>
-    <li>하루 중 <b>오후에 가장 낮고</b> 아침에 높습니다. 오후 한때 35% 아래로 내려가는 것만으로는 특보 수준이 아닙니다.</li>
-    <li>기상청 공식값은 ASOS 관측소 5곳(청주·충주·제천·보은·추풍령)만 있고 몇 시간 늦게 올라와서, 재해별 집중 감시 건조·산불 탭에 <b>기상청 공식</b>으로 함께 적습니다.</li>
+    <li>기상청과 같은 식으로 5일치 습도에서 계산하고, 오래된 날일수록 0.7배씩 줄입니다.</li>
+    <li>오후에 가장 낮습니다. 오후 한때 35% 아래로 내려가는 것만으로는 특보 수준이 아닙니다.</li>
+    <li>119종합상황실에서는 헷갈리지 않게 표시하지 않고, 종합 현황과 재해별 건조·산불 탭에서 봅니다.</li>
   </ul>
 
-  <h3>풍속과 순간풍속</h3>
-  <p><b>풍속</b>은 일정 시간 평균, <b>순간풍속</b>은 그 사이 가장 세게 분 순간의 값입니다.
-     구조물 파손이나 고가 전개 위험은 순간풍속이 좌우합니다.</p>
+  <h3>풍속과 순간풍속은 뭐가 다른가요</h3>
+  <p>풍속은 일정 시간 평균이고, 순간풍속은 가장 세게 분 순간의 값입니다. <code>풍속 / 순간</code> 칸의 두 값은 지점이 다를 수 있습니다(풍속은 대표 관측소, 순간은 관할 최강 지점).</p>
 
-  <h3>새 특보·재난문자가 오면 알려 주나요</h3>
-  <p>네. <b>종합 현황</b>을 켜 두면(119종합상황실 화면은 띄우지 않습니다), 5분 갱신 때 <b>새 기상특보·예비특보·재난문자</b>가 들어오면
-     화면 <b>오른쪽 위에 알림 카드</b>가 뜨고 짧은 알림음이 울립니다(🔕 경보음 끄기면 소리 없음).
-     특보가 풀리면 '해제' 카드가 뜹니다.</p>
+  <h3>새 특보가 오면 알려 주나요</h3>
+  <p>네. <b>종합 현황</b>을 켜 두면 새 특보·예비특보·재난문자가 들어올 때 오른쪽 위에 카드가 뜨고 알림음이 울립니다. 특보가 풀리면 '해제' 카드가 뜹니다. 119종합상황실은 카드를 띄우지 않습니다.</p>
   <ul>
-    <li>처음 열면 왼쪽 아래에 <b>기기 알림</b>(Windows·휴대폰)도 받을지 묻습니다. <b>켜기</b>를 누르면 다른 창을 보고 있어도 알림이 옵니다.</li>
-    <li>처음 여는 PC에서는 이미 떠 있던 특보는 알리지 않고, <b>그 뒤에 새로 들어온 것</b>만 알립니다. 새로고침해도 같은 특보를 다시 알리지 않습니다.</li>
-    <li>종합 현황의 재난문자 알림은 재난문자 칸과 같은 범위입니다(충청북도를 고르면 전부, 관서를 고르면 그 시·군과 도 전체 발송분).</li>
-    <li>▶ 시연 모드에서 단계를 바꾸면 <b>[시연]</b> 표시가 붙은 알림 카드로 미리 볼 수 있습니다.</li>
+    <li>처음 열면 왼쪽 아래에서 <b>Windows 알림</b>을 켤지 묻습니다.</li>
+    <li>처음 여는 컴퓨터에서는 이미 떠 있던 특보는 알리지 않습니다. 새로고침해도 같은 특보를 다시 알리지 않습니다.</li>
+    <li>재난문자 알림 범위는 재난문자 칸과 같습니다.</li>
   </ul>
 
-  <h3>시간대별 예보와 6시간 강수예측의 강수량이 다릅니다</h3>
-  <p>둘은 기상청의 <b>서로 다른 예보</b>라서 같은 시각이라도 숫자가 다를 수 있습니다.</p>
-  <ul>
-    <li><b>시간대별 예보</b> = <b>단기예보</b>. 하루 8번(02·05·08·11·14·17·20·23시) 발표되고, 화면에는
-        가장 최근 발표분이 나옵니다. 발표한 지 최대 3시간이 지난 예보일 수 있습니다.</li>
-    <li><b>6시간 강수예측</b> = <b>초단기예보</b>. <b>매시간</b> 새로 발표되고, 직전의 레이더·관측을 반영해
-        앞으로 6시간만 예측합니다.</li>
-    <li>기상청은 강수량을 <b>구간</b>으로 내놓기도 합니다('1mm 미만', '30~50mm' 등). 화면은 숫자로 보여주려고
-        '1mm 미만' → 0.5mm, '30~50mm' → 40mm처럼 대표값으로 바꿉니다.</li>
-  </ul>
-  <p><b>가까운 몇 시간은 6시간 강수예측(초단기)이 더 최신</b>이고, 그 뒤 시간은 시간대별 예보(단기)를 보시면 됩니다.</p>
-
-  <h3>화면이 안 바뀌는 것 같습니다</h3>
-  <p>데이터는 5분마다 갱신됩니다. 화면 맨 아래(또는 상단 LIVE 옆)의 <b>마지막 갱신 시각</b>을
-     확인해 보세요. 시각이 오래됐다면 새로고침(F5)해 보시고, 그래도 안 되면 알려주세요.</p>
-
-  <h3>위험구역은 어떻게 정해지나요</h3>
-  <p>사람이 등록하지 않고 <b>5분마다 들어오는 실측으로 자동 등록</b>됩니다. 조건이 풀리면 자동으로 사라집니다.<br>
-     · 하천: 경계수위 이상 <b>경계</b> · 주의수위 이상 <b>주의</b> · 1시간에 0.3m 이상 급상승 <b>관심</b> (관측소 위치에 표시)<br>
-     · 집중호우: 관서 강수 1시간 50mm·12시간 180mm 이상 <b>경계</b>, 1시간 30mm·12시간 110mm 이상 <b>주의</b> (관서 중심에 표시)<br>
-     하천 핀을 누르면 그 하천의 수위 그래프와 CCTV가 열립니다.</p>
+  <h3>화면이 안 바뀌거나 이상합니다</h3>
+  <p>화면의 <b>마지막 갱신 시각</b>을 먼저 보세요. 시각이 오래됐으면 <b>F5</b>, 프로그램을 고친 직후 화면이 이상하면 <b>Ctrl+F5</b>를 눌러 보세요. 그래도 안 되면 소방정보통신팀에 알려 주세요.</p>
 
   <div class="foot">
     데이터 · 기상청 / 행정안전부 / 홍수통제소(한강·금강) / 에어코리아 / 국립산림과학원 / 한국천문연구원<br>

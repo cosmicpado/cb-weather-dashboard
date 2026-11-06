@@ -1275,6 +1275,7 @@ def build_sido(key, with_cctv=True, refresh=False):
         'stations_all': [{k: r[k] for k in ('name', 'lat', 'lon', 'admin')} for r in regs],   # 분리 소방서 포함(배치도·이웃용)
         'pm_stations': pm,
         'aws_stations': {a: [[r['stn'], r['name']] for r in st] for a, st in aws.items()},
+        'aws_meta': {str(r['stn']): {'lat': r['lat'], 'lon': r['lon'], 'addr': r['addr']} for st in aws.values() for r in st},   # 관서 지도의 관측소 표시
         'aws_fallback': aws_fallback,
         'aws_neighbors': aws_neighbors(regs),
         'river_stations': river_stations,
