@@ -1025,7 +1025,7 @@ def build_dams(sd, sigun, dam_inv):
                 return float(str(v).strip())
             except (TypeError, ValueError):
                 return None
-        out.append({'code': d['dmobscd'], 'name': f"{d.get('obsnm', '')} ({area})".strip(),
+        out.append({'code': d['dmobscd'], 'name': f"({area}) {d.get('obsnm', '')}".strip(),
                     'sigun': area, 'warning': num(d.get('fldlmtwl')), 'danger': num(d.get('pfh')),
                     'has_cctv': False, 'api': 'dam'})
     return out
@@ -1196,12 +1196,12 @@ def build_sido(key, with_cctv=True, refresh=False):
                 names_cache[st['code']] = river_name(st['code'], sess)
                 time.sleep(0.2)
             rn = names_cache[st['code']]
-            label = f"{rn} ({area} {_bridge(st['obsnm'])})" if rn else f"{area} {_bridge(st['obsnm'])}"
+            label = f"({area}) {rn} {_bridge(st['obsnm'])}" if rn else f"({area}) {_bridge(st['obsnm'])}"
             if st.get('nearby'):
                 toks = (st.get('addr') or '').split()
                 near_area = (unit_of(toks[1])[0] or '') if len(toks) > 1 else ''
-                tail = f"{area} 인근 · {near_area} {_bridge(st['obsnm'])}".replace('  ', ' ')
-                label = f"{rn} ({tail})" if rn else tail
+                tail = f"{near_area} {_bridge(st['obsnm'])}".strip()
+                label = f"({area} 인근) {rn} {tail}" if rn else f"({area} 인근) {tail}"
             river_stations.append({'code': st['code'], 'name': label, 'sigun': area,
                                    'warning': st['warning'], 'danger': st['danger'],
                                    'has_cctv': False, 'api': 'waterlevel',

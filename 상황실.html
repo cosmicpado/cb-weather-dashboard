@@ -1653,7 +1653,7 @@ https://scripts.sil.org/OFL
     </div>
 
     <div style="height:38px;flex:none;display:flex;align-items:center;gap:28px;font-size:calc(26px*var(--fz,1));font-weight:500;color:var(--dim,#8e9bb0);">
-      <div>데이터 · 기상청 / 행정안전부 / 한강홍수통제소 / 에어코리아 / 국립산림과학원</div>
+      <div>데이터 출처 · 기상청 / 행정안전부 / 한강홍수통제소 / 에어코리아 / 국립산림과학원</div>
       <div style="width:2px;height:22px;background:var(--line,#28313f);"></div>
       <div style="margin-left:auto;font-variant-numeric:tabular-nums;">관서 자동 순환 {{ rotSec }}초 · 데이터 자동 갱신 5분 · 마지막 갱신 {{ updatedLabel }}</div>
     </div>
@@ -2408,9 +2408,7 @@ class Component extends DCLogic {
     return inner; }
   /* 상단바 감시카드용 짧은 이름 — '임진강 (연천 필승교)' → '필승교'.
      칸이 좁아 시군명까지 넣으면 넘친다. 어차피 고정 지점이라 어디인지 다 안다. */
-  function keyName(nm){ var s=shortRiver(nm).split(' ');
-    if(s.length>1 && SIG_ALL.indexOf(s[0])>=0) s.shift();
-    return s.join(' '); }
+  function keyName(nm){ return shortRiver(nm).trim().split(' ').pop(); }   /* '(연천) 임진강 필승교' → '필승교' */
   var ICON={'맑음':'☀️','구름많음':'⛅','구름조금':'🌤️','흐림':'☁️','비':'🌧️','소나기':'🌦️','빗방울':'🌧️','비/눈':'🌨️','눈':'❄️','눈날림':'🌨️','진눈깨비':'🌨️','뇌우':'⛈️'};
   function wicon(w){ return ICON[w]||'☁️'; }
   /* 날씨문자 → 통일 SVG 아이콘 타입(메테오그램 wxSvg). 밤(19~06시)엔 해→달 */

@@ -27,6 +27,13 @@ from urllib.parse import unquote
 ROOT = Path(__file__).resolve().parent.parent
 FILES = ['data.js', 'data-cctv.js']
 SERVE_EXT = {'.html', '.js', '.css', '.json', '.svg', '.png', '.jpg', '.jpeg', '.gif', '.webp', '.ico', '.woff', '.woff2'}
+# Cloudflare _headers 와 같게 둔다. CSP 를 스크립트 출처까지 조이지 않는 이유는 _headers 주석 참고.
+SECURITY_HEADERS = {
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'SAMEORIGIN',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+    'Content-Security-Policy': "frame-ancestors 'self'; object-src 'none'; base-uri 'self'",
+}
 
 
 def git(*args):
@@ -87,6 +94,11 @@ def allowed_path(raw):
 
 
 class Quiet(http.server.SimpleHTTPRequestHandler):
+    # Windows 는 레지스트리 때문에 .js 종류가 text/plain 으로 잡힐 수 있다. nosniff 면 그런 스크립트는 막히므로 못 박는다.
+    extensions_map = {**http.server.SimpleHTTPRequestHandler.extensions_map,
+                      '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',
+                      '.json': 'application/json', '.svg': 'image/svg+xml', '.webp': 'image/webp', '.woff': 'font/woff', '.woff2': 'font/woff2'}
+
     def log_message(self, *x):                 # 요청 로그는 끈다(가져오기 기록만 보이게)
         pass
 
@@ -98,6 +110,8 @@ class Quiet(http.server.SimpleHTTPRequestHandler):
 
     def end_headers(self):                     # 운영(nginx·Cloudflare)과 같게 — 브라우저가 옛 data.js 를 다시 쓰지 않게
         self.send_header('Cache-Control', 'no-cache')
+        for k, v in SECURITY_HEADERS.items():
+            self.send_header(k, v)
         super().end_headers()
 
 

@@ -3,15 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
-<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous">
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
 <script src="./support.js"></script>
 </head>
 <body>
 <x-dc>
 <helmet>
 <link rel="preconnect" href="https://cdn.jsdelivr.net">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" integrity="sha256-0nQ4DLeBXpJHnTjkPdWy7vWFVnCROUAio6Le3gSEdMs=" crossorigin="anonymous">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#2563eb">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1664,7 +1664,7 @@ class Component extends DCLogic {
     const days=['일','월','화','수','목','금','토'];
     const dateStr=now.getFullYear()+'.'+p2(now.getMonth()+1)+'.'+p2(now.getDate())+' ('+days[now.getDay()]+')';
     const cvar=this.cvar.bind(this), num=(v,dg)=>this.fmtNum(v,dg);
-    const place=nm=>{ var m=String(nm||'').match(/\(([^)]+)\)/); return m?m[1].split(' ').pop():String(nm||'').split(' ')[0]; };
+    const place=nm=>String(nm||'').trim().split(' ').pop();   // '(진천) 미호천 가산교' → '가산교'
 
     const stations=(d.stations||[]);
     const grouped=this.groupWarns(d.warnings||[]);
@@ -1766,7 +1766,7 @@ class Component extends DCLogic {
   }
   wallSlideBody(d, idx){
     const R=React.createElement, cvar=this.cvar.bind(this), num=(v,dg)=>this.fmtNum(v,dg);
-    const place=nm=>{ var m=String(nm||'').match(/\(([^)]+)\)/); return m?m[1].split(' ').pop():String(nm||'').split(' ')[0]; };
+    const place=nm=>String(nm||'').trim().split(' ').pop();   // '(진천) 미호천 가산교' → '가산교'
     const IMGH='';
     const imgSrc=k=>{ const info=(d.kmaImages||{})[k]||{}; const f=info.file||('images/kma_'+k+'.png'); return IMGH+f+(info.ts?('?v='+encodeURIComponent(info.ts)):''); };
     const cell=(kids)=>R('div',{style:{flex:'1 1 0', minWidth:0, background:'var(--surface2)', border:'1px solid var(--border)', borderRadius:'12px', padding:'9px 13px', display:'flex', flexDirection:'column', justifyContent:'center'}}, kids);
@@ -1840,7 +1840,7 @@ class Component extends DCLogic {
     const days=['일','월','화','수','목','금','토'];
     const dateStr=now.getFullYear()+'.'+p2(now.getMonth()+1)+'.'+p2(now.getDate())+' ('+days[now.getDay()]+')';
     const cvar=this.cvar.bind(this), num=(v,dg)=>this.fmtNum(v,dg);
-    const place=nm=>{ var m=String(nm||'').match(/\(([^)]+)\)/); return m?m[1].split(' ').pop():String(nm||'').split(' ')[0]; };
+    const place=nm=>String(nm||'').trim().split(' ').pop();   // '(진천) 미호천 가산교' → '가산교'
     const fmtM=m=>m==null?'-':(p2(Math.floor(m/60)%24)+':'+p2(m%60));
     const C={safe:'var(--safe)',caution:'var(--caution)',warn:'var(--warn)',severe:'var(--severe)'};
     const CSFT={safe:'var(--safeSoft)',caution:'var(--cautionSoft)',warn:'var(--warnSoft)',severe:'var(--severeSoft)'};
@@ -2018,7 +2018,7 @@ class Component extends DCLogic {
         R('div',{style:{display:'flex', alignItems:'baseline', justifyContent:'center', gap:'5px', marginTop:'1px'}}, R('span',{style:{fontSize:'clamp(12px,1.1vw,16px)', fontWeight:700, color:'var(--ink2)'}}, (s2.temp!=null?Math.round(s2.temp)+'°':'')), R('span',{style:{fontSize:'11px', fontWeight:700, color:col2c}}, w2?String(w2.type).replace(/(주의보|경보|특보)$/,''):'평상'))); }));
 
     const footer=R('div',{style:{display:'flex', alignItems:'center', gap:'14px', padding:'2px 26px 10px', fontSize:'11.5px', color:'var(--ink3)', whiteSpace:'nowrap'}},
-      R('span',{style:{overflow:'hidden', textOverflow:'ellipsis'}}, '데이터 · 기상청 / 행정안전부 / 한강홍수통제소 / 에어코리아 / 국립산림과학원'),
+      R('span',{style:{overflow:'hidden', textOverflow:'ellipsis'}}, '데이터 출처 · 기상청 / 행정안전부 / 한강홍수통제소 / 에어코리아 / 국립산림과학원'),
       R('span',{style:{marginLeft:'auto', flexShrink:0}}, '관서 자동 순환 14초 · 데이터 자동 갱신 5분 · 마지막 갱신 '+String(d.updated||'').replace(/^\d{4}-/,'').replace(/:\d\d$/,'')));
 
     return R('div',{style:{width:'100%', height:'100%', display:'flex', flexDirection:'column', position:'relative'}},
@@ -2615,10 +2615,10 @@ class Component extends DCLogic {
           R('div',{style:{display:'flex', justifyContent:'space-between', alignItems:'center', padding:'9px 12px', background:'var(--surface2)', borderRadius:'10px', border:'1px solid var(--border)'}},
             R('span',{style:{fontSize:'12.5px', color:'var(--ink2)', fontWeight:600}}, '🔥 산불 위험'),
             R('span',{style:{fontSize:'13px', fontWeight:800, color:fire?fireColor(fire.level):'var(--ink3)'}}, fire?(fire.levelText+' · '+fire.region):'정보 없음')),
-          // 이름·순서는 상황실 '하천 수위' 칸과 같게: '미호천 (청주동부 팔결교)' → '청주동부 팔결교', 경계수위에 가까운 순
+          // 순서는 상황실 '하천 수위' 칸과 같게 경계수위에 가까운 순
           near.slice().sort((a,b)=>(b.danger?b.value/b.danger:0)-(a.danger?a.value/a.danger:0)).map((r,i)=>
             R('div',{key:i, style:{display:'flex', justifyContent:'space-between', alignItems:'center', padding:'9px 12px', background:'var(--surface2)', borderRadius:'10px', border:'1px solid var(--border)'}},
-              R('span',{style:{fontSize:'12.5px', color:'var(--ink2)', fontWeight:600}}, '🌊 '+(((String(r.name).match(/\(([^)]+)\)/)||[])[1])||r.name)),
+              R('span',{style:{fontSize:'12.5px', color:'var(--ink2)', fontWeight:600}}, '🌊 '+r.name),
               R('span',{style:{fontSize:'13px', fontWeight:800, color:cvar(r.lv)}}, num(r.value,2)+'m'+(r.danger?' / 경계 '+r.danger+'m':'')))))),
       // 7. 재난문자
       sect('최근 재난문자 (해당 시군)',

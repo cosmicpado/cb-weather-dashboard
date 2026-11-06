@@ -210,7 +210,7 @@
       if(body && areaHits(body, sg)){ var s=String(g.type||'').replace(' 예비특보','').replace('예비특보','').trim(); if(s && pre.indexOf(s)<0) pre.push(s); } }); });
     var tW=$('tWarn'); tW.className='tile ' + (warns.length ? (sev?'severe':'warn') : (pre.length ? 'info' : 'safe'));
     tW.querySelector('.v').className = 'v' + ((warns.length && types[0].length>4) ? ' long' : '');
-    tW.querySelector('.v').innerHTML = warns.length ? (types[0] + (types.length>1 ? '<small>+' + (types.length-1) + '</small>' : '')) : (pre.length ? '예비' : '없음');
+    tW.querySelector('.v').innerHTML = warns.length ? (String(types[0]).replace(/[&<>"']/g, function(c){ return '&#'+c.charCodeAt(0)+';'; }) + (types.length>1 ? '<small>+' + (types.length-1) + '</small>' : '')) : (pre.length ? '예비' : '없음');
     tW.querySelector('.d').textContent = warns.length ? types.join(' · ') : (pre.length ? '예비특보: ' + pre.join(' · ') : '발효 중인 특보 없음');
 
     /* 비: 실측(AWS 1시간) + 6시간 예보 최대 */

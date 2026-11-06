@@ -205,6 +205,7 @@ td.n{white-space:nowrap;font-weight:700}
 
   <h3>하천 수위 보는 법</h3>
   <ul>
+    <li>이름은 <code>(관서) 하천 지점</code> 순서입니다. 예: <code>(진천) 미호천 가산교</code>, <code>(충주) 충주댐</code></li>
     <li><b>▲ +0.35m/h</b>는 최근 1시간 수위 변화입니다. 수치보다 <b>올라가는 속도</b>가 더 중요할 때가 많습니다.</li>
     <li>기준은 홍수통제소(한강·금강) 공식값입니다. 관심수위 이상이면 <span class="pill p-caution">관심</span>, 경계수위 이상이면 <span class="pill p-severe">경계</span>입니다.</li>
     <li>댐은 가득 채워 두는 것이 정상이라 <b>저수율·유입량·방류량</b>으로 표시하고, 침수 판단에서 뺍니다.</li>
@@ -218,7 +219,7 @@ td.n{white-space:nowrap;font-weight:700}
   <div class="tw"><table>
     <tr><th style="width:130px">탭</th><th style="width:230px">관서별 순위</th><th>함께 나오는 것</th></tr>
     <tr><td class="n">🌧 호우</td><td>실측 강수량<br>(1시간 · 12시간 · 일누적)</td><td>지금 강수, 6시간 예측, 강풍, 24시간 예보, 하천 수위, 태풍, 레이더, 재난문자</td></tr>
-    <tr><td class="n">❄ 대설·한파</td><td>예상 적설 · 오늘 최저 · 체감<br><small>한파특보가 있으면 <b>내일 아침</b> 탭 추가</small></td><td>결빙 위험 시간, 다음 아침 최저와 한파 기준, 시간대별 눈·기온, 레이더, 재난문자</td></tr>
+    <tr><td class="n">❄ 대설·한파</td><td>예상 적설 · 최저기온(오늘 최저와 내일 아침 최저를 점 두 개로 비교) · 체감<br><small>평소에는 오늘 최저가 낮은 순, <b>한파특보 중에는 내일 아침이 낮은 순</b></small></td><td>결빙 위험 시간, 다음 아침 최저와 한파 기준, 시간대별 눈·기온, 레이더, 재난문자</td></tr>
     <tr><td class="n">🔥 건조·산불</td><td>실효습도 · 지금 습도 · 바람</td><td>산불위험예보, 앞으로 24시간 습도·바람, 올해 충북 산불, 위성, 재난문자</td></tr>
   </table></div>
 
@@ -234,7 +235,7 @@ td.n{white-space:nowrap;font-weight:700}
   <div class="tw"><table>
     <tr><th style="width:130px">순위 탭</th><th>먼저 보이는 항목</th></tr>
     <tr><td class="n">호우</td><td>비가 있는 가장 짧은 기간: 1시간 → 12시간 → 일누적</td></tr>
-    <tr><td class="n">대설·한파</td><td>눈 예보나 대설특보가 있으면 적설, 없으면 오늘 최저</td></tr>
+    <tr><td class="n">대설·한파</td><td>눈 예보나 대설특보가 있으면 적설, 없으면 최저기온</td></tr>
     <tr><td class="n">건조·산불</td><td>강풍특보만 있으면 바람, 그 밖에는 실효습도</td></tr>
   </table></div>
 
@@ -293,7 +294,7 @@ td.n{white-space:nowrap;font-weight:700}
     <tr><td class="n">시간대별 예보</td><td><b>날씨누리 메인</b>과 같은 값(최대 10분 늦을 수 있음). '지금' 칸만 대표 관측소 실측. 적설만 기상청 단기예보.</td></tr>
     <tr><td class="n">오늘 최고</td><td>날씨누리 값. 날씨누리가 비워도 자정까지 유지합니다.</td></tr>
     <tr><td class="n">오늘 최저</td><td>날씨누리 값, 비어 있으면 기상청 단기예보</td></tr>
-    <tr><td class="n">내일 아침 최저</td><td>날씨누리 시간별 예보의 3~9시 중 가장 낮은 값. 한파 칸·내일 아침 탭에만 나옵니다. 화면의 다른 "최고·최저"는 모두 <b>오늘</b> 값입니다.</td></tr>
+    <tr><td class="n">내일 아침 최저</td><td>날씨누리 시간별 예보의 3~9시 중 가장 낮은 값. 한파 칸·최저기온 탭에만 나옵니다. 화면의 다른 "최고·최저"는 모두 <b>오늘</b> 값입니다.</td></tr>
     <tr><td class="n">6시간 강수예측</td><td>기상청 초단기예보 (매시간 발표)</td></tr>
     <tr><td class="n">기상특보</td><td>기상청 특보현황과 기상청 API 허브</td></tr>
     <tr><td class="n">하천 수위</td><td>한강·금강 홍수통제소 10분 자료</td></tr>
