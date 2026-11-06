@@ -2,6 +2,15 @@
 # 자주 바뀌는 파일은 캐시 안 함 → 새로고침만 해도 항상 최신 화면.
 # (이전엔 index.html이 캐시되어 사장님이 옛날 화면을 봄)
 
+# 보안 헤더 — 모든 파일. tools/live_local.py 의 SECURITY_HEADERS 와 같게 둔다.
+# CSP 는 다른 사이트의 틀 안에 넣기·플러그인·base 태그만 막는다. 화면이 인라인 스크립트와
+# 템플릿 실행(support.js)을 쓰고 CCTV·지도가 여러 외부 주소를 쓰므로 스크립트 출처는 제한하지 않았다.
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: SAMEORIGIN
+  Referrer-Policy: strict-origin-when-cross-origin
+  Content-Security-Policy: frame-ancestors 'self'; object-src 'none'; base-uri 'self'
+
 # HTML 진입점 — 절대 캐시 안 함
 /
   Cache-Control: no-store, must-revalidate

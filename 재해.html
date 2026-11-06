@@ -15,7 +15,7 @@
 <x-dc>
 <helmet>
 <link rel="preconnect" href="https://cdn.jsdelivr.net">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" integrity="sha256-0nQ4DLeBXpJHnTjkPdWy7vWFVnCROUAio6Le3gSEdMs=" crossorigin="anonymous">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#2563eb">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -183,6 +183,7 @@
       <sc-if value="{{rankEmpty}}">
         <div style="font-size:12.5px; color:var(--ink3); padding:10px 2px;">{{rankEmptyTxt}}</div>
       </sc-if>
+      {{rankChart}}
       {{rankLegend}}
     </div>
 
@@ -790,7 +791,7 @@ class Component extends DCLogic {
       obsText, obsSub, obsBg:(obsLv.k>=2?obsLv.bg:'var(--surface)'),
       obsBorder:(obsLv.k>=2?obsLv.c:'var(--border)'), obsTagBg:(obsLv.k>=2?obsLv.c:'var(--ink3)'),
       // 랭킹
-      rankLegend: null,
+      rankLegend: null, rankChart: null,
       rankTabs, rankRows, rankEmpty: rankRows.length===0,
       rankSrcTxt: anyAws ? ('기상청 AWS 실측 · ' + anyAws + '개 관서') : '자료 수신 대기',
       // 본문 블록
@@ -869,8 +870,46 @@ class Component extends DCLogic {
     const R=React.createElement;
     return R('div',{style:{display:'flex', flexWrap:'wrap', alignItems:'center', gap:'4px 12px', marginTop:'10px', paddingTop:'9px', borderTop:'1px solid var(--border)', fontSize:'11px', color:'var(--ink3)'}},
       items.map((x,i)=>R('span',{key:i, style:{display:'inline-flex', alignItems:'center', gap:'4px', whiteSpace:'nowrap'}},
-        R('span',{style:{width:'10px', height:'10px', borderRadius:'3px', background:x[0]}}), x[1])),
+        R('span',{style: x[2]==='ring'
+          ? {width:'11px', height:'11px', borderRadius:'50%', boxSizing:'border-box', border:'2px solid '+x[0], background:'var(--surface)'}
+          : {width:'10px', height:'10px', borderRadius:(x[2]==='dot'?'50%':'3px'), background:x[0]}}), x[1])),
       note ? R('span',{key:'note', style:{marginLeft:'auto'}}, note) : null);
+  }
+  /* 오늘 최저·다음 아침 최저 덤벨 차트 — 온도 축 하나에 빈 점(오늘)과 찬 점(아침)을 찍어 잇는다. 왼쪽일수록 춥다.
+     값은 오른쪽 칸에 항상 보이고, 단계는 아침 점의 색과 줄 배경으로 나타낸다. */
+  rankDumbbell(rows, myStation, mornLabel){
+    const R=React.createElement, all=[];
+    rows.forEach(r=>{ if(r.low!==null) all.push(r.low); if(r.morn!==null) all.push(r.morn); });
+    const lo=Math.min(...all), hi=Math.max(...all), span=hi-lo;
+    const step = span<=8 ? 2 : span<=20 ? 5 : 10;
+    const a=Math.floor(lo/step)*step, b=Math.max(Math.ceil(hi/step)*step, a+step);
+    const x=t=>(t-a)/(b-a)*100, ticks=[]; for(let t=a; t<=b; t+=step) ticks.push(t);
+    const cols='70px minmax(0,1fr) 46px 62px';
+    const cap=(t,w)=>R('div',{style:{fontSize:'11px', color:'var(--ink3)', textAlign:'right', whiteSpace:'nowrap', fontWeight:w||600}}, t);
+    const head=R('div',{key:'head', style:{display:'grid', gridTemplateColumns:cols, gap:'10px', alignItems:'end', padding:'0 10px 5px'}},
+      R('div'),
+      R('div',{style:{position:'relative', height:'15px', margin:'0 10px'}}, ticks.map(t=>
+        R('span',{key:t, style:{position:'absolute', left:x(t)+'%', transform:'translateX(-50%)', fontSize:'11px', color:'var(--ink3)', fontVariantNumeric:'tabular-nums', whiteSpace:'nowrap'}}, t+'℃'))),
+      cap('오늘 최저'), cap(mornLabel));
+    const body=rows.map(r=>{
+      const isMine=r.s.name===myStation, lvA=this.coldLevel(r.low), lvB=this.coldLevel(r.morn);
+      const hasA=r.low!==null, hasB=r.morn!==null, top=Math.max(hasA?lvA.k:0, hasB?lvB.k:0);
+      const tint=top>=3 ? (lvB.k>=lvA.k ? lvB.bg : lvA.bg) : 'transparent';
+      const dotB=lvB.k>=2 ? lvB.c : 'var(--brand)';
+      const gap=(hasA&&hasB) ? r.morn-r.low : null;
+      const tip=r.s.name+' · 오늘 최저 '+(hasA?this.deg(r.low)+'℃':'자료 없음')+' · '+mornLabel+' '+(hasB?this.deg(r.morn)+'℃':'자료 없음')
+        +(hasB&&lvB.t?' ('+lvB.t+')':'')+(gap===null||gap===0?'':' · '+Math.abs(gap)+'℃ '+(gap<0?'낮음':'높음'));
+      return R('div',{key:r.s.name, title:tip, style:{display:'grid', gridTemplateColumns:cols, gap:'10px', alignItems:'center', height:'34px', padding:'0 9px', borderRadius:'10px', background:(isMine?'var(--brandSoft)':tint), border:'1px solid '+(isMine?'var(--brand)':'transparent')}},
+        R('span',{style:{fontSize:'13.5px', fontWeight:(isMine?900:700), color:(isMine?'var(--brand)':'var(--ink)'), whiteSpace:'nowrap'}}, r.s.name),
+        R('div',{style:{position:'relative', height:'100%', margin:'0 10px'}},
+          ticks.map(t=>R('div',{key:t, style:{position:'absolute', left:x(t)+'%', top:'-1px', bottom:'-1px', width:'1px', background:(t===0?'var(--ink3)':'var(--border)')}})),
+          (hasA&&hasB) ? R('div',{style:{position:'absolute', left:Math.min(x(r.low),x(r.morn))+'%', width:Math.abs(x(r.low)-x(r.morn))+'%', top:'50%', height:'2px', transform:'translateY(-50%)', background:'var(--ink3)'}}) : null,
+          hasA ? R('div',{style:{position:'absolute', left:x(r.low)+'%', top:'50%', width:'14px', height:'14px', boxSizing:'border-box', transform:'translate(-50%,-50%)', borderRadius:'50%', border:'2px solid var(--ink2)', background:'var(--surface)'}}) : null,
+          hasB ? R('div',{style:{position:'absolute', left:x(r.morn)+'%', top:'50%', width:'10px', height:'10px', transform:'translate(-50%,-50%)', borderRadius:'50%', background:dotB, boxShadow:'0 0 0 2px var(--surface)'}}) : null),
+        R('span',{style:{textAlign:'right', fontSize:'14px', fontWeight:600, color:'var(--ink2)', fontVariantNumeric:'tabular-nums', whiteSpace:'nowrap'}}, hasA?this.deg(r.low)+'℃':'—'),
+        R('span',{style:{textAlign:'right', fontSize:'15px', fontWeight:900, color:'var(--ink)', fontVariantNumeric:'tabular-nums', whiteSpace:'nowrap'}}, hasB?this.deg(r.morn)+'℃':'—'));
+    });
+    return R('div',null, head, body);
   }
   legendBody(){
     const R=React.createElement;
@@ -1349,14 +1388,17 @@ class Component extends DCLogic {
     // ── 관서별 순위 ─────────────────────────────────────
     // 눈 예보도 대설특보도 없으면 오늘 최저부터 보여 준다. 적설 탭은 그대로 두어 언제든 누를 수 있다.
     const snowOn = (snowTop && snowTop.snow>0) || (d.warnings||[]).some(w=>/대설/.test(w.type||''));
-    // 한파특보가 있을 때만 다음 아침 최저 탭 — 한파는 다음 아침 예보로 대비하는데 오늘 최저 순위엔 안 보인다
     const coldOn = (d.warnings||[]).some(w=>/한파/.test(w.type||''));
     const mornLabel = (rowsAll.some(r=>r.mornNext) ? '내일' : '오늘')+' 아침';
-    const TABS = [{k:'snow',label:'적설'},{k:'low',label:'오늘 최저'}].concat(coldOn ? [{k:'morn',label:mornLabel}] : []).concat([{k:'feel',label:'체감'}]);
-    const key = (st.snowTab && (st.snowTab!=='morn' || coldOn)) ? st.snowTab : (snowOn ? 'snow' : 'low');
-    const val = r => key==='snow' ? r.snow : key==='low' ? r.low : key==='morn' ? r.morn : r.feel;
+    const TABS = [{k:'snow',label:'적설'},{k:'low',label:'최저기온'},{k:'feel',label:'체감'}];
+    const key = st.snowTab || (snowOn ? 'snow' : 'low');
+    const val = r => key==='snow' ? r.snow : key==='low' ? r.low : r.feel;
+    // 최저기온 탭은 다음 아침과 비교하는 덤벨 차트로 그린다 (아침 예보가 하나도 없으면 막대)
+    const useChart = key==='low' && rowsAll.some(r=>r.morn!==null);
+    // 한파특보 중에는 다음 아침으로 대비하므로 아침이 추운 순으로 세운다
+    const sortByMorn = useChart && coldOn;
     const rows = rowsAll.slice().sort((a,b)=>{
-      const x=val(a), y=val(b); if(x===null) return 1; if(y===null) return -1;
+      const x=sortByMorn?a.morn:val(a), y=sortByMorn?b.morn:val(b); if(x===null) return 1; if(y===null) return -1;
       return key==='snow' ? (y-x) : (x-y); });
     const vals = rows.map(val).filter(v=>v!==null);
     const maxSnow = Math.max(1, ...rows.map(r=>r.snow));
@@ -1400,15 +1442,18 @@ class Component extends DCLogic {
       warnText, warnBg:wT.bg, warnBorder:wT.bd, warnTagBg:wT.tag,
       obsTag:topTag, obsText:topText, obsSub:topSub, obsBg:tT.bg, obsBorder:tT.bd, obsTagBg:tT.tag,
       noteTxt: '※ 적설은 기상청 단기예보의 예상 신적설입니다(실측 적설이 아님). 대설주의보=24시간 신적설 5cm · 경보=20cm(산지 30cm) · 한파주의보=아침 최저 −12℃ 이하 2일 이상 또는 전날보다 10℃ 이상 하강 · 경보=−15℃ 이하 2일 이상 또는 15℃ 이상 하강',
-      rankTip: (key==='snow' ? '기상청 단기예보의 앞으로 24시간 예상 신적설 합계입니다. 실측 적설이 아닙니다.' : key==='low' ? '오늘 최저기온 예보입니다. 날씨누리 값이 비면 기상청 단기예보를 씁니다. 내일 아침 예보는 아래 한파 칸에 있습니다.' : key==='morn' ? '날씨누리 시간별 예보의 다음 아침(3~9시) 중 가장 낮은 값입니다. 실측이 아닙니다.' : '날씨누리 시간별 예보의 앞으로 24시간 중 가장 낮은 체감온도입니다. 실측이 아닙니다.'),
+      rankTip: (key==='snow' ? '기상청 단기예보의 앞으로 24시간 예상 신적설 합계입니다. 실측 적설이 아닙니다.' : key==='low' ? '오늘 최저기온 예보입니다. 날씨누리 값이 비면 기상청 단기예보를 씁니다. 빈 점이 오늘 최저, 찬 점이 날씨누리 시간별 예보의 다음 아침(3~9시) 최저입니다. 왼쪽일수록 춥습니다. 평소에는 오늘 최저가 낮은 순, 한파특보 중에는 다음 아침이 낮은 순입니다.' : '날씨누리 시간별 예보의 앞으로 24시간 중 가장 낮은 체감온도입니다. 실측이 아닙니다.'),
       c1Tip: '기온은 이 관서 대표 기상 관측소의 실측입니다.', c2Tip: '날씨누리 시간별 예보로 판단합니다. 앞으로 24시간 중 0도 이하이면서 앞뒤로 비·눈이 있는 시간을 결빙 위험으로 봅니다.',
       c3Tip: '날씨누리 메인의 시간별 예보 기준 아침(3~9시) 최저기온입니다.', f24Tip: '날씨누리 메인의 시간별 예보(1시간 간격)와 같은 값입니다. 적설만 기상청 단기예보입니다.',
-      rankTitle: (key==='snow' ? '예상 적설' : key==='low' ? '오늘 최저기온' : key==='morn' ? mornLabel+' 최저기온' : '최저 체감온도'),
-      rankSrcTxt: (key==='snow' ? '기상청 단기예보 · 앞으로 24시간 신적설 합계' : key==='low' ? '날씨누리 · 기상청 단기예보 · 오늘 최저' : key==='morn' ? '날씨누리 시간별 예보 · 3~9시 중 가장 낮은 값' : '날씨누리 시간별 예보 · 앞으로 24시간 중 가장 낮은 값'),
-      rankLegend: key==='snow'
+      rankTitle: (key==='snow' ? '예상 적설' : key==='low' ? '오늘 최저 · '+mornLabel+' 최저' : '최저 체감온도'),
+      rankSrcTxt: (key==='snow' ? '기상청 단기예보 · 앞으로 24시간 신적설 합계' : key==='low' ? '날씨누리 · 기상청 단기예보' + (sortByMorn ? ' · '+mornLabel+' 추운 순' : '') : '날씨누리 시간별 예보 · 앞으로 24시간 중 가장 낮은 값'),
+      rankChart: useChart ? this.rankDumbbell(rows, myStation, mornLabel) : null,
+      rankLegend: useChart
+        ? this.rankLegend([['var(--ink2)','오늘 최저','ring'],['var(--brand)',mornLabel,'dot'],['var(--caution)','−5℃ 이하 강추위','dot'],['var(--warn)','−12℃ 이하 주의보급','dot'],['var(--severe)','−15℃ 이하 경보급','dot']], '왼쪽일수록 추움')
+        : key==='snow'
         ? this.rankLegend([['var(--brand)','1cm 미만 눈'],['var(--caution)','1cm 이상'],['var(--warn)','5cm 이상 주의보급'],['var(--severe)','20cm 이상 경보급']], '막대가 길수록 많음')
         : this.rankLegend([['var(--ink3)','영상'],['var(--brand)','0℃ 이하 영하'],['var(--caution)','−5℃ 이하 강추위'],['var(--warn)','−12℃ 이하 주의보급'],['var(--severe)','−15℃ 이하 경보급']], '막대가 길수록 추움 · 지금 가장 추운 곳이 끝까지'),
-      rankTabs, rankRows, rankEmpty: !stations.length, rankEmptyTxt: '예보 자료를 불러오는 중입니다.',
+      rankTabs, rankRows: (useChart ? [] : rankRows), rankEmpty: !stations.length, rankEmptyTxt: '예보 자료를 불러오는 중입니다.',
       midCols: wide ? 'minmax(0,1fr) minmax(0,1.3fr) minmax(0,1fr)' : 'minmax(0,1fr)',
       c1Title: myStation+' 지금', c1Sub: '', c1Body: this.snowNowBody(me),
       c2Title: '결빙 위험', c2Sub: myStation+' · 앞으로 24시간', c2Body: this.iceBody(me),

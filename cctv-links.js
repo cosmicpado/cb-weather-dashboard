@@ -108,6 +108,7 @@
   function loadHls(cb) {
     if (window.Hls) { cb(true); return; }
     if (!hlsLoading) { hlsLoading = []; var s = document.createElement('script'); s.src = HLS_SRC;
+      s.integrity = 'sha384-oJR5PTkR0gvqJ/UnX1IkFQgxg6BByX7jPWmgSSY5dz0+Yc7O3mloo717zZpF/xpb'; s.crossOrigin = 'anonymous';   /* 버전을 올리면 이 값도 다시 계산 */
       s.onload = function () { var q = hlsLoading; hlsLoading = null; q.forEach(function (f) { f(true); }); };
       s.onerror = function () { var q = hlsLoading; hlsLoading = null; q.forEach(function (f) { f(false); }); };
       document.head.appendChild(s); }
