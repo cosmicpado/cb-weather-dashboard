@@ -15,15 +15,18 @@
 import argparse
 import functools
 import http.server
+import os
 import subprocess
 import sys
 import threading
 import time
 from datetime import datetime
 from pathlib import Path
+from urllib.parse import unquote
 
 ROOT = Path(__file__).resolve().parent.parent
 FILES = ['data.js', 'data-cctv.js']
+SERVE_EXT = {'.html', '.js', '.css', '.json', '.svg', '.png', '.jpg', '.jpeg', '.gif', '.webp', '.ico', '.woff', '.woff2'}
 
 
 def git(*args):
@@ -64,6 +67,40 @@ def loop(every, job=sync):
         time.sleep(every)
 
 
+def allowed_path(raw):
+    """화면에 필요한 파일만 내준다 — 운영 nginx(tools/server/setup-*.sh)와 같은 규칙.
+    ⚠ 작업 폴더에는 .env(API 키)·.git·tools 가 함께 있다. --lan 이면 내부망 어디서나 받아 갈 수 있으므로
+      빼면 안 된다(2026-11-06 점검에서 /.env 가 그대로 내려받아지는 것을 발견).
+    Windows 는 '.env.'·'tools '·'.env::$DATA' 처럼 끝 글자가 달라도 같은 파일로 열어서 그런 모양도 막는다."""
+    path = unquote(raw.split('?', 1)[0].split('#', 1)[0])      # 표준 처리기(translate_path)와 같은 방식으로 자른다
+    if path == '/':
+        return True                                            # → index.html → 지도.html
+    if path.endswith('/') or any(c in path for c in '\\:\0'):
+        return False                                           # 폴더 목록 · 역슬래시 경로 · 대체 스트림
+    parts = [p for p in path.split('/') if p]
+    if not parts or parts[-1] != parts[-1].rstrip(' .'):
+        return False
+    for p in parts:
+        if p.startswith('.') or p.rstrip(' .').lower() == 'tools':
+            return False
+    return os.path.splitext(parts[-1])[1].lower() in SERVE_EXT
+
+
+class Quiet(http.server.SimpleHTTPRequestHandler):
+    def log_message(self, *x):                 # 요청 로그는 끈다(가져오기 기록만 보이게)
+        pass
+
+    def send_head(self):                       # GET·HEAD 가 모두 여기를 지난다
+        if not allowed_path(self.path):
+            self.send_error(404)
+            return None
+        return super().send_head()
+
+    def end_headers(self):                     # 운영(nginx·Cloudflare)과 같게 — 브라우저가 옛 data.js 를 다시 쓰지 않게
+        self.send_header('Cache-Control', 'no-cache')
+        super().end_headers()
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--port', type=int, default=8765)
@@ -82,13 +119,6 @@ def main():
         except KeyboardInterrupt:
             sys.exit(0)
     threading.Thread(target=loop, args=(every, job), daemon=True).start()
-    class Quiet(http.server.SimpleHTTPRequestHandler):
-        def log_message(self, *x):                 # 요청 로그는 끈다(가져오기 기록만 보이게)
-            pass
-
-        def end_headers(self):                     # 운영(nginx·Cloudflare)과 같게 — 브라우저가 옛 data.js 를 다시 쓰지 않게
-            self.send_header('Cache-Control', 'no-cache')
-            super().end_headers()
     handler = functools.partial(Quiet, directory=str(ROOT))
     class Server(http.server.ThreadingHTTPServer):
         allow_reuse_address = False                # Windows 는 켜 두면 이미 쓰는 포트에도 겹쳐 붙는다
