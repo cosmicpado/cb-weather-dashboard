@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ko"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>받은 의견</title>
+<style>
+  :root{--bg:#f3f5f9;--card:#fff;--ink:#1b2333;--ink2:#4a5568;--ink3:#7a8597;--line:#dde3ec;--brand:#2563eb;--soft:#eef3ff}
+  @media (prefers-color-scheme:dark){:root{--bg:#0f141c;--card:#171e29;--ink:#eef2f8;--ink2:#b9c3d3;--ink3:#8592a6;--line:#2a3443;--brand:#5b8dff;--soft:#1c2740}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.55 Pretendard,system-ui,-apple-system,"Malgun Gothic",sans-serif}
+  .wrap{max-width:980px;margin:0 auto;padding:22px 16px 60px}
+  header{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+  h1{font-size:20px;margin:0;letter-spacing:-.3px}
+  .back{color:var(--ink2);text-decoration:none;border:1px solid var(--line);background:var(--card);border-radius:9px;padding:6px 11px;font-weight:700;font-size:13px}
+  .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+  input,select,button{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:9px;padding:7px 10px}
+  button{cursor:pointer;font-weight:700}
+  button.pri{background:var(--brand);border-color:var(--brand);color:#fff}
+  .n{color:var(--ink3);font-size:13px;margin-left:auto}
+  .item{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+  .meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:12.5px;color:var(--ink3);margin-bottom:6px}
+  .tag{background:var(--soft);color:var(--brand);border-radius:6px;padding:1px 7px;font-weight:700}
+  .k{border-radius:6px;padding:1px 8px;font-weight:800;color:#fff}
+  .k-오류{background:#d64545}.k-기능{background:#2563eb}.k-새{background:#7c3aed}.k-기타{background:#6b7280}
+  .who{color:var(--ink2);font-weight:700}
+  .txt{white-space:pre-wrap;word-break:break-word;font-size:14.5px}
+  .msg{padding:30px 10px;text-align:center;color:var(--ink3)}
+</style>
+</head><body>
+<div class="wrap">
+  <header>
+    <a class="back" href="지도.html">← 종합 현황</a>
+    <h1>받은 의견</h1>
+  </header>
+  <div class="bar">
+    <select id="kind"><option value="">모든 구분</option><option>오류</option><option>기능 제안</option><option>새 사이트 제안</option><option>기타</option></select>
+    <select id="page"><option value="">모든 화면</option></select>
+    <input id="q" type="search" placeholder="내용·부서·관서 검색" style="flex:1;min-width:180px">
+    <button id="reload">새로고침</button>
+    <button id="csv">CSV 받기</button>
+    <span class="n" id="count"></span>
+  </div>
+  <div id="list"><div class="msg">불러오는 중…</div></div>
+</div>
+<script>
+(function(){
+  var items=[], $=function(id){ return document.getElementById(id); };
+  /* 비밀 주소 의견.html#k=<키> — # 뒤는 서버로 가지 않는다. 서버 PC(localhost)는 키 없이 보인다. */
+  function getKey(){ var m=/(?:^|[#&])k=([^&]+)/.exec(location.hash||''); return m ? decodeURIComponent(m[1]) : ''; }
+  function el(tag, cls, txt){ var e=document.createElement(tag); if(cls) e.className=cls; if(txt!=null) e.textContent=txt; return e; }
+
+  function load(){
+    $('list').innerHTML=''; $('list').appendChild(el('div','msg','불러오는 중…'));
+    var h={}; var k=getKey(); if(k) h['X-Admin-Key']=k;
+    fetch('api/feedback',{cache:'no-store',headers:h}).then(function(r){
+      return r.json().catch(function(){ return {ok:false, err: r.status===404||r.status===405||r.status===501 ? '이 서버에서는 의견 받기가 켜져 있지 않습니다' : '서버 응답 오류 ('+r.status+')'}; });
+    }).then(function(j){
+      if(!j.ok){ items=[]; render(j.err||'볼 수 없는 주소입니다'); return; }
+      items=j.items||[];
+      var pages={}; items.forEach(function(x){ if(x.page) pages[x.page]=1; });
+      var sel=$('page'), cur=sel.value; sel.innerHTML='<option value="">모든 화면</option>';
+      Object.keys(pages).sort().forEach(function(p){ var o=el('option',null,p); o.value=p; sel.appendChild(o); }); sel.value=cur;
+      render();
+    }).catch(function(){ render('서버에 연결하지 못했습니다'); });
+  }
+  function filtered(){
+    var p=$('page').value, k=$('kind').value, q=$('q').value.trim().toLowerCase();
+    return items.filter(function(x){ if(p && x.page!==p) return false; if(k && (x.kind||'기타')!==k) return false;
+      if(q){ var s=[x.text,x.who,x.station,x.page].join(' ').toLowerCase(); if(s.indexOf(q)<0) return false; } return true; });
+  }
+  function render(err){
+    var L=$('list'); L.innerHTML='';
+    if(err){ L.appendChild(el('div','msg',err)); $('count').textContent=''; return; }
+    var f=filtered(); $('count').textContent='전체 '+items.length+'건'+(f.length!==items.length?' · 보이는 '+f.length+'건':'');
+    if(!f.length){ L.appendChild(el('div','msg', items.length ? '조건에 맞는 의견이 없습니다' : '아직 받은 의견이 없습니다')); return; }
+    f.forEach(function(x){
+      var it=el('div','item'), m=el('div','meta');
+      var kd=x.kind||'기타'; m.appendChild(el('span','k k-'+kd.split(' ')[0],kd));
+      m.appendChild(el('span',null,x.ts||''));
+      if(x.page) m.appendChild(el('span','tag',x.page));
+      if(x.station) m.appendChild(el('span',null,x.station));
+      m.appendChild(el('span','who',x.who||'익명'));
+
+      it.appendChild(m); it.appendChild(el('div','txt',x.text||'')); L.appendChild(it);
+    });
+  }
+  function csv(){
+    var cell=function(v){ v=String(v==null?'':v); if(/^[=+\-@]/.test(v)) v="'"+v; return '"'+v.replace(/"/g,'""')+'"'; };   /* 엑셀 수식 실행 방지 */
+    var rows=[['시각','구분','화면','관서','부서·이름','내용']].concat(filtered().map(function(x){ return [x.ts,x.kind||'기타',x.page,x.station,x.who||'익명',x.text]; }));
+    var b=new Blob(['﻿'+rows.map(function(r){ return r.map(cell).join(','); }).join('\r\n')],{type:'text/csv;charset=utf-8'});
+    var a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='의견_'+new Date().toISOString().slice(0,10)+'.csv'; a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);
+  }
+  $('page').onchange=function(){ render(); }; $('kind').onchange=function(){ render(); }; $('q').oninput=function(){ render(); };
+  $('reload').onclick=load; $('csv').onclick=csv;
+  load();
+})();
+</script>
+</body></html>

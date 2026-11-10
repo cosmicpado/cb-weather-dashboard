@@ -15,6 +15,7 @@
 import argparse
 import functools
 import http.server
+import json
 import os
 import subprocess
 import sys
@@ -25,6 +26,8 @@ from pathlib import Path
 from urllib.parse import unquote
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT / 'tools'))
+import feedback  # noqa: E402  — 의견 받기(/api/feedback)
 FILES = ['data.js', 'data-cctv.js']
 SERVE_EXT = {'.html', '.js', '.css', '.json', '.svg', '.png', '.jpg', '.jpeg', '.gif', '.webp', '.ico', '.woff', '.woff2'}
 # Cloudflare _headers 와 같게 둔다. CSP 를 스크립트 출처까지 조이지 않는 이유는 _headers 주석 참고.
@@ -68,6 +71,13 @@ def collect():
     return f'직접 수집 완료 ({time.time() - t0:.0f}초)'
 
 
+def radar():
+    r = subprocess.run([sys.executable, str(ROOT / 'tools' / 'update_data.py'), '--radar-only'], cwd=ROOT,
+                       capture_output=True, text=True, encoding='utf-8', errors='replace')
+    out = (r.stdout or r.stderr).strip().splitlines()
+    return (out[-1] if out else '레이더 결과 없음') if r.returncode == 0 else '레이더 실패 — ' + ' / '.join(out[-2:])
+
+
 def loop(every, job=sync):
     while True:
         print(f'[{datetime.now():%H:%M:%S}] {job()}', flush=True)
@@ -102,6 +112,38 @@ class Quiet(http.server.SimpleHTTPRequestHandler):
     def log_message(self, *x):                 # 요청 로그는 끈다(가져오기 기록만 보이게)
         pass
 
+    def _feedback(self, method):
+        """화면의 💬 의견 보내기 · 의견.html — 규칙은 tools/feedback.py(Rocky 서버와 같은 코드)."""
+        body = b''
+        if method == 'POST':
+            try:
+                n = int(self.headers.get('Content-Length') or 0)
+            except ValueError:
+                n = -1
+            if n < 0 or n > feedback.MAX_BODY:
+                code, out = 413, {'ok': False, 'err': '너무 깁니다'}
+            else:
+                body = self.rfile.read(n)
+                code, out = feedback.handle(method, self.client_address[0], self.headers, body)
+        else:
+            code, out = feedback.handle(method, self.client_address[0], self.headers)
+        b = json.dumps(out, ensure_ascii=False).encode('utf-8')
+        self.send_response(code)
+        self.send_header('Content-Type', 'application/json; charset=utf-8')
+        self.send_header('Content-Length', str(len(b)))
+        self.end_headers()
+        self.wfile.write(b)
+
+    def do_GET(self):
+        if self.path.split('?', 1)[0] == '/api/feedback':
+            return self._feedback('GET')
+        return super().do_GET()
+
+    def do_POST(self):
+        if self.path.split('?', 1)[0] == '/api/feedback':
+            return self._feedback('POST')
+        self.send_error(405)
+
     def send_head(self):                       # GET·HEAD 가 모두 여기를 지난다
         if not allowed_path(self.path):
             self.send_error(404)
@@ -133,6 +175,9 @@ def main():
         except KeyboardInterrupt:
             sys.exit(0)
     threading.Thread(target=loop, args=(every, job), daemon=True).start()
+    if a.collect:
+        # 레이더만 1분마다 따로 — 5분 전체 수집을 기다리면 화면이 10분 넘게 늦는다(상황실 레이더 칸이 frames.json 을 1분마다 읽는다)
+        threading.Thread(target=loop, args=(60, radar), daemon=True).start()
     handler = functools.partial(Quiet, directory=str(ROOT))
     class Server(http.server.ThreadingHTTPServer):
         allow_reuse_address = False                # Windows 는 켜 두면 이미 쓰는 포트에도 겹쳐 붙는다

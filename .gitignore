@@ -34,3 +34,8 @@ Thumbs.db
 
 # Claude Code 작업 공간 (worktree, 세션 데이터)
 .claude/
+
+# 상황실 움직이는 레이더 프레임 — 수집기가 2시간치만 두고 지운다
+images/radar/
+# 받은 의견(tools/feedback.py) — 서버에만 둔다
+.data/

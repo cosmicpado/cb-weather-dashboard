@@ -2,7 +2,7 @@
 # 행정망 운영 서버(Rocky Linux 9·10) 설치 스크립트.
 #
 # 하는 일: 접속 확인 · 시간대(KST) · 패키지 · 전용 계정 · 저장소 받기 · .env 견본 · 시험 수집
-#          · 5분 수집 타이머(systemd) · nginx 웹서버(80) · SELinux · 방화벽
+#          · 5분 수집 타이머 · 1분 레이더 타이머 · 의견 받기 서비스(systemd) · nginx 웹서버(80) · SELinux · 방화벽
 # GitHub 에 올리지 않는다(--no-push). 이 서버가 데이터를 모으고 화면도 직접 띄운다 — Cloudflare 불필요.
 # 여러 번 실행해도 안전하다(이미 된 단계는 건너뛴다). 중간에 멈추면 안내대로 한 뒤 다시 실행하면 된다.
 #
@@ -74,6 +74,13 @@ if ! grep -qE '^DATA_GO_KR_KEY=.+' "$DIR/.env" || ! grep -qE '^KMA_APIHUB_KEY=.+
      vi $DIR/.env      (i 로 입력 시작 / 붙여넣기: 마우스 오른쪽 클릭 / 저장·종료: Esc 누르고 :wq Enter)"
 fi
 ok "키 확인 (DATA_GO_KR_KEY · KMA_APIHUB_KEY 있음)"
+# 받은 의견을 다른 PC 에서 보는 비밀 주소(의견.html#k=<키>)용 키 — 없으면 하나 만든다(서버 자신에서는 키 없이 보인다)
+if ! grep -qE '^FEEDBACK_ADMIN_KEY=.+' "$DIR/.env"; then
+  K=$(python3 -c 'import secrets; print(secrets.token_hex(12))')
+  sed -i '/^FEEDBACK_ADMIN_KEY=/d' "$DIR/.env"
+  printf '\n# 의견.html 관리자 키 — 다른 PC 에서 받은 의견을 볼 때 넣는다\nFEEDBACK_ADMIN_KEY=%s\n' "$K" >> "$DIR/.env"
+  ok "의견 비밀 주소용 키 만듦 (맨 끝 '완료'에 주소가 나온다)"
+fi
 
 say "7. 시험 수집 (1~2분 걸린다)"
 if runuser -u "$SVC_USER" -- env PYTHONUTF8=1 python3 "$DIR/tools/update_data.py" --no-push > /tmp/cb-first-run.log 2>&1; then
@@ -116,9 +123,68 @@ Persistent=true
 [Install]
 WantedBy=timers.target
 EOF
+# 레이더만 1분마다 따로 — 5분 수집만 기다리면 상황실 레이더가 실제보다 10분 넘게 늦는다.
+# 이미 받은 5분 칸이면 기상청을 부르지 않으므로 실제 호출은 5분에 한두 번이다(update_data.py fetch_radar_frames).
+cat > /etc/systemd/system/cbweather-radar.service <<EOF
+[Unit]
+Description=충북소방 기상종합상황판 레이더 영상 받기
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=$SVC_USER
+WorkingDirectory=$DIR
+Environment=PYTHONUTF8=1
+Nice=10
+TimeoutStartSec=3min
+ExecStart=/usr/bin/python3 tools/update_data.py --radar-only
+ExecStartPost=+-/usr/sbin/restorecon -R $DIR/images
+EOF
+cat > /etc/systemd/system/cbweather-radar.timer <<EOF
+[Unit]
+Description=충북소방 기상종합상황판 레이더 — 1분마다
+
+[Timer]
+OnCalendar=*:*:20
+AccuracySec=5s
+
+[Install]
+WantedBy=timers.target
+EOF
 systemctl daemon-reload
 systemctl enable --now $UNIT.timer >/dev/null 2>&1
-ok "다음 실행: $(systemctl list-timers $UNIT.timer --no-legend | awk '{print $1, $2, $3}')"
+systemctl enable --now cbweather-radar.timer >/dev/null 2>&1
+ok "다음 실행: $(systemctl list-timers $UNIT.timer --no-legend | awk '{print $1, $2, $3}') · 레이더는 1분마다"
+
+say "8-2. 의견 받기 (화면의 💬 → 127.0.0.1:8081 → $DIR/.data/feedback.jsonl)"
+install -d -o "$SVC_USER" -g "$SVC_USER" -m 750 "$DIR/.data"
+cat > /etc/systemd/system/cbweather-feedback.service <<EOF
+[Unit]
+Description=충북소방 기상종합상황판 의견 받기
+After=network.target
+
+[Service]
+User=$SVC_USER
+WorkingDirectory=$DIR
+Environment=PYTHONUTF8=1
+ExecStart=/usr/bin/python3 tools/server/feedback_server.py
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=$DIR/.data
+
+[Install]
+WantedBy=multi-user.target
+EOF
+systemctl daemon-reload
+systemctl enable --now cbweather-feedback >/dev/null 2>&1
+systemctl restart cbweather-feedback
+sleep 1
+systemctl is-active -q cbweather-feedback && ok "의견 받기 동작" || warn "의견 받기 시작 실패 — journalctl -u cbweather-feedback -n 30"
 
 say "9. 웹서버 (nginx · 80 포트)"
 # 저장소 폴더를 그대로 여는 것이라 .env(API 키)·.git·tools·로그가 같이 노출되지 않게
@@ -137,6 +203,12 @@ server {
     location ~ /\\.          { return 404; }          # .env · .git · .tmp
     location ^~ /tools/     { return 404; }
     location = /            { }                       # → index.html → 지도.html
+    location = /api/feedback {                        # 화면의 💬 의견 보내기 · 의견.html (tools/server/feedback_server.py)
+        proxy_pass http://127.0.0.1:8081;
+        proxy_set_header X-Real-IP \$remote_addr;
+        client_max_body_size 16k;
+        proxy_read_timeout 10s;
+    }
     location ~* \\.(html|js|css|json|svg|png|jpe?g|gif|webp|ico|woff2?)\$ {
         add_header Cache-Control "no-cache";          # data.js 가 5분마다 바뀌므로 매번 확인
     }
@@ -147,6 +219,8 @@ nginx -t -q
 semanage fcontext -a -t httpd_sys_content_t "$DIR(/.*)?" 2>/dev/null \
   || semanage fcontext -m -t httpd_sys_content_t "$DIR(/.*)?"
 restorecon -R "$DIR"
+# nginx 가 의견 받기(127.0.0.1:8081)로 넘길 수 있게 — SELinux 기본값은 웹서버의 외부 연결을 막는다
+getsebool httpd_can_network_connect 2>/dev/null | grep -q ' on$' || setsebool -P httpd_can_network_connect 1
 systemctl enable --now nginx >/dev/null 2>&1
 systemctl reload nginx
 ok "nginx 동작 — SELinux: $(getenforce)"
@@ -165,5 +239,8 @@ code=$(curl -s -o /dev/null -m 5 -w '%{http_code}' "http://127.0.0.1/%EC%A7%80%E
 say "완료"
 echo "  · 이 서버에서     : http://localhost/지도.html"
 echo "  · 행정망 PC 에서  : http://$IP/지도.html"
-echo "  · 수집 기록 보기  : journalctl -u $UNIT -n 50"
+FBK=$(grep -m1 '^FEEDBACK_ADMIN_KEY=' "$DIR/.env" | cut -d= -f2-)
+echo "  · 받은 의견(비밀) : http://$IP/의견.html#k=$FBK   ← 즐겨찾기 해 두고 남에게 알리지 마세요"
+echo "                      원본 CSV: $DIR/.data/feedback.csv   · 주소가 샜으면 .env 의 FEEDBACK_ADMIN_KEY 만 바꾸면 된다"
+echo "  · 수집 기록 보기  : journalctl -u $UNIT -n 50   (레이더: journalctl -u cbweather-radar -n 20)"
 echo "  · 소스 반영       : bash $DIR/tools/server/update-code.sh   (GitHub main 에 올린 뒤)"

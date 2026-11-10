@@ -1462,6 +1462,224 @@ def fetch_typhoon():
     return out
 
 
+# ── 지진·낙뢰·영향예보 (2026-11-09 활용신청) ──────────────────────────────
+def _km(lat1, lon1, lat2, lon2):
+    """두 좌표 사이 거리(km) — 하버사인."""
+    from math import radians, sin, cos, asin, sqrt
+    p1, p2 = radians(lat1), radians(lat2)
+    a = sin((p2 - p1) / 2) ** 2 + cos(p1) * cos(p2) * sin(radians(lon2 - lon1) / 2) ** 2
+    return 6371 * 2 * asin(sqrt(a))
+
+
+def _stations_ll():
+    return [(s['name'], float(s['lat']), float(s['lon']))
+            for s in (P.get('stations_all') or []) if s.get('lat') and s.get('lon')]
+
+
+def _nearest_station(lat, lon):
+    best = None
+    for nm, a, b in _stations_ll():
+        d = _km(lat, lon, a, b)
+        if best is None or d < best[1]:
+            best = (nm, d)
+    return best or ('', 9999.0)
+
+
+def _hub_text(r):
+    """API 허브 응답 본문 — UTF-8 이 아니면 EUC-KR. 활용신청 안내면 예외."""
+    try:
+        t = r.content.decode('utf-8')
+    except UnicodeDecodeError:
+        t = r.content.decode('euc-kr', errors='replace')
+    if '활용신청' in t[:300]:
+        raise RuntimeError('활용신청 필요')
+    return t
+
+
+QUAKE_TP = {'2': '국외지진정보', '3': '국내지진통보', '5': '지진정보(재통보)', '10': '지진현장경보',
+            '11': '지진조기경보', '12': '국외지진조기경보', '14': '지진속보'}
+_ROMAN = 'ⅠⅡⅢⅣⅤⅥⅦⅧⅨⅩ'
+
+
+def _roman_num(s):
+    m = _re.search('[' + _ROMAN + ']+', s or '')
+    if not m:
+        return None
+    # Ⅰ~Ⅹ는 한 글자씩 따로 있는 문자다(Ⅳ도 한 글자) — 첫 글자의 순번이 곧 진도.
+    return _ROMAN.index(m.group(0)[0]) + 1
+
+
+def fetch_quake():
+    """기상청 지진 통보(eqk_now) — 국내 지진만, 관서 거리·충북 진도를 붙인다.
+    한 줄 형식: TP TM_FC SEQ TM_EQK.MSC MT LAT LON LOC,INT,REM,COR,=
+    ⚠ INT(진도)가 '최대진도 Ⅳ(전북),Ⅲ(전남),Ⅱ(광주)'처럼 쉼표로 여러 칸이라 쉼표로 자르면 안 된다
+      → 로마숫자 진도로 시작하는 칸만 진도로 모으고 나머지를 비고로 본다.
+    실패하면 예외(호출측이 이전 값 보존). 지진이 없으면 []."""
+    if not KMA_APIHUB_KEY:
+        return []
+    tm = datetime.now().strftime('%Y%m%d%H%M')
+    r = shared_get('quake_now', f'https://apihub.kma.go.kr/api/typ01/url/eqk_now.php'
+                   f'?tm={tm}&disp=0&help=0&authKey={KMA_APIHUB_KEY}', timeout=12, max_age=120)
+    r.raise_for_status()
+    out = []
+    for raw in _hub_text(r).split('\n'):
+        s = raw.strip()
+        if not s or s.startswith('#'):
+            continue
+        f = s.split(None, 7)
+        if len(f) < 8 or f[0] not in QUAKE_TP or f[0] in ('2', '12'):   # 국외는 뺀다
+            continue
+        try:
+            mt, lat, lon = float(f[4]), float(f[5]), float(f[6])
+        except ValueError:
+            continue
+        rest = f[7].rstrip('=').rstrip(',').strip()
+        parts = [x.strip() for x in rest.split(',')]
+        loc, i, ints = parts[0], 1, []
+        while i < len(parts) and _re.match(r'^(최대진도\s*)?[' + _ROMAN + r']+\s*\(', parts[i]):
+            ints.append(parts[i]); i += 1
+        if not ints and i < len(parts) and parts[i] == '':
+            i += 1
+        rem = ','.join(p for p in parts[i:] if p).strip()
+        cb = next((x for x in ints if _re.search(r'충북|충청북', x)), '')
+        te = f[3].split('.')[0]
+        near_nm, near_km = _nearest_station(lat, lon)
+        out.append({
+            'tp': f[0], 'tp_txt': QUAKE_TP[f[0]], 'tm_fc': f[1], 'seq': f[2],
+            'tm_eqk': f'{te[0:4]}-{te[4:6]}-{te[6:8]} {te[8:10]}:{te[10:12]}:{te[12:14]}',
+            'mt': mt, 'lat': lat, 'lon': lon, 'loc': loc,
+            'int': ','.join(ints), 'int_max': _roman_num(ints[0]) if ints else None,
+            'int_cb': _roman_num(cb) if cb else None, 'rem': rem[:200],
+            'near': near_nm, 'dist_km': round(near_km),
+        })
+    return out
+
+
+def merge_quake(prev_list, new_list, days=7):
+    """eqk_now 는 최근 통보 몇 건만 준다 → 회차마다 이전 목록과 합쳐 7일치를 쌓는다.
+    같은 지진은 통보가 여러 번(속보→통보→재통보) 오니 진앙시 기준 마지막 통보만 남긴다."""
+    cut = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d %H:%M:%S')
+    by = {}
+    for q in (prev_list or []) + (new_list or []):
+        if not isinstance(q, dict) or q.get('tm_eqk', '') < cut:
+            continue
+        k = q.get('tm_eqk', '')[:16]
+        if k not in by or str(q.get('tm_fc', '')) >= str(by[k].get('tm_fc', '')):
+            by[k] = q
+    return sorted(by.values(), key=lambda q: q.get('tm_eqk', ''), reverse=True)[:30]
+
+
+def fetch_lightning(radius_km=20, minutes=60):
+    """기상청 낙뢰 관측(lgt_pnt) — 최근 1시간, 관서마다 반경 20km 안 횟수·가장 가까운 거리·마지막 시각.
+    낙뢰가 없으면(겨울 대부분) by={} 이고 정상이다. 실패하면 예외."""
+    if not KMA_APIHUB_KEY:
+        return None
+    now = datetime.now()
+    # ⚠ lgt_pnt 는 tm 앞뒤로 itv분씩 준다(2026-11-09 실측: tm=17:00·itv=60 → 16:00~17:59).
+    #   최근 1시간 = 가운데를 30분 전으로 두고 itv=30.
+    tm = (now - timedelta(minutes=minutes // 2)).strftime('%Y%m%d%H%M')
+    r = shared_get('lgt_pnt', f'https://apihub.kma.go.kr/api/typ01/url/lgt_pnt.php'
+                   f'?tm={tm}&itv={minutes // 2}&authKey={KMA_APIHUB_KEY}', timeout=12, max_age=120)
+    r.raise_for_status()
+    cut = (now - timedelta(minutes=minutes)).strftime('%Y%m%d%H%M%S')
+    cut10 = (now - timedelta(minutes=10)).strftime('%Y%m%d%H%M%S')
+    sts = _stations_ll()
+    by, pts = {}, []
+    for raw in _hub_text(r).split('\n'):
+        s = raw.strip()
+        if not s or s.startswith('#'):
+            continue
+        f = s.split()
+        if len(f) < 4 or len(f[0]) < 12:
+            continue
+        try:
+            t, lon, lat, st = f[0], float(f[1]), float(f[2]), float(f[3])
+        except ValueError:
+            continue
+        if t < cut:
+            continue
+        hit = False
+        for nm, a, b in sts:
+            d = _km(lat, lon, a, b)
+            if d > radius_km:
+                continue
+            hit = True
+            o = by.setdefault(nm, {'n': 0, 'n10': 0, 'near_km': None, 'last': ''})
+            o['n'] += 1
+            if t >= cut10:
+                o['n10'] += 1
+            if o['near_km'] is None or d < o['near_km']:
+                o['near_km'] = round(d, 1)
+            if t > o['last']:
+                o['last'] = t
+        if hit and len(pts) < 300:
+            pts.append({'tm': t, 'lat': lat, 'lon': lon, 'st': st})
+    for o in by.values():
+        lt = o['last']
+        o['last'] = f'{lt[8:10]}:{lt[10:12]}' if len(lt) >= 12 else ''
+    return {'tm': now.strftime('%Y-%m-%d %H:%M'), 'minutes': minutes, 'radius_km': radius_km,
+            'n': len(pts), 'by': by, 'pts': pts}
+
+
+IMPACT_ORDER = {'관심': 1, '주의': 2, '경고': 3, '위험': 4}
+
+
+def fetch_impact():
+    """기상청 영향예보(폭염 hw·한파 cw) — 충북 구역(L104…)만 관서별로 나눈다.
+    결과: {'hw': {관서: [{tmEf, value, clsfc[]}]}, 'cw': {...}}. 해당 없음(NO_DATA)은 빈 dict(정상)."""
+    if not DATA_KEY:
+        return None
+    pre = tuple(P.get('wrn_prefix') or ['L104'])
+    reg_map, areas = P.get('reg_map') or {}, P.get('wrn_areas') or {}
+    names = [nm for nm, _, _ in _stations_ll()]
+    today = datetime.now().strftime('%Y%m%d')
+
+    def targets(it):
+        rid, rn = str(it.get('regId', '')), str(it.get('regName', ''))
+        if rid.endswith('0000'):                          # 도 전체
+            return names
+        for k in (rn, _re.sub(r'(시|군)$', '', rn)):
+            if k in areas:
+                return areas[k]
+            if k in names:
+                return [k]
+        nm = reg_map.get(rid)
+        if nm and nm in areas:
+            return areas[nm]
+        return [nm] if nm in names else []
+
+    out = {}
+    for kind, op in (('hw', 'getHWImpactValueV2'), ('cw', 'getCWImpactValueV2')):
+        r = shared_get(f'impact_{kind}_{today}',
+                       f'https://apis.data.go.kr/1360000/ImpactInfoServiceV2/{op}',
+                       params={'serviceKey': DATA_KEY, 'pageNo': 1, 'numOfRows': 2000,
+                               'dataType': 'JSON', 'tm': today}, timeout=15, max_age=1800)
+        r.raise_for_status()
+        j = r.json()
+        hd = (j.get('response') or {}).get('header') or {}
+        if hd.get('resultCode') not in ('00', '03'):
+            raise RuntimeError(f'영향예보 {kind} {hd.get("resultCode")} {hd.get("resultMsg", "")}')
+        items = (((j.get('response') or {}).get('body') or {}).get('items') or {}).get('item') or []
+        if isinstance(items, dict):
+            items = [items]
+        by = {}
+        for it in items:
+            if not str(it.get('regId', '')).startswith(pre) or str(it.get('tmEf', '')) < today:
+                continue
+            v = str(it.get('value', ''))
+            if v not in IMPACT_ORDER:
+                continue
+            for nm in targets(it):
+                days = by.setdefault(nm, {})
+                d = days.setdefault(str(it['tmEf']), {'tmEf': str(it['tmEf']), 'value': v, 'clsfc': []})
+                if IMPACT_ORDER[v] > IMPACT_ORDER[d['value']]:
+                    d['value'], d['clsfc'] = v, []
+                if v == d['value'] and it.get('clsfc') and it['clsfc'] not in d['clsfc']:
+                    d['clsfc'].append(it['clsfc'])
+        out[kind] = {nm: sorted(days.values(), key=lambda d: d['tmEf']) for nm, days in by.items()}
+    return out
+
+
 NCST_CACHE_PATH = TMP / 'ncst_cache.json'
 
 
@@ -2112,6 +2330,83 @@ class _SkipSatellite(Exception):
     """위성영상 갱신 건너뜀 — 아직 30분이 안 지났다는 신호(오류 아님)."""
 
 
+RADAR_STEP_MIN, RADAR_FRAMES = 5, 7      # 상황실 움직이는 레이더 — 최근 30분을 5분 간격 7장
+
+
+def fetch_radar_frames(img_dir=None):
+    """기상청 레이더 합성영상(rdr_cmp_file.php) — 5분 주기, 공개는 약 5분 늦다(2026-11-09 실측: 17:45 에 17:40 까지 있음).
+    · 최신 = 올라와 있는 가장 최근 5분 칸. kma_radar.png 로도 저장(지도·재해 화면용).
+    · 상황실용으로 최근 30분 5분 간격 7장을 images/radar/RDR_<tm>.png 로 모으고, 목록을 images/radar/frames.json 에 쓴다.
+      이미 받은 시각은 다시 받지 않고 2시간 지난 파일은 지운다(.gitignore — 깃에 안 올린다).
+    · 서버(live_local --collect)가 1분마다 --radar-only 로 이것만 따로 부른다 → 화면 지연이 '공개 5분 + 최대 2분'."""
+    if img_dir is None:
+        img_dir = os.path.join(str(ROOT), 'images')
+    now = datetime.now()
+
+    def _rdr(tm):
+        u = f'https://apihub.kma.go.kr/api/typ04/url/rdr_cmp_file.php?tm={tm}&data=img&cmp=cmb&authKey={KMA_APIHUB_KEY}'
+        rr = requests.get(u, timeout=20)
+        return rr.content if (rr.status_code == 200 and rr.content.startswith(b'\x89PNG')) else None
+
+    rdir = os.path.join(img_dir, 'radar')
+    os.makedirs(rdir, exist_ok=True)
+    base = now.replace(minute=(now.minute // 5) * 5, second=0, microsecond=0)
+    latest_dt, latest_png = None, None
+    # 호출 아끼기 — 다음 5분 칸은 그 시각보다 약 5분 뒤에 올라온다. 가진 최신 칸에서 9분이 안 지났으면 묻지 않는다
+    #   (1분마다 불러도 실제 호출은 5분에 1~2번, 하루 약 400번).
+    have = sorted(fn[4:16] for fn in os.listdir(rdir) if fn.startswith('RDR_') and fn.endswith('.png'))
+    if have:
+        try:
+            hd = datetime.strptime(have[-1], '%Y%m%d%H%M')
+            if now - hd < timedelta(minutes=9):
+                latest_dt = hd
+        except ValueError:
+            pass
+    for back in (() if latest_dt else (0, 5, 10, 15, 20, 30, 45)):
+        cand = base - timedelta(minutes=back)
+        fp = os.path.join(rdir, 'RDR_' + cand.strftime('%Y%m%d%H%M') + '.png')
+        if os.path.exists(fp):                     # 이미 받은 칸이면 그게 최신(더 새 칸은 위에서 이미 없었다)
+            latest_dt = cand
+            break
+        png = _rdr(cand.strftime('%Y%m%d%H%M'))
+        if png:
+            latest_dt, latest_png = cand, png
+            break
+    if latest_dt is None:
+        return {'ok': False, 'err': 'no PNG (최근 45분 없음)'}
+    radar_tm = latest_dt.strftime('%Y%m%d%H%M')
+    if latest_png:
+        _atomic_write_bytes(os.path.join(rdir, f'RDR_{radar_tm}.png'), latest_png)
+        _atomic_write_bytes(os.path.join(img_dir, 'kma_radar.png'), latest_png)
+    frames = []
+    for k in range(RADAR_FRAMES - 1, -1, -1):          # 30분 전 → 최신
+        t = (latest_dt - timedelta(minutes=RADAR_STEP_MIN * k)).strftime('%Y%m%d%H%M')
+        fp = os.path.join(rdir, f'RDR_{t}.png')
+        if not os.path.exists(fp):
+            png = _rdr(t)
+            if not png:
+                continue
+            _atomic_write_bytes(fp, png)
+        frames.append(t)
+    cut = (now - timedelta(hours=2)).strftime('%Y%m%d%H%M')
+    for fn in os.listdir(rdir):
+        if fn.startswith('RDR_') and fn[4:16] < cut:
+            try:
+                os.remove(os.path.join(rdir, fn))
+            except OSError:
+                pass
+    info = {'ok': True, 'ts': now.strftime('%Y-%m-%d %H:%M'), 'tm': radar_tm, 'frames': frames}
+    _atomic_write_text(os.path.join(rdir, 'frames.json'), json.dumps(info, ensure_ascii=False))
+    return info
+
+
+def _atomic_write_bytes(path, data):
+    tmp = f'{path}.tmp.{os.getpid()}'     # 5분 수집과 1분 레이더가 같은 파일을 동시에 써도 임시파일이 겹치지 않게
+    with open(tmp, 'wb') as f:
+        f.write(data)
+    os.replace(tmp, path)
+
+
 def download_kma_images():
     """기상청 API 허브 이미지(충북 특보 발효현황·레이더·천리안 위성)를 images/ 에 저장한다.
     인증키가 주소에 들어가므로 서버에서만 받고, 사이트에는 그림 파일만 올린다.
@@ -2159,31 +2454,9 @@ def download_kma_images():
             return False
         return len(content) >= 5000
 
-    # 2) 레이더 합성영상    # 3) 레이더 합성영상 (rdr_cmp_file.php) — 5분 주기. 발표 지연 감안해 15분 전 + 5분배수로 정렬
+    # 3) 레이더 — fetch_radar_frames() (서버가 1분마다 --radar-only 로도 따로 부른다)
     try:
-        radar_dt = now - timedelta(minutes=15)
-        # 분을 5의 배수로 내림
-        radar_dt = radar_dt.replace(minute=(radar_dt.minute // 5) * 5, second=0, microsecond=0)
-        radar_tm = radar_dt.strftime('%Y%m%d%H%M')
-        url = f'https://apihub.kma.go.kr/api/typ04/url/rdr_cmp_file.php?tm={radar_tm}&data=img&cmp=cmb&authKey={KMA_APIHUB_KEY}'
-        r = requests.get(url, timeout=20)
-        # 응답이 PNG가 아니면 (예: "# file not exist") 더 이전 시각으로 폴백 시도
-        if r.status_code == 200 and not r.content.startswith(b'\x89PNG'):
-            for back in (5, 10, 15, 30):
-                radar_dt_alt = radar_dt - timedelta(minutes=back)
-                radar_tm_alt = radar_dt_alt.strftime('%Y%m%d%H%M')
-                url_alt = f'https://apihub.kma.go.kr/api/typ04/url/rdr_cmp_file.php?tm={radar_tm_alt}&data=img&cmp=cmb&authKey={KMA_APIHUB_KEY}'
-                r = requests.get(url_alt, timeout=20)
-                if r.status_code == 200 and r.content.startswith(b'\x89PNG'):
-                    radar_tm = radar_tm_alt
-                    break
-        if r.status_code == 200 and r.content.startswith(b'\x89PNG'):
-            path = os.path.join(img_dir, 'kma_radar.png')
-            with open(path, 'wb') as f:
-                f.write(r.content)
-            result['radar'] = {'ok': True, 'ts': ts, 'tm': radar_tm, 'bytes': len(r.content)}
-        else:
-            result['radar'] = {'ok': False, 'err': f'HTTP {r.status_code} (no PNG)'}
+        result['radar'] = fetch_radar_frames(img_dir)
     except Exception as e:
         result['radar'] = {'ok': False, 'err': _redact(e)}
 
@@ -3139,6 +3412,11 @@ def fetch_messages():
     url = 'https://www.safetydata.go.kr/V2/api/DSSP-IF-00247'
     now = datetime.now()
     today = now.strftime('%Y%m%d')
+    # 최근 6시간만 보여 준다(2026-11-09 결정 — '오늘 날짜' 기준이면 아침 문자가 밤까지 남고 23:50 문자는 15분 만에 사라졌다).
+    # API 는 날짜(crtDt) 단위라 0~6시에는 어제 날짜도 함께 묻는다.
+    MSG_HOURS = 6
+    since = (now - timedelta(hours=MSG_HOURS)).strftime('%Y/%m/%d %H:%M:%S')
+    days = [today] + ([(now - timedelta(days=1)).strftime('%Y%m%d')] if now.hour < MSG_HOURS else [])
 
     north_sigun = [r['name'] for r in REGIONS]   # 관할 시군 (프로파일)
     gun_names = GUN_NAMES
@@ -3163,18 +3441,34 @@ def fetch_messages():
             return _unit_from_match(m) in north_sigun   # 특정 시군이면 관할만
         return True   # 시군명 없는 경기 전역
 
-    try:
-        r = shared_get('safety_msgs', url, max_age=240, params={
-            'serviceKey': SAFETY_KEY,
-            'pageNo': 1,
-            'numOfRows': 100,
-            'crtDt': today,
+    def _page(day, page):
+        r = shared_get(f'safety_msgs_{day}_{page}', url, max_age=240, params={
+            'serviceKey': SAFETY_KEY, 'pageNo': page, 'numOfRows': 100, 'crtDt': day,
         }, timeout=15)
         r.raise_for_status()
-        items = r.json().get('body') or []
-    except Exception as e:
-        print(f'    재난문자: {e}')
-        return None   # 수집 실패 — 정상 0건([])과 구분(main에서 이전 목록 보존)
+        j = r.json()
+        return (j.get('body') or []), int(j.get('totalCount') or 0)
+
+    def _day(day):
+        """⚠ 응답은 오래된 순(2026-11-09 실측: 06:54 → 13:46). 하루 전국 문자가 100건을 넘으면 1쪽만 받아선
+        최신 문자를 놓친다 → 전체 건수를 보고 마지막 두 쪽(최신 200건)을 받는다."""
+        first, total = _page(day, 1)
+        pages = max(1, -(-total // 100))
+        if pages == 1:
+            return first
+        out = []
+        for pg in sorted({max(1, pages - 1), pages}):
+            out += first if pg == 1 else _page(day, pg)[0]
+        return out
+
+    items = []
+    for i, day in enumerate(days):
+        try:
+            items += _day(day)
+        except Exception as e:
+            print(f'    재난문자({day}): {_redact(str(e))[:120]}')
+            if i == 0:
+                return None   # 오늘 수집 실패 — 정상 0건([])과 구분(main에서 이전 목록 보존)
 
     result = []
     for it in items:
@@ -3183,6 +3477,8 @@ def fetch_messages():
             continue
         msg = str(it.get('MSG_CN', '')).strip()
         crt = str(it.get('CRT_DT', ''))
+        if crt[:19] < since:          # 'YYYY/MM/DD HH:MM:SS' 끼리 문자열 비교 = 시각 비교
+            continue
         time_str = crt[11:16] if len(crt) >= 16 else ''
 
         # 송출 시군 추출 - 우리 북부 시군 우선
@@ -3208,13 +3504,20 @@ def fetch_messages():
             'sender': sender,
             'time': time_str,
             'date': crt[:10],   # 'YYYY/MM/DD' — 알림 중복판정 키 안정화용(화면 미표시)
+            'crt': crt[:19],    # 발송 시각 전체 — 화면이 6시간 지난 문자를 스스로 빼는 데 쓴다
             'text': msg[:300],
             'region': region,
             'sn': int(it.get('SN', 0)),   # 고유번호 — 알림 중복판정 키용(화면 미표시)
         })
 
-    # SN 내림차순 (최신 발송 우선)
-    result.sort(key=lambda x: x['sn'], reverse=True)
+    # 최신 발송 우선 — 발송 시각, 같으면 SN(어제·오늘을 합치면 SN 만으로는 순서가 안 맞을 수 있다)
+    seen, uniq = set(), []
+    for m in sorted(result, key=lambda x: (x['crt'], x['sn']), reverse=True):
+        if m['sn'] in seen:
+            continue
+        seen.add(m['sn'])
+        uniq.append(m)
+    result = uniq
 
     return result[:20]
 
@@ -3766,6 +4069,11 @@ def main():
     if '--push-only' in sys.argv:
         push_only()
         return
+    if '--radar-only' in sys.argv:
+        # 서버가 1분마다 레이더만 따로 받는다 — data.js 는 건드리지 않는다
+        r = fetch_radar_frames()
+        print(f'[{now_str()}] 레이더 ' + (f"{r['tm'][8:10]}:{r['tm'][10:12]} 관측 · {len(r['frames'])}장" if r.get('ok') else '실패 ' + str(r.get('err'))))
+        return
     print(f'[{now_str()}] 데이터 수집 시작 — {P["label"]}')
     # 이전 data.js — hrfco 실패 시 폴백용
     prev = load_previous_data()
@@ -3811,6 +4119,40 @@ def main():
         # 실패 시 이전 값을 쓰면 '끝난 태풍'이 계속 떠 있게 된다 → 빈 값이 안전
         data['typhoon'] = []
         print(f'  ✗ 태풍 수집 실패: {type(e).__name__} → 표시 안 함')
+
+    # 지진 — 최근 통보를 이전 목록과 합쳐 7일치. 실패하면 이전 목록 그대로.
+    print('[지진]')
+    try:
+        _q = fetch_quake()
+        data['quake'] = merge_quake(prev.get('quake'), _q)
+        _q0 = data['quake'][0] if data['quake'] else None
+        print(f'  ✓ 국내 지진 7일 {len(data["quake"])}건'
+              + (f' — 최근 {_q0["tm_eqk"][5:16]} {_q0["loc"]} 규모 {_q0["mt"]}' if _q0 else ''))
+    except Exception as e:
+        data['quake'] = merge_quake(prev.get('quake'), [])
+        print(f'  ✗ 지진 실패: {type(e).__name__}: {_redact(str(e))[:80]} → 이전 목록 보존')
+
+    # 낙뢰 — 최근 1시간. 실패 시 이전 값을 쓰면 '지난 낙뢰'가 계속 떠 있게 되므로 비운다.
+    print('[낙뢰]')
+    try:
+        data['lightning'] = fetch_lightning()
+        if data['lightning']:
+            _lb = data['lightning']['by']
+            print(f'  ✓ 충북 관서 반경 20km 안 {data["lightning"]["n"]}회'
+                  + (' — ' + ', '.join(f'{k} {v["n"]}' for k, v in _lb.items()) if _lb else ''))
+    except Exception as e:
+        data['lightning'] = None
+        print(f'  ✗ 낙뢰 실패: {type(e).__name__}: {_redact(str(e))[:80]} → 표시 안 함')
+
+    # 영향예보(폭염·한파) — 하루 1~2회 발표라 30분 캐시. 실패하면 이전 값 보존.
+    print('[영향예보]')
+    try:
+        data['impact'] = fetch_impact()
+        _ib = data['impact'] or {}
+        print(f'  ✓ 폭염 {len(_ib.get("hw") or {})}개 관서 · 한파 {len(_ib.get("cw") or {})}개 관서 해당')
+    except Exception as e:
+        data['impact'] = prev.get('impact')
+        print(f'  ✗ 영향예보 실패: {type(e).__name__}: {_redact(str(e))[:80]} → 이전 값 보존')
 
     # 일출·일몰 — 한국천문연구원 공식값(하루 1회). 실패하면 화면이 같은 좌표로 계산한다.
     print('[일출·일몰]')
