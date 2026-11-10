@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>재해별 집중 감시 · 충청북도</title>
+<title>충북소방 기상재난 상황판</title>
 <!-- support.js = dc-runtime 본체. 없으면 페이지가 부팅되지 않는다(템플릿이 글자로 노출).
      반드시 진짜 head 안에 둘 것 — helmet에 넣으면 첫 렌더 뒤에 로드돼 부팅이 안 된다.
      leaflet은 이 페이지가 지도를 안 그리므로 생략.
@@ -29,6 +29,9 @@
 <!-- 지역 설정 — 반드시 data-adapter.js보다 먼저. 없으면 어댑터가 충청북도 기본값으로
      떨어져 남부 사이트에 북부 관서·강수량이 뜬다(2026-08-07 실제로 발생). -->
 <script src="region.js"></script>
+<script src="cctv-hrfco.js"></script>
+<script src="cctv-links.js"></script>
+<script src="river-popup.js"></script>
 <script src="data.js"></script>
 <script src="data-adapter.js"></script>
 <script src="dashboard-data.js"></script>
@@ -56,6 +59,7 @@
   html{ scrollbar-width:none; -ms-overflow-style:none; }
   html::-webkit-scrollbar, body::-webkit-scrollbar{ display:none; width:0; height:0; }
   @keyframes dashBlink{ 0%,100%{ opacity:1 } 50%{ opacity:.4 } }
+  @keyframes dashPop{ 0%{ transform:scale(.96); opacity:0 } 100%{ transform:scale(1); opacity:1 } }
   @keyframes dashRise{ from{ opacity:0; transform:translateY(10px) } to{ opacity:1; transform:none } }
 </style>
 </helmet>
@@ -279,7 +283,7 @@
 
     <!-- ── ⑧ 재난문자 ───────────────────────────────────────── -->
     <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; box-shadow:var(--sh2); padding:15px 17px;">
-      <div style="font-size:15px; font-weight:900; color:var(--ink); margin-bottom:11px; cursor:help;" title="행정안전부 긴급재난문자입니다. 오늘 날짜로 조회해 수신 지역이 충북 전역이거나 충북 시군인 문자만 보여 줍니다. 이 탭과 관련된 낱말이 든 문자를 먼저 보여 주고, 없으면 최근 문자를 보여 줍니다.">재난문자</div>
+      <div style="font-size:15px; font-weight:900; color:var(--ink); margin-bottom:11px; cursor:help;" title="행정안전부 긴급재난문자입니다. 최근 6시간 안에 발송된 문자 중 수신 지역이 충북 전역이거나 충북 시군인 문자만 보여 줍니다. 이 탭과 관련된 낱말이 든 문자를 먼저 보여 주고, 없으면 최근 문자를 보여 줍니다.">재난문자</div>
       {{msgBody}}
     </div>
 
@@ -288,6 +292,18 @@
       {{footB}}
     </div>
   </div>
+  <!-- ============ 하천 상세 팝업 (지도.html 과 같은 틀·같은 본문 river-popup.js) ============ -->
+  <sc-if value="{{modalOpen}}" hint-placeholder-val="{{false}}">
+    <div onClick="{{closeModal}}" style="position:fixed; inset:0; z-index:100; background:rgba(8,13,24,.55); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; padding:24px;">
+      <div onClick="{{stopEv}}" style="width:100%; max-width:{{modalMax}}; max-height:88vh; overflow:auto; background:var(--surface); border:1px solid var(--border); border-radius:20px; box-shadow:0 20px 50px rgba(0,0,0,.28); animation:dashPop .18s ease;">
+        <div style="position:sticky; top:0; z-index:1; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:16px 20px; background:var(--surface); border-bottom:1px solid var(--border);">
+          <div style="display:flex; align-items:center; gap:10px;"><span style="width:10px; height:10px; border-radius:3px; background:{{modalAccent}};"></span><span style="font-size:16px; font-weight:800; color:var(--ink);">{{modalTitle}}</span></div>
+          <button onClick="{{closeModal}}" style="width:32px; height:32px; border-radius:9px; border:1px solid var(--border2); background:var(--surface2); color:var(--ink2); font-size:17px; cursor:pointer; line-height:1;">✕</button>
+        </div>
+        <div style="padding:18px 20px 22px;">{{modalBody}}</div>
+      </div>
+    </div>
+  </sc-if>
 </div>
 </x-dc>
 
@@ -344,8 +360,8 @@ class Component extends DCLogic {
     if(prev.accent !== this.props.accent){ this.applyTheme(); }
     this.syncTitle();
   }
-  // 브라우저 탭 제목도 지금 탭에 맞춘다 (창을 여러 개 띄워 둘 때 구분용)
-  syncTitle(){ try{ const m=this.curMode(), t=(m==='snow'?'대설·한파':m==='fire'?'건조·산불':'호우')+' 집중 감시 · 충청북도'; if(document.title!==t) document.title=t; }catch(e){} }
+  // 브라우저 탭 제목은 모든 화면 공통 이름으로 고정한다
+  syncTitle(){ try{ const t='충북소방 기상재난 상황판'; if(document.title!==t) document.title=t; }catch(e){} }
   // ⚠ 이 메서드는 단 한 번만 정의할 것 (중복 정의로 타이머가 누수된 전례가 있음)
   componentWillUnmount(){
     clearInterval(this._clock); clearInterval(this._poll); clearInterval(this._upd); this._upd=null;
@@ -592,7 +608,20 @@ class Component extends DCLogic {
     return {t:'', c:'var(--ink3)', bg:'transparent', k:0};
   }
 
+  /* 하천 상세 팝업 — 지도.html 과 같은 본문(river-popup.js). 탭(호우·대설·산불)과 상관없이 덧붙인다 */
   renderVals(){
+    const v = this.tabVals(), m = this.state.modal;
+    let mv = {modalOpen:false, modalTitle:'', modalAccent:'var(--brand)', modalMax:'620px', modalBody:''};
+    if(m && m.kind==='river' && window.cbRiverBody){
+      const r = (this.working().rivers||[]).find(x=>x.name===m.key);
+      if(r){ const lv = (r.danger!=null && r.value>=r.danger) ? 'var(--severe)' : (r.warning!=null && r.value>=r.warning) ? 'var(--warn)' : 'var(--safe)';
+        mv = {modalOpen:true, modalTitle:r.name||'하천', modalAccent:lv, modalMax:'620px', modalBody:window.cbRiverBody(this, r)}; }
+    }
+    return Object.assign(v, mv, {
+      closeModal:()=>this.setState({modal:null, riverCctvPaused:false, riverCctvResume:false}),
+      stopEv:(e)=>{ e && e.stopPropagation && e.stopPropagation(); } });
+  }
+  tabVals(){
     const d = this.working(), st = this.state, R = React.createElement;   // 시연 모드면 가짜 데이터로 그린다
     const wide = st.w >= 900;
     const myStation = st.myStation || (window.REGION_CONF||{}).home;
@@ -1253,7 +1282,8 @@ class Component extends DCLogic {
       const c = r.level==='danger'?'var(--severe)':r.level==='warning'?'var(--warn)':'var(--safe)';
       const bg = r.level==='danger'?'var(--severeSoft)':r.level==='warning'?'var(--warnSoft)':'var(--surface2)';
       const d1 = (r.delta1!=null && !isNaN(r.delta1)) ? ((r.delta1>0?'▲':r.delta1<0?'▼':'-') + Math.abs(r.delta1).toFixed(2)) : '';
-      return R('div',{key:i, style:{background:bg, border:'1px solid '+(r.level==='safe'?'var(--border)':c), borderRadius:'11px', padding:'10px 11px'}},
+      return R('div',{key:i, onClick:()=>this.setState({modal:{kind:'river', key:r.name}}), title:'눌러서 상세 보기 (24시간 추이·홍수위험 단계·CCTV)',
+        style:{background:bg, border:'1px solid '+(r.level==='safe'?'var(--border)':c), borderRadius:'11px', padding:'10px 11px', cursor:'pointer'}},
         R('div',{style:{fontSize:'11.5px', color:'var(--ink2)', marginBottom:'4px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}, r.name||''),
         R('div',{style:{display:'flex', alignItems:'baseline', gap:'5px'}},
           R('span',{style:{fontSize:'19px', fontWeight:900, color:c, fontVariantNumeric:'tabular-nums'}}, (r.value!=null?(+r.value).toFixed(2):'—')),

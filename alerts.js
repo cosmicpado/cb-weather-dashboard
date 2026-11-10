@@ -15,6 +15,8 @@
   function load(pg) { try { return JSON.parse(localStorage.getItem(KEY + ':' + pg) || 'null'); } catch (e) { return null; } }
   function save(pg, o) { try { localStorage.setItem(KEY + ':' + pg, JSON.stringify(o)); } catch (e) {} }
   function muted() { try { return localStorage.getItem('ggMuted') === '1'; } catch (e) { return false; } }
+  /* 알림 설정(종합 현황 🔔 패널, 2026-11-10) — 끈 것만 '1'. 기본은 모두 켜짐 */
+  function off(k) { try { return localStorage.getItem(k) === '1'; } catch (e) { return false; } }
   function esc(t) { return String(t == null ? '' : t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function areas(a) { return String(a || '').split(/\s*,\s*/).map(function (x) { return x.trim(); }).filter(Boolean); }
 
@@ -65,6 +67,7 @@
     document.body.appendChild(box); return box;
   }
   function card(c, demo) {
+    if (off('cbAlertCardsOff')) return;          // 화면 알림 카드 끔
     var t = TONE[c.tone] || TONE.msg, el = document.createElement('div');
     el.style.cssText = 'pointer-events:auto;background:#fff;color:#0f1b2d;border:1px solid ' + t[0] + ';border-left:5px solid ' + t[0] + ';border-radius:12px;box-shadow:0 10px 30px -8px rgba(15,27,45,.35);padding:11px 13px 11px 12px;font:500 13px/1.5 Pretendard,system-ui,sans-serif;animation:cbAlertIn .25s ease-out;';
     el.innerHTML = '<div style="display:flex;align-items:flex-start;gap:9px">'
@@ -95,7 +98,7 @@
   }
   function osNotify(c) {
     try {
-      if (!('Notification' in window) || Notification.permission !== 'granted') return;
+      if (off('cbOsNotifyOff') || !('Notification' in window) || Notification.permission !== 'granted') return;
       var n = new Notification(c.title, { body: c.body, icon: 'icon.svg', tag: 'cb-' + c.title + c.body.slice(0, 20) });
       n.onclick = function () { try { window.focus(); n.close(); } catch (e) {} };
     } catch (e) {}

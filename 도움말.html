@@ -3,10 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>충북소방 기상재난 상황판 사용설명서</title>
+<title>충북소방 기상재난 상황판</title>
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <!-- 지역 설정 — 관할 이름·관서 수를 여기서 읽는다. -->
 <script src="region.js"></script>
+<script src="notices.js"></script>
 <style>
 :root{
   --bg:#eef1f7; --surface:#ffffff; --surface2:#f3f7fc;
@@ -105,7 +106,25 @@ td.n{white-space:nowrap;font-weight:700}
 .foot{margin-top:44px;padding-top:16px;border-top:1px solid var(--border);
   color:var(--ink3);font-size:12.5px;line-height:1.7}
 
+/* 탭 — 공지사항 / 도움말 */
+.tabs{display:flex;gap:6px;margin:0 0 16px;border-bottom:2px solid var(--border)}
+.tabs button{position:relative;appearance:none;border:none;background:none;padding:10px 16px 11px;margin-bottom:-2px;
+  font:inherit;font-size:15.5px;font-weight:800;color:var(--ink3);cursor:pointer;border-bottom:3px solid transparent}
+.tabs button[aria-selected="true"]{color:var(--brand);border-bottom-color:var(--brand)}
+.tabs button:hover{color:var(--ink)}
+.tabs .nb{display:inline-block;min-width:18px;height:18px;padding:0 5px;margin-left:5px;border-radius:9px;background:var(--severe);
+  color:#fff;font-size:11.5px;line-height:18px;text-align:center;vertical-align:2px}
+.tabs .nb[hidden]{display:none}   /* 위 display 가 hidden 속성을 덮어써 빈 빨간 원이 남던 문제 */
+.nt{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:15px 18px;box-shadow:var(--sh);margin-bottom:12px}
+.nt .h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;font-size:13px;color:var(--ink3)}
+.nt .t{font-size:16.5px;font-weight:800;color:var(--ink);margin:0 0 6px}
+.nt .b{white-space:pre-line;font-size:14.5px;color:var(--ink2);line-height:1.7}
+.nt .new{background:var(--severe);color:#fff;border-radius:6px;padding:0 6px;font-size:11.5px;font-weight:800}
+.nt.is-new{border-color:var(--brand)}
+.nempty{padding:30px 0;text-align:center;color:var(--ink3)}
+
 @media print{
+  .tabs{display:none}
   header.top{display:none}
   body{background:#fff;color:#000;font-size:11pt}
   .wrap{max-width:none;padding:0}
@@ -130,6 +149,19 @@ td.n{white-space:nowrap;font-weight:700}
 </header>
 
 <div class="wrap">
+
+  <div class="tabs" role="tablist">
+    <button role="tab" id="tb-notice" aria-controls="pane-notice">📢 공지사항<span class="nb" id="nbadge" hidden></span></button>
+    <button role="tab" id="tb-help" aria-controls="pane-help">📖 도움말</button>
+  </div>
+
+  <!-- ============ 공지사항 (내용은 notices.js) ============ -->
+  <section id="pane-notice" role="tabpanel" aria-labelledby="tb-notice" hidden>
+    <div id="noticeList"></div>
+    <div class="note">불편한 점이나 바라는 기능이 있으면 화면의 <b>💬 의견 보내기</b>로 알려 주세요. 반영되면 여기에 알려 드립니다.</div>
+  </section>
+
+  <div id="pane-help" role="tabpanel" aria-labelledby="tb-help">
 
   <div class="lead">
     <p><b id="leadWho">충북소방 기상재난 상황판</b>은 충청북도 <span class="cnt">12</span>개 소방관서의 기상·특보·하천 자료를 한곳에 모아 보여 줍니다.
@@ -161,17 +193,17 @@ td.n{white-space:nowrap;font-weight:700}
 
   <!-- ============ 1. 종합 현황 ============ -->
   <h2 id="map">1. 종합 현황 <span class="u">주소 뒤에 /지도</span></h2>
-  <p>처음 쓰신다면 맨 위 <b>📍 관서 선택</b>에서 내 관서를 고르세요. 이 컴퓨터에 기억됩니다. <b>충청북도</b>를 고르면 도 전체를 봅니다.</p>
+  <p>처음 쓰신다면 맨 위 <b>관서 선택</b>(관서 이름 버튼)에서 내 관서를 고르세요. 이 컴퓨터에 기억됩니다. <b>충청북도</b>를 고르면 도 전체를 봅니다.</p>
 
   <h3>맨 위 버튼</h3>
   <div class="tw"><table>
     <tr><th style="width:170px">버튼</th><th>하는 일</th></tr>
-    <tr><td class="n">🎯 재해별 집중 감시</td><td><a href="#dis">재해별 화면</a>으로 이동. 특보가 있거나 비가 오면 버튼 이름이 🌧 호우처럼 바뀌고, 특보가 있거나 어느 관서든 1시간 3mm·3시간 10mm 이상이면 은은하게 빛납니다.</td></tr>
-    <tr><td class="n">🖥 119종합상황실</td><td><a href="#wall">벽면 화면</a>으로 이동. 띄운 뒤 <b>F11</b>을 누르면 전체화면이 됩니다.</td></tr>
-    <tr><td class="n">?</td><td>이 설명서</td></tr>
+    <tr><td class="n">재해별 집중 감시</td><td><a href="#dis">재해별 화면</a>으로 이동. 특보가 있거나 비가 오면 버튼 이름이 "호우"처럼 바뀌고, 특보가 있거나 어느 관서든 1시간 3mm·3시간 10mm 이상이면 은은하게 빛납니다.</td></tr>
+    <tr><td class="n">119종합상황실</td><td><a href="#wall">벽면 화면</a>으로 이동. 띄운 뒤 <b>F11</b>을 누르면 전체화면이 됩니다.</td></tr>
+    <tr><td class="n">📢</td><td>공지사항과 이 설명서. 새 공지가 있으면 빨간 점이 붙습니다.</td></tr>
+    <tr><td class="n">💬 의견 보내기</td><td>오류 · 기능 제안 · 새 사이트 제안 · 기타 중 하나를 골라 개발 담당자에게 보냅니다. 부서·이름은 비워 두면 익명입니다(<b>새 사이트 제안</b>만은 되물어 볼 수 있게 부서·이름과 항목별 답을 꼭 받습니다). 반영되면 이 설명서의 <b>📢 공지사항</b>으로 알려 드립니다.</td></tr>
     <tr><td class="n">▶ 시연</td><td><a href="#demo">교육·훈련용 가짜 상황</a>을 띄웁니다. 같은 버튼으로 끕니다.</td></tr>
-    <tr><td class="n">🔔 경보음</td><td>경보 소리 켜기·끄기. 설정이 기억됩니다.</td></tr>
-    <tr><td class="n">🚨 테두리 점멸</td><td>재대본 3단계나 고른 관서가 심각일 때 화면 가장자리가 붉게 깜빡입니다. 끄면 버튼의 빛 맥동도 멈춥니다. 경보음과 따로 켜고 끕니다.</td></tr>
+    <tr><td class="n">🔔 알림 설정</td><td>누르면 아래로 설정 창이 열리고 스위치로 켜고 끕니다(이 PC에 기억). <b>경보음</b> · <b>테두리 점멸</b>(재대본 3단계·관서 심각 때 화면 가장자리 붉게) · <b>화면 알림 카드</b>(새 특보·재난문자·해제) · <b>Windows 알림</b>(창을 내려 둬도 알림. 처음 켤 때 브라우저가 허용을 묻습니다) · <b>새 공지 알림</b>. 경보음을 끄면 아이콘이 🔕로 바뀝니다.</td></tr>
     <tr><td class="n">☾ 다크</td><td>밝은 화면과 어두운 화면 전환</td></tr>
   </table></div>
 
@@ -218,7 +250,7 @@ td.n{white-space:nowrap;font-weight:700}
 
   <div class="tw"><table>
     <tr><th style="width:130px">탭</th><th style="width:230px">관서별 순위</th><th>함께 나오는 것</th></tr>
-    <tr><td class="n">🌧 호우</td><td>실측 강수량<br>(1시간 · 12시간 · 일누적)</td><td>지금 강수, 6시간 예측, 강풍, 24시간 예보, 하천 수위, 태풍, 레이더, 재난문자</td></tr>
+    <tr><td class="n">🌧 호우</td><td>실측 강수량<br>(1시간 · 12시간 · 일누적)</td><td>지금 강수, 6시간 예측, 강풍, 24시간 예보, 하천 수위(<b>누르면</b> 지도 화면과 같은 상세 창 — 24시간 추이·홍수위험 단계·CCTV), 태풍, 레이더, 재난문자</td></tr>
     <tr><td class="n">❄ 대설·한파</td><td>예상 적설 · 최저기온(오늘 최저와 내일 아침 최저를 점 두 개로 비교) · 체감<br><small>평소에는 오늘 최저가 낮은 순, <b>한파특보 중에는 내일 아침이 낮은 순</b></small></td><td>결빙 위험 시간, 다음 아침 최저와 한파 기준, 시간대별 눈·기온, 레이더, 재난문자</td></tr>
     <tr><td class="n">🔥 건조·산불</td><td>실효습도 · 지금 습도 · 바람</td><td>산불위험예보, 앞으로 24시간 습도·바람, 올해 충북 산불, 위성, 재난문자</td></tr>
   </table></div>
@@ -260,13 +292,18 @@ td.n{white-space:nowrap;font-weight:700}
     <tr><th style="width:170px">칸</th><th>내용</th></tr>
     <tr><td class="n">관서명 · 날씨</td><td>지금 보여 주는 관서(<code>6 / <span class="cnt">12</span></code>)와 기온·하늘 상태·체감</td></tr>
     <tr><td class="n">단계 카드</td><td>왼쪽 <b>재대본 비상단계</b>(도 전체), 오른쪽 <b>관서 상황단계</b>(<a href="#rule">6장</a>)</td></tr>
-    <tr><td class="n">현재 실황</td><td>대표 관측소의 강수·습도·풍향, 관할 최강 순간풍속, 1시간·12시간·일누적 강수</td></tr>
-    <tr><td class="n">시간대별 예보</td><td>앞으로 12시간. 제목 오른쪽은 <b>오늘</b> 최고·최저</td></tr>
-    <tr><td class="n">기상특보 · 재난문자</td><td>그 관서에 해당하는 것만</td></tr>
-    <tr><td class="n">하천 수위 · 관할</td><td>관내 하천·댐. 막대의 눈금이 관심수위·경계수위</td></tr>
-    <tr><td class="n">출동 영향 판단</td><td>지금 값으로 자동 판정한 4가지(<a href="#judge">7장</a>)</td></tr>
-    <tr><td class="n">산불·PM10·일출일몰</td><td>산불위험, 미세먼지(측정소 장애 시 '자료 없음'), 일출·일몰</td></tr>
-    <tr><td class="n">6시간 강수예측</td><td>기상청 초단기예보</td></tr>
+    <tr><td class="n">현재 실황</td><td>대표 관측소의 습도·풍속(아래 작은 글씨가 순간풍속)·풍향, 강수량(한 칸 안에 1시간·12시간·오늘 0시부터 누적, mm). 모든 값이 같은 대표 관측소입니다.</td></tr>
+    <tr><td class="n">시간대별 예보</td><td>앞으로 12시간의 날씨·기온·체감·강수·강수확률·바람(화살표가 바람이 부는 쪽, 숫자가 풍속). 제목 오른쪽은 <b>오늘</b> 최고·최저</td></tr>
+    <tr><td class="n">기상특보 · 재난문자</td><td>그 관서에 해당하는 것만. <b>기상특보 칸을 누르면</b> 종합 현황처럼 기상청 <b>특보 통보문</b>이 창으로 뜹니다 — 특보 줄을 누르면 그 특보의 통보문, 빈 곳을 누르면 가장 최근 통보문. 창 위 <b>충북 특보 전체</b>를 누르면 충북 전체 특보·예비특보 목록(관서 목록 전부)이 나옵니다. 바깥·Esc로 닫고 3분 지나면 저절로 닫힙니다. 재난문자는 <b>최근 6시간</b> 안에 발송된 것만 최신순으로 칸에 다 들어가는 만큼(최대 5건) 보이고 반쯤 잘린 문자는 보이지 않습니다. 다 못 보이면 제목 옆에 <code>5건 · 최신 2건 표시</code>처럼 나옵니다. 기상특보 칸에는 아래 두 가지도 함께 나옵니다.<br>
+      <b>지진</b>: 24시간 안 국내 지진 중 충북에 진도가 있었거나, 관서에서 80km 안이거나, 규모 4.0 이상인 것<br>
+      <b>⚡ 낙뢰</b>: 최근 1시간 동안 관서 반경 20km 안에 떨어진 횟수와 가장 가까운 거리. 10분 안에 떨어졌으면 노란색입니다.</td></tr>
+    <tr><td class="n">기상 레이더</td><td>기상청 레이더 합성 영상에서 한반도 가운데(충북 부근)만 잘라, <b>최근 30분을 5분 간격으로 돌려</b> 보여 줍니다(한 장 1초, 최신 장에서 3초 멈춤). 왼쪽 아래가 지금 보이는 장의 시각입니다. 파랑·초록은 약한 비, 노랑·빨강은 강한 비. 기상청 공개가 약 5분 늦고, 서버.bat 이 레이더만 1분마다 따로 받아 화면에는 실제보다 5~7분 늦게 나옵니다. 30분 넘게 지난 영상이면 제목 오른쪽에 ⚠ 가 붙습니다.</td></tr>
+    <tr><td class="n">산불·PM10·일출일몰</td><td>산불위험, 미세먼지(측정소 장애 시 '자료 없음'), 일몰(낮)·일출(밤) 중 다가오는 쪽</td></tr>
+    <tr><td class="n">계절 감시</td><td>계절·특보에 맞춰 바뀌고, 산불위험·미세먼지·일출일몰 칸과 같은 모양의 세 칸으로 나옵니다.<br>
+      <b>결빙·한파</b>(한파·대설특보 또는 11~3월): 내일 아침 최저 · 오늘 최저보다 몇 도 낮은지 · 결빙 위험 시간(0℃ 이하에 비·눈이 겹치는 시각, 없으면 서리 시각)<br>
+      <b>폭염·열대야</b>(폭염특보 또는 6~9월): 최고 체감 · 체감 33℃ 이상인 시각 · 오늘 밤 최저(25℃ 이상이면 열대야)<br>
+      <b>건조·산불</b>(건조특보 또는 4·5·10월): 실효습도 · 최저 습도 · 순간풍속(산불 확산 기준 7·11m/s)<br>
+      기상청 <b>한파·폭염 영향예보</b>가 그 시군에 나오면 첫 칸 아래 줄에 오늘·내일 단계(관심·주의·경고·위험)가 나옵니다.</td></tr>
     <tr><td class="n">맨 아래 줄</td><td>전 관서 기온과 상황단계. 지금 비가 오는 관서만 <code>시간당 · 일</code> 강수가 나오고, 비가 그치면 <code>—</code>로 바뀝니다.</td></tr>
   </table></div>
 
@@ -275,8 +312,9 @@ td.n{white-space:nowrap;font-weight:700}
     <tr><td class="n">❚❚ / ▶</td><td>자동 순환 멈춤·다시 시작</td></tr>
     <tr><td class="n">‹ ›, 맨 아래 관서 칸</td><td>다른 관서로 직접 이동</td></tr>
     <tr><td class="n">☀ / ☾</td><td>밝은 화면·어두운 화면</td></tr>
-    <tr><td class="n">▶ 시연 (맨 위 가운데)</td><td><a href="#demo">단계별 가상 상황</a></td></tr>
-    <tr><td class="n">✎ 배치 편집 (왼쪽 위)</td><td>칸의 위치·크기를 바꾸고 이 컴퓨터에 저장</td></tr>
+    <tr><td class="n">왼쪽 위 아이콘</td><td>← 종합 현황 · ? 설명서 · ✎ 배치 편집 · ▶ 시연 · 💬 의견 보내기. 평소엔 아이콘만 보이고 마우스를 올리면 이름이 펼쳐집니다.</td></tr>
+    <tr><td class="n">▶ 시연</td><td><a href="#demo">단계별 가상 상황</a> — 시연 중에는 빨간 ■ 버튼에 단계가 계속 보이고, 누르면 끝납니다.</td></tr>
+    <tr><td class="n">✎ 배치 편집</td><td>칸의 위치·크기를 바꾸고 이 컴퓨터에 저장</td></tr>
   </table></div>
 
   <!-- ============ 4. 큰 글씨 보기 ============ -->
@@ -290,17 +328,19 @@ td.n{white-space:nowrap;font-weight:700}
     <tr><th style="width:170px">값</th><th>기준</th></tr>
     <tr><td class="n">현재 기온·습도·바람</td><td>관서 <b>대표 관측소</b> 실측 (약 10분 전 값)</td></tr>
     <tr><td class="n">강수량</td><td>1시간·12시간·일누적 모두 <b>같은 대표 관측소</b> 값. 일누적은 0시부터 지금까지 합계입니다. 대표 관측소 자료가 없을 때만 관할에서 가장 많이 온 지점을 쓰고, 지점 이름을 함께 적습니다.</td></tr>
-    <tr><td class="n">순간풍속</td><td>관할 관측소 중 <b>가장 센 지점</b>. 사다리차 전개 판단에 쓰는 값이라 이 값만 관할 최대입니다.</td></tr>
+    <tr><td class="n">순간풍속</td><td>119종합상황실 화면은 풍속과 같은 <b>대표 관측소</b> 값. 종합 현황의 사다리차 판단은 관할 관측소 중 <b>가장 센 지점</b> 값입니다.</td></tr>
     <tr><td class="n">시간대별 예보</td><td><b>날씨누리 메인</b>과 같은 값(최대 10분 늦을 수 있음). '지금' 칸만 대표 관측소 실측. 적설만 기상청 단기예보.</td></tr>
     <tr><td class="n">오늘 최고</td><td>날씨누리 값. 날씨누리가 비워도 자정까지 유지합니다.</td></tr>
     <tr><td class="n">오늘 최저</td><td>날씨누리 값, 비어 있으면 기상청 단기예보</td></tr>
     <tr><td class="n">내일 아침 최저</td><td>날씨누리 시간별 예보의 3~9시 중 가장 낮은 값. 한파 칸·최저기온 탭에만 나옵니다. 화면의 다른 "최고·최저"는 모두 <b>오늘</b> 값입니다.</td></tr>
     <tr><td class="n">6시간 강수예측</td><td>기상청 초단기예보 (매시간 발표)</td></tr>
     <tr><td class="n">기상특보</td><td>기상청 특보현황과 기상청 API 허브</td></tr>
+    <tr><td class="n">지진 · 낙뢰</td><td>기상청 API 허브 지진 통보(국내만, 7일 보관) · 낙뢰 관측(최근 1시간)</td></tr>
+    <tr><td class="n">영향예보</td><td>기상청 한파·폭염 영향예보 (공공데이터포털, 하루 1~2회 발표)</td></tr>
     <tr><td class="n">하천 수위</td><td>한강·금강 홍수통제소 10분 자료</td></tr>
     <tr><td class="n">산불위험</td><td>국립산림과학원 예보 (권역별)</td></tr>
     <tr><td class="n">미세먼지 · 일출몰</td><td>에어코리아 · 한국천문연구원</td></tr>
-    <tr><td class="n">재난문자</td><td>행정안전부 긴급재난문자</td></tr>
+    <tr><td class="n">재난문자</td><td>행정안전부 긴급재난문자. 최근 6시간 안에 발송된 것만(자정 무렵에는 어제 발송분도 함께 조회)</td></tr>
   </table></div>
 
   <h3>관서별 대표 관측소</h3>
@@ -403,7 +443,7 @@ td.n{white-space:nowrap;font-weight:700}
   <div class="tw"><table>
     <tr><th style="width:170px">화면</th><th style="width:170px">켜는 곳</th><th>내용</th></tr>
     <tr><td class="n">종합 현황</td><td>맨 위 ▶ → 지도 아래 단계 버튼</td><td>평상·준비·1·2·3단계 호우 상황</td></tr>
-    <tr><td class="n">119종합상황실</td><td>맨 위 가운데 ▶ 시연</td><td>평상·준비·1·2·3단계 호우 상황 (종합 현황과 같은 수치)</td></tr>
+    <tr><td class="n">119종합상황실</td><td>왼쪽 위 ▶ 시연</td><td>평상·준비·1·2·3단계 호우 상황 (종합 현황과 같은 수치)<br>계절 시연 <b>❄ 한파·결빙 · ☀ 폭염 · 🔥 건조·산불</b> — 그 계절의 기온·체감·습도·바람과 특보·재난문자로 바꿔 계절 감시 칸이 어떻게 바뀌는지 봅니다</td></tr>
     <tr><td class="n">재해별 집중 감시</td><td>맨 위 ▶</td><td>열린 탭의 상황: 호우경보·태풍 / 대설경보·한파주의보 / 건조경보·산불</td></tr>
   </table></div>
   <ul>
@@ -415,6 +455,11 @@ td.n{white-space:nowrap;font-weight:700}
 
   <!-- ============ 10. FAQ ============ -->
   <h2 id="faq">10. 자주 묻는 것</h2>
+
+  <h3>의견은 어떻게 보내고, 누가 보나요?</h3>
+  <p>종합 현황 맨 위 오른쪽 <b>💬</b>, 119종합상황실 왼쪽 위 <b>💬</b>를 누르고 <b>오류 · 기능 제안 · 새 사이트 제안 · 기타</b> 중 하나를 고른 뒤 적어 보내면 됩니다. 부서·이름은 비워 두면 익명이고, 접속한 PC 주소도 저장하지 않습니다. 단, <b>새 사이트 제안</b>은 어떤 사이트인지·누가 언제 쓰는지·지금 무엇이 불편한지·꼭 필요한 화면을 적는 양식이 나오고, 부서·이름을 꼭 적어야 보낼 수 있습니다. 의견은 상황판 서버 안에만 저장되고 밖으로 나가지 않습니다. 반영된 내용은 위 <b>📢 공지사항</b> 탭에 올라옵니다.
+     받은 의견은 담당자만 아는 주소로 봅니다(서버 안 CSV 파일에도 그대로 쌓입니다).
+     같은 PC에서는 20초에 한 번, 하루 30건까지 보낼 수 있습니다.</p>
 
   <h3>숫자가 <code>-</code> 또는 <code>—</code>로 나옵니다</h3>
   <p><b>자료가 없다</b>는 뜻이고, 0이 아닙니다. 관측소 고장이나 통신 장애 때 0으로 채우지 않습니다. 맨 아래 관서 칸의 <code>—</code>만 예외로, 지금 비가 안 온다는 뜻입니다.</p>
@@ -434,7 +479,7 @@ td.n{white-space:nowrap;font-weight:700}
   </ul>
 
   <h3>풍속과 순간풍속은 뭐가 다른가요</h3>
-  <p>풍속은 일정 시간 평균이고, 순간풍속은 가장 세게 분 순간의 값입니다. <code>풍속 / 순간</code> 칸의 두 값은 지점이 다를 수 있습니다(풍속은 대표 관측소, 순간은 관할 최강 지점).</p>
+  <p>풍속은 10분 평균이고, 순간풍속은 관측 시각 그 순간의 값입니다. 바람이 잦아드는 순간이면 순간풍속이 평균보다 작게 나올 수도 있습니다. 119종합상황실 화면의 두 값은 같은 대표 관측소에서 옵니다.</p>
 
   <h3>새 특보가 오면 알려 주나요</h3>
   <p>네. <b>종합 현황</b>을 켜 두면 새 특보·예비특보·재난문자가 들어올 때 오른쪽 위에 카드가 뜨고 알림음이 울립니다. 특보가 풀리면 '해제' 카드가 뜹니다. 119종합상황실은 카드를 띄우지 않습니다.</p>
@@ -451,15 +496,55 @@ td.n{white-space:nowrap;font-weight:700}
     데이터 · 기상청 / 행정안전부 / 홍수통제소(한강·금강) / 에어코리아 / 국립산림과학원 / 한국천문연구원<br>
     데이터 자동 갱신 5분
   </div>
+  </div><!-- /pane-help -->
 </div>
 
 <script>
+/* 탭 — #notice 면 공지사항, 그 밖의 #map 같은 주소나 주소 없음은 도움말. 안 본 공지가 있으면 공지사항부터 연다. */
+(function(){
+  var N = window.cbNotices || { list: [], unseen: function(){ return 0; }, markSeen: function(){} };
+  var seenBefore = ''; try { seenBefore = localStorage.getItem('cbNoticeSeen') || ''; } catch(e){}
+  var KC = { '새 기능':'p-blue', '개선':'p-safe', '오류 수정':'p-warn', '안내':'p-grey' };
+  function el(t,c,x){ var e=document.createElement(t); if(c) e.className=c; if(x!=null) e.textContent=x; return e; }
+  var box = document.getElementById('noticeList');
+  if (!N.list.length) box.appendChild(el('div','nempty','아직 공지가 없습니다.'));
+  N.list.forEach(function(n){
+    var isNew = n.id > seenBefore, c = el('article','nt'+(isNew?' is-new':'')), h = el('div','h');
+    h.appendChild(el('span','pill '+(KC[n.kind]||'p-grey'), n.kind||'안내'));
+    h.appendChild(el('span',null,n.date||''));
+    if (n.from) h.appendChild(el('span',null,'· '+n.from));
+    if (isNew) h.appendChild(el('span','new','NEW'));
+    c.appendChild(h); c.appendChild(el('h3','t',n.title||'')); c.appendChild(el('div','b',n.body||''));
+    box.appendChild(c);
+  });
+  var badge = document.getElementById('nbadge'), un = N.unseen();
+  if (un) { badge.textContent = un; badge.hidden = false; }
+
+  function show(tab, push){
+    var nt = tab === 'notice';
+    document.getElementById('pane-notice').hidden = !nt;
+    document.getElementById('pane-help').hidden = nt;
+    document.getElementById('tb-notice').setAttribute('aria-selected', nt ? 'true' : 'false');
+    document.getElementById('tb-help').setAttribute('aria-selected', nt ? 'false' : 'true');
+    if (nt) { N.markSeen(); badge.hidden = true; }
+    if (push) { try { history.replaceState(null, '', nt ? '#notice' : location.pathname + location.search); } catch(e){} window.scrollTo(0,0); }
+  }
+  function fromHash(){ var h = location.hash.slice(1);
+    if (h === 'notice') return 'notice';
+    if (h) return 'help';
+    return un ? 'notice' : 'help'; }
+  document.getElementById('tb-notice').onclick = function(){ show('notice', true); };
+  document.getElementById('tb-help').onclick = function(){ show('help', true); };
+  window.addEventListener('hashchange', function(){ show(fromHash(), false); });
+  show(fromHash(), false);
+})();
+
 (function(){
   var C = window.REGION_CONF || {};
 
   // 지역 이름 반영
   if (C.label) {
-    document.title = '충북소방 기상재난 상황판 사용설명서';
+    document.title = '충북소방 기상재난 상황판';
     var w = document.getElementById('leadWho');
     if (w) w.textContent = '충북소방 기상재난 상황판';
   }
