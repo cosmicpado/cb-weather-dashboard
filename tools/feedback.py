@@ -1,26 +1,31 @@
 """화면 사용자 의견 받기 — 서버.bat(tools/live_local.py)과 행정망 Rocky 서버(tools/server/feedback_server.py)가 같이 쓴다.
 
   POST /api/feedback   의견 한 건 저장 (화면의 💬 의견 보내기)
-       {"action":"status", "id", "status", "note"}  처리 상태·처리 내용 저장 (의견.html — 관리자만)
-  GET  /api/feedback   저장된 의견 목록 + 처리 상태 (의견.html — 관리자만)
+       {"action":"status", "id", "status", "note"}  처리 상태·처리 내용 저장 (관리자.html — 관리자만)
+  GET  /api/feedback   저장된 의견 목록 + 처리 상태 (관리자.html — 관리자만)
+  GET  /api/feedback?notices=1   공지사항 고친 것·지운 것·새로 쓴 것 (누구나 — 모든 화면의 notices.js 가 읽는다)
+  POST {"action":"notice_save", "item":{id,date,kind,title,body,from}}  공지 쓰기·고치기 (관리자만)
+       {"action":"notice_delete", "id"}                                   공지 지우기 (관리자만)
+       └ .data/notices.json 에 둔다. notices.js 안의 기본 공지 위에 id 로 덮어쓴다(2026-11-12).
+         코드 반영(git)으로는 지워지지 않고, 코드로 새 공지를 넣어도 여기서 고친 것과 함께 보인다.
 
 저장: <저장소>/.data/feedback.csv   — 엑셀로 바로 여는 원본(덧붙이기만 한다, UTF-8 BOM)
-      <저장소>/.data/feedback.jsonl — 의견.html 이 읽는 같은 내용
+      <저장소>/.data/feedback.jsonl — 관리자.html 이 읽는 같은 내용
       <저장소>/.data/feedback_status.json — 처리 상태(대기·처리 완료·보류·미수용)와 처리 내용(2026-11-12)
         · 의견 원본은 고치지 않는다. 의견 번호(id)는 시각·이름·내용으로 만든 고정값이라 따로 저장하지 않는다.
   · 점(.)으로 시작하는 폴더라 nginx·서버.bat 이 밖으로 내주지 않는다.
   · 깃에 올리지 않는다(.gitignore). 소스 반영(update-code.sh 의 git reset)은 추적하지 않는 파일을 지우지 않는다.
 
 목록 보기 권한(2026-11-10 사용자 결정: 키 입력 없이 '나만 아는 주소'로)
-  · 서버 자신(127.0.0.1)에서 열면 바로 보인다 — 서버.bat 을 켠 PC 에서 http://localhost:8000/의견.html
-  · 다른 PC 는 비밀 주소 http://<서버>/의견.html#k=<.env 의 FEEDBACK_ADMIN_KEY> 로 연다(# 뒤는 서버 기록에 안 남는다).
+  · 서버 자신(127.0.0.1)에서 열면 바로 보인다 — 서버.bat 을 켠 PC 에서 http://localhost:8000/관리자.html
+  · 다른 PC 는 비밀 주소 http://<서버>/관리자.html#k=<.env 의 FEEDBACK_ADMIN_KEY> 로 연다(# 뒤는 서버 기록에 안 남는다).
     키가 비어 있으면 서버 자신만 볼 수 있다. 주소가 새면 .env 의 키만 바꾸면 된다(서버 재시작 불필요).
 
 안전장치(행정망 서버의 첫 '쓰기' 기능이라)
   · 본문 16KB · 의견 2,000자 · 부서/이름 40자까지
   · 같은 PC 는 20초에 한 번, 하루 30건까지
   · 다른 사이트가 몰래 보내지 못하게 X-Requested-With 머리글을 요구한다(일반 폼으로는 못 붙인다)
-  · 저장만 하고 실행하지 않는다. 의견.html 은 글자를 그대로(textContent) 보여 준다.
+  · 저장만 하고 실행하지 않는다. 관리자.html 은 글자를 그대로(textContent) 보여 준다.
 """
 import csv
 import hashlib
@@ -28,6 +33,7 @@ import hmac
 import io
 import json
 import os
+import re
 import threading
 import time
 from datetime import datetime
@@ -38,6 +44,10 @@ STORE = ROOT / '.data' / 'feedback.jsonl'
 STORE_CSV = ROOT / '.data' / 'feedback.csv'
 STORE_STATUS = ROOT / '.data' / 'feedback_status.json'
 STATUSES = ('대기', '처리 완료', '보류', '미수용')
+STORE_NOTICES = ROOT / '.data' / 'notices.json'
+NOTICE_KINDS = ('새 기능', '개선', '오류 수정', '안내')
+NOTICE_ID = re.compile(r'^\d{4}-\d{2}-\d{2}-[0-9A-Za-z]{1,8}$')
+MAX_NOTICES = 300
 MAX_NOTE = 500
 KINDS = ('오류', '기능 제안', '새 사이트 제안', '기타')
 # 이름을 비우면 익명 — 그래서 접속 주소(IP)는 저장하지 않는다(연속 전송 제한에만 잠깐 메모리에 둔다)
@@ -117,11 +127,64 @@ def _set_status(ip, headers, j):
     return 200, {'ok': True, 'id': rid, **(d.get(rid) or {'status': '대기', 'note': '', 'at': ''})}
 
 
-def handle(method, ip, headers, body=b''):
-    """(상태코드, 응답 dict) 를 돌려준다. headers 는 대소문자 무시 조회가 되는 객체(http.server 의 self.headers)."""
+def _load_notices():
+    try:
+        d = json.loads(STORE_NOTICES.read_text(encoding='utf-8'))
+        return d if isinstance(d, dict) else {}
+    except (OSError, ValueError):
+        return {}
+
+
+def _save_notices(d):
+    STORE_NOTICES.parent.mkdir(parents=True, exist_ok=True)
+    tmp = STORE_NOTICES.with_name(STORE_NOTICES.name + '.tmp')
+    tmp.write_text(json.dumps(d, ensure_ascii=False, indent=1), encoding='utf-8')
+    os.replace(tmp, STORE_NOTICES)
+
+
+def _get_notices():
+    d = _load_notices()
+    return 200, {'ok': True, 'items': list(d.values())}
+
+
+def _notice(ip, headers, j):
+    """공지 쓰기·고치기·지우기 — 관리자만. 지운 것은 {id, deleted:true} 로 남겨 notices.js 기본 공지도 가린다."""
+    if not _is_admin(ip, headers):
+        return 403, {'ok': False, 'err': '공지를 바꿀 수 없는 주소입니다'}
+    now = datetime.now().strftime('%Y-%m-%d %H:%M')
+    if j.get('action') == 'notice_delete':
+        nid = _clean(j.get('id'), 24)
+        if not NOTICE_ID.match(nid):
+            return 400, {'ok': False, 'err': '형식 오류'}
+        rec = {'id': nid, 'deleted': True, 'at': now}
+    else:
+        it = j.get('item') if isinstance(j.get('item'), dict) else {}
+        nid = _clean(it.get('id'), 24)
+        date = _clean(it.get('date'), 10)
+        kind = _clean(it.get('kind'), 10)
+        title = _clean(it.get('title'), 100)
+        body = str(it.get('body') or '').replace('\r\n', '\n').strip()[:3000]
+        if not NOTICE_ID.match(nid) or not re.match(r'^\d{4}-\d{2}-\d{2}$', date) or len(title) < 2:
+            return 400, {'ok': False, 'err': '제목·날짜를 확인해 주세요'}
+        rec = {'id': nid, 'date': date, 'kind': kind if kind in NOTICE_KINDS else '안내',
+               'title': title, 'body': body, 'from': _clean(it.get('from'), 40), 'at': now}
+    with _lock:
+        d = _load_notices()
+        if nid not in d and len(d) >= MAX_NOTICES:
+            return 400, {'ok': False, 'err': '공지가 너무 많습니다'}
+        d[nid] = rec
+        _save_notices(d)
+    return 200, {'ok': True, 'item': rec}
+
+
+def handle(method, ip, headers, body=b'', path=''):
+    """(상태코드, 응답 dict) 를 돌려준다. headers 는 대소문자 무시 조회가 되는 객체(http.server 의 self.headers).
+    path 는 요청 주소(물음표 뒤 포함) — ?notices=1 이면 공지사항."""
     if method == 'POST':
         return _post(ip, headers, body)
     if method == 'GET':
+        if 'notices=1' in (path.split('?', 1)[1] if '?' in path else ''):
+            return _get_notices()
         return _get(ip, headers)
     return 405, {'ok': False, 'err': '지원하지 않는 방식'}
 
@@ -139,6 +202,8 @@ def _post(ip, headers, body):
         return 400, {'ok': False, 'err': '형식 오류'}
     if j.get('action') == 'status':
         return _set_status(ip, headers, j)
+    if j.get('action') in ('notice_save', 'notice_delete'):
+        return _notice(ip, headers, j)
     text = _clean(j.get('text'), MAX_TEXT)
     if len(text) < 2:
         return 400, {'ok': False, 'err': '내용을 적어 주세요'}

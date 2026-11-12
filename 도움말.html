@@ -507,6 +507,9 @@ td.n{white-space:nowrap;font-weight:700}
   var KC = { '새 기능':'p-blue', '개선':'p-safe', '오류 수정':'p-warn', '안내':'p-grey' };
   function el(t,c,x){ var e=document.createElement(t); if(c) e.className=c; if(x!=null) e.textContent=x; return e; }
   var box = document.getElementById('noticeList');
+  /* 관리자 페이지에서 고친 공지(서버)를 받은 뒤 그린다 — notices.js 의 ready */
+  function drawNotices(){
+  box.textContent = '';
   if (!N.list.length) box.appendChild(el('div','nempty','아직 공지가 없습니다.'));
   N.list.forEach(function(n){
     var isNew = n.id > seenBefore, c = el('article','nt'+(isNew?' is-new':'')), h = el('div','h');
@@ -517,8 +520,16 @@ td.n{white-space:nowrap;font-weight:700}
     c.appendChild(h); c.appendChild(el('h3','t',n.title||'')); c.appendChild(el('div','b',n.body||''));
     box.appendChild(c);
   });
+  }
+  drawNotices();
   var badge = document.getElementById('nbadge'), un = N.unseen();
   if (un) { badge.textContent = un; badge.hidden = false; }
+  if (N.ready) N.ready.then(function(){
+    drawNotices();
+    var u2 = N.unseen(), onNotice = !document.getElementById('pane-notice').hidden;
+    if (onNotice) { N.markSeen(); badge.hidden = true; }
+    else if (u2) { badge.textContent = u2; badge.hidden = false; } else badge.hidden = true;
+  });
 
   function show(tab, push){
     var nt = tab === 'notice';

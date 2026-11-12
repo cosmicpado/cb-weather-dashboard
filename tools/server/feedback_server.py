@@ -36,7 +36,7 @@ class H(http.server.BaseHTTPRequestHandler):
             if n < 0 or n > feedback.MAX_BODY:
                 return self._send(413, {'ok': False, 'err': '너무 깁니다'})
             body = self.rfile.read(n)
-        code, out = feedback.handle(method, self._ip(), self.headers, body)
+        code, out = feedback.handle(method, self._ip(), self.headers, body, self.path)
         self._send(code, out)
 
     def _send(self, code, obj):
