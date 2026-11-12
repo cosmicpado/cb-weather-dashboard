@@ -202,7 +202,13 @@ server {
 
     location ~ /\\.          { return 404; }          # .env · .git · .tmp
     location ^~ /tools/     { return 404; }
-    location = /            { }                       # → index.html → 지도.html
+    # 짧은 주소(2026-11-12) — 주소창에 한글 파일 이름 대신. 화면 short-url.js · tools/live_local.py 와 같은 표
+    location = /            { rewrite ^ /지도.html last; }
+    location = /room        { rewrite ^ /상황실.html last; }
+    location = /watch       { rewrite ^ /재해.html last; }
+    location = /admin       { rewrite ^ /관리자.html last; }
+    location = /help        { rewrite ^ /도움말.html last; }
+    location = /easy        { rewrite ^ /쉬운.html last; }
     location = /api/feedback {                        # 화면의 💬 의견 보내기 · 관리자.html (tools/server/feedback_server.py)
         proxy_pass http://127.0.0.1:8081;
         proxy_set_header X-Real-IP \$remote_addr;
@@ -237,10 +243,10 @@ code=$(curl -s -o /dev/null -m 5 -w '%{http_code}' "http://127.0.0.1/%EC%A7%80%E
 [ "$code" = 200 ] && ok "화면 응답 확인 (200)" || warn "화면 응답 $code — nginx 기록: journalctl -u nginx"
 
 say "완료"
-echo "  · 이 서버에서     : http://localhost/지도.html"
-echo "  · 행정망 PC 에서  : http://$IP/지도.html"
+echo "  · 이 서버에서     : http://localhost/"
+echo "  · 행정망 PC 에서  : http://$IP/   (119종합상황실 /room · 재해별 집중 감시 /watch · 도움말 /help)"
 FBK=$(grep -m1 '^FEEDBACK_ADMIN_KEY=' "$DIR/.env" | cut -d= -f2-)
-echo "  · 관리자 페이지 : http://$IP/관리자.html   (화면에 넣을 관리자 키: $FBK — 남에게 알리지 마세요)"
+echo "  · 관리자 페이지 : http://$IP/admin   (화면에 넣을 관리자 키: $FBK — 남에게 알리지 마세요)"
 echo "                      원본 CSV: $DIR/.data/feedback.csv   · 주소가 샜으면 .env 의 FEEDBACK_ADMIN_KEY 만 바꾸면 된다"
 echo "  · 수집 기록 보기  : journalctl -u $UNIT -n 50   (레이더: journalctl -u cbweather-radar -n 20)"
 echo "  · 소스 반영       : bash $DIR/tools/server/update-code.sh   (GitHub main 에 올린 뒤)"
