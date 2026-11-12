@@ -5,6 +5,8 @@
      · 섹션 순서 바꾸기 (리본 / 상황도 / 관서별 기상 / 예보·산불·미세먼지 / 기상 이미지)
      · 섹션·카드 숨기기
      · 지도 크기 (보통 / 크게 / 아주 크게)
+     · 위쪽 칸 고르기 (상황도 옆 맨 아래 칸: 하천 수위 / 산불 위험도 / 미세먼지 — 2026-11-12)
+       아래는 시간대별 예보(왼쪽) + 오른쪽 열에 나머지 두 칸(위아래). 카드 두 벌은 지도.html 끝 스크립트가 만든다.
    화면(React/dc-runtime)은 건드리지 않는다 — CSS 변수(--ds-<id>-o / -d, --ds-map)만 :root 에 쓴다.
 
    저장: localStorage ggDashLayout:<권역>   심기: ?dl=<코드> (저장 후 주소에서 제거) · ?dl=reset
@@ -31,9 +33,13 @@
     { id: 'pm',     name: '미세먼지',     sec: 'trio' }
   ];
   var MAPS = [[1, '보통'], [1.35, '크게'], [1.8, '아주 크게']];
-  var DEFAULT = { order: SECTIONS.map(function (s) { return s.id; }), hide: {}, map: 1 };
+  /* 위쪽 칸 후보 — 시간대별 예보는 가로 1,300px 남짓이 필요해 위쪽(600~700px)에선 절반 넘게 잘려 뺀다 */
+  var TOPS = [['river', '하천 수위'], ['fire', '산불 위험도'], ['pm', '미세먼지']];
+  /* 기본은 미세먼지가 위(상황도 옆), 하천 수위는 아래 산불 밑(2026-11-12 결정) */
+  var DEFAULT_TOP = 'pm';
+  var DEFAULT = { order: SECTIONS.map(function (s) { return s.id; }), hide: {}, map: 1, top: DEFAULT_TOP };
   var DISP = { ribbon: 'block', hero: 'grid', stations: 'block', trio: 'grid', imgs: 'block',
-               warn: 'flex', info: 'flex', msg: 'flex', river: 'flex', hourly: 'block', fire: 'block', pm: 'flex' };
+               warn: 'flex', info: 'flex', msg: 'flex', river: 'flex', hourly: 'block', fire: 'flex', pm: 'flex' };
 
   function scopeKey() {
     var RC = window.REGION_CONF || {}, g = RC.scopes || {}, sc = null;
@@ -56,24 +62,27 @@
     var hide = {};
     ALL.forEach(function (x) { if (L.hide && L.hide[x.id] && !x.noHide) hide[x.id] = true; });
     var map = MAPS.map(function (m) { return m[0]; }).indexOf(+L.map) >= 0 ? +L.map : 1;
-    return { order: order, hide: hide, map: map };
+    var top = TOPS.map(function (t) { return t[0]; }).indexOf(L.top) >= 0 ? L.top : DEFAULT_TOP;
+    return { order: order, hide: hide, map: map, top: top };
   }
-  function isDefault(L) { return L.order.join() === DEFAULT.order.join() && !Object.keys(L.hide).length && L.map === 1; }
+  function isDefault(L) { return L.order.join() === DEFAULT.order.join() && !Object.keys(L.hide).length && L.map === 1 && L.top === DEFAULT_TOP; }
 
-  /* 짧은 코드: D1<권역>.<섹션 순서 첫글자 5자>.<숨김 id 첫글자들>.<지도단계>  예) D1북.rhsti..1 */
+  /* 짧은 코드: D1<권역>.<섹션 순서 첫글자 5자>.<숨김 id 첫글자들>.<지도단계>[.<위쪽 칸 첫글자>]  예) D1북.rhsti..1 · D1북.rhsti..1.f
+     위쪽 칸이 기본(미세먼지)이면 끝을 붙이지 않는다. */
   var INITIAL = { ribbon: 'r', hero: 'h', stations: 's', trio: 't', imgs: 'i', warn: 'w', info: 'n', msg: 'm', river: 'v', hourly: 'y', fire: 'f', pm: 'p' };
   var BY_INI = {}; Object.keys(INITIAL).forEach(function (k) { BY_INI[INITIAL[k]] = k; });
   function encode(L) {
     return 'D' + VER + SCOPE.replace('경기', '').charAt(0) + '.' + L.order.map(function (x) { return INITIAL[x]; }).join('')
-      + '.' + Object.keys(L.hide).map(function (x) { return INITIAL[x]; }).join('') + '.' + (MAPS.map(function (m) { return m[0]; }).indexOf(L.map) + 1);
+      + '.' + Object.keys(L.hide).map(function (x) { return INITIAL[x]; }).join('') + '.' + (MAPS.map(function (m) { return m[0]; }).indexOf(L.map) + 1)
+      + (L.top && L.top !== DEFAULT_TOP ? '.' + INITIAL[L.top] : '');
   }
   function decode(code) {
     try {
-      var m = String(code || '').trim().match(/^D(\d)[전북남]?\.([a-z]+)\.([a-z]*)\.(\d)$/); if (!m || +m[1] !== VER) return null;
+      var m = String(code || '').trim().match(/^D(\d)[전북남충]?\.([a-z]+)\.([a-z]*)\.(\d)(?:\.([vfp]))?$/); if (!m || +m[1] !== VER) return null;
       var order = m[2].split('').map(function (c) { return BY_INI[c]; }), hide = {};
       m[3].split('').forEach(function (c) { if (BY_INI[c]) hide[BY_INI[c]] = true; });
       var map = (MAPS[+m[4] - 1] || MAPS[0])[0];
-      return validate({ order: order, hide: hide, map: map });
+      return validate({ order: order, hide: hide, map: map, top: m[5] ? BY_INI[m[5]] : DEFAULT_TOP });
     } catch (e) { return null; }
   }
 
@@ -95,6 +104,10 @@
     L.order.forEach(function (id, i) { st.setProperty('--ds-' + id + '-o', i + 1); });
     ALL.forEach(function (x) { st.setProperty('--ds-' + x.id + '-d', L.hide[x.id] ? 'none' : DISP[x.id]); });
     st.setProperty('--ds-map', L.map);
+    /* 위쪽 칸: 고른 카드는 위 벌만, 나머지는 아래(예보 오른쪽 열) 벌만 보인다 */
+    TOPS.forEach(function (t) { var id = t[0], d = L.hide[id] ? 'none' : DISP[id];
+      st.setProperty('--ds-' + id + '-top-d', L.top === id ? d : 'none');
+      st.setProperty('--ds-' + id + '-bot-d', L.top === id ? 'none' : d); });
     /* 지도 열 비율: 1.6fr × 배율. calc() 는 fr 을 못 받아 열 정의 전체를 문자열로 준다 */
     st.setProperty('--ds-hero-cols', 'minmax(0,' + (1.6 * L.map).toFixed(2) + 'fr) minmax(330px,1fr)');
     window.DASH_LAYOUT = L;
@@ -131,11 +144,14 @@
   function refresh() { renderBadge(); drawTags(); if (EDIT) renderHud(); }
 
   /* 편집 중 각 섹션·카드 위에 이름표 */
+  /* 카드가 위·아래 두 벌일 수 있다 — 지금 보이는 쪽(없으면 첫 번째) */
+  function cardEl(id) { var all = document.querySelectorAll('[data-dash="' + id + '"]');
+    for (var i = 0; i < all.length; i++) { if (getComputedStyle(all[i]).display !== 'none') return all[i]; } return all[0] || null; }
   function drawTags() {
     tags.forEach(function (t) { t.remove(); }); tags = [];
     if (!EDIT) return;
     ALL.forEach(function (x) {
-      var el = document.querySelector('[data-dash="' + x.id + '"]'); if (!el) return;
+      var el = cardEl(x.id); if (!el) return;
       var hidden = !!LAYOUT.hide[x.id];
       var isSec = !!SECTIONS.filter(function (s) { return s.id === x.id; }).length;
       el.style.outline = hidden ? '2px dotted #8593aa' : (isSec ? '2px dashed #e0930a' : '2px dashed #2563eb');
@@ -146,7 +162,7 @@
       var r = el.getBoundingClientRect(); lab.style.left = (r.left + window.scrollX + 8) + 'px'; lab.style.top = (r.top + window.scrollY + 6) + 'px';
     });
   }
-  function clearMarks() { ALL.forEach(function (x) { var el = document.querySelector('[data-dash="' + x.id + '"]'); if (!el) return; el.style.outline = ''; el.style.outlineOffset = ''; el.style.opacity = ''; el.style.removeProperty('display'); }); }
+  function clearMarks() { ALL.forEach(function (x) { document.querySelectorAll('[data-dash="' + x.id + '"]').forEach(function (el) { el.style.outline = ''; el.style.outlineOffset = ''; el.style.opacity = ''; el.style.removeProperty('display'); }); }); }
 
   function renderHud() {
     var B = function (a, v, t, on) { return '<button data-a="' + a + '" data-v="' + (v || '') + '" style="cursor:pointer;border:1px solid var(--border,#d3dbe9);border-radius:8px;padding:5px 9px;font:700 12px system-ui;background:' + (on ? '#e0930a' : 'var(--surface2,#f3f7fc)') + ';color:' + (on ? '#fff' : 'var(--ink,#0f1b2d)') + ';">' + t + '</button>'; };
@@ -166,6 +182,9 @@
       h += '</div>';
     });
     h += '</div>';
+    h += '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;"><span style="color:var(--ink3,#8593aa);">상황도 옆 아래 칸</span>';
+    TOPS.forEach(function (t) { h += B('top', t[0], t[1], LAYOUT.top === t[0]); });
+    h += '<span style="color:var(--ink3,#8593aa);font-weight:500;">· 고르지 않은 칸은 아래 시간대별 예보 오른쪽에</span></div>';
     h += '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;"><span style="color:var(--ink3,#8593aa);">지도 크기</span>';
     MAPS.forEach(function (m) { h += B('map', m[0], m[1], LAYOUT.map === m[0]); });
     h += '<span style="border-left:1px solid var(--border,#d3dbe9);height:18px;margin:0 6px;"></span>';
@@ -181,6 +200,7 @@
       case 'down': i = L.order.indexOf(v); if (i < L.order.length - 1) { L.order.splice(i, 1); L.order.splice(i + 1, 0, v); } break;
       case 'hide': if (L.hide[v]) delete L.hide[v]; else L.hide[v] = true; break;
       case 'map':  L.map = +v; break;
+      case 'top':  L.top = v; break;
       case 'copy': var code = encode(LAYOUT);
         (navigator.clipboard ? navigator.clipboard.writeText(code) : Promise.reject()).then(function () { toast('복사됨: ' + code, 4000); }, function () { prompt('배치 코드 (복사하세요)', code); }); return;
       case 'paste': var s = prompt('배치 코드를 붙여넣으세요'); if (s == null) return; var d = decode(s);

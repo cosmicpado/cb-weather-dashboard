@@ -125,7 +125,15 @@
     window.DASH = {
       updated: SRC.updated,
       stations: stations, rivers: rivers, warnings: warnings, prelim: prelim,
-      fire: SRC.fire || [], pm: SRC.pm || [],
+      fire: SRC.fire || [],
+      /* 국가산불위험예보시스템 첫 화면의 전국 산불위험 지도 + 「산불발생위험예측」 팝업(없는 날은 popup:null) */
+      fireImg: SRC.fire_img || null,
+      /* 미세먼지 등급은 PM10 기준으로(화면이 모두 'PM10 수치 + 등급'으로 보여 준다 — 상황실과 같게, 2026-11-12).
+         수집기 grade 는 PM10·PM2.5 중 나쁜 쪽이라 PM10 17 이 '보통'으로 떴다. 원래 값은 gradeAll·gradeTextAll 로 남긴다. */
+      pm: (SRC.pm || []).map(function(p){ var v=p.pm10;
+        if(v==null) return p;
+        var g = v<=30 ? ['good','좋음'] : v<=80 ? ['normal','보통'] : v<=150 ? ['bad','나쁨'] : ['vbad','매우나쁨'];
+        return Object.assign({}, p, { grade:g[0], gradeText:g[1], gradeAll:p.grade, gradeTextAll:p.gradeText }); }),
       messages: (SRC.messages||[]).map(function(m){ return { sender:m.sender, time:m.time, text:m.text, region:m.region }; }),
       forecast: forecast, focusRegion: (RC.home || '동두천'),
       dam: damR ? { name: damR.name, info: damR.dam_info } : null,

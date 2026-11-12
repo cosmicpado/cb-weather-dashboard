@@ -1623,7 +1623,7 @@ https://scripts.sil.org/OFL
         <div style="display:contents;">
           <div data-card="idx" style="margin:14px;grid-column:var(--wl-idx-c,5)/span var(--wl-idx-cs,4);grid-row:var(--wl-idx-r,20)/span var(--wl-idx-rs,5);display:var(--wl-idx-d,grid);--fz:var(--wl-idx-fz,1);min-height:0;min-width:0;overflow:hidden;display:var(--wl-idx-d,grid);grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;">
             <div style="background:var(--panel,#151b26);border:2px solid var(--line,#28313f);border-radius:22px;padding:20px 26px;display:flex;flex-direction:column;justify-content:center;gap:8px;min-width:0;overflow:hidden;">
-              <div style="font-size:calc(34px*var(--fz,1));font-weight:560;color:var(--dim,#8e9bb0);white-space:nowrap; cursor:help;" title="국립산림과학원 산불위험예보입니다(낮음·보통·높음·매우높음). 권역 안에 더 높은 단계가 1%라도 있으면 그 단계로 표시합니다.">산불위험</div>
+              <div style="font-size:calc(34px*var(--fz,1));font-weight:560;color:var(--dim,#8e9bb0);white-space:nowrap; cursor:help;" title="국립산림과학원 산불위험예보(시군별)입니다. 공식 판정처럼 이 관서 시군의 평균 지수로 단계를 정합니다 — 낮음 50 이하 · 다소높음 51~65 · 높음 66~85 · 매우높음 86 이상.">산불위험</div>
               <div style="font-size:calc(82px*var(--fz,1));font-weight:700;line-height:1;white-space:nowrap;color:{{ fireColor }};">{{ fireLevel }}</div>
             </div>
             <div style="background:var(--panel,#151b26);border:2px solid var(--line,#28313f);border-radius:22px;padding:20px 26px;display:flex;flex-direction:column;justify-content:center;gap:8px;min-width:0;overflow:hidden;">
@@ -2090,8 +2090,16 @@ class Component extends DCLogic {
         /* 아랫줄 — 최저가 되는 시각과 그때 체감(출근·출동 시간대 판단용). 영향예보가 나오면 그게 먼저 */
         tile('a',(mo.tomorrow?'내일':'오늘')+' 아침 최저', r0(t), '℃', lv,
           im.on?['영향예보 '+im.today, im.col] : (mh ? [mh.hour+'시 · 체감 '+r0(mh.feels)+'℃', (mh.feels!=null&&mh.feels<=-10)?ORANGE:null] : null), null),
-        tile('b','오늘 최저보다', drop==null?'—':(drop===0?'같음':Math.abs(drop)), (drop==null||drop===0)?'':'℃',
-          (drop==null||drop===0)?null:[drop<0?'낮음':'높음', drop<=-10?ORANGE:drop<0?BLUE:DIM], ['오늘 최저 '+r0(s.tmin)+'℃',null], null),
+        /* 둘째 칸 — 아침 최저가 내일 것이면 '오늘 최저보다', 오늘 것(아침 9시 전후)이면 오늘 최저와 같은 값이라 비교가 안 되므로
+           '내일 아침 최저'를 보여 주고 오늘 아침과 비교한다(2026-11-12 — 아침에 '—'로 비어 있었다) */
+        (()=>{ if(mo.tomorrow) return tile('b','오늘 최저보다', drop==null?'—':(drop===0?'같음':Math.abs(drop)), (drop==null||drop===0)?'':'℃',
+            (drop==null||drop===0)?null:[drop<0?'낮음':'높음', drop<=-10?ORANGE:drop<0?BLUE:DIM], ['오늘 최저 '+r0(s.tmin)+'℃',null], null);
+          let nx=null, cr=false; for(let i=0;i<H.length;i++){ if(i>0 && H[i].hour<H[i-1].hour) cr=true;
+            const o=H[i]; if(cr && o.hour>=3 && o.hour<=9 && o.t!=null && (nx===null || o.t<nx.t)) nx=o; }
+          if(!nx) return tile('b','내일 아침 최저','—','',null,['예보 들어오면 표시',null],null);
+          const d2=(t==null)?null:Math.round(nx.t - t);
+          return tile('b','내일 아침 최저', r0(nx.t), '℃', null,
+            d2==null?null:[d2===0?'오늘 아침과 같음':('오늘 아침보다 '+Math.abs(d2)+'℃ '+(d2<0?'낮음':'높음')), d2<=-10?ORANGE:d2<0?BLUE:null], null); })(),
         si ? tile('c','결빙 위험', si.v, '', null, ['젖은 노면 '+si.n, RED], RED, true)
            : sf ? tile('c','결빙 위험', sf.v, '', null, ['서리 '+sf.n, AMBER], AMBER, true)
                 : tile('c','결빙 위험', '없음', '', null, ['앞으로 24시간',null], null)
@@ -2824,7 +2832,7 @@ class Component extends DCLogic {
       return hit(function(x){ return x===nm||x===sg; }) || hit(function(x){ return x.slice(0,2)===nm.slice(0,2); }); };   /* 재해.html fireGroupOf 와 같은 찾기 */
     var stations=NAMES.map(function(nm){
       /* 일산은 regions에 없다 → 지역기상은 '고양'. 단 AWS/미세먼지는 일산 고유 키. */
-      var r=byName[sig(nm)]||{}, a=aws[nm]||{}, w=a.wind||{}, pm=pmBy[sig(nm)]||{}, det=r.detail||{};
+      var r=byName[sig(nm)]||{}, a=aws[nm]||{}, w=a.wind||{}, pm=pmBy[nm]||pmBy[sig(nm)]||{}, det=r.detail||{};
       /* 시를 나눠 맡는 관서(청주서부)는 현재값·예보를 자기 동 기준으로(서버가 data.local 에 싣는다) */
       var own=(nm!==sig(nm) && D.local && D.local[nm]) || null, hsrc=(own&&own.hourly)||det.hourly||[];
       var hrs=hsrc.slice(0,12).map(function(o,k){   /* 실제 시간대별 예보 → 시간대별 표 */

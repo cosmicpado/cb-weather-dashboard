@@ -41,7 +41,27 @@
   section[data-dash="imgs"]{display:var(--ds-imgs-d,block)!important;order:var(--ds-imgs-o,5);}
   [data-dash="warn"]{display:var(--ds-warn-d,flex)!important;} [data-dash="info"]{display:var(--ds-info-d,flex)!important;} [data-dash="msg"]{display:var(--ds-msg-d,flex)!important;}
   [data-dash="river"]{display:var(--ds-river-d,flex)!important;} [data-dash="hourly"]{display:var(--ds-hourly-d,block)!important;}
-  [data-dash="fire"]{display:var(--ds-fire-d,block)!important;} [data-dash="pm"]{display:var(--ds-pm-d,flex)!important;}
+  [data-dash="fire"]{display:var(--ds-fire-d,flex)!important;} [data-dash="pm"]{display:var(--ds-pm-d,flex)!important;}
+  /* 위쪽 칸 고르기(2026-11-12) — 하천·산불·미세먼지는 위(상황도 옆)·아래(예보 오른쪽 열) 두 벌이 있고 고른 쪽만 보인다.
+     기본: 미세먼지가 위, 아래 오른쪽 열은 산불(위) + 하천(아래). 값은 dash_layout.js 가 --ds-<id>-top-d / -bot-d 로 준다. */
+  [data-dash="river"][data-place="top"]{display:var(--ds-river-top-d,none)!important;}
+  [data-dash="river"][data-place="bot"]{display:var(--ds-river-bot-d,flex)!important;}
+  [data-dash="fire"][data-place="top"]{display:var(--ds-fire-top-d,none)!important;}
+  [data-dash="fire"][data-place="bot"]{display:var(--ds-fire-bot-d,flex)!important;}
+  [data-dash="pm"][data-place="top"]{display:var(--ds-pm-top-d,flex)!important;}
+  [data-dash="pm"][data-place="bot"]{display:var(--ds-pm-bot-d,none)!important;}
+  /* 아래: 왼쪽 시간대별 예보 · 오른쪽 열(산불 + 나머지 한 칸). 오른쪽 열 높이는 예보 칸에 맞추고,
+     산불은 제 높이, 그 아래 칸(하천·미세먼지)이 남는 높이를 받아 안에서 스크롤한다 */
+  .trio-grid{ grid-template-columns:repeat(2, minmax(0,1fr)); }
+  @media (max-width:980px){ .trio-grid{ grid-template-columns:minmax(0,1fr); } }
+  .trio-right > [data-dash="fire"]{flex:0 0 auto;}
+  .trio-right > [data-dash="pm"], .trio-right > [data-dash="river"]{flex:1 1 0; min-height:220px;}
+  @media (max-width:980px){ .trio-right > [data-dash="pm"], .trio-right > [data-dash="river"]{flex:0 0 auto; max-height:560px;} }
+  .trio-right > [data-dash="river"] > div:last-child{flex:1 1 0!important; min-height:0!important; overflow:auto!important;}
+  [data-dash="pm"]{container-type:inline-size;}
+  /* 위쪽 칸에 올린 카드 — 넓은 화면에선 남는 높이를 채우고 넘치면 안에서 스크롤 */
+  @media (min-width:1160px){ [data-place="top"][data-dash="fire"], [data-place="top"][data-dash="pm"]{flex:1 1 0; min-height:0; overflow:auto!important;} }
+  [data-dash="fire"]{flex-direction:column;}
 </style>
 <script src="dash_layout.js"></script>
 <!-- 테스트2는 운영의 실시간 data.js를 직접 참조 (document.write는 dc-runtime 파싱과 충돌하므로 정적 로드) -->
@@ -60,6 +80,7 @@
     --border:#e4e9f2; --border2:#d3dbe9; --ink:#0f1b2d; --ink2:#4b5a74; --ink3:#5f6d85;   /* 2026-11-10 대비 4.0→5.3 (#71809a) */
     --brand:#2563eb; --brand2:#1d4ed8; --brandSoft:#e9f0ff; --cyan:#0e7490;
     --safe:#0a8058; --safeSoft:#e5f7f0;   /* 2026-11-10 글자 대비 2.9→4.6 (#0ea371) */ --caution:#e0930a; --cautionSoft:#fdf2df;
+    /* 산불 다소높음 노랑(2026-11-12) — 주의색(#e0930a)은 높음(주황)과 비슷해 보여 산불만 따로. 글자는 조금 진하게, 막대·견본은 밝게 */ --fireY:#b89200; --fireYBar:#f2c200;
     --warn:#ef6c1a; --warnSoft:#ffece0; --danger:#e5484d; --dangerSoft:#fdebec; --severe:#d42a2f; --severeSoft:#fbe3e3;
     --sh1:0 1px 2px rgba(16,27,45,.06); --sh2:0 8px 26px -12px rgba(16,27,45,.16),0 2px 6px -3px rgba(16,27,45,.07);
     --sh3:0 24px 56px -18px rgba(16,27,45,.30); --hexEmpty:#dde5f1; --headerBg:rgba(255,255,255,.82); --lblShadow:rgba(255,255,255,.8); --grid:rgba(16,27,45,.05);
@@ -69,7 +90,7 @@
     --bg:#080d18; --bg2:#0b1222; --surface:#111a2c; --surface2:#18233b; --surface3:#1e2a45;
     --border:#26314c; --border2:#354364; --ink:#e9eef9; --ink2:#9fb0cf; --ink3:#8090ad;
     --brand:#4b8bf5; --brand2:#3b82f6; --brandSoft:rgba(75,139,245,.15); --cyan:#22d3ee;
-    --safe:#34d399; --safeSoft:rgba(52,211,153,.13); --caution:#fbbf24; --cautionSoft:rgba(251,191,36,.13);
+    --safe:#34d399; --safeSoft:rgba(52,211,153,.13); --caution:#fbbf24; --cautionSoft:rgba(251,191,36,.13); --fireY:#facc15; --fireYBar:#facc15;
     --warn:#fb923c; --warnSoft:rgba(251,146,60,.14); --danger:#f87171; --dangerSoft:rgba(248,113,113,.13); --severe:#ef4444; --severeSoft:rgba(239,68,68,.16);
     --sh1:0 1px 2px rgba(0,0,0,.5); --sh2:0 8px 26px -10px rgba(0,0,0,.6); --sh3:0 24px 60px -20px rgba(0,0,0,.72);
     --hexEmpty:#1a2540; --headerBg:rgba(12,18,34,.82); --lblShadow:rgba(0,0,0,.55); --grid:rgba(255,255,255,.05);
@@ -84,6 +105,15 @@
   @keyframes dashRise{ from{ opacity:0; transform:translateY(10px) } to{ opacity:1; transform:none } }
   @keyframes dashFlow{ to{ stroke-dashoffset:-14 } }
   @keyframes dashSpin{ to{ transform:rotate(360deg) } }
+  /* 산불 위험도 — 11개 시군을 6칸씩(6+5), 좁은 화면은 4칸씩 */
+  /* 시군 칸(4열) + 오른쪽 작은 전국 산불위험 지도(2026-11-12) */
+  .fire-grid{ grid-template-columns:repeat(4, minmax(0,1fr)); }
+  .fire-map{ flex:0 0 190px; }
+  /* 칸 너비 기준(화면 너비가 아니라) — 위쪽 좁은 자리에 올려도 줄어든다 */
+  [data-dash="fire"]{ container-type:inline-size; }
+  @container (max-width:700px){ .fire-grid{ grid-template-columns:repeat(3, minmax(0,1fr)); } .fire-map{ flex-basis:165px; } }
+  /* 휴대폰처럼 아주 좁으면 지도를 시군 칸 아래로 내려 가로 전체로 */
+  @container (max-width:520px){ .fire-body{ flex-direction:column; } .fire-grid{ grid-template-columns:repeat(3, minmax(0,1fr)); grid-auto-rows:auto !important; } .fire-map{ align-self:center !important; width:100%; max-width:300px; flex:0 0 auto !important; } }
   @keyframes alertDrop{ 0%{ transform:translateY(-6px) scale(.98); opacity:0 } 100%{ transform:none; opacity:1 } }
   @keyframes dashPop{ 0%{ transform:scale(.96); opacity:0 } 100%{ transform:scale(1); opacity:1 } }
   /* 호우 버튼 글로우 — 비 오거나 기상특보 있을 때만. 클래스로 켠다.
@@ -517,7 +547,7 @@
 
       <!-- 수위 CARD -->
       <sc-if value="{{noFocus}}" hint-placeholder-val="{{true}}">
-      <div data-dash="river" style="{{riverCardStyle}}">
+      <div data-dash="river" data-place="top" style="{{riverCardStyle}}">
         <div style="display:flex; align-items:center; justify-content:space-between; padding:14px 16px 11px; border-bottom:1px solid var(--border);">
           <div style="display:flex; align-items:center; gap:8px;"><span style="width:9px; height:9px; border-radius:3px; background:var(--cyan);"></span><span style="font-size:15.5px; font-weight:800; color:var(--ink); cursor:help;" title="한강홍수통제소 수위 관측소의 10분 자료입니다. 관심 = 관심수위 이상, 경계 = 경계수위 이상(기준값은 관측소별로 홍수통제소가 정한 값). 홍수 특보는 홍수통제소 홍수예보 자료입니다.">하천 수위 · 홍수 위험</span></div>
           <span style="font-size:13px; font-weight:700; color:var(--ink3);">관심 이상 · 내 관할 · 경계수위 근접순</span>
@@ -576,6 +606,9 @@
           </sc-if>
         </div>
       </div>
+      <!-- 위쪽 칸 고르기(배치 편집, 2026-11-12): 아래 칸의 산불·미세먼지가 여기로 복사된다(지도.html 끝 스크립트). 고른 것만 보인다 -->
+      <div data-topslot="fire"></div>
+      <div data-topslot="pm"></div>
       </sc-if>
 
     </div>
@@ -610,11 +643,10 @@
     </div>
   </section>
 
-  <!-- ============ 시간대별 예보 (반칸) + 산불·미세먼지 (반칸) ============
-       align-items는 stretch(기본)로 둔다 — start면 오른쪽 열이 '내용 높이'만 차지해
-       왼쪽 날씨 카드보다 짧아지고 아래가 빈다. stretch면 두 열이 같은 높이가 되고,
-       남는 높이는 미세먼지 카드(flex:1)가 흡수한다. -->
-  <section data-dash="trio" style="padding:22px 22px 0; display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,440px),1fr)); gap:16px;">
+  <!-- ============ 시간대별 예보 (왼쪽) + 오른쪽 열: 산불 위험도 · 그 아래 한 칸 ============
+       2026-11-12: 오른쪽 열 아래 칸은 위쪽 칸(상황도 옆)으로 올리지 않은 카드 — 기본은 미세먼지가 위, 하천 수위가 여기.
+       오른쪽 열 높이는 예보 칸에 맞춘다(아래 칸이 남는 높이를 받아 안에서 스크롤). -->
+  <section data-dash="trio" class="trio-grid" style="padding:22px 22px 0; display:grid; gap:16px;">
     <div data-dash="hourly" style="background:var(--surface); border:1px solid var(--border); border-radius:16px; box-shadow:var(--sh2); overflow:hidden;">
       <div style="display:flex; align-items:center; justify-content:space-between; padding:15px 18px 8px; flex-wrap:wrap; gap:8px;">
         <div style="display:flex; align-items:center; gap:9px;">
@@ -632,38 +664,53 @@
         {{hourlyTable}}
       </div>
     </div>
-    <!-- 오른쪽 절반: 산불 위험도 + 미세먼지 (위아래) -->
-    <div style="display:flex; flex-direction:column; gap:16px;">
-
-    <div data-dash="fire" style="background:var(--surface); border:1px solid var(--border); border-radius:16px; box-shadow:var(--sh2); overflow:hidden;">
+    <!-- 오른쪽 열 -->
+    <div class="trio-right" style="display:flex; flex-direction:column; gap:16px; min-height:0;">
+    <div data-dash="fire" data-place="bot" style="background:var(--surface); border:1px solid var(--border); border-radius:16px; box-shadow:var(--sh2); overflow:hidden;">
       <div style="display:flex; align-items:center; justify-content:space-between; padding:14px 16px 11px; border-bottom:1px solid var(--border);">
-        <div style="display:flex; align-items:center; gap:8px;"><span style="width:9px; height:9px; border-radius:3px; background:var(--warn);"></span><span style="font-size:15.5px; font-weight:800; color:var(--ink); cursor:help;" title="국립산림과학원 산불위험예보입니다. 시군 안에 더 높은 단계가 1%라도 있으면 그 단계로 표시합니다.">산불 위험도</span></div>
+        <div style="display:flex; align-items:center; gap:8px;"><span style="width:9px; height:9px; border-radius:3px; background:var(--warn);"></span><span style="font-size:15.5px; font-weight:800; color:var(--ink); cursor:help;" title="국립산림과학원 산불위험예보(시군별)입니다. 공식 판정처럼 시군 평균 지수로 단계를 정합니다 — 낮음 50 이하 · 다소높음 51~65 · 높음 66~85 · 매우높음 86 이상. 칸에 마우스를 올리면 가장 높은 곳의 지수와 단계별 면적 비율이 나옵니다.">산불 위험도</span></div>
         <span style="font-size:13px; color:var(--ink3); font-weight:600;">국립산림과학원</span>
       </div>
-      <div style="padding:12px 16px; display:flex; flex-direction:column; gap:12px;">
-        <sc-for list="{{fire}}" as="f" hint-placeholder-count="4">
-          <div>
-            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
-              <span style="font-size:14.5px; font-weight:700; color:var(--ink);">{{f.region}}</span>
-              <span style="font-size:13.5px; font-weight:800; color:{{f.color}};">{{f.levelText}}</span>
-            </div>
-            <div style="height:7px; border-radius:999px; background:var(--surface3); overflow:hidden;"><div style="height:100%; width:{{f.pctW}}; background:{{f.color}}; border-radius:999px;"></div></div>
+      <!-- 왼쪽: 시군 11칸 + 범례 · 오른쪽: 국가산불위험예보시스템 전국 산불위험 지도(작게, 2026-11-12).
+           지도를 누르면 「산불발생위험예측」, 그 팝업이 없는 날은 시스템으로 바로 간다. -->
+      <div class="fire-body" style="display:flex; gap:10px; padding:10px 12px 9px; align-items:flex-start;">
+      <div style="flex:1 1 0; min-width:0; display:flex; flex-direction:column; gap:8px;">
+      <div class="fire-grid" style="display:grid; gap:6px; align-content:start;">
+        <sc-for list="{{fire}}" as="f" hint-placeholder-count="11">
+          <div title="{{f.tip}}" style="display:flex; flex-direction:column; justify-content:center; gap:4px; padding:6px 9px 7px; border-radius:10px; background:{{f.tileBg}}; border:2px solid {{f.tileBorder}}; box-shadow:{{f.tileShadow}}; min-width:0;">
+            <span style="font-size:13.5px; font-weight:700; color:var(--ink2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{f.region}}</span>
+            <span style="display:flex; align-items:baseline; justify-content:space-between; gap:4px; line-height:1.2;"><span style="font-size:17px; font-weight:800; color:{{f.color}}; white-space:nowrap;">{{f.levelText}}</span><span style="font-size:13.5px; font-weight:700; color:var(--ink3); font-variant-numeric:tabular-nums;">{{f.idxTxt}}</span></span>
+            <div style="height:5px; border-radius:3px; margin-top:2px; background:{{f.bar}};"></div>
           </div>
         </sc-for>
       </div>
+      </div>
+      <sc-if value="{{hasFireMap}}" hint-placeholder-val="{{true}}">
+        <div onClick="{{openFireImg}}" title="{{fireMapTip}}" class="fire-map" style="min-width:0; border:1px solid var(--border); border-radius:10px; overflow:hidden; cursor:pointer; background:#fff; display:flex; flex-direction:column; align-self:flex-start;" style-hover="border-color:var(--brand2); box-shadow:var(--sh2)">
+          <img src="{{fireMapSrc}}" alt="전국 산불위험 지도" style="width:100%; display:block; aspect-ratio:481/524; object-fit:contain;">
+          <span style="font-size:12.5px; font-weight:800; color:var(--brand); text-align:center; padding:5px 2px 6px; background:var(--surface); border-top:1px solid var(--border); white-space:nowrap;">{{fireMapLabel}}</span>
+        </div>
+      </sc-if>
+      </div>
+      <!-- 범례 — 시군 칸·지도 아래 가로 전체 -->
+      <div style="display:flex; flex-wrap:wrap; gap:3px 10px; padding:0 14px 11px; font-size:12px; color:var(--ink3);">
+        <span>숫자 = 평균 지수 · 막대 = 면적 중 단계 비율</span>
+        <span><i style="display:inline-block; width:8px; height:8px; border-radius:2px; background:var(--safe); margin-right:3px;"></i>낮음</span>
+        <span><i style="display:inline-block; width:8px; height:8px; border-radius:2px; background:var(--fireYBar); margin-right:3px;"></i>다소높음</span>
+        <span><i style="display:inline-block; width:8px; height:8px; border-radius:2px; background:var(--warn); margin-right:3px;"></i>높음</span>
+        <span><i style="display:inline-block; width:8px; height:8px; border-radius:2px; background:var(--severe); margin-right:3px;"></i>매우높음</span>
+      </div>
     </div>
 
-    <!-- 미세먼지 카드가 남는 높이를 흡수한다(flex:1) → 오른쪽 열이 왼쪽 날씨 카드와 같은 높이가 된다.
-         min-height:0 이 있어야 이 카드가 내용보다 작게 줄어들 수 있고(=목록이 안쪽에서 스크롤),
-         없으면 반대로 이 카드가 행 높이를 밀어올려 왼쪽이 늘어난다. -->
-    <div data-dash="pm" style="background:var(--surface); border:1px solid var(--border); border-radius:16px; box-shadow:var(--sh2); overflow:hidden; display:flex; flex-direction:column; flex:1 1 0; min-height:0;">
+    <!-- 아래 칸(미세먼지 또는 하천)이 남는 높이를 흡수한다(flex:1 1 0) → 오른쪽 열이 왼쪽 날씨 카드와 같은 높이 -->
+    <div data-dash="pm" data-place="bot" style="background:var(--surface); border:1px solid var(--border); border-radius:16px; box-shadow:var(--sh2); overflow:hidden; display:flex; flex-direction:column; flex:1 1 0; min-height:0;">
       <div style="display:flex; align-items:center; justify-content:space-between; padding:14px 16px 11px; border-bottom:1px solid var(--border); flex-shrink:0;">
         <div style="display:flex; align-items:center; gap:8px;"><span style="width:9px; height:9px; border-radius:3px; background:var(--cyan);"></span><span style="font-size:15.5px; font-weight:800; color:var(--ink); cursor:help;" title="에어코리아 실시간 측정값입니다. 시군별로 정해 둔 측정소 값이며, 측정이 빠지면 비어 있을 수 있습니다.">미세먼지 PM10</span></div>
         <span style="font-size:13px; color:var(--ink3); font-weight:600;">에어코리아</span>
       </div>
-      <div style="padding:11px 16px; display:flex; flex-direction:column; gap:9px; flex:1 1 0; min-height:120px; overflow:auto;">
+      <div class="pm-list" style="padding:11px 16px; display:flex; flex-direction:column; gap:9px; flex:1 1 0; min-height:120px; overflow:auto;">
         <sc-for list="{{pm}}" as="p" hint-placeholder-count="6">
-          <div style="display:flex; align-items:center; gap:11px;">
+          <div title="{{p.tip}}" style="display:flex; align-items:center; gap:11px; margin:0 -8px; padding:3px 6px; border-radius:9px; border:2px solid {{p.selBorder}}; background:{{p.selBg}};">
             <span style="font-size:14px; font-weight:700; color:var(--ink); width:66px; flex-shrink:0; white-space:nowrap;">{{p.region}}</span>
             <div style="flex:1; height:7px; border-radius:999px; background:var(--surface3); overflow:hidden;"><div style="height:100%; width:{{p.pctW}}; background:{{p.color}}; border-radius:999px;"></div></div>
             <span style="font-size:14.5px; font-weight:800; color:var(--ink); font-variant-numeric:tabular-nums; width:30px; text-align:right;">{{p.pm10}}</span>
@@ -672,6 +719,8 @@
         </sc-for>
       </div>
     </div>
+    <!-- 하천 수위를 위쪽에서 내리면 여기(지도.html 끝 스크립트가 위쪽 원본을 복사) -->
+    <div data-botslot="river"></div>
     </div>
   </section>
 
@@ -740,6 +789,33 @@
 
 </div>
 </x-dc>
+<script>
+/* 위쪽 칸 고르기(2026-11-12) — 카드 정의는 한 곳에만 두고(고칠 때 한 번만), 런타임이 읽기 전에 한 벌 더 복사해 둔다.
+   하천 수위(위 원본) → 아래 2×2 자리, 산불 위험도·미세먼지(아래 원본) → 위쪽 자리.
+   어느 쪽을 보일지는 dash_layout.js 의 CSS 변수가 정한다.
+   ⚠ dc-runtime 은 시작 뒤 이 페이지 원문을 fetch(location.href)로 한 번 더 받아 틀을 갈아 끼운다.
+     그 응답에도 같은 복사를 해 줘야 복사본이 사라지지 않는다(아래 fetch 감싸기 — 이 주소 한 건만). */
+(function(){
+  var SLOTS=[['river','top','bot','[data-botslot="river"]'],['fire','bot','top','[data-topslot="fire"]'],['pm','bot','top','[data-topslot="pm"]']];
+  function dup(dc){ SLOTS.forEach(function(x){
+    var src=dc.querySelector('[data-dash="'+x[0]+'"][data-place="'+x[1]+'"]'), slot=dc.querySelector(x[3]);
+    if(!src||!slot) return;
+    var c=src.cloneNode(true); c.setAttribute('data-place', x[2]); slot.parentNode.replaceChild(c, slot); }); }
+  var dc=document.querySelector('x-dc'); if(!dc) return;
+  dup(dc);
+  var F=window.fetch; if(!F || !window.DOMParser) return;
+  window.fetch=function(u, o){
+    var p=F.apply(this, arguments), url=(typeof u==='string') ? u : (u && u.url);
+    if(url!==location.href) return p;
+    window.fetch=F;   // 런타임의 원문 받기는 한 번뿐
+    return p.then(function(res){ if(!res.ok) return res; return res.text().then(function(t){
+      try{ var i=t.indexOf('<x-dc>'), j=t.lastIndexOf('</x-dc>');
+        if(i>=0 && j>i){ var d=new DOMParser().parseFromString(t,'text/html'), x=d.querySelector('x-dc');
+          if(x){ dup(x); t=t.slice(0,i+6)+x.innerHTML+t.slice(j); } } }catch(e){}
+      return new Response(t, {status:res.status, headers:{'Content-Type':'text/html; charset=utf-8'}}); }); });
+  };
+})();
+</script>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:1024},&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;light&quot;,&quot;tsType&quot;:&quot;'light'|'dark'&quot;,&quot;section&quot;:&quot;표시&quot;},&quot;demo&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;표시&quot;},&quot;accent&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#2563eb&quot;,&quot;options&quot;:[&quot;#2563eb&quot;,&quot;#0e7490&quot;,&quot;#4f46e5&quot;,&quot;#0f766e&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;표시&quot;}}">
 class Component extends DCLogic {
   constructor(props){
@@ -1352,6 +1428,8 @@ class Component extends DCLogic {
     if(!sigun) return [];
     return (rivers||[]).filter(r=> r.sigun ? (r.sigun===sigun) : String(r.name||'').includes(sigun));
   }
+  /* 산불 단계 색(한 곳에서) — 국립산림과학원 색표 순서(빨강·주황·노랑)를 우리 경보 색으로, 낮음은 초록 */
+  fireLvColor(l){ return l>=4 ? 'var(--severe)' : l>=3 ? 'var(--warn)' : l>=2 ? 'var(--fireY)' : 'var(--safe)'; }
   cvar(lv){ return lv==='danger'?'var(--severe)':lv==='warning'?'var(--warn)':'var(--safe)'; }
   spark(hist){
     const h=(hist||[]).filter(v=>typeof v==='number' && !isNaN(v));
@@ -1579,7 +1657,7 @@ class Component extends DCLogic {
     const nearRB=this.riversOf(d.rivers, sg, (s&&s.name)||sg).map(r=>({name:r.name, value:r.value, danger:r.danger, lv:this.riverLevel(r)}));
     const msgs=(d.messages||[]).filter(m=>m.region===sg || m.region===f || m.region==='충청북도');
     const warnsRB=(d.warnings||[]).filter(w=>this._areaHits(w.area, sg));
-    const pm=(d.pm||[]).find(p=>p.region===sg);
+    const pm=(d.pm||[]).find(p=>p.region===f)||(d.pm||[]).find(p=>p.region===sg);   // 청주서부는 자기 측정소
     const fire=(d.fire||[]).find(z=>(z.region||'').includes(sg));
     let detail=this.regionBody(s, nearRB, msgs, warnsRB, pm, fire);
     // 파주 등 서해 조석영향 관서: 물때 카드를 상세 최상단에 삽입.
@@ -1725,7 +1803,7 @@ class Component extends DCLogic {
       kpi('재난문자', msgs.length, msgs.length?'건':'', msgs.length?'var(--warn)':'var(--ink3)'),
       kpi('최고 하천수위', worstRiver?(Math.round((worstRiver.pct||0)*100)+'%'):'-', worstRiver?place(worstRiver.name):'', worstRiver?cvar(worstRiver.lv):'var(--ink3)'),
       pm[0]?kpi('미세먼지 최고', pm[0].pm10, pm[0].region, (pm[0].grade==='vbad'?'var(--severe)':pm[0].grade==='bad'?'var(--warn)':'var(--ink)')):kpi('미세먼지','-','','var(--ink3)'),
-      typ?kpi('태풍', typ.seq+'호', typ.name, 'var(--severe)'):kpi('산불위험', fire[0]?fire[0].levelText:'-', fire[0]?fire[0].region:'', fire[0]&&fire[0].level>=3?'var(--warn)':'var(--ink)')
+      typ?kpi('태풍', typ.seq+'호', typ.name, 'var(--severe)'):kpi('산불위험', fire[0]?fire[0].levelText:'-', fire[0]?(fire[0].region+(fire.filter(x=>x.level===fire[0].level).length>1?' 외 '+(fire.filter(x=>x.level===fire[0].level).length-1):'')):'', fire[0]?this.fireLvColor(fire[0].level):'var(--ink)')
     ];
     const zoneA=R('div',{style:{display:'flex', alignItems:'stretch', gap:'12px', height:'13vh', minHeight:'96px', padding:'12px 20px 4px'}},
       R('div',{style:{display:'flex', flexDirection:'column', justifyContent:'center', minWidth:'210px'}},
@@ -1807,7 +1885,7 @@ class Component extends DCLogic {
         R('div',{style:{flex:2, display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:'8px'}}, pm.map((p,i)=>{ const c=p.grade==='vbad'?'var(--severe)':p.grade==='bad'?'var(--warn)':p.grade==='normal'?'var(--caution)':'var(--safe)'; return R('div',{key:i, style:{background:'var(--surface2)', border:'1px solid var(--border)', borderRadius:'11px', padding:'6px 10px', display:'flex', flexDirection:'column', justifyContent:'center'}},
           R('div',{style:{fontSize:'15px', color:'var(--ink2)', fontWeight:700}}, p.region),
           R('div',{style:{display:'flex', alignItems:'baseline', gap:'5px'}}, R('span',{style:{fontSize:'clamp(20px,2vw,30px)', fontWeight:800, color:c, fontVariantNumeric:'tabular-nums'}}, p.pm10), R('span',{style:{fontSize:'14px', color:'var(--ink3)'}}, p.gradeText))); })),
-        R('div',{style:{flex:1, display:'flex', flexDirection:'column', gap:'8px'}}, fire.map((f,i)=>{ const c=f.level>=4?'var(--severe)':f.level>=3?'var(--warn)':f.level>=2?'var(--caution)':'var(--safe)'; return R('div',{key:i, style:{flex:'1 1 0', background:'var(--surface2)', border:'1px solid var(--border)', borderLeft:'4px solid '+c, borderRadius:'11px', padding:'6px 12px', display:'flex', alignItems:'center', justifyContent:'space-between'}}, R('span',{style:{fontSize:'15.5px', fontWeight:700, color:'var(--ink2)'}}, '🔥 '+f.region), R('span',{style:{fontSize:'17px', fontWeight:800, color:c}}, f.levelText)); })));
+        R('div',{style:{flex:1, display:'grid', gridTemplateColumns:'repeat(2,minmax(0,1fr))', gridAutoRows:'1fr', gap:'6px'}}, fire.map((f,i)=>{ const c=f.level>=4?'var(--severe)':f.level>=3?'var(--warn)':f.level>=2?'var(--caution)':'var(--safe)'; return R('div',{key:i, style:{minWidth:0, background:'var(--surface2)', border:'1px solid var(--border)', borderLeft:'4px solid '+c, borderRadius:'9px', padding:'2px 9px', display:'flex', alignItems:'center', justifyContent:'space-between', gap:'4px'}}, R('span',{style:{fontSize:'14.5px', fontWeight:700, color:'var(--ink2)', whiteSpace:'nowrap'}}, f.region), R('span',{style:{fontSize:'15px', fontWeight:800, color:c, whiteSpace:'nowrap'}}, f.levelText)); })));
     }
     if(idx===1){ // 하천/댐 수위
       const rivers=(d.rivers||[]).map(r=>{ const lv=this.riverLevel(r); const pct=r.danger?Math.min(1,r.value/r.danger):0; return Object.assign({},r,{lv,pct}); }).sort((a,b)=>(b.pct||0)-(a.pct||0)).slice(0,8);
@@ -1893,7 +1971,7 @@ class Component extends DCLogic {
     const near=this.riversOf(d.rivers, sg, (s&&s.name)||sg).map(r=>{ const lv=this.riverLevel(r); return Object.assign({},r,{lv, pct:r.danger?Math.min(1,r.value/r.danger):0}); });
     const worstPct=near.reduce((a,r)=>Math.max(a,r.pct||0),0);
     const msgs=(d.messages||[]).filter(m=> m.region===sg || m.region===f || m.region==='충청북도');
-    const pm=(d.pm||[]).find(p=>p.region===sg);
+    const pm=(d.pm||[]).find(p=>p.region===f)||(d.pm||[]).find(p=>p.region===sg);   // 청주서부는 자기 측정소
     const fire=(d.fire||[]).find(z=>String(z.region||'').includes(sg));
     const risks=this.getRisks().filter(z=>z.region===f);
     const fc=(s.forecast&&s.forecast.length)?s.forecast:(d.forecast||[]);
@@ -1907,13 +1985,14 @@ class Component extends DCLogic {
     const _sun=(window.cbSun ? window.cbSun(now, f) : {}), sunR=_sun.riseMin, sunS=_sun.setMin;   // 그 관서 시·군청 좌표(stage.js)
 
     // ── 출동 영향 판단 (현재 기상값 기반 자동) — 위험별 어휘·색(틴트 배경) ──
-    const SFT={safe:'var(--safeSoft)',caution:'var(--cautionSoft)',warn:'var(--warnSoft)',severe:'var(--severeSoft)',brand:'var(--brandSoft)'};
-    const CC={safe:'var(--safe)',caution:'var(--caution)',warn:'var(--warn)',severe:'var(--severe)',brand:'var(--brand)'};
+    const SFT={safe:'var(--safeSoft)',caution:'var(--cautionSoft)',fireY:'var(--cautionSoft)',warn:'var(--warnSoft)',severe:'var(--severeSoft)',brand:'var(--brandSoft)'};
+    const CC={safe:'var(--safe)',caution:'var(--caution)',fireY:'var(--fireY)',warn:'var(--warn)',severe:'var(--severe)',brand:'var(--brand)'};
     const mk=(t,c)=>({t:t, c:CC[c], soft:SFT[c]});
     const ladder = gust==null?mk('-','safe'):(gust>10?mk('전개 제한','severe'):gust>8?mk('주의','caution'):mk('정상','safe'));
-    const fireColBy=l=> l>=4?'severe':l>=3?'warn':l>=2?'brand':'safe';
+    // 산불 단계 색 — 국립산림과학원 색표(매우높음 빨강·높음 주황·다소높음 노랑)를 우리 색(severe·warn·caution)으로, 낮음은 초록(safe)
+    const fireColBy=l=> l>=4?'severe':l>=3?'warn':l>=2?'fireY':'safe';
     const fireJ = fire ? mk(fire.levelText||'-', fireColBy(fire.level))
-                       : ((effH!=null&&effH<35)?mk('높음','warn'):(effH!=null&&effH<45)?mk('보통','brand'):mk('낮음','safe'));
+                       : ((effH!=null&&effH<35)?mk('높음','warn'):(effH!=null&&effH<45)?mk('다소높음','fireY'):mk('낮음','safe'));
     /* 체감온도 카드 — 계절에 따라 제목이 바뀐다(구급 전용 어휘 대신 모든 직원이 읽는 말로).
        · 체감 30° 이상: 온열질환 주의 — 단계는 기상청 폭염 영향예보 체감 기준(31 관심 · 33 주의 · 35 경고 · 38 위험)
        · 체감 10° 미만: 한파 주의 — 기상청 체감온도 단계(0 이하 관심 · -10 이하 주의 · -25 이하 경고), 0~10°는 '쌀쌀'
@@ -2035,7 +2114,7 @@ class Component extends DCLogic {
     const col3=R('div',{style:{flex:'1 1 0', minWidth:0, display:'flex', flexDirection:'column', gap:'11px'}},
       card('재난문자 · 관할 시군', msgs.length+'건', msgs.length?R('div',{style:{display:'flex', flexDirection:'column', gap:'6px'}}, msgs.slice(0,2).map((m,i)=>R('div',{key:i, style:{padding:'8px 12px', borderRadius:'10px', background:'var(--warnSoft)', border:'1px solid var(--border)'}}, R('div',{style:{display:'flex', justifyContent:'space-between'}}, R('span',{style:{fontSize:'15px', fontWeight:800, color:'var(--warn)'}}, m.sender), R('span',{style:{fontSize:'13px', color:'var(--ink3)'}}, m.time)), R('div',{style:{fontSize:'15px', color:'var(--ink)', marginTop:'2px', lineHeight:1.4, display:'-webkit-box', WebkitLineClamp:3, WebkitBoxOrient:'vertical', overflow:'hidden'}}, m.text)))):R('div',{style:{fontSize:'15px', color:'var(--ink3)'}}, '최근 재난문자 없음'), true),
       card('산불 · 미세먼지 · 일출몰', '', R('div',{style:{display:'flex', gap:'8px'}},
-        bigStat('산불위험', fire?fire.levelText:'-', '', (fire&&fire.level>=3?'var(--warn)':'var(--ink)')),
+        bigStat('산불위험', fire?fire.levelText:'-', '', (fire?this.fireLvColor(fire.level):'var(--ink)')),
         bigStat('미세먼지', pm?pm.pm10:'-', (pm?pm.gradeText:''), (pm&&pm.grade==='vbad'?'var(--severe)':pm&&pm.grade==='bad'?'var(--warn)':'var(--ink)')),
         bigStat('일출/일몰', fmtM(sunR), '/'+fmtM(sunS)))),
       card('관할 위험구역', risks.length+'곳 등록', risks.length?R('div',{style:{display:'flex', flexDirection:'column', gap:'6px'}}, risks.slice(0,4).map((z,i)=>R('div',{key:i, style:{display:'flex', justifyContent:'space-between', alignItems:'center', gap:'8px', padding:'7px 12px', background:'var(--surface2)', border:'1px solid var(--border)', borderRadius:'10px'}}, R('div',{style:{minWidth:0}}, R('div',{style:{fontSize:'15.5px', fontWeight:800, color:'var(--ink)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis'}}, z.name), z.note?R('div',{style:{fontSize:'14px', color:'var(--ink3)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis'}}, z.note):null), R('span',{style:{fontSize:'14px', fontWeight:800, color:'#fff', background:'var(--warn)', padding:'2px 8px', borderRadius:'6px', flexShrink:0}}, z.type||'')))):R('div',{style:{fontSize:'15px', color:'var(--ink3)'}}, '지금 해당하는 위험구역 없음'), true));
@@ -2187,11 +2266,32 @@ class Component extends DCLogic {
     const fcRainBars=fc.map((f,i)=>{ const x=N>1?i/(N-1)*96+2:50; const h=(f.rain||0)/rmx*20; return {x:+(x-1.4).toFixed(2), y:+(82-h).toFixed(2), h:+Math.max(h,0.4).toFixed(2)}; });
     const forecast=fc.map((f,i)=>({ hour:f.hour, hourLabel:(i===0?'지금':f.hour), icon:f.icon, weather:f.weather, pop:f.pop, rain:f.rain, rainShow:(f.rain||0)>0, cellBg:(i===0?'var(--brandSoft)':'transparent'), hourCol:(i===0?'var(--brand)':'var(--ink3)'), tempTxt:this.fmtNum(f.temp,0), feelsTxt:this.fmtNum(f.feels,0) }));
     // fire / pm / messages
-    const fire=(d.fire||[]).map(f=>({ region:f.region, levelText:f.levelText, level:f.level,
-      color: f.level>=4?'var(--severe)':f.level>=3?'var(--warn)':f.level>=2?'var(--caution)':'var(--safe)', pctW:Math.round(f.level/4*100)+'%' }));
-    const pm=(d.pm||[]).slice().sort((a,b)=>(b.pm10||0)-(a.pm10||0)).map(p=>({ region:p.region, pm10:p.pm10, pm25:p.pm25, gradeText:p.gradeText,
-      color: p.grade==='vbad'?'var(--severe)':p.grade==='bad'?'var(--warn)':p.grade==='normal'?'var(--caution)':'var(--safe)',
-      pctW:Math.min(100,Math.round((p.pm10/150)*100))+'%' }));
+    /* 고른 관서의 시군 칸 — 테두리로 두르고 맨 앞으로(관서별 현재 기상과 같은 방식, 나머지 순서는 그대로).
+       청주동부·청주서부 → '청주' 칸. 산불 위험도·미세먼지 둘 다. */
+    const _selSt=(d.stations||[]).find(x=>x.name===pickLabel), _selSg=_selSt ? String(_selSt.sigun||_selSt.name) : '';
+    const _stNames=new Set((d.stations||[]).map(x=>x.name));
+    // 관서 이름(청주동부·청주서부)으로 온 줄은 그 관서만, 시군 이름('청주')으로 온 칸은 그 시군 관서 모두
+    const _isSel=r=>!!_selSg && !!r && (r===pickLabel || (!_stNames.has(r) && (r===_selSg || _selSg.indexOf(r)===0 || r.indexOf(_selSg)===0)));
+    const _selFirst=(arr)=>arr.slice().sort((a,b)=>(_isSel(a.region)?0:1)-(_isSel(b.region)?0:1));
+    const fire=_selFirst(d.fire||[]).map(f=>{ const on=_isSel(f.region); return { region:f.region, levelText:f.levelText, level:f.level,
+      tileBg:'var(--surface2)', tileBorder: on?'var(--brand)':'transparent', tileShadow: on?'0 0 0 3px var(--brandSoft)':'none',
+      idxTxt: f.index!=null ? String(f.index) : '',
+      tip: f.region+' '+f.levelText+(f.index!=null ? ' (평균 지수 '+f.index+(f.max!=null?' · 가장 높은 곳 '+f.max:'')+')' : '')+(Array.isArray(f.pct) ? '\n면적 비율 — 낮음 '+f.pct[0]+'% · 다소높음 '+f.pct[1]+'% · 높음 '+f.pct[2]+'% · 매우높음 '+f.pct[3]+'%' : ''),
+      /* 단계별 면적 비율 막대 — 높은 단계가 1%라도 보이게 최소 4%로 늘려 그린다 */
+      bar: (()=>{ const C=['var(--safe)','var(--fireYBar)','var(--warn)','var(--severe)'];
+        if(!Array.isArray(f.pct)) return C[Math.max(0,Math.min(3,(f.level||1)-1))];
+        const p=f.pct.map(v=>v>0?Math.max(4,v):0), s=p.reduce((a,b)=>a+b,0)||1; let x=0;
+        return 'linear-gradient(90deg,'+p.map((v,i)=>{ const a=x; x+=v/s*100; return C[i]+' '+a.toFixed(1)+'% '+x.toFixed(1)+'%'; }).join(',')+')'; })(),
+      color: this.fireLvColor(f.level), pctW:Math.round(f.level/4*100)+'%' }; });
+    /* 이 카드는 'PM10' 카드라 등급도 PM10 기준(상황실과 같게, 2026-11-12). 수집기의 grade 는 PM10·PM2.5 중 나쁜 쪽이라
+       단양 PM10 17 이 초미세 16 때문에 '보통'으로 떴다. 초미세는 마우스를 올리면 보인다. */
+    const _g10=v=>v==null?[null,'-']:v<=30?['good','좋음']:v<=80?['normal','보통']:v<=150?['bad','나쁨']:['vbad','매우나쁨'];
+    const _g25=v=>v==null?'':v<=15?'좋음':v<=35?'보통':v<=75?'나쁨':'매우나쁨';
+    const pm=_selFirst((d.pm||[]).slice().sort((a,b)=>(b.pm10||0)-(a.pm10||0))).map(p=>{ const g=_g10(p.pm10); return { region:p.region, pm10:p.pm10, pm25:p.pm25, gradeText:g[1],
+      tip: p.region+' 미세먼지(PM10) '+(p.pm10==null?'-':p.pm10)+'㎍/㎥ '+g[1]+(p.pm25!=null?' · 초미세먼지(PM2.5) '+p.pm25+'㎍/㎥ '+_g25(p.pm25):''),
+      selBorder: _isSel(p.region)?'var(--brand)':'transparent', selBg: _isSel(p.region)?'var(--brandSoft)':'transparent',
+      color: g[0]==='vbad'?'var(--severe)':g[0]==='bad'?'var(--warn)':g[0]==='normal'?'var(--caution)':'var(--safe)',
+      pctW:Math.min(100,Math.round((p.pm10/150)*100))+'%' }; });
     // 재난문자 — 시도 전체를 고르면 전부, 관서를 고르면 그 시군 발송분 + 시도 전역 발송분만
     //   (재난문자는 시 단위로 발송된다 — 청주동부·청주서부는 둘 다 청주시 문자를 본다)
     const myMsgs=isWide ? (d.messages||[]) : (d.messages||[]).filter(m=> m.region===mySg || m.region===myStation || m.region===WIDE);
@@ -2396,6 +2496,12 @@ class Component extends DCLogic {
       wxInfoListUrl:'https://www.weather.go.kr/w/special-report/list.do?stn='+_wstn+'&kind='+((wxInfoItems[0]||{}).kind||'inf'),
       openImgRadar:()=>this.setState({wimgTab:'radar', modal:{kind:'weatherimg'}}),
       openImgSat:()=>this.setState({wimgTab:'satellite', modal:{kind:'weatherimg'}}),
+      /* 산불위험 지도 칸 — 「산불발생위험예측」 팝업이 있으면 그 창을, 없으면 국가산불위험예보시스템을 바로 연다 */
+      ...(()=>{ const fi=d.fireImg||{}, mp=fi.map, pp=fi.popup, site=fi.site||'https://forestfire.nifos.go.kr/';
+        return { hasFireMap:!!(mp&&mp.file), fireMapSrc: mp&&mp.file ? mp.file+'?v='+encodeURIComponent(mp.ts||'') : '',
+          fireMapLabel: pp ? '위험예측 보기' : '시스템 열기 ↗',
+          fireMapTip: '국가산불위험예보시스템 전국 산불위험 지도'+(mp&&mp.ts?' ('+mp.ts.slice(11)+' 받음)':'')+(pp ? '\n누르면 「'+pp.title+'」 그림이 열립니다.' : '\n누르면 국가산불위험예보시스템으로 갑니다.'),
+          openFireImg: ()=>{ if(pp&&pp.file) this.setState({modal:{kind:'fireimg'}, fireZoom:false}); else window.open(site,'_blank','noopener'); } }; })(),
       // 기상영상: 운영 절대URL + ts 캐시버스터(5분 갱신 반영). 상대경로(자기 브랜치 고착) 대신.
       imgWarnSrc:_imgSrc('warn'), imgRadarSrc:_imgSrc('radar'), imgSatSrc:_imgSrc('satellite'),
       weatherText:this.commentaryBody(d),
@@ -2575,7 +2681,7 @@ class Component extends DCLogic {
       const near=this.riversOf(d.rivers, sg, (s&&s.name)||sg).map(r=>({name:r.name, value:r.value, danger:r.danger, lv:this.riverLevel(r)}));
       const msgs=(d.messages||[]).filter(m=>m.region===sg || m.region===modal.key || m.region==='충청북도');
       const warns=(d.warnings||[]).filter(w=>this._areaHits(w.area, sg));
-      const pm=(d.pm||[]).find(p=>p.region===sg);
+      const pm=(d.pm||[]).find(p=>p.region===modal.key)||(d.pm||[]).find(p=>p.region===sg);   // 청주서부는 자기 측정소
       const fire=(d.fire||[]).find(f=>(f.region||'').includes(sg));
       return {modalTitle:modal.key+' 관서 상세', modalAccent:this.cvar(s.level==='danger'?'danger':s.level==='warning'?'warning':'safe'), modalMax:'620px',
         modalBody:this.regionBody(s, near, msgs, warns, pm, fire)};
@@ -2591,6 +2697,41 @@ class Component extends DCLogic {
       const z=modal.zone||{};
       return {modalTitle:'위치 · '+(z.type||'위험구역'), modalAccent:'var(--warn)', modalMax:'720px', modalBody:this.locBody(z)};
     }
+    if(modal.kind==='fireimg'){
+      const R=React.createElement, fi=d.fireImg||{}, pp=fi.popup||{}, mp=fi.map||{}, site=fi.site||'https://forestfire.nifos.go.kr/';
+      const link=(href,txt,primary)=>R('a',{href, target:'_blank', rel:'noopener', style:{display:'inline-flex', alignItems:'center', gap:'6px', padding:'9px 14px', borderRadius:'10px', fontSize:'14px', fontWeight:800, textDecoration:'none',
+        background:primary?'var(--brand)':'var(--surface2)', color:primary?'#fff':'var(--ink2)', border:'1px solid '+(primary?'var(--brand)':'var(--border)')}}, txt);
+      /* 원본이 가로 1,488px 라 640px 창에 줄여 넣으면 작은 한글이 뭉개졌다(2026-11-12).
+         처음엔 한 장이 다 보이게(창 높이에 맞춤), 그림을 누르면 원본 크기 ↔ 맞춤. */
+      const zoom=!!this.state.fireZoom, src=pp.file ? pp.file+'?v='+encodeURIComponent(pp.ts||'') : '';
+      const msrc=mp.file ? mp.file+'?v='+encodeURIComponent(mp.ts||'') : '';
+      /* 전국 산불위험 지도(실시간) + 「산불발생위험예측」을 나란히(2026-11-12). 열 비율을 두 그림의 가로세로 비율(0.92 : 0.71)에
+         맞춰 같은 높이로 선다. 좁은 화면은 위아래. 보고서를 누르면 보고서만 원본 크기로. */
+      const H='calc(88vh - 230px)', narrow=(typeof window!=='undefined' && window.innerWidth<760);
+      const cap=(t,sub)=>R('div',{style:{display:'flex', alignItems:'baseline', gap:'8px', margin:'0 2px 6px'}},
+        R('span',{style:{fontSize:'14px', fontWeight:800, color:'var(--ink)'}}, t), R('span',{style:{fontSize:'12.5px', color:'var(--ink3)'}}, sub||''));
+      const panel=(kids)=>R('div',{style:{minWidth:0, display:'flex', flexDirection:'column'}}, ...kids);
+      const box={borderRadius:'12px', border:'1px solid var(--border)', background:'#fff', overflow:'hidden'};
+      const both = !zoom && msrc && src;
+      return {modalTitle: both ? '산불위험 지도 · '+(pp.title||'산불발생위험예측') : (pp.title||'산불발생위험예측'), modalAccent:'var(--warn)',
+        modalMax: zoom ? '96vw' : (both ? 'min(1320px, 96vw)' : 'min(1100px, 96vw)'),
+        modalBody:R('div',null,
+          both ? R('div',{style:{display:'grid', gridTemplateColumns: narrow ? 'minmax(0,1fr)' : 'minmax(0,92fr) minmax(0,71fr)', gap:'14px', alignItems:'start'}},
+            panel([cap('전국 산불위험 지도', '실시간 · 매시 갱신'+(mp.ts?' · '+mp.ts.slice(11)+' 받음':'')),
+              R('div',{style:box}, R('img',{src:msrc, alt:'전국 산불위험 지도', style:{display:'block', width:'100%', height:'auto', maxHeight:narrow?'none':H, objectFit:'contain'}}))]),
+            panel([cap(pp.title||'산불발생위험예측', '매일 아침 발표 · 누르면 원본 크기'),
+              R('div',{style:box}, R('img',{src, alt:pp.title, title:'누르면 원본 크기로 크게 보기', onClick:()=>this.setState({fireZoom:true}),
+                style:{display:'block', width:'100%', height:'auto', maxHeight:narrow?'none':H, objectFit:'contain', cursor:'zoom-in'}}))]))
+          : src ? R('div',{style:{overflow:'auto', maxHeight:zoom?'calc(88vh - 190px)':'none', borderRadius:'12px', border:'1px solid var(--border)', background:'#fff', textAlign:'center'}},
+            R('img',{src, alt:pp.title, title:zoom?'누르면 창에 맞춰 보기':'누르면 원본 크기로 크게 보기', onClick:()=>this.setState({fireZoom:!zoom}),
+              style: zoom ? {display:'block', width:'1488px', maxWidth:'none', margin:'0 auto', cursor:'zoom-out'}
+                          : {display:'inline-block', maxWidth:'100%', maxHeight:'calc(88vh - 190px)', width:'auto', cursor:'zoom-in', verticalAlign:'top'}})) : null,
+          R('div',{style:{display:'flex', flexWrap:'wrap', gap:'8px', marginTop:'12px', alignItems:'center'}},
+            link(site,'국가산불위험예보시스템 열기 ↗',true),
+            src ? R('button',{type:'button', onClick:()=>this.setState({fireZoom:!zoom}), style:{padding:'9px 14px', borderRadius:'10px', fontSize:'14px', fontWeight:800, background:'var(--surface2)', color:'var(--ink2)', border:'1px solid var(--border)', cursor:'pointer', fontFamily:'inherit'}}, zoom?(msrc?'↩ 지도와 함께 보기':'🔍 창에 맞춰 보기'):'🔍 위험예측 원본 크기로') : null,
+            src ? link(src,'위험예측 새 창으로',false) : null,
+            R('span',{style:{fontSize:'12.5px', color:'var(--ink3)'}}, '국립산림과학원 · 매일 아침 발표'+(pp.ts?' · '+pp.ts.slice(5).replace('-','/')+' 받음':''))))};
+    }
     if(modal.kind==='image'){
       return {modalTitle:modal.title||'기상 이미지', modalAccent:'var(--brand)', modalMax:'860px',
         modalBody:React.createElement('img',{src:modal.key, alt:modal.title, style:{width:'100%', borderRadius:'12px', display:'block', background:'var(--surface2)'}})};
@@ -2602,7 +2743,7 @@ class Component extends DCLogic {
     const obs=s.obs||{};
     const num=(v,d)=> (v!=null && !isNaN(v)) ? (+v).toFixed(d==null?1:d) : '-';
     const pmColor=(g)=> ({good:'var(--brand)', normal:'var(--safe)', bad:'var(--warn)', vbad:'var(--severe)'})[g] || 'var(--ink)';
-    const fireColor=(lv)=> ['var(--safe)','var(--safe)','var(--caution)','var(--warn)','var(--severe)'][lv] || 'var(--ink3)';
+    const fireColor=(lv)=> lv ? this.fireLvColor(lv) : 'var(--ink3)';
     const cumColor=(v)=> v>=30?'var(--severe)': v>=5?'var(--warn)':'var(--ink)';
     const sect=(title,...kids)=>R('div',{style:{marginTop:'16px'}},
       R('div',{style:{fontSize:'14px', fontWeight:800, color:'var(--ink2)', marginBottom:'8px'}}, title), ...kids);

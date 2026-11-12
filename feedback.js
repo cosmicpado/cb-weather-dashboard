@@ -73,7 +73,7 @@
       if (!on && ta.value === SITE_FORM) ta.value = '';
       ta.style.minHeight = on ? '230px' : '140px';
       ta.placeholder = on ? '위 네 가지를 구체적으로 적어 주세요' : PH;
-      who.placeholder = on ? '부서·이름 (새 사이트 제안은 꼭 적어 주세요)' : '부서·이름 (비워 두면 익명)';
+      who.placeholder = on ? '부서·이름 (필수)' : '부서·이름 (비워 두면 익명)';
       who.style.borderColor = on ? '#2563eb' : '#c9d1de';
       ta.oninput();
     }
