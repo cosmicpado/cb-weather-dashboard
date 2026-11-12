@@ -2922,6 +2922,72 @@ def fetch_pm():
 # 5. 산불 위험도 (국립산림과학원)
 # ============================================================
 
+FIRE_SITE = 'https://forestfire.nifos.go.kr'
+
+
+def fetch_fire_images(prev_meta=None):
+    """국가산불위험예보시스템 첫 화면의 그림 두 장(2026-11-12).
+      · 전국 산불위험 지도 — /sys/selectRealImage.do (365일, 매시 갱신되는 실시간 그림)
+      · 「산불발생위험예측」 팝업 보고서 — 첫 화면 팝업의 그림. 팝업이 없는 날은 None.
+    공식 API 가 아니라 첫 화면을 읽는 방식이라, 실패하면 이전 그림·메타를 그대로 둔다.
+    팝업 그림(약 400KB)은 주소가 바뀔 때만 새로 받는다.
+    Returns: {'map': {...}|None, 'popup': {...}|None, 'site': FIRE_SITE}"""
+    import html as _html
+    prev_meta = prev_meta or {}
+    proj_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+    img_dir = os.path.join(proj_root, 'images')
+    os.makedirs(img_dir, exist_ok=True)
+    ts = datetime.now().strftime('%Y-%m-%d %H:%M')
+    s = requests.Session()
+    s.headers['User-Agent'] = 'Mozilla/5.0 (cb-weather-dashboard)'
+    out = {'site': FIRE_SITE + '/', 'map': prev_meta.get('map'), 'popup': prev_meta.get('popup')}
+
+    r = s.get(FIRE_SITE + '/', timeout=20)
+    r.raise_for_status()
+    page = r.content.decode('utf-8', errors='replace')
+
+    # 1) 전국 산불위험 지도
+    try:
+        m = s.get(FIRE_SITE + '/sys/selectRealImage.do', timeout=20)
+        if m.status_code == 200 and m.content[:4] == b'\x89PNG' and len(m.content) > 5000:
+            path = os.path.join(img_dir, 'fire_map.png')
+            old = open(path, 'rb').read() if os.path.exists(path) else b''
+            if m.content != old:
+                with open(path, 'wb') as f:
+                    f.write(m.content)
+                out['map'] = {'file': 'images/fire_map.png', 'ts': ts}
+            elif not out.get('map'):
+                out['map'] = {'file': 'images/fire_map.png', 'ts': ts}
+    except Exception as e:
+        print(f'  · 산불위험 지도 실패: {_redact(e)}')
+
+    # 2) 「산불발생위험예측」 팝업 — 제목에 그 말이 든 팝업 상자의 첫 그림
+    pop = None
+    for box in _re.findall(r'(?s)<div id="Popup_[^"]*" class="popup-box".*?</div>\s*</div>\s*</div>', page):
+        tm = _re.search(r'(?s)class="modal-title">(.*?)</h3>', box)
+        title = _re.sub(r'\s+', ' ', _html.unescape(tm.group(1))).strip() if tm else ''
+        im = _re.search(r'<img[^>]+src="(/utl/web/imageSrc\.do\?[^"]+)"', box)
+        if '산불발생위험예측' in title.replace(' ', '') and im:
+            pop = {'title': title, 'src': _html.unescape(im.group(1))}
+            break
+    if not pop:
+        out['popup'] = None            # 오늘은 팝업이 없다 → 화면은 바로 시스템으로 보낸다
+    else:
+        prevp = prev_meta.get('popup') or {}
+        path = os.path.join(img_dir, 'fire_popup.jpg')
+        if prevp.get('src') == pop['src'] and os.path.exists(path):
+            out['popup'] = prevp
+        else:
+            p = s.get(FIRE_SITE + pop['src'], timeout=30)
+            ct = p.headers.get('Content-Type', '')
+            if p.status_code == 200 and ct.startswith('image/') and len(p.content) > 10000:
+                with open(path, 'wb') as f:
+                    f.write(p.content)
+                out['popup'] = {'file': 'images/fire_popup.jpg', 'title': pop['title'], 'src': pop['src'], 'ts': ts}
+            # 받기 실패면 이전 메타(있으면) 유지
+    return out
+
+
 def fetch_fire_incidents():
     """산림청 산불발생통계정보 — 최근 1년치 산불 발생 통계.
     endpoint: https://apis.data.go.kr/1400000/forestStusService/getfirestatsservice
@@ -4454,6 +4520,15 @@ def main():
     except Exception as e:
         print(f'  ✗ {e}')
         data['fire'] = prev.get('fire', [])
+
+    print('[산불위험 지도·예측 그림]')
+    try:
+        data['fire_img'] = fetch_fire_images(prev.get('fire_img'))
+        fi = data['fire_img']
+        print(f'  ✓ 지도 {"있음" if fi.get("map") else "없음"} · 예측 팝업 {(fi.get("popup") or {}).get("title") or "없음"}')
+    except Exception as e:
+        print(f'  ✗ {_redact(e)} — 이전 그림 보존')
+        data['fire_img'] = prev.get('fire_img') or {'site': FIRE_SITE + '/', 'map': None, 'popup': None}
 
     print('[산불 발생 통계]')
     try:

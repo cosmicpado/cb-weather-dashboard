@@ -42,6 +42,7 @@
     --border:#e4e9f2; --border2:#d3dbe9; --ink:#0f1b2d; --ink2:#4b5a74; --ink3:#8593aa;
     --brand:#2563eb; --brand2:#1d4ed8; --brandSoft:#e9f0ff; --cyan:#0e7490;
     --safe:#0ea371; --safeSoft:#e5f7f0; --caution:#e0930a; --cautionSoft:#fdf2df;
+    /* 산불 다소높음 노랑(2026-11-12) — 주의색(#e0930a)은 높음(주황)과 비슷해 보여 산불만 따로. 글자는 조금 진하게, 막대·견본은 밝게 */ --fireY:#b89200; --fireYBar:#f2c200;
     --warn:#ef6c1a; --warnSoft:#ffece0; --danger:#e5484d; --dangerSoft:#fdebec; --severe:#d42a2f; --severeSoft:#fbe3e3;
     --sh1:0 1px 2px rgba(16,27,45,.06); --sh2:0 8px 26px -12px rgba(16,27,45,.16),0 2px 6px -3px rgba(16,27,45,.07);
     --headerBg:rgba(255,255,255,.82); --grid:rgba(16,27,45,.05);
@@ -50,7 +51,7 @@
     --bg:#080d18; --bg2:#0b1222; --surface:#111a2c; --surface2:#18233b; --surface3:#1e2a45;
     --border:#26314c; --border2:#354364; --ink:#e9eef9; --ink2:#9fb0cf; --ink3:#6b7a99;
     --brand:#4b8bf5; --brand2:#3b82f6; --brandSoft:rgba(75,139,245,.15); --cyan:#22d3ee;
-    --safe:#34d399; --safeSoft:rgba(52,211,153,.13); --caution:#fbbf24; --cautionSoft:rgba(251,191,36,.13);
+    --safe:#34d399; --safeSoft:rgba(52,211,153,.13); --caution:#fbbf24; --cautionSoft:rgba(251,191,36,.13); --fireY:#facc15; --fireYBar:#facc15;
     --warn:#fb923c; --warnSoft:rgba(251,146,60,.14); --danger:#f87171; --dangerSoft:rgba(248,113,113,.13); --severe:#ef4444; --severeSoft:rgba(239,68,68,.16);
     --sh1:0 1px 2px rgba(0,0,0,.5); --sh2:0 8px 26px -10px rgba(0,0,0,.6);
     --headerBg:rgba(12,18,34,.82); --grid:rgba(255,255,255,.05);
@@ -1686,7 +1687,7 @@ class Component extends DCLogic {
     return list.find(f=>String(f.region||'').split('·').some(x=>x===nm || x===sg))
         || list.find(f=>String(f.region||'').split('·').some(x=>x.slice(0,2)===nm.slice(0,2))) || null;
   }
-  fireLvColor(l){ return l>=4 ? 'var(--severe)' : l>=3 ? 'var(--warn)' : l>=2 ? 'var(--caution)' : 'var(--safe)'; }
+  fireLvColor(l){ return l>=4 ? 'var(--severe)' : l>=3 ? 'var(--warn)' : l>=2 ? 'var(--fireY)' : 'var(--safe)'; }
   // 올해 충북 산불 — 어댑터가 넘기지 않아 원본에서 읽는다(시연이면 시연 목록)
   fireStatsOf(d){ return d.fireStats || ((window.DASHBOARD_DATA||{}).fire_stats) || {}; }
 

@@ -37,5 +37,8 @@ Thumbs.db
 
 # 상황실 움직이는 레이더 프레임 — 수집기가 2시간치만 두고 지운다
 images/radar/
+# 국가산불위험예보시스템 전국 지도·「산불발생위험예측」 그림 — 운영 서버가 받는다
+images/fire_map.png
+images/fire_popup.jpg
 # 받은 의견(tools/feedback.py) — 서버에만 둔다
 .data/

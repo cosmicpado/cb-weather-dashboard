@@ -126,6 +126,8 @@
       updated: SRC.updated,
       stations: stations, rivers: rivers, warnings: warnings, prelim: prelim,
       fire: SRC.fire || [],
+      /* 국가산불위험예보시스템 첫 화면의 전국 산불위험 지도 + 「산불발생위험예측」 팝업(없는 날은 popup:null) */
+      fireImg: SRC.fire_img || null,
       /* 미세먼지 등급은 PM10 기준으로(화면이 모두 'PM10 수치 + 등급'으로 보여 준다 — 상황실과 같게, 2026-11-12).
          수집기 grade 는 PM10·PM2.5 중 나쁜 쪽이라 PM10 17 이 '보통'으로 떴다. 원래 값은 gradeAll·gradeTextAll 로 남긴다. */
       pm: (SRC.pm || []).map(function(p){ var v=p.pm10;
