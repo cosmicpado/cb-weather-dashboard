@@ -1,7 +1,7 @@
 /* 💬 의견 보내기 — 종합 현황(지도.html)·119종합상황실(상황실.html) 공용.
    cbFeedback.open({page:'화면 이름'}) 으로 입력창을 띄우고 /api/feedback 에 보낸다(서버: tools/feedback.py).
    보던 관서는 화면에서 [data-fb-station] 이 붙은 글자를 읽어 자동으로 붙인다.
-   받은 의견은 의견.html 에서 본다. */
+   받은 의견은 관리자.html 에서 본다. */
 (function () {
   var box = null, KEY = 'cbFeedbackWho';
   function el(tag, css, txt) { var e = document.createElement(tag); if (css) e.style.cssText = css; if (txt != null) e.textContent = txt; return e; }

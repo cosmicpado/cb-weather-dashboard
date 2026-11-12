@@ -74,11 +74,11 @@ if ! grep -qE '^DATA_GO_KR_KEY=.+' "$DIR/.env" || ! grep -qE '^KMA_APIHUB_KEY=.+
      vi $DIR/.env      (i 로 입력 시작 / 붙여넣기: 마우스 오른쪽 클릭 / 저장·종료: Esc 누르고 :wq Enter)"
 fi
 ok "키 확인 (DATA_GO_KR_KEY · KMA_APIHUB_KEY 있음)"
-# 받은 의견을 다른 PC 에서 보는 비밀 주소(의견.html#k=<키>)용 키 — 없으면 하나 만든다(서버 자신에서는 키 없이 보인다)
+# 받은 의견을 다른 PC 에서 보는 비밀 주소(관리자.html#k=<키>)용 키 — 없으면 하나 만든다(서버 자신에서는 키 없이 보인다)
 if ! grep -qE '^FEEDBACK_ADMIN_KEY=.+' "$DIR/.env"; then
   K=$(python3 -c 'import secrets; print(secrets.token_hex(12))')
   sed -i '/^FEEDBACK_ADMIN_KEY=/d' "$DIR/.env"
-  printf '\n# 의견.html 관리자 키 — 다른 PC 에서 받은 의견을 볼 때 넣는다\nFEEDBACK_ADMIN_KEY=%s\n' "$K" >> "$DIR/.env"
+  printf '\n# 관리자.html 키 — 다른 PC 에서 관리자 페이지(받은 의견·공지사항)를 열 때 넣는다\nFEEDBACK_ADMIN_KEY=%s\n' "$K" >> "$DIR/.env"
   ok "의견 비밀 주소용 키 만듦 (맨 끝 '완료'에 주소가 나온다)"
 fi
 
@@ -203,7 +203,7 @@ server {
     location ~ /\\.          { return 404; }          # .env · .git · .tmp
     location ^~ /tools/     { return 404; }
     location = /            { }                       # → index.html → 지도.html
-    location = /api/feedback {                        # 화면의 💬 의견 보내기 · 의견.html (tools/server/feedback_server.py)
+    location = /api/feedback {                        # 화면의 💬 의견 보내기 · 관리자.html (tools/server/feedback_server.py)
         proxy_pass http://127.0.0.1:8081;
         proxy_set_header X-Real-IP \$remote_addr;
         client_max_body_size 16k;
@@ -240,7 +240,7 @@ say "완료"
 echo "  · 이 서버에서     : http://localhost/지도.html"
 echo "  · 행정망 PC 에서  : http://$IP/지도.html"
 FBK=$(grep -m1 '^FEEDBACK_ADMIN_KEY=' "$DIR/.env" | cut -d= -f2-)
-echo "  · 받은 의견(비밀) : http://$IP/의견.html#k=$FBK   ← 즐겨찾기 해 두고 남에게 알리지 마세요"
+echo "  · 관리자 페이지(비밀) : http://$IP/관리자.html#k=$FBK   ← 즐겨찾기 해 두고 남에게 알리지 마세요"
 echo "                      원본 CSV: $DIR/.data/feedback.csv   · 주소가 샜으면 .env 의 FEEDBACK_ADMIN_KEY 만 바꾸면 된다"
 echo "  · 수집 기록 보기  : journalctl -u $UNIT -n 50   (레이더: journalctl -u cbweather-radar -n 20)"
 echo "  · 소스 반영       : bash $DIR/tools/server/update-code.sh   (GitHub main 에 올린 뒤)"

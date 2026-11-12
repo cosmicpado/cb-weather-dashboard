@@ -113,7 +113,7 @@ class Quiet(http.server.SimpleHTTPRequestHandler):
         pass
 
     def _feedback(self, method):
-        """화면의 💬 의견 보내기 · 의견.html — 규칙은 tools/feedback.py(Rocky 서버와 같은 코드)."""
+        """화면의 💬 의견 보내기 · 관리자.html — 규칙은 tools/feedback.py(Rocky 서버와 같은 코드)."""
         body = b''
         if method == 'POST':
             try:
@@ -124,9 +124,9 @@ class Quiet(http.server.SimpleHTTPRequestHandler):
                 code, out = 413, {'ok': False, 'err': '너무 깁니다'}
             else:
                 body = self.rfile.read(n)
-                code, out = feedback.handle(method, self.client_address[0], self.headers, body)
+                code, out = feedback.handle(method, self.client_address[0], self.headers, body, self.path)
         else:
-            code, out = feedback.handle(method, self.client_address[0], self.headers)
+            code, out = feedback.handle(method, self.client_address[0], self.headers, b'', self.path)
         b = json.dumps(out, ensure_ascii=False).encode('utf-8')
         self.send_response(code)
         self.send_header('Content-Type', 'application/json; charset=utf-8')
