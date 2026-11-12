@@ -23,7 +23,7 @@ import threading
 import time
 from datetime import datetime
 from pathlib import Path
-from urllib.parse import unquote
+from urllib.parse import unquote, quote
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / 'tools'))
@@ -84,14 +84,24 @@ def loop(every, job=sync):
         time.sleep(every)
 
 
+# 짧은 주소(2026-11-12) — 주소창에 한글 파일 이름 대신. 화면의 short-url.js · Rocky nginx(setup-rocky.sh)와 같은 표
+SHORT = {'/': '/지도.html', '/room': '/상황실.html', '/watch': '/재해.html',
+         '/admin': '/관리자.html', '/help': '/도움말.html', '/easy': '/쉬운.html'}
+
+
+def short_to_file(raw):
+    """짧은 주소면 실제 파일 주소(물음표 뒤는 그대로), 아니면 그대로."""
+    base, q = (raw.split('?', 1) + [''])[:2]
+    f = SHORT.get(base)
+    return (quote(f) + ('?' + q if q else '')) if f else raw
+
+
 def allowed_path(raw):
     """화면에 필요한 파일만 내준다 — 운영 nginx(tools/server/setup-*.sh)와 같은 규칙.
     ⚠ 작업 폴더에는 .env(API 키)·.git·tools 가 함께 있다. --lan 이면 내부망 어디서나 받아 갈 수 있으므로
       빼면 안 된다(2026-11-06 점검에서 /.env 가 그대로 내려받아지는 것을 발견).
     Windows 는 '.env.'·'tools '·'.env::$DATA' 처럼 끝 글자가 달라도 같은 파일로 열어서 그런 모양도 막는다."""
     path = unquote(raw.split('?', 1)[0].split('#', 1)[0])      # 표준 처리기(translate_path)와 같은 방식으로 자른다
-    if path == '/':
-        return True                                            # → index.html → 지도.html
     if path.endswith('/') or any(c in path for c in '\\:\0'):
         return False                                           # 폴더 목록 · 역슬래시 경로 · 대체 스트림
     parts = [p for p in path.split('/') if p]
@@ -145,6 +155,7 @@ class Quiet(http.server.SimpleHTTPRequestHandler):
         self.send_error(405)
 
     def send_head(self):                       # GET·HEAD 가 모두 여기를 지난다
+        self.path = short_to_file(self.path)  # /room → /상황실.html 등(주소창은 그대로)
         if not allowed_path(self.path):
             self.send_error(404)
             return None
@@ -197,14 +208,14 @@ def main():
                 time.sleep(3600)
         except KeyboardInterrupt:
             sys.exit(0)
-    print(f'열기: http://localhost:{a.port}/지도.html   (끄기: 이 창 닫기 또는 Ctrl+C)', flush=True)
+    print(f'열기: http://localhost:{a.port}/   (끄기: 이 창 닫기 또는 Ctrl+C)', flush=True)
     if a.lan:
         import socket
         try:
             ip = socket.gethostbyname(socket.gethostname())
         except OSError:
             ip = '<이 PC IP>'
-        print(f'다른 PC 에서: http://{ip}:{a.port}/지도.html', flush=True)
+        print(f'다른 PC 에서: http://{ip}:{a.port}/   (상황실 /room · 집중 감시 /watch · 관리자 /admin)', flush=True)
     try:
         srv.serve_forever()
     except KeyboardInterrupt:

@@ -6,8 +6,8 @@
 <style>
   :root{--bg:#f3f5f9;--card:#fff;--ink:#1b2333;--ink2:#4a5568;--ink3:#7a8597;--line:#dde3ec;--brand:#2563eb;--soft:#eef3ff;
     --s-wait:#6b7280;--s-done:#0a8058;--s-hold:#b7791f;--s-no:#c0392b;--s-wait-bg:#f1f3f6;--s-done-bg:#e6f5ee;--s-hold-bg:#fdf3e1;--s-no-bg:#fbeaea}
-  @media (prefers-color-scheme:dark){:root{--bg:#0f141c;--card:#171e29;--ink:#eef2f8;--ink2:#b9c3d3;--ink3:#8592a6;--line:#2a3443;--brand:#5b8dff;--soft:#1c2740;
-    --s-wait:#9aa4b5;--s-done:#3ccf8e;--s-hold:#f0b44c;--s-no:#ff7a6b;--s-wait-bg:#212a37;--s-done-bg:#14322a;--s-hold-bg:#362a14;--s-no-bg:#3a1d1d}}
+  /* 관리자 페이지는 늘 밝은 화면(2026-11-12 사용자 결정) — 컴퓨터가 어두운 모드여도 */
+  :root{color-scheme:light}
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.55 Pretendard,system-ui,-apple-system,"Malgun Gothic",sans-serif}
   .wrap{max-width:980px;margin:0 auto;padding:22px 16px 60px}
@@ -130,6 +130,7 @@
   </section>
   </div>
 </div>
+<script src="short-url.js"></script>
 <script src="notices.js"></script>
 <script>
 (function(){
