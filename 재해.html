@@ -217,6 +217,17 @@
       </div>
     </div>
 
+    <!-- ── ③-2 전국 산불위험 지도 + 「산불발생위험예측」 — 건조·산불 탭에서만(2026-11-12) ── -->
+    <sc-if value="{{isFire}}">
+      <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; box-shadow:var(--sh2); padding:15px 17px;">
+        <div style="display:flex; align-items:baseline; justify-content:space-between; gap:8px; margin-bottom:11px; flex-wrap:wrap;">
+          <span style="font-size:15px; font-weight:900; color:var(--ink); cursor:help;" title="국가산불위험예보시스템(국립산림과학원) 첫 화면의 전국 산불위험 지도(매시)와, 매일 아침 올라오는 「산불발생위험예측」 보고서입니다.">산불위험 지도 · 산불발생위험예측</span>
+          <span style="font-size:11.5px; color:var(--ink3);">국립산림과학원</span>
+        </div>
+        {{fireImgBody}}
+      </div>
+    </sc-if>
+
     <!-- ── ④ 시간대별 예보 (24시간) ───────────────────── -->
     <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; box-shadow:var(--sh2); padding:15px 17px;">
       <div style="display:flex; align-items:baseline; justify-content:space-between; gap:8px; margin-bottom:4px; flex-wrap:wrap;">
@@ -617,6 +628,17 @@ class Component extends DCLogic {
       const r = (this.working().rivers||[]).find(x=>x.name===m.key);
       if(r){ const lv = (r.danger!=null && r.value>=r.danger) ? 'var(--severe)' : (r.warning!=null && r.value>=r.warning) ? 'var(--warn)' : 'var(--safe)';
         mv = {modalOpen:true, modalTitle:r.name||'하천', modalAccent:lv, modalMax:'620px', modalBody:window.cbRiverBody(this, r)}; }
+    }
+    if(m && m.kind==='fireimg'){   // 「산불발생위험예측」 원본 크기(가로 1,488px) — 넓은 화면은 가운데, 좁으면 스크롤
+      const d=this.working(), fi=d.fireImg || (window.DASHBOARD_DATA||{}).fire_img || {}, pp=fi.popup||{}, R=React.createElement;
+      if(pp.file){ const src=pp.file+'?v='+encodeURIComponent(pp.ts||'');
+        mv = {modalOpen:true, modalTitle:pp.title||'산불발생위험예측', modalAccent:'var(--warn)', modalMax:'96vw',
+          modalBody:R('div',null,
+            R('div',{style:{overflow:'auto', maxHeight:'calc(88vh - 170px)', borderRadius:'12px', border:'1px solid var(--border)', background:'#fff'}},
+              R('img',{src, alt:pp.title, style:{display:'block', width:'1488px', maxWidth:'none', margin:'0 auto'}})),
+            R('div',{style:{display:'flex', gap:'8px', marginTop:'11px', flexWrap:'wrap'}},
+              R('a',{href:fi.site||'https://forestfire.nifos.go.kr/', target:'_blank', rel:'noopener', style:{padding:'8px 13px', borderRadius:'10px', fontSize:'13px', fontWeight:800, textDecoration:'none', background:'var(--brand)', color:'#fff'}}, '국가산불위험예보시스템 열기 ↗'),
+              R('a',{href:src, target:'_blank', rel:'noopener', style:{padding:'8px 13px', borderRadius:'10px', fontSize:'13px', fontWeight:800, textDecoration:'none', background:'var(--surface2)', color:'var(--ink2)', border:'1px solid var(--border)'}}, '위험예측 새 창으로')))}; }
     }
     return Object.assign(v, mv, {
       closeModal:()=>this.setState({modal:null, riverCctvPaused:false, riverCctvResume:false}),
@@ -1804,6 +1826,7 @@ class Component extends DCLogic {
       c3Title:'앞으로 24시간', c3Sub:myStation+' · 습도·바람·비', c3Body:this.fireAheadBody(me),
       f24Title:'시간대별 습도·바람 예보', fcst24Body:this.fireFcst24Body(me),
       fireListSub:'올해 '+inc.length+'건 · 최근 순', fireListBody:this.fireListBody(inc),
+      fireImgBody:this.fireImgBody(d, wide),
       radarTip:'천리안 2A호(GK2A) 적외 위성 영상입니다. 구름 분포를 보여 줍니다.', radarTitle:'위성 (천리안)', radarImg:'images/kma_satellite.png'+(((ki.satellite||{}).ts)?('?v='+encodeURIComponent(ki.satellite.ts)):''),
       radarAge:this.ageTxt(satMin)+' 자료', radarAgeColor:this.ageColor(satMin, 30),
       radarDesc:'구름 없이 맑은 날이 이어지면 메마름이 깊어집니다. 큰 산불은 위성 영상에 연기가 보이기도 합니다.',
@@ -1842,16 +1865,44 @@ class Component extends DCLogic {
   fireRiskBody(d, me){
     const R=React.createElement, list=(d.fire||[]), mine=this._wide ? null : this.fireGroupOf(d, me);
     if(!list.length) return R('div',{style:{fontSize:'13px', color:'var(--ink3)'}}, '산불위험예보를 불러오는 중입니다.');
+    /* 고른 관서의 시군 칸은 맨 앞으로 + 테두리만(이름·색은 그대로) — 종합 현황 산불 칸과 같은 방식(2026-11-12) */
+    const ordered = mine ? [mine].concat(list.filter(f=>f!==mine)) : list;
     return R('div',null,
       R('div',{style:{display:'grid', gridTemplateColumns:'repeat(2,minmax(0,1fr))', gap:'6px'}},
-        list.map((f,i)=>{ const c=this.fireLvColor(f.level), on=(mine && mine.region===f.region);
+        ordered.map((f,i)=>{ const c=this.fireLvColor(f.level), on=(mine && mine.region===f.region);
           return R('div',{key:i, title:((f.index!=null?'평균 지수 '+f.index+(f.max!=null?' · 가장 높은 곳 '+f.max:'')+' · ':'')+(Array.isArray(f.pct)?'면적 비율 낮음 '+f.pct[0]+'% · 다소높음 '+f.pct[1]+'% · 높음 '+f.pct[2]+'% · 매우높음 '+f.pct[3]+'%':''))||undefined,
             style:{display:'flex', alignItems:'center', justifyContent:'space-between', gap:'6px', padding:'7px 10px', borderRadius:'10px', minWidth:0,
-            background:(f.level>=3 ? (f.level>=4?'var(--severeSoft)':'var(--warnSoft)') : 'var(--surface2)'), border:'1px solid '+(on?'var(--brand)':'var(--border)')}},
-            R('span',{style:{fontSize:'13px', fontWeight:(on?900:700), color:(on?'var(--brand)':'var(--ink)')}}, (on?'📍 ':'')+f.region),
+            background:(f.level>=3 ? (f.level>=4?'var(--severeSoft)':'var(--warnSoft)') : 'var(--surface2)'),
+            border:(on?'2px solid var(--brand)':'1px solid var(--border)'), boxShadow:(on?'0 0 0 3px var(--brandSoft)':'none'), margin:(on?'0':'1px')}},
+            R('span',{style:{fontSize:'13px', fontWeight:700, color:'var(--ink)'}}, f.region),
             R('span',{style:{fontSize:'15px', fontWeight:900, color:c, whiteSpace:'nowrap'}}, f.levelText||'-', f.index!=null ? R('span',{style:{fontSize:'12px', fontWeight:700, color:'var(--ink3)', marginLeft:'5px'}}, f.index) : null)); })),
       R('div',{style:{fontSize:'11px', color:'var(--ink3)', marginTop:'9px', lineHeight:1.55}},
         '공식 판정 기준 — 시군 평균 지수: 낮음 50 이하 · 다소높음 51~65 · 높음 66~85 · 매우높음 86 이상 (칸에 마우스를 올리면 가장 높은 곳과 면적 비율).'));
+  }
+
+  /* 전국 산불위험 지도 + 「산불발생위험예측」 나란히 — 열 비율을 두 그림 가로세로 비율(0.92 : 0.71)에 맞춰 같은 높이.
+     보고서를 누르면 원본 크기 창, 지도를 누르면 국가산불위험예보시스템. 보고서가 없는 날은 지도만. */
+  fireImgBody(d, wide){
+    const R=React.createElement, fi=d.fireImg || (window.DASHBOARD_DATA||{}).fire_img || {}, mp=fi.map||{}, pp=fi.popup||{};
+    const site=fi.site||'https://forestfire.nifos.go.kr/';
+    const v=(o)=>o.file+'?v='+encodeURIComponent(o.ts||'');
+    if(!mp.file && !pp.file) return R('div',{style:{fontSize:'13px', color:'var(--ink3)'}}, '그림을 불러오는 중입니다. ',
+      R('a',{href:site, target:'_blank', rel:'noopener', style:{color:'var(--brand)', fontWeight:800}}, '국가산불위험예보시스템 열기 ↗'));
+    const cap=(t,sub)=>R('div',{style:{display:'flex', alignItems:'baseline', gap:'7px', margin:'0 2px 6px', flexWrap:'wrap'}},
+      R('span',{style:{fontSize:'13px', fontWeight:800, color:'var(--ink)'}}, t), R('span',{style:{fontSize:'11.5px', color:'var(--ink3)'}}, sub||''));
+    const box={display:'block', borderRadius:'11px', border:'1px solid var(--border)', background:'#fff', overflow:'hidden', cursor:'pointer'};
+    const two = !!(mp.file && pp.file);
+    return R('div',null,
+      R('div',{style:{display:'grid', gridTemplateColumns:(two && wide) ? 'minmax(0,92fr) minmax(0,71fr)' : 'minmax(0,1fr)', gap:'13px', alignItems:'start'}},
+        mp.file ? R('div',{style:{minWidth:0}}, cap('전국 산불위험 지도', '실시간 · 매시 갱신'+(mp.ts?' · '+String(mp.ts).slice(11)+' 받음':'')),
+          R('a',{href:site, target:'_blank', rel:'noopener', title:'눌러서 국가산불위험예보시스템 열기', style:box},
+            R('img',{src:v(mp), alt:'전국 산불위험 지도', style:{display:'block', width:'100%', height:'auto', maxWidth:two?'none':'520px', margin:'0 auto'}}))) : null,
+        pp.file ? R('div',{style:{minWidth:0}}, cap(pp.title||'산불발생위험예측', '매일 아침 발표 · 누르면 원본 크기'),
+          R('div',{onClick:()=>this.setState({modal:{kind:'fireimg'}}), title:'눌러서 원본 크기로 보기', style:box},
+            R('img',{src:v(pp), alt:pp.title||'산불발생위험예측', style:{display:'block', width:'100%', height:'auto'}}))) : null),
+      R('div',{style:{display:'flex', flexWrap:'wrap', gap:'8px', alignItems:'center', marginTop:'11px'}},
+        R('a',{href:site, target:'_blank', rel:'noopener', style:{display:'inline-flex', padding:'8px 13px', borderRadius:'10px', fontSize:'13px', fontWeight:800, textDecoration:'none', background:'var(--brand)', color:'#fff'}}, '국가산불위험예보시스템 열기 ↗'),
+        pp.file ? null : R('span',{style:{fontSize:'12px', color:'var(--ink3)'}}, '오늘은 「산불발생위험예측」 그림이 올라오지 않았습니다.')));
   }
 
   fireAheadBody(s){
