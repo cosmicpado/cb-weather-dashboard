@@ -368,6 +368,63 @@ def _aws_request():
     return f'aws_min_{bucket}', url
 
 
+def _aws_rn12_fill(obs):
+    """대표 관측소 12시간 강수(RN-12H)가 결측일 때 대신 쓸 값 {stn: mm}.
+
+    단양(601)처럼 기상청이 RN-12H 만 -99.9 로 보내는 지점이 있다(2026-11-12 확인 — 일누적·1시간은 정상).
+    같은 지점의 일누적(RN-DAY) 기록으로 계산한다: 12시간 = 지금 누적 − 12시간 전 누적
+    (자정을 넘으면 어제 마지막 누적을 더한다). 다른 지점 값은 섞지 않는다(2026-11-06 결정).
+    12시간 전 기록이 없거나(서버 시작 직후) 중간에 1시간 넘게 비면 계산하지 않는다 → 화면은 '—' 그대로.
+    """
+    path = TMP / 'aws_rnday_hist.json'
+    try:
+        hist = json.loads(path.read_text(encoding='utf-8'))
+    except Exception:
+        hist = {}
+    reps = {str(v) for v in AWS_REP.values()}
+    fill = {}
+    for stn, o in obs.items():
+        if str(stn) not in reps or o.get('rnday') is None or not o.get('tm'):
+            continue
+        try:
+            now = datetime.strptime(str(o['tm'])[:12], '%Y%m%d%H%M')
+        except ValueError:
+            continue
+        h = hist.setdefault(str(stn), {})
+        h[now.strftime('%Y%m%d%H%M')] = o['rnday']
+        # 13시간 넘은 기록은 버린다
+        for k in [k for k in h if datetime.strptime(k, '%Y%m%d%H%M') < now - timedelta(hours=13)]:
+            del h[k]
+        if o.get('rn12h') is not None:
+            continue
+        pts = sorted((datetime.strptime(k, '%Y%m%d%H%M'), v) for k, v in h.items())
+        start = now - timedelta(hours=12)
+        base = [p for p in pts if abs((p[0] - start).total_seconds()) <= 600]
+        if not base:
+            # 기록이 아직 없어도 정오가 지났고 오늘 누적이 0이면 12시간도 0(12시간이 전부 오늘 안이다)
+            if now.hour >= 12 and o['rnday'] == 0:
+                fill[stn] = 0.0
+            continue
+        seq = [p for p in pts if p[0] >= base[0][0]]
+        if any((b[0] - a[0]) > timedelta(hours=1) for a, b in zip(seq, seq[1:])):
+            continue
+        # 날짜가 바뀌는 곳마다 그 전날 마지막 누적을 더해 이어 붙인다
+        total, prev = 0.0, seq[0]
+        day = lambda t: (t - timedelta(minutes=1)).date()   # 00:00 기록은 '어제 하루 합계'라 어제 쪽으로 친다
+        for p in seq[1:]:
+            if day(p[0]) != day(prev[0]):
+                total += (prev[1] or 0)
+            prev = p
+        val = round(total + (seq[-1][1] or 0) - (seq[0][1] or 0), 1)
+        if val >= 0:
+            fill[stn] = val
+    try:
+        _atomic_write_bytes(path, json.dumps(hist, ensure_ascii=False, separators=(',', ':')).encode('utf-8'))
+    except Exception:
+        pass
+    return fill
+
+
 def fetch_aws_rain():
     """AWS 매분자료 1회 호출로 전 관서 실측 강수·돌풍 수집.
 
@@ -456,6 +513,8 @@ def fetch_aws_rain():
                         po[k] = o[k]
         return po
 
+    rn12_fill = _aws_rn12_fill(obs)   # 대표 관측소 12시간 강수가 결측(-99.9)일 때 같은 지점 일누적 기록으로 메운다
+
     out = {}
     for area in AWS_STATIONS:
         best, ok = pick(area)
@@ -479,6 +538,9 @@ def fetch_aws_rain():
         out[area] = {'rn15': o['rn15'], 'rn60': o['rn60'], 'rn12h': o['rn12h'],
                      'rnday': o['rnday'], 'wss': o['wss'], 'station': sname,
                      'stn': stn, 'ok': ok, 'total': total}
+        if o['rn12h'] is None and rn12_fill.get(stn) is not None:
+            out[area]['rn12h'] = rn12_fill[stn]
+            out[area]['rn12h_calc'] = True      # 기상청이 12시간 값을 안 보내 같은 지점 일누적으로 계산한 값
         # 강풍은 별도 지점 — 관할 내 '가장 센 바람'(대체 관서를 썼으면 그쪽 기준)
         w = pick_wind(alt or area)
         if w:
@@ -2355,23 +2417,44 @@ def fetch_radar_frames(img_dir=None):
     # 호출 아끼기 — 다음 5분 칸은 그 시각보다 약 5분 뒤에 올라온다. 가진 최신 칸에서 9분이 안 지났으면 묻지 않는다
     #   (1분마다 불러도 실제 호출은 5분에 1~2번, 하루 약 400번).
     have = sorted(fn[4:16] for fn in os.listdir(rdir) if fn.startswith('RDR_') and fn.endswith('.png'))
+    hd = None
     if have:
         try:
             hd = datetime.strptime(have[-1], '%Y%m%d%H%M')
-            if now - hd < timedelta(minutes=9):
-                latest_dt = hd
         except ValueError:
-            pass
-    for back in (() if latest_dt else (0, 5, 10, 15, 20, 30, 45)):
-        cand = base - timedelta(minutes=back)
-        fp = os.path.join(rdir, 'RDR_' + cand.strftime('%Y%m%d%H%M') + '.png')
-        if os.path.exists(fp):                     # 이미 받은 칸이면 그게 최신(더 새 칸은 위에서 이미 없었다)
-            latest_dt = cand
-            break
-        png = _rdr(cand.strftime('%Y%m%d%H%M'))
-        if png:
-            latest_dt, latest_png = cand, png
-            break
+            hd = None
+    if hd and now - hd > timedelta(minutes=45):
+        hd = None                                  # 너무 오래된 칸은 없는 셈 치고 처음부터 찾는다
+    if hd and now - hd < timedelta(minutes=9):
+        latest_dt = hd
+    elif hd:
+        # 2026-11-12 — 기상청이 10:40~ 합성영상을 늦게 올렸을 때 예전 코드는 25·35·40분 전 칸을 건너뛰어
+        #   이미 받은 10:35 대신 10:30 으로 물러났다. 이제 가진 최신 칸 '다음'부터 차례로 묻는다(밀린 칸도 채운다).
+        #   빠진 칸이 있으면 가장 새 칸·그 앞 칸만 한 번 더 확인 → 기상청 지연 중에도 1분에 최대 3번만 묻는다.
+        latest_dt = hd
+        t = hd + timedelta(minutes=RADAR_STEP_MIN)
+        while t <= base:
+            png = _rdr(t.strftime('%Y%m%d%H%M'))
+            if not png:
+                break
+            _atomic_write_bytes(os.path.join(rdir, f'RDR_{t:%Y%m%d%H%M}.png'), png)
+            latest_dt, latest_png = t, png
+            t += timedelta(minutes=RADAR_STEP_MIN)
+        if t <= base:                               # 중간 칸이 비었다 — 더 새 칸이 따로 올라왔는지
+            for cand in (base, base - timedelta(minutes=RADAR_STEP_MIN)):
+                if cand <= t:
+                    continue
+                png = _rdr(cand.strftime('%Y%m%d%H%M'))
+                if png:
+                    latest_dt, latest_png = cand, png
+                    break
+    else:
+        for back in range(0, 50, RADAR_STEP_MIN):   # 받은 칸이 없을 때 — 지금부터 45분 전까지 5분마다
+            cand = base - timedelta(minutes=back)
+            png = _rdr(cand.strftime('%Y%m%d%H%M'))
+            if png:
+                latest_dt, latest_png = cand, png
+                break
     if latest_dt is None:
         return {'ok': False, 'err': 'no PNG (최근 45분 없음)'}
     radar_tm = latest_dt.strftime('%Y%m%d%H%M')
@@ -2932,8 +3015,11 @@ def fetch_fire_incidents():
 
 def fetch_fire():
     """국립산림과학원 산불위험예보 V2 — 시군구별 위험도.
-    응답의 d1~d4 는 해당 시군 안에서 각 위험단계(낮음·보통·높음·매우높음) 면적 비율(%).
-    한 시군 안에 더 높은 단계가 1%라도 있으면 그 단계로 표시."""
+    단계는 공식 판정과 같이 시군 평균 지수(meanavg)로 정한다(2026-11-11):
+      낮음 50 이하 · 다소높음 51~65 · 높음 66~85 · 매우높음 86 이상
+      (국립산림과학원 「산불발생위험예측」 등급표, 산불위험예보시스템 '산불위험지역(높음 이상)' 목록도 시군구 평균값 기준)
+    d1~d4 는 시군 안 단계별 면적 비율(%) — 일부만 높은지 보여 주는 참고값으로만 싣는다.
+    예전엔 높은 단계가 1%라도 있으면 그 단계로 쳐서 공식 판정보다 높게 나왔다."""
     url = 'https://apis.data.go.kr/1400377/forestPointV2/forestPointListSigunguSearchV2'
     r = shared_get('fire_point', url, max_age=1500, params={
         'serviceKey': DATA_KEY,
@@ -2953,7 +3039,12 @@ def fetch_fire():
     # 산불 API의 시군 표기 → 관서명 (구가 있는 시는 구 단위로 내려온다)
     sigun_map = P['fire_sigun_map']
 
-    region_max = {}
+    # 시를 나눠 맡는 관서(청주동부·청주서부)는 시 이름 하나로 — 산불 API 가 청주시를 한 줄로 준다
+    parent_of = {s: p for p, subs in (P.get('splits') or {}).items() for s in subs}
+
+    # 2026-11-11 시군별로 바꿈 — 예전엔 북→남 3개씩 묶은 '권역'의 최댓값을 보여 줘서
+    #   단양만 높아도 충주 관서에 '높음'이 떴다(권역은 국립산림과학원이 아니라 우리가 만든 묶음이었다).
+    by_name = {}
     for it in items:
         if not str(it.get('doname', '')).startswith(tuple(SIDO_WORDS)):
             continue
@@ -2961,22 +3052,39 @@ def fetch_fire():
         target = sigun_map.get(sigun)
         if not target:
             continue
-        d2 = float(it.get('d2', 0) or 0)
-        d3 = float(it.get('d3', 0) or 0)
-        d4 = float(it.get('d4', 0) or 0)
-        if d4 > 0:   level = 4
-        elif d3 > 0: level = 3
-        elif d2 > 0: level = 2
-        else:        level = 1
-        region_max[target] = max(region_max.get(target, 0), level)
+        name = parent_of.get(target, target)
+        pct = [float(it.get(k, 0) or 0) for k in ('d1', 'd2', 'd3', 'd4')]
+        try:
+            mean = float(str(it.get('meanavg', '')).replace(',', ''))
+        except ValueError:
+            continue
+        idx = round(mean)
+        level = 4 if idx >= 86 else 3 if idx >= 66 else 2 if idx >= 51 else 1
+        try:
+            mx = round(float(str(it.get('maxi', '')).replace(',', '')))
+        except ValueError:
+            mx = None
+        old = by_name.get(name)
+        if not old or idx > old['index']:   # 구 단위로 여러 줄이 오는 시는 가장 높은 구
+            by_name[name] = {'level': level, 'index': idx, 'max': mx, 'pct': [round(v) for v in pct]}
 
-    groups = P['fire_groups']
-    text_map = {1: '낮음', 2: '보통', 3: '높음', 4: '매우높음'}
+    # 순서는 관서 순서(region_order — 청주동부·청주서부·충주·제천·…·단양, 2026-11-12 사용자 지정)를 따른다.
+    #   [0]은 시도 전역 이름이라 뺀다. 청주동부·청주서부는 '청주' 한 칸.
+    order = []
+    for members in [list(P.get('region_order') or [])[1:]] + list(P['fire_groups'].values()):
+        for m in members:
+            m = parent_of.get(m, m)
+            if m not in order:
+                order.append(m)
+    order += [n for n in by_name if n not in order]
+    text_map = {1: '낮음', 2: '다소높음', 3: '높음', 4: '매우높음'}
     result = []
-    for group_name, sigungus in groups.items():
-        levels = [region_max.get(s, 1) for s in sigungus]
-        max_level = max(levels)
-        result.append({'region': group_name, 'level': max_level, 'levelText': text_map[max_level]})
+    for name in order:
+        v = by_name.get(name)
+        if not v:
+            continue
+        result.append({'region': name, 'level': v['level'], 'levelText': text_map[v['level']],
+                       'index': v['index'], 'max': v['max'], 'pct': v['pct']})
     return result
 
 
@@ -4339,10 +4447,10 @@ def main():
         fire = fetch_fire()
         if not fire and prev.get('fire'):
             data['fire'] = prev['fire']
-            print(f'  · 산불위험 수집 실패 — 이전 {len(data["fire"])}개 권역 보존')
+            print(f'  · 산불위험 수집 실패 — 이전 {len(data["fire"])}개 시군 보존')
         else:
             data['fire'] = fire
-            print(f'  ✓ {len(data["fire"])}개 권역')
+            print(f'  ✓ {len(data["fire"])}개 시군')
     except Exception as e:
         print(f'  ✗ {e}')
         data['fire'] = prev.get('fire', [])

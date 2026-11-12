@@ -4,26 +4,51 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>받은 의견</title>
 <style>
-  :root{--bg:#f3f5f9;--card:#fff;--ink:#1b2333;--ink2:#4a5568;--ink3:#7a8597;--line:#dde3ec;--brand:#2563eb;--soft:#eef3ff}
-  @media (prefers-color-scheme:dark){:root{--bg:#0f141c;--card:#171e29;--ink:#eef2f8;--ink2:#b9c3d3;--ink3:#8592a6;--line:#2a3443;--brand:#5b8dff;--soft:#1c2740}}
+  :root{--bg:#f3f5f9;--card:#fff;--ink:#1b2333;--ink2:#4a5568;--ink3:#7a8597;--line:#dde3ec;--brand:#2563eb;--soft:#eef3ff;
+    --s-wait:#6b7280;--s-done:#0a8058;--s-hold:#b7791f;--s-no:#c0392b;--s-wait-bg:#f1f3f6;--s-done-bg:#e6f5ee;--s-hold-bg:#fdf3e1;--s-no-bg:#fbeaea}
+  @media (prefers-color-scheme:dark){:root{--bg:#0f141c;--card:#171e29;--ink:#eef2f8;--ink2:#b9c3d3;--ink3:#8592a6;--line:#2a3443;--brand:#5b8dff;--soft:#1c2740;
+    --s-wait:#9aa4b5;--s-done:#3ccf8e;--s-hold:#f0b44c;--s-no:#ff7a6b;--s-wait-bg:#212a37;--s-done-bg:#14322a;--s-hold-bg:#362a14;--s-no-bg:#3a1d1d}}
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.55 Pretendard,system-ui,-apple-system,"Malgun Gothic",sans-serif}
   .wrap{max-width:980px;margin:0 auto;padding:22px 16px 60px}
   header{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
   h1{font-size:20px;margin:0;letter-spacing:-.3px}
   .back{color:var(--ink2);text-decoration:none;border:1px solid var(--line);background:var(--card);border-radius:9px;padding:6px 11px;font-weight:700;font-size:13px}
-  .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
-  input,select,button{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:9px;padding:7px 10px}
+  .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+  input,select,button,textarea{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:9px;padding:7px 10px}
   button{cursor:pointer;font-weight:700}
-  button.pri{background:var(--brand);border-color:var(--brand);color:#fff}
   .n{color:var(--ink3);font-size:13px;margin-left:auto}
-  .item{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+  /* 처리 상태별 건수 — 누르면 그 상태만 */
+  .sum{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+  .sum button{border-radius:999px;padding:5px 12px;font-size:13px;display:inline-flex;gap:6px;align-items:center}
+  .sum button b{font-variant-numeric:tabular-nums}
+  .sum button[aria-pressed=true]{border-color:var(--brand);background:var(--soft);color:var(--brand)}
+  .item{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--s-wait);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+  .item.st-done{border-left-color:var(--s-done)} .item.st-hold{border-left-color:var(--s-hold)} .item.st-no{border-left-color:var(--s-no)}
   .meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:12.5px;color:var(--ink3);margin-bottom:6px}
   .tag{background:var(--soft);color:var(--brand);border-radius:6px;padding:1px 7px;font-weight:700}
   .k{border-radius:6px;padding:1px 8px;font-weight:800;color:#fff}
   .k-오류{background:#d64545}.k-기능{background:#2563eb}.k-새{background:#7c3aed}.k-기타{background:#6b7280}
   .who{color:var(--ink2);font-weight:700}
+  .badge{margin-left:auto;border-radius:6px;padding:1px 9px;font-weight:800;font-size:12.5px}
+  .b-wait{color:var(--s-wait);background:var(--s-wait-bg)} .b-done{color:var(--s-done);background:var(--s-done-bg)}
+  .b-hold{color:var(--s-hold);background:var(--s-hold-bg)} .b-no{color:var(--s-no);background:var(--s-no-bg)}
   .txt{white-space:pre-wrap;word-break:break-word;font-size:14.5px}
+  /* 처리 — 상태 4개 + 처리 내용 */
+  .proc{margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);display:flex;flex-direction:column;gap:7px}
+  .seg{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+  .seg .lb{font-size:12.5px;color:var(--ink3);font-weight:700;margin-right:3px}
+  .seg button{padding:4px 11px;font-size:13px;border-radius:8px;color:var(--ink2)}
+  .seg button[aria-pressed=true].v-wait{border-color:var(--s-wait);background:var(--s-wait-bg);color:var(--s-wait)}
+  .seg button[aria-pressed=true].v-done{border-color:var(--s-done);background:var(--s-done-bg);color:var(--s-done)}
+  .seg button[aria-pressed=true].v-hold{border-color:var(--s-hold);background:var(--s-hold-bg);color:var(--s-hold)}
+  .seg button[aria-pressed=true].v-no{border-color:var(--s-no);background:var(--s-no-bg);color:var(--s-no)}
+  .note{display:flex;gap:6px;align-items:flex-start}
+  .note textarea{flex:1;min-height:38px;resize:vertical;font-size:13.5px;line-height:1.45}
+  .note button.save{background:var(--brand);border-color:var(--brand);color:#fff;white-space:nowrap}
+  .note button.save:disabled{opacity:.45;cursor:default}
+  .saved{font-size:12px;color:var(--ink3)}
+  .saved.err{color:var(--s-no)}
   .msg{padding:30px 10px;text-align:center;color:var(--ink3)}
 </style>
 </head><body>
@@ -35,24 +60,27 @@
   <div class="bar">
     <select id="kind"><option value="">모든 구분</option><option>오류</option><option>기능 제안</option><option>새 사이트 제안</option><option>기타</option></select>
     <select id="page"><option value="">모든 화면</option></select>
-    <input id="q" type="search" placeholder="내용·부서·관서 검색" style="flex:1;min-width:180px">
+    <input id="q" type="search" placeholder="내용·부서·관서·처리 내용 검색" style="flex:1;min-width:180px">
     <button id="reload">새로고침</button>
     <button id="csv">CSV 받기</button>
     <span class="n" id="count"></span>
   </div>
+  <div class="sum" id="sum"></div>
   <div id="list"><div class="msg">불러오는 중…</div></div>
 </div>
 <script>
 (function(){
-  var items=[], $=function(id){ return document.getElementById(id); };
+  /* 처리 상태(2026-11-12) — 서버 tools/feedback.py 의 STATUSES 와 같은 이름. '대기'는 아직 손대지 않은 의견 */
+  var ST=[['대기','wait'],['처리 완료','done'],['보류','hold'],['미수용','no']], CLS={}; ST.forEach(function(s){ CLS[s[0]]=s[1]; });
+  var items=[], stFilter='', $=function(id){ return document.getElementById(id); };
   /* 비밀 주소 의견.html#k=<키> — # 뒤는 서버로 가지 않는다. 서버 PC(localhost)는 키 없이 보인다. */
   function getKey(){ var m=/(?:^|[#&])k=([^&]+)/.exec(location.hash||''); return m ? decodeURIComponent(m[1]) : ''; }
+  function hdr(extra){ var h=extra||{}; var k=getKey(); if(k) h['X-Admin-Key']=k; return h; }
   function el(tag, cls, txt){ var e=document.createElement(tag); if(cls) e.className=cls; if(txt!=null) e.textContent=txt; return e; }
 
   function load(){
     $('list').innerHTML=''; $('list').appendChild(el('div','msg','불러오는 중…'));
-    var h={}; var k=getKey(); if(k) h['X-Admin-Key']=k;
-    fetch('api/feedback',{cache:'no-store',headers:h}).then(function(r){
+    fetch('api/feedback',{cache:'no-store',headers:hdr()}).then(function(r){
       return r.json().catch(function(){ return {ok:false, err: r.status===404||r.status===405||r.status===501 ? '이 서버에서는 의견 받기가 켜져 있지 않습니다' : '서버 응답 오류 ('+r.status+')'}; });
     }).then(function(j){
       if(!j.ok){ items=[]; render(j.err||'볼 수 없는 주소입니다'); return; }
@@ -63,30 +91,73 @@
       render();
     }).catch(function(){ render('서버에 연결하지 못했습니다'); });
   }
-  function filtered(){
+  function filtered(ignoreSt){
     var p=$('page').value, k=$('kind').value, q=$('q').value.trim().toLowerCase();
     return items.filter(function(x){ if(p && x.page!==p) return false; if(k && (x.kind||'기타')!==k) return false;
-      if(q){ var s=[x.text,x.who,x.station,x.page].join(' ').toLowerCase(); if(s.indexOf(q)<0) return false; } return true; });
+      if(!ignoreSt && stFilter && (x.status||'대기')!==stFilter) return false;
+      if(q){ var s=[x.text,x.who,x.station,x.page,x.note].join(' ').toLowerCase(); if(s.indexOf(q)<0) return false; } return true; });
+  }
+  /* 상태별 건수 — 구분·화면·검색 조건은 따르고 상태 조건만 뺀 개수 */
+  function renderSum(){
+    var S=$('sum'); S.innerHTML=''; var base=filtered(true), cnt={};
+    base.forEach(function(x){ var s=x.status||'대기'; cnt[s]=(cnt[s]||0)+1; });
+    [['', '전체', base.length]].concat(ST.map(function(s){ return [s[0], s[0], cnt[s[0]]||0]; })).forEach(function(r){
+      var b=el('button'); b.type='button'; b.setAttribute('aria-pressed', stFilter===r[0]?'true':'false');
+      b.appendChild(el('span',null,r[1])); b.appendChild(el('b',null,String(r[2])));
+      b.onclick=function(){ stFilter=r[0]; render(); }; S.appendChild(b); });
   }
   function render(err){
     var L=$('list'); L.innerHTML='';
-    if(err){ L.appendChild(el('div','msg',err)); $('count').textContent=''; return; }
+    if(err){ L.appendChild(el('div','msg',err)); $('count').textContent=''; $('sum').innerHTML=''; return; }
+    renderSum();
     var f=filtered(); $('count').textContent='전체 '+items.length+'건'+(f.length!==items.length?' · 보이는 '+f.length+'건':'');
     if(!f.length){ L.appendChild(el('div','msg', items.length ? '조건에 맞는 의견이 없습니다' : '아직 받은 의견이 없습니다')); return; }
-    f.forEach(function(x){
-      var it=el('div','item'), m=el('div','meta');
-      var kd=x.kind||'기타'; m.appendChild(el('span','k k-'+kd.split(' ')[0],kd));
-      m.appendChild(el('span',null,x.ts||''));
-      if(x.page) m.appendChild(el('span','tag',x.page));
-      if(x.station) m.appendChild(el('span',null,x.station));
-      m.appendChild(el('span','who',x.who||'익명'));
+    f.forEach(function(x){ L.appendChild(card(x)); });
+  }
+  function card(x){
+    var st=x.status||'대기', it=el('div','item st-'+CLS[st]), m=el('div','meta');
+    var kd=x.kind||'기타'; m.appendChild(el('span','k k-'+kd.split(' ')[0],kd));
+    m.appendChild(el('span',null,x.ts||''));
+    if(x.page) m.appendChild(el('span','tag',x.page));
+    if(x.station) m.appendChild(el('span',null,x.station));
+    m.appendChild(el('span','who',x.who||'익명'));
+    var badge=el('span','badge b-'+CLS[st],st); m.appendChild(badge);
+    it.appendChild(m); it.appendChild(el('div','txt',x.text||''));
 
-      it.appendChild(m); it.appendChild(el('div','txt',x.text||'')); L.appendChild(it);
-    });
+    /* 처리 — 상태를 고르고 처리 내용을 적어 저장 */
+    var proc=el('div','proc'), seg=el('div','seg'), pick=st, btns=[];
+    seg.appendChild(el('span','lb','처리'));
+    ST.forEach(function(s){ var b=el('button','v-'+s[1],s[0]); b.type='button'; b.setAttribute('aria-pressed', s[0]===pick?'true':'false');
+      b.onclick=function(){ pick=s[0]; btns.forEach(function(o){ o.setAttribute('aria-pressed', o.textContent===pick?'true':'false'); }); dirty(); };
+      btns.push(b); seg.appendChild(b); });
+    var row=el('div','note'), ta=el('textarea'); ta.maxLength=500; ta.rows=1; ta.value=x.note||'';
+    ta.placeholder='어떻게 처리했는지 간단히 (예: 11/12 지도 글자 크기 조정 반영 · 공지사항 안내)';
+    var save=el('button','save','저장'); save.type='button'; save.disabled=true;
+    var info=el('div','saved', x.statusAt ? '마지막 저장 '+x.statusAt : '');
+    function dirty(){ save.disabled = (pick===(x.status||'대기') && ta.value.trim()===(x.note||'')); }
+    ta.oninput=dirty;
+    ta.onkeydown=function(e){ if((e.ctrlKey||e.metaKey) && e.key==='Enter' && !save.disabled) save.click(); };
+    save.onclick=function(){
+      save.disabled=true; info.className='saved'; info.textContent='저장 중…';
+      fetch('api/feedback',{method:'POST',cache:'no-store',headers:hdr({'Content-Type':'application/json','X-Requested-With':'cbweather'}),
+        body:JSON.stringify({action:'status', id:x.id, status:pick, note:ta.value.trim()})})
+      .then(function(r){ return r.json().catch(function(){ return {ok:false, err:'서버 응답 오류 ('+r.status+')'}; }); })
+      .then(function(j){
+        if(!j.ok){ info.className='saved err'; info.textContent=j.err||'저장하지 못했습니다'; dirty(); return; }
+        x.status=j.status||pick; x.note=j.note||''; x.statusAt=j.at||'';
+        it.className='item st-'+CLS[x.status]; badge.className='badge b-'+CLS[x.status]; badge.textContent=x.status;
+        info.textContent='저장했습니다'+(x.statusAt?' · '+x.statusAt:''); dirty(); renderSum();
+      }).catch(function(){ info.className='saved err'; info.textContent='서버에 연결하지 못했습니다'; dirty(); });
+    };
+    row.appendChild(ta); row.appendChild(save);
+    proc.appendChild(seg); proc.appendChild(row); proc.appendChild(info);
+    it.appendChild(proc);
+    return it;
   }
   function csv(){
     var cell=function(v){ v=String(v==null?'':v); if(/^[=+\-@]/.test(v)) v="'"+v; return '"'+v.replace(/"/g,'""')+'"'; };   /* 엑셀 수식 실행 방지 */
-    var rows=[['시각','구분','화면','관서','부서·이름','내용']].concat(filtered().map(function(x){ return [x.ts,x.kind||'기타',x.page,x.station,x.who||'익명',x.text]; }));
+    var rows=[['시각','구분','화면','관서','부서·이름','내용','처리 상태','처리 내용','처리 시각']].concat(filtered().map(function(x){
+      return [x.ts,x.kind||'기타',x.page,x.station,x.who||'익명',x.text,x.status||'대기',x.note||'',x.statusAt||'']; }));
     var b=new Blob(['﻿'+rows.map(function(r){ return r.map(cell).join(','); }).join('\r\n')],{type:'text/csv;charset=utf-8'});
     var a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='의견_'+new Date().toISOString().slice(0,10)+'.csv'; a.click();
     setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);

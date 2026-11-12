@@ -84,6 +84,9 @@
   @keyframes dashRise{ from{ opacity:0; transform:translateY(10px) } to{ opacity:1; transform:none } }
   @keyframes dashFlow{ to{ stroke-dashoffset:-14 } }
   @keyframes dashSpin{ to{ transform:rotate(360deg) } }
+  /* 산불 위험도 — 11개 시군을 6칸씩(6+5), 좁은 화면은 4칸씩 */
+  .fire-grid{ grid-template-columns:repeat(6, minmax(0,1fr)); }
+  @media (max-width:700px){ .fire-grid{ grid-template-columns:repeat(4, minmax(0,1fr)); } }
   @keyframes alertDrop{ 0%{ transform:translateY(-6px) scale(.98); opacity:0 } 100%{ transform:none; opacity:1 } }
   @keyframes dashPop{ 0%{ transform:scale(.96); opacity:0 } 100%{ transform:scale(1); opacity:1 } }
   /* 호우 버튼 글로우 — 비 오거나 기상특보 있을 때만. 클래스로 켠다.
@@ -637,19 +640,25 @@
 
     <div data-dash="fire" style="background:var(--surface); border:1px solid var(--border); border-radius:16px; box-shadow:var(--sh2); overflow:hidden;">
       <div style="display:flex; align-items:center; justify-content:space-between; padding:14px 16px 11px; border-bottom:1px solid var(--border);">
-        <div style="display:flex; align-items:center; gap:8px;"><span style="width:9px; height:9px; border-radius:3px; background:var(--warn);"></span><span style="font-size:15.5px; font-weight:800; color:var(--ink); cursor:help;" title="국립산림과학원 산불위험예보입니다. 시군 안에 더 높은 단계가 1%라도 있으면 그 단계로 표시합니다.">산불 위험도</span></div>
+        <div style="display:flex; align-items:center; gap:8px;"><span style="width:9px; height:9px; border-radius:3px; background:var(--warn);"></span><span style="font-size:15.5px; font-weight:800; color:var(--ink); cursor:help;" title="국립산림과학원 산불위험예보(시군별)입니다. 공식 판정처럼 시군 평균 지수로 단계를 정합니다 — 낮음 50 이하 · 다소높음 51~65 · 높음 66~85 · 매우높음 86 이상. 칸에 마우스를 올리면 가장 높은 곳의 지수와 단계별 면적 비율이 나옵니다.">산불 위험도</span></div>
         <span style="font-size:13px; color:var(--ink3); font-weight:600;">국립산림과학원</span>
       </div>
-      <div style="padding:12px 16px; display:flex; flex-direction:column; gap:12px;">
-        <sc-for list="{{fire}}" as="f" hint-placeholder-count="4">
-          <div>
-            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
-              <span style="font-size:14.5px; font-weight:700; color:var(--ink);">{{f.region}}</span>
-              <span style="font-size:13.5px; font-weight:800; color:{{f.color}};">{{f.levelText}}</span>
-            </div>
-            <div style="height:7px; border-radius:999px; background:var(--surface3); overflow:hidden;"><div style="height:100%; width:{{f.pctW}}; background:{{f.color}}; border-radius:999px;"></div></div>
+      <!-- 시군별(2026-11-11) — 예전 3개 묶음 권역 대신 11개 시군을 두 줄로 -->
+      <div class="fire-grid" style="padding:10px 12px 12px; display:grid; gap:6px;">
+        <sc-for list="{{fire}}" as="f" hint-placeholder-count="11">
+          <div title="{{f.tip}}" style="display:flex; flex-direction:column; gap:3px; padding:6px 8px 7px; border-radius:9px; background:{{f.tileBg}}; border:2px solid {{f.tileBorder}}; box-shadow:{{f.tileShadow}}; min-width:0;">
+            <span style="font-size:13px; font-weight:700; color:var(--ink2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{f.region}}</span>
+            <span style="display:flex; align-items:baseline; justify-content:space-between; gap:4px; line-height:1.2;"><span style="font-size:15.5px; font-weight:800; color:{{f.color}}; white-space:nowrap;">{{f.levelText}}</span><span style="font-size:12.5px; font-weight:700; color:var(--ink3); font-variant-numeric:tabular-nums;">{{f.idxTxt}}</span></span>
+            <div style="height:4px; border-radius:2px; margin-top:2px; background:{{f.bar}};"></div>
           </div>
         </sc-for>
+      </div>
+      <div style="display:flex; flex-wrap:wrap; gap:4px 12px; padding:0 14px 11px; font-size:12px; color:var(--ink3);">
+        <span>숫자 = 평균 지수 · 막대 = 면적 중 단계 비율</span>
+        <span><i style="display:inline-block; width:8px; height:8px; border-radius:2px; background:var(--safe); margin-right:3px;"></i>낮음</span>
+        <span><i style="display:inline-block; width:8px; height:8px; border-radius:2px; background:var(--caution); margin-right:3px;"></i>다소높음</span>
+        <span><i style="display:inline-block; width:8px; height:8px; border-radius:2px; background:var(--warn); margin-right:3px;"></i>높음</span>
+        <span><i style="display:inline-block; width:8px; height:8px; border-radius:2px; background:var(--severe); margin-right:3px;"></i>매우높음</span>
       </div>
     </div>
 
@@ -663,7 +672,7 @@
       </div>
       <div style="padding:11px 16px; display:flex; flex-direction:column; gap:9px; flex:1 1 0; min-height:120px; overflow:auto;">
         <sc-for list="{{pm}}" as="p" hint-placeholder-count="6">
-          <div style="display:flex; align-items:center; gap:11px;">
+          <div title="{{p.tip}}" style="display:flex; align-items:center; gap:11px; margin:0 -8px; padding:3px 6px; border-radius:9px; border:2px solid {{p.selBorder}}; background:{{p.selBg}};">
             <span style="font-size:14px; font-weight:700; color:var(--ink); width:66px; flex-shrink:0; white-space:nowrap;">{{p.region}}</span>
             <div style="flex:1; height:7px; border-radius:999px; background:var(--surface3); overflow:hidden;"><div style="height:100%; width:{{p.pctW}}; background:{{p.color}}; border-radius:999px;"></div></div>
             <span style="font-size:14.5px; font-weight:800; color:var(--ink); font-variant-numeric:tabular-nums; width:30px; text-align:right;">{{p.pm10}}</span>
@@ -1579,7 +1588,7 @@ class Component extends DCLogic {
     const nearRB=this.riversOf(d.rivers, sg, (s&&s.name)||sg).map(r=>({name:r.name, value:r.value, danger:r.danger, lv:this.riverLevel(r)}));
     const msgs=(d.messages||[]).filter(m=>m.region===sg || m.region===f || m.region==='충청북도');
     const warnsRB=(d.warnings||[]).filter(w=>this._areaHits(w.area, sg));
-    const pm=(d.pm||[]).find(p=>p.region===sg);
+    const pm=(d.pm||[]).find(p=>p.region===f)||(d.pm||[]).find(p=>p.region===sg);   // 청주서부는 자기 측정소
     const fire=(d.fire||[]).find(z=>(z.region||'').includes(sg));
     let detail=this.regionBody(s, nearRB, msgs, warnsRB, pm, fire);
     // 파주 등 서해 조석영향 관서: 물때 카드를 상세 최상단에 삽입.
@@ -1725,7 +1734,7 @@ class Component extends DCLogic {
       kpi('재난문자', msgs.length, msgs.length?'건':'', msgs.length?'var(--warn)':'var(--ink3)'),
       kpi('최고 하천수위', worstRiver?(Math.round((worstRiver.pct||0)*100)+'%'):'-', worstRiver?place(worstRiver.name):'', worstRiver?cvar(worstRiver.lv):'var(--ink3)'),
       pm[0]?kpi('미세먼지 최고', pm[0].pm10, pm[0].region, (pm[0].grade==='vbad'?'var(--severe)':pm[0].grade==='bad'?'var(--warn)':'var(--ink)')):kpi('미세먼지','-','','var(--ink3)'),
-      typ?kpi('태풍', typ.seq+'호', typ.name, 'var(--severe)'):kpi('산불위험', fire[0]?fire[0].levelText:'-', fire[0]?fire[0].region:'', fire[0]&&fire[0].level>=3?'var(--warn)':'var(--ink)')
+      typ?kpi('태풍', typ.seq+'호', typ.name, 'var(--severe)'):kpi('산불위험', fire[0]?fire[0].levelText:'-', fire[0]?(fire[0].region+(fire.filter(x=>x.level===fire[0].level).length>1?' 외 '+(fire.filter(x=>x.level===fire[0].level).length-1):'')):'', fire[0]&&fire[0].level>=3?'var(--warn)':'var(--ink)')
     ];
     const zoneA=R('div',{style:{display:'flex', alignItems:'stretch', gap:'12px', height:'13vh', minHeight:'96px', padding:'12px 20px 4px'}},
       R('div',{style:{display:'flex', flexDirection:'column', justifyContent:'center', minWidth:'210px'}},
@@ -1807,7 +1816,7 @@ class Component extends DCLogic {
         R('div',{style:{flex:2, display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:'8px'}}, pm.map((p,i)=>{ const c=p.grade==='vbad'?'var(--severe)':p.grade==='bad'?'var(--warn)':p.grade==='normal'?'var(--caution)':'var(--safe)'; return R('div',{key:i, style:{background:'var(--surface2)', border:'1px solid var(--border)', borderRadius:'11px', padding:'6px 10px', display:'flex', flexDirection:'column', justifyContent:'center'}},
           R('div',{style:{fontSize:'15px', color:'var(--ink2)', fontWeight:700}}, p.region),
           R('div',{style:{display:'flex', alignItems:'baseline', gap:'5px'}}, R('span',{style:{fontSize:'clamp(20px,2vw,30px)', fontWeight:800, color:c, fontVariantNumeric:'tabular-nums'}}, p.pm10), R('span',{style:{fontSize:'14px', color:'var(--ink3)'}}, p.gradeText))); })),
-        R('div',{style:{flex:1, display:'flex', flexDirection:'column', gap:'8px'}}, fire.map((f,i)=>{ const c=f.level>=4?'var(--severe)':f.level>=3?'var(--warn)':f.level>=2?'var(--caution)':'var(--safe)'; return R('div',{key:i, style:{flex:'1 1 0', background:'var(--surface2)', border:'1px solid var(--border)', borderLeft:'4px solid '+c, borderRadius:'11px', padding:'6px 12px', display:'flex', alignItems:'center', justifyContent:'space-between'}}, R('span',{style:{fontSize:'15.5px', fontWeight:700, color:'var(--ink2)'}}, '🔥 '+f.region), R('span',{style:{fontSize:'17px', fontWeight:800, color:c}}, f.levelText)); })));
+        R('div',{style:{flex:1, display:'grid', gridTemplateColumns:'repeat(2,minmax(0,1fr))', gridAutoRows:'1fr', gap:'6px'}}, fire.map((f,i)=>{ const c=f.level>=4?'var(--severe)':f.level>=3?'var(--warn)':f.level>=2?'var(--caution)':'var(--safe)'; return R('div',{key:i, style:{minWidth:0, background:'var(--surface2)', border:'1px solid var(--border)', borderLeft:'4px solid '+c, borderRadius:'9px', padding:'2px 9px', display:'flex', alignItems:'center', justifyContent:'space-between', gap:'4px'}}, R('span',{style:{fontSize:'14.5px', fontWeight:700, color:'var(--ink2)', whiteSpace:'nowrap'}}, f.region), R('span',{style:{fontSize:'15px', fontWeight:800, color:c, whiteSpace:'nowrap'}}, f.levelText)); })));
     }
     if(idx===1){ // 하천/댐 수위
       const rivers=(d.rivers||[]).map(r=>{ const lv=this.riverLevel(r); const pct=r.danger?Math.min(1,r.value/r.danger):0; return Object.assign({},r,{lv,pct}); }).sort((a,b)=>(b.pct||0)-(a.pct||0)).slice(0,8);
@@ -1893,7 +1902,7 @@ class Component extends DCLogic {
     const near=this.riversOf(d.rivers, sg, (s&&s.name)||sg).map(r=>{ const lv=this.riverLevel(r); return Object.assign({},r,{lv, pct:r.danger?Math.min(1,r.value/r.danger):0}); });
     const worstPct=near.reduce((a,r)=>Math.max(a,r.pct||0),0);
     const msgs=(d.messages||[]).filter(m=> m.region===sg || m.region===f || m.region==='충청북도');
-    const pm=(d.pm||[]).find(p=>p.region===sg);
+    const pm=(d.pm||[]).find(p=>p.region===f)||(d.pm||[]).find(p=>p.region===sg);   // 청주서부는 자기 측정소
     const fire=(d.fire||[]).find(z=>String(z.region||'').includes(sg));
     const risks=this.getRisks().filter(z=>z.region===f);
     const fc=(s.forecast&&s.forecast.length)?s.forecast:(d.forecast||[]);
@@ -1913,7 +1922,7 @@ class Component extends DCLogic {
     const ladder = gust==null?mk('-','safe'):(gust>10?mk('전개 제한','severe'):gust>8?mk('주의','caution'):mk('정상','safe'));
     const fireColBy=l=> l>=4?'severe':l>=3?'warn':l>=2?'brand':'safe';
     const fireJ = fire ? mk(fire.levelText||'-', fireColBy(fire.level))
-                       : ((effH!=null&&effH<35)?mk('높음','warn'):(effH!=null&&effH<45)?mk('보통','brand'):mk('낮음','safe'));
+                       : ((effH!=null&&effH<35)?mk('높음','warn'):(effH!=null&&effH<45)?mk('다소높음','brand'):mk('낮음','safe'));
     /* 체감온도 카드 — 계절에 따라 제목이 바뀐다(구급 전용 어휘 대신 모든 직원이 읽는 말로).
        · 체감 30° 이상: 온열질환 주의 — 단계는 기상청 폭염 영향예보 체감 기준(31 관심 · 33 주의 · 35 경고 · 38 위험)
        · 체감 10° 미만: 한파 주의 — 기상청 체감온도 단계(0 이하 관심 · -10 이하 주의 · -25 이하 경고), 0~10°는 '쌀쌀'
@@ -2187,11 +2196,32 @@ class Component extends DCLogic {
     const fcRainBars=fc.map((f,i)=>{ const x=N>1?i/(N-1)*96+2:50; const h=(f.rain||0)/rmx*20; return {x:+(x-1.4).toFixed(2), y:+(82-h).toFixed(2), h:+Math.max(h,0.4).toFixed(2)}; });
     const forecast=fc.map((f,i)=>({ hour:f.hour, hourLabel:(i===0?'지금':f.hour), icon:f.icon, weather:f.weather, pop:f.pop, rain:f.rain, rainShow:(f.rain||0)>0, cellBg:(i===0?'var(--brandSoft)':'transparent'), hourCol:(i===0?'var(--brand)':'var(--ink3)'), tempTxt:this.fmtNum(f.temp,0), feelsTxt:this.fmtNum(f.feels,0) }));
     // fire / pm / messages
-    const fire=(d.fire||[]).map(f=>({ region:f.region, levelText:f.levelText, level:f.level,
-      color: f.level>=4?'var(--severe)':f.level>=3?'var(--warn)':f.level>=2?'var(--caution)':'var(--safe)', pctW:Math.round(f.level/4*100)+'%' }));
-    const pm=(d.pm||[]).slice().sort((a,b)=>(b.pm10||0)-(a.pm10||0)).map(p=>({ region:p.region, pm10:p.pm10, pm25:p.pm25, gradeText:p.gradeText,
-      color: p.grade==='vbad'?'var(--severe)':p.grade==='bad'?'var(--warn)':p.grade==='normal'?'var(--caution)':'var(--safe)',
-      pctW:Math.min(100,Math.round((p.pm10/150)*100))+'%' }));
+    /* 고른 관서의 시군 칸 — 테두리로 두르고 맨 앞으로(관서별 현재 기상과 같은 방식, 나머지 순서는 그대로).
+       청주동부·청주서부 → '청주' 칸. 산불 위험도·미세먼지 둘 다. */
+    const _selSt=(d.stations||[]).find(x=>x.name===pickLabel), _selSg=_selSt ? String(_selSt.sigun||_selSt.name) : '';
+    const _stNames=new Set((d.stations||[]).map(x=>x.name));
+    // 관서 이름(청주동부·청주서부)으로 온 줄은 그 관서만, 시군 이름('청주')으로 온 칸은 그 시군 관서 모두
+    const _isSel=r=>!!_selSg && !!r && (r===pickLabel || (!_stNames.has(r) && (r===_selSg || _selSg.indexOf(r)===0 || r.indexOf(_selSg)===0)));
+    const _selFirst=(arr)=>arr.slice().sort((a,b)=>(_isSel(a.region)?0:1)-(_isSel(b.region)?0:1));
+    const fire=_selFirst(d.fire||[]).map(f=>{ const on=_isSel(f.region); return { region:f.region, levelText:f.levelText, level:f.level,
+      tileBg:'var(--surface2)', tileBorder: on?'var(--brand)':'transparent', tileShadow: on?'0 0 0 3px var(--brandSoft)':'none',
+      idxTxt: f.index!=null ? String(f.index) : '',
+      tip: f.region+' '+f.levelText+(f.index!=null ? ' (평균 지수 '+f.index+(f.max!=null?' · 가장 높은 곳 '+f.max:'')+')' : '')+(Array.isArray(f.pct) ? '\n면적 비율 — 낮음 '+f.pct[0]+'% · 다소높음 '+f.pct[1]+'% · 높음 '+f.pct[2]+'% · 매우높음 '+f.pct[3]+'%' : ''),
+      /* 단계별 면적 비율 막대 — 높은 단계가 1%라도 보이게 최소 4%로 늘려 그린다 */
+      bar: (()=>{ const C=['var(--safe)','var(--caution)','var(--warn)','var(--severe)'];
+        if(!Array.isArray(f.pct)) return C[Math.max(0,Math.min(3,(f.level||1)-1))];
+        const p=f.pct.map(v=>v>0?Math.max(4,v):0), s=p.reduce((a,b)=>a+b,0)||1; let x=0;
+        return 'linear-gradient(90deg,'+p.map((v,i)=>{ const a=x; x+=v/s*100; return C[i]+' '+a.toFixed(1)+'% '+x.toFixed(1)+'%'; }).join(',')+')'; })(),
+      color: f.level>=4?'var(--severe)':f.level>=3?'var(--warn)':f.level>=2?'var(--caution)':'var(--safe)', pctW:Math.round(f.level/4*100)+'%' }; });
+    /* 이 카드는 'PM10' 카드라 등급도 PM10 기준(상황실과 같게, 2026-11-12). 수집기의 grade 는 PM10·PM2.5 중 나쁜 쪽이라
+       단양 PM10 17 이 초미세 16 때문에 '보통'으로 떴다. 초미세는 마우스를 올리면 보인다. */
+    const _g10=v=>v==null?[null,'-']:v<=30?['good','좋음']:v<=80?['normal','보통']:v<=150?['bad','나쁨']:['vbad','매우나쁨'];
+    const _g25=v=>v==null?'':v<=15?'좋음':v<=35?'보통':v<=75?'나쁨':'매우나쁨';
+    const pm=_selFirst((d.pm||[]).slice().sort((a,b)=>(b.pm10||0)-(a.pm10||0))).map(p=>{ const g=_g10(p.pm10); return { region:p.region, pm10:p.pm10, pm25:p.pm25, gradeText:g[1],
+      tip: p.region+' 미세먼지(PM10) '+(p.pm10==null?'-':p.pm10)+'㎍/㎥ '+g[1]+(p.pm25!=null?' · 초미세먼지(PM2.5) '+p.pm25+'㎍/㎥ '+_g25(p.pm25):''),
+      selBorder: _isSel(p.region)?'var(--brand)':'transparent', selBg: _isSel(p.region)?'var(--brandSoft)':'transparent',
+      color: g[0]==='vbad'?'var(--severe)':g[0]==='bad'?'var(--warn)':g[0]==='normal'?'var(--caution)':'var(--safe)',
+      pctW:Math.min(100,Math.round((p.pm10/150)*100))+'%' }; });
     // 재난문자 — 시도 전체를 고르면 전부, 관서를 고르면 그 시군 발송분 + 시도 전역 발송분만
     //   (재난문자는 시 단위로 발송된다 — 청주동부·청주서부는 둘 다 청주시 문자를 본다)
     const myMsgs=isWide ? (d.messages||[]) : (d.messages||[]).filter(m=> m.region===mySg || m.region===myStation || m.region===WIDE);
@@ -2575,7 +2605,7 @@ class Component extends DCLogic {
       const near=this.riversOf(d.rivers, sg, (s&&s.name)||sg).map(r=>({name:r.name, value:r.value, danger:r.danger, lv:this.riverLevel(r)}));
       const msgs=(d.messages||[]).filter(m=>m.region===sg || m.region===modal.key || m.region==='충청북도');
       const warns=(d.warnings||[]).filter(w=>this._areaHits(w.area, sg));
-      const pm=(d.pm||[]).find(p=>p.region===sg);
+      const pm=(d.pm||[]).find(p=>p.region===modal.key)||(d.pm||[]).find(p=>p.region===sg);   // 청주서부는 자기 측정소
       const fire=(d.fire||[]).find(f=>(f.region||'').includes(sg));
       return {modalTitle:modal.key+' 관서 상세', modalAccent:this.cvar(s.level==='danger'?'danger':s.level==='warning'?'warning':'safe'), modalMax:'620px',
         modalBody:this.regionBody(s, near, msgs, warns, pm, fire)};

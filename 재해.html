@@ -1671,7 +1671,7 @@ class Component extends DCLogic {
   humColor(v){ const a=this.num(v); return a===null ? 'var(--ink3)' : a<=25 ? 'var(--severe)' : a<=35 ? 'var(--warn)' : a<=45 ? 'var(--caution)' : 'var(--ink2)'; }
   pct(v){ const a=this.num(v); return a===null ? '—' : Math.round(a)+'%'; }
   ms(v){ const a=this.num(v); return a===null ? '—' : a.toFixed(1).replace(/\.0$/,'')+'m/s'; }
-  // 산불위험예보 권역 — 관서 이름으로 찾고, 없으면 같은 시(청주서부 → '청주…' 권역)로
+  // 산불위험예보 — 관서 이름(시군)으로 찾고, 없으면 같은 시(청주서부 → '청주')로
   // 특보 띠 — 충청북도를 고르면 도 전체, 관서를 고르면 그 관서에 걸린 특보만
   mineWarns(d, me){
     const RC=window.REGION_CONF||{}, base=n=>String(n||'').replace(/(시|군)$/,''), seen={};
@@ -1699,12 +1699,9 @@ class Component extends DCLogic {
       {type:'강풍주의보', area:'제천, 단양', level:'warning', time:'13:00'}
     ];
     c.prelim = [];
-    c.fire = [
-      {region:'제천·단양·충주', level:4, levelText:'매우높음'},
-      {region:'음성·진천·괴산', level:3, levelText:'높음'},
-      {region:'증평·청주동부·보은', level:3, levelText:'높음'},
-      {region:'옥천·영동', level:2, levelText:'보통'}
-    ];
+    const _FT={1:'낮음',2:'다소높음',3:'높음',4:'매우높음'};
+    c.fire = [['청주',3],['충주',3],['제천',4],['보은',3],['옥천',2],['영동',2],['증평',3],['진천',3],['괴산',3],['음성',3],['단양',4]]
+      .map(([r,l])=>({region:r, level:l, levelText:_FT[l]}));
     // 관서별 [실효습도, 지금 습도, 순간최대풍속, 10분평균, 풍향(도)]
     const D = {
       '제천':[19,16,21.4,11.2,300], '단양':[21,18,20.6,10.4,295], '충주':[24,20,15.2,7.9,290],
@@ -1792,7 +1789,7 @@ class Component extends DCLogic {
       obsTag:'가장 메마름', obsText, obsSub, obsBg:oT.bg, obsBorder:oT.bd, obsTagBg:oT.tag,
       noteTxt:'※ 건조주의보=실효습도 35% 이하가 2일 이상 지속 예상 · 경보=25% 이하 2일 이상(기상청) — 오후 한때 35% 아래로 내려가는 것만으로는 특보 수준이 아닙니다. 여기 실효습도는 기상청과 같은 식(같은 시각 습도 5일치 가중합)으로 관서 AWS 습도에서 계산한 실시간 값이며, 하루 중 오후에 가장 낮습니다. 기상청 공식값(ASOS)은 관서 칸에 함께 적었습니다. 강풍은 작은 불씨도 크게 번지게 하므로 함께 봅니다.',
       rankTip:(key==='eff'?'관서 AWS 습도를 쌓아 최근 5일 가중으로 계산한 값입니다. 기상청 공식값(ASOS 5곳)과 다를 수 있고, 이력이 모자라면 가까운 ASOS 자료로 채웁니다.':key==='hum'?'기상청 AWS 실측 습도입니다.':'기상청 AWS 실측 순간최대풍속입니다.'),
-      c1Tip:'기상청 AWS 실측값과, AWS 습도로 계산한 실효습도입니다.', c2Tip:'국립산림과학원 산불위험예보입니다. 권역 안에 더 높은 단계가 1%라도 있으면 그 단계로 표시합니다.',
+      c1Tip:'기상청 AWS 실측값과, AWS 습도로 계산한 실효습도입니다.', c2Tip:'국립산림과학원 산불위험예보(시군별)입니다. 공식 판정처럼 시군 평균 지수로 단계를 정합니다.',
       c3Tip:'날씨누리 메인의 시간별 예보 기준 앞으로 24시간 습도·바람·비입니다.', f24Tip:'날씨누리 메인의 시간별 예보(1시간 간격)와 같은 값입니다.',
       rankTitle:(key==='eff'?'실효습도':key==='hum'?'지금 습도':'순간 최대풍속'),
       rankSrcTxt:(key==='wind'?'기상청 AWS 실측 · 센 순':'낮을수록 메마름 · 메마른 순'),
@@ -1802,7 +1799,7 @@ class Component extends DCLogic {
       rankTabs, rankRows, rankEmpty:!stations.length, rankEmptyTxt:'습도 자료를 불러오는 중입니다.',
       midCols: wide ? 'minmax(0,1fr) minmax(0,1fr) minmax(0,1fr)' : 'minmax(0,1fr)',
       c1Title:myStation+' 지금', c1Sub:'', c1Body:this.fireNowBody(me),
-      c2Title:'산불위험예보', c2Sub:'국립산림과학원 · 권역별', c2Body:this.fireRiskBody(d, me),
+      c2Title:'산불위험예보', c2Sub:'국립산림과학원 · 시군별', c2Body:this.fireRiskBody(d, me),
       c3Title:'앞으로 24시간', c3Sub:myStation+' · 습도·바람·비', c3Body:this.fireAheadBody(me),
       f24Title:'시간대별 습도·바람 예보', fcst24Body:this.fireFcst24Body(me),
       fireListSub:'올해 '+inc.length+'건 · 최근 순', fireListBody:this.fireListBody(inc),
@@ -1845,14 +1842,15 @@ class Component extends DCLogic {
     const R=React.createElement, list=(d.fire||[]), mine=this._wide ? null : this.fireGroupOf(d, me);
     if(!list.length) return R('div',{style:{fontSize:'13px', color:'var(--ink3)'}}, '산불위험예보를 불러오는 중입니다.');
     return R('div',null,
-      R('div',{style:{display:'flex', flexDirection:'column', gap:'7px'}},
+      R('div',{style:{display:'grid', gridTemplateColumns:'repeat(2,minmax(0,1fr))', gap:'6px'}},
         list.map((f,i)=>{ const c=this.fireLvColor(f.level), on=(mine && mine.region===f.region);
-          return R('div',{key:i, style:{display:'flex', alignItems:'center', justifyContent:'space-between', gap:'8px', padding:'9px 11px', borderRadius:'10px',
+          return R('div',{key:i, title:((f.index!=null?'평균 지수 '+f.index+(f.max!=null?' · 가장 높은 곳 '+f.max:'')+' · ':'')+(Array.isArray(f.pct)?'면적 비율 낮음 '+f.pct[0]+'% · 다소높음 '+f.pct[1]+'% · 높음 '+f.pct[2]+'% · 매우높음 '+f.pct[3]+'%':''))||undefined,
+            style:{display:'flex', alignItems:'center', justifyContent:'space-between', gap:'6px', padding:'7px 10px', borderRadius:'10px', minWidth:0,
             background:(f.level>=3 ? (f.level>=4?'var(--severeSoft)':'var(--warnSoft)') : 'var(--surface2)'), border:'1px solid '+(on?'var(--brand)':'var(--border)')}},
             R('span',{style:{fontSize:'13px', fontWeight:(on?900:700), color:(on?'var(--brand)':'var(--ink)')}}, (on?'📍 ':'')+f.region),
-            R('span',{style:{fontSize:'15px', fontWeight:900, color:c}}, f.levelText||'-')); })),
+            R('span',{style:{fontSize:'15px', fontWeight:900, color:c, whiteSpace:'nowrap'}}, f.levelText||'-', f.index!=null ? R('span',{style:{fontSize:'12px', fontWeight:700, color:'var(--ink3)', marginLeft:'5px'}}, f.index) : null)); })),
       R('div',{style:{fontSize:'11px', color:'var(--ink3)', marginTop:'9px', lineHeight:1.55}},
-        '낮음·보통·높음·매우높음 4단계. 권역 안 시군 중 가장 높은 값입니다(시군 안에 높은 단계 지역이 조금이라도 있으면 그 단계).'));
+        '공식 판정 기준 — 시군 평균 지수: 낮음 50 이하 · 다소높음 51~65 · 높음 66~85 · 매우높음 86 이상 (칸에 마우스를 올리면 가장 높은 곳과 면적 비율).'));
   }
 
   fireAheadBody(s){

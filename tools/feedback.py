@@ -1,10 +1,13 @@
 """화면 사용자 의견 받기 — 서버.bat(tools/live_local.py)과 행정망 Rocky 서버(tools/server/feedback_server.py)가 같이 쓴다.
 
   POST /api/feedback   의견 한 건 저장 (화면의 💬 의견 보내기)
-  GET  /api/feedback   저장된 의견 목록 (의견.html — 관리자만)
+       {"action":"status", "id", "status", "note"}  처리 상태·처리 내용 저장 (의견.html — 관리자만)
+  GET  /api/feedback   저장된 의견 목록 + 처리 상태 (의견.html — 관리자만)
 
 저장: <저장소>/.data/feedback.csv   — 엑셀로 바로 여는 원본(덧붙이기만 한다, UTF-8 BOM)
       <저장소>/.data/feedback.jsonl — 의견.html 이 읽는 같은 내용
+      <저장소>/.data/feedback_status.json — 처리 상태(대기·처리 완료·보류·미수용)와 처리 내용(2026-11-12)
+        · 의견 원본은 고치지 않는다. 의견 번호(id)는 시각·이름·내용으로 만든 고정값이라 따로 저장하지 않는다.
   · 점(.)으로 시작하는 폴더라 nginx·서버.bat 이 밖으로 내주지 않는다.
   · 깃에 올리지 않는다(.gitignore). 소스 반영(update-code.sh 의 git reset)은 추적하지 않는 파일을 지우지 않는다.
 
@@ -20,6 +23,7 @@
   · 저장만 하고 실행하지 않는다. 의견.html 은 글자를 그대로(textContent) 보여 준다.
 """
 import csv
+import hashlib
 import hmac
 import io
 import json
@@ -32,6 +36,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 STORE = ROOT / '.data' / 'feedback.jsonl'
 STORE_CSV = ROOT / '.data' / 'feedback.csv'
+STORE_STATUS = ROOT / '.data' / 'feedback_status.json'
+STATUSES = ('대기', '처리 완료', '보류', '미수용')
+MAX_NOTE = 500
 KINDS = ('오류', '기능 제안', '새 사이트 제안', '기타')
 # 이름을 비우면 익명 — 그래서 접속 주소(IP)는 저장하지 않는다(연속 전송 제한에만 잠깐 메모리에 둔다)
 CSV_COLS = [('ts', '시각'), ('kind', '구분'), ('page', '화면'), ('station', '관서'), ('who', '부서·이름'), ('text', '내용')]
@@ -66,6 +73,50 @@ def _is_local(ip):
     return ip in ('127.0.0.1', '::1', '::ffff:127.0.0.1')
 
 
+def _is_admin(ip, headers):
+    """목록 보기·처리 상태 바꾸기 권한 — 서버 PC 자신이거나 비밀 키를 가진 주소."""
+    if _is_local(ip):
+        return True
+    key = _env_key()
+    given = (headers.get('X-Admin-Key') or '').strip()
+    return bool(key and given and hmac.compare_digest(key.encode(), given.encode()))
+
+
+def _rec_id(rec):
+    """의견 번호 — 시각·이름·내용으로 만든 고정값(예전 의견에도 그대로 붙는다)."""
+    src = '|'.join(str(rec.get(k) or '') for k in ('ts', 'who', 'text'))
+    return hashlib.sha1(src.encode('utf-8')).hexdigest()[:12]
+
+
+def _load_status():
+    try:
+        d = json.loads(STORE_STATUS.read_text(encoding='utf-8'))
+        return d if isinstance(d, dict) else {}
+    except (OSError, ValueError):
+        return {}
+
+
+def _set_status(ip, headers, j):
+    if not _is_admin(ip, headers):
+        return 403, {'ok': False, 'err': '처리 상태를 바꿀 수 없는 주소입니다'}
+    rid = _clean(j.get('id'), 20)
+    status = _clean(j.get('status'), 10)
+    note = _clean(j.get('note'), MAX_NOTE)
+    if not rid or status not in STATUSES:
+        return 400, {'ok': False, 'err': '형식 오류'}
+    with _lock:
+        d = _load_status()
+        if status == '대기' and not note:
+            d.pop(rid, None)
+        else:
+            d[rid] = {'status': status, 'note': note, 'at': datetime.now().strftime('%Y-%m-%d %H:%M')}
+        STORE_STATUS.parent.mkdir(parents=True, exist_ok=True)
+        tmp = STORE_STATUS.with_name(STORE_STATUS.name + '.tmp')
+        tmp.write_text(json.dumps(d, ensure_ascii=False, indent=1), encoding='utf-8')
+        os.replace(tmp, STORE_STATUS)
+    return 200, {'ok': True, 'id': rid, **(d.get(rid) or {'status': '대기', 'note': '', 'at': ''})}
+
+
 def handle(method, ip, headers, body=b''):
     """(상태코드, 응답 dict) 를 돌려준다. headers 는 대소문자 무시 조회가 되는 객체(http.server 의 self.headers)."""
     if method == 'POST':
@@ -86,6 +137,8 @@ def _post(ip, headers, body):
             raise ValueError
     except (ValueError, UnicodeDecodeError):
         return 400, {'ok': False, 'err': '형식 오류'}
+    if j.get('action') == 'status':
+        return _set_status(ip, headers, j)
     text = _clean(j.get('text'), MAX_TEXT)
     if len(text) < 2:
         return 400, {'ok': False, 'err': '내용을 적어 주세요'}
@@ -142,9 +195,7 @@ def _append_csv(rec):
 
 
 def _get(ip, headers):
-    key = _env_key()
-    given = (headers.get('X-Admin-Key') or '').strip()
-    if not _is_local(ip) and not (key and given and hmac.compare_digest(key.encode(), given.encode())):
+    if not _is_admin(ip, headers):
         return 403, {'ok': False, 'err': '볼 수 없는 주소입니다'}
     items = []
     try:
@@ -157,4 +208,12 @@ def _get(ip, headers):
     except FileNotFoundError:
         pass
     items.reverse()                         # 최신부터
+    st = _load_status()
+    for x in items:
+        x.pop('ua', None)                   # 화면에 쓰지 않는다
+        x['id'] = _rec_id(x)
+        s = st.get(x['id']) or {}
+        x['status'] = s.get('status') or '대기'
+        x['note'] = s.get('note') or ''
+        x['statusAt'] = s.get('at') or ''
     return 200, {'ok': True, 'n': len(items), 'items': items[:2000]}
