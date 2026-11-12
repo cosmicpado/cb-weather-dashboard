@@ -73,13 +73,34 @@
   .ed textarea{min-height:130px;resize:vertical;line-height:1.5}
   .ed .go{background:var(--brand);border-color:var(--brand);color:#fff}
   .ed .err{color:var(--s-no);font-size:12.5px}
+  /* hidden 속성이 display 지정(.gate 의 flex 등)에 지지 않게 */
+  [hidden]{display:none!important}
+  /* 관리자 키 입력(2026-11-12) — 주소(#k=)에 키를 싣지 않는다 */
+  .gate{max-width:380px;margin:60px auto 0;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px 22px 18px;display:flex;flex-direction:column;gap:10px}
+  .gate h2{margin:0;font-size:17px}
+  .gate p{margin:0;font-size:13px;color:var(--ink3);line-height:1.5}
+  .gate input[type=password]{font-size:15px;padding:10px 12px}
+  .gate .go{background:var(--brand);border-color:var(--brand);color:#fff;padding:10px}
+  .gate .err{color:var(--s-no);font-size:13px;min-height:18px}
+  .gate label{font-size:13px;color:var(--ink2);display:flex;gap:6px;align-items:center}
+  .out{margin-left:auto;font-size:12.5px;color:var(--ink3);background:none;border:1px solid var(--line)}
 </style>
 </head><body>
 <div class="wrap">
   <header>
     <a class="back" href="지도.html">← 종합 현황</a>
     <h1>관리자 페이지</h1>
+    <button type="button" class="out" id="logout" hidden>키 지우기 · 나가기</button>
   </header>
+  <form class="gate" id="gate" hidden autocomplete="off">
+    <h2>🔒 관리자 키</h2>
+    <p>관리자만 볼 수 있습니다.</p>
+    <input type="password" id="gkey" placeholder="관리자 키" autocomplete="off" spellcheck="false">
+    <label><input type="checkbox" id="gkeep"> 이 PC 에서 기억 (공용 PC 에서는 끄세요)</label>
+    <button type="submit" class="go">들어가기</button>
+    <div class="err" id="gerr"></div>
+  </form>
+  <div id="main" hidden>
   <div class="tabs" role="tablist">
     <button type="button" role="tab" id="tb-fb" aria-selected="true">받은 의견<span class="c" id="c-fb"></span></button>
     <button type="button" role="tab" id="tb-nt" aria-selected="false">공지사항<span class="c" id="c-nt"></span></button>
@@ -107,6 +128,7 @@
     <div id="ntEd"></div>
     <div id="ntList"><div class="msg">불러오는 중…</div></div>
   </section>
+  </div>
 </div>
 <script src="notices.js"></script>
 <script>
@@ -114,16 +136,26 @@
   /* 처리 상태(2026-11-12) — 서버 tools/feedback.py 의 STATUSES 와 같은 이름. '대기'는 아직 손대지 않은 의견 */
   var ST=[['대기','wait'],['처리 완료','done'],['보류','hold'],['미수용','no']], CLS={}; ST.forEach(function(s){ CLS[s[0]]=s[1]; });
   var items=[], stFilter='', $=function(id){ return document.getElementById(id); };
-  /* 비밀 주소 관리자.html#k=<키> — # 뒤는 서버로 가지 않는다. 서버 PC(localhost)는 키 없이 보인다. */
-  function getKey(){ var m=/(?:^|[#&])k=([^&]+)/.exec(location.hash||''); return m ? decodeURIComponent(m[1]) : ''; }
+  /* 관리자 키 — 화면에서 받아 이 탭(sessionStorage)에만, '이 PC 에서 기억'이면 localStorage 에 둔다. 주소에는 싣지 않는다.
+     예전 비밀 주소(#k=키)로 열면 키를 옮겨 담고 주소에서 바로 지운다. 서버 PC(localhost)는 키 없이 열린다. */
+  var KK='cbAdminKey';
+  function store(){ try{ return sessionStorage.getItem(KK) || localStorage.getItem(KK) || ''; }catch(e){ return ''; } }
+  function setKey(k, keep){ try{ sessionStorage.setItem(KK, k); if(keep) localStorage.setItem(KK, k); else localStorage.removeItem(KK); }catch(e){} }
+  function clearKey(){ try{ sessionStorage.removeItem(KK); localStorage.removeItem(KK); }catch(e){} }
+  (function(){ var m=/(?:^|[#&])k=([^&]+)/.exec(location.hash||'');
+    if(m){ setKey(decodeURIComponent(m[1]), false); try{ history.replaceState(null,'',location.pathname+location.search); }catch(e){ location.hash=''; } } })();
+  function getKey(){ return store(); }
   function hdr(extra){ var h=extra||{}; var k=getKey(); if(k) h['X-Admin-Key']=k; return h; }
   function el(tag, cls, txt){ var e=document.createElement(tag); if(cls) e.className=cls; if(txt!=null) e.textContent=txt; return e; }
 
   function load(){
     $('list').innerHTML=''; $('list').appendChild(el('div','msg','불러오는 중…'));
     fetch('api/feedback',{cache:'no-store',headers:hdr()}).then(function(r){
+      if(r.status===403) return {ok:false, code:403};
       return r.json().catch(function(){ return {ok:false, err: r.status===404||r.status===405||r.status===501 ? '이 서버에서는 의견 받기가 켜져 있지 않습니다' : '서버 응답 오류 ('+r.status+')'}; });
     }).then(function(j){
+      if(j.code===403){ var had=!!getKey(); clearKey(); gate(had ? '키가 맞지 않습니다' : ''); return; }
+      opened();
       if(!j.ok){ items=[]; render(j.err||'볼 수 없는 주소입니다'); return; }
       items=j.items||[];
       var pages={}; items.forEach(function(x){ if(x.page) pages[x.page]=1; });
@@ -206,6 +238,12 @@
   }
   $('page').onchange=function(){ render(); }; $('kind').onchange=function(){ render(); }; $('q').oninput=function(){ render(); };
   $('reload').onclick=load; $('csv').onclick=csv;
+  /* 키 입력 화면 */
+  function gate(msg){ $('main').hidden=true; $('gate').hidden=false; $('logout').hidden=true; $('gerr').textContent=msg||''; $('gkey').value=''; $('gkey').focus(); }
+  function opened(){ $('gate').hidden=true; $('main').hidden=false; $('logout').hidden=!store(); }
+  $('gate').onsubmit=function(e){ e.preventDefault(); var k=$('gkey').value.trim(); if(!k){ $('gerr').textContent='키를 넣으세요'; return; }
+    setKey(k, $('gkeep').checked); $('gerr').textContent='확인 중…'; load(); };
+  $('logout').onclick=function(){ clearKey(); gate('키를 지웠습니다'); };
   load();
 
   /* ── 탭 ── */

@@ -55,7 +55,7 @@ df -h /                                         # 디스크(10GB)
 | 수집 | systemd 타이머 `cbweather-collect.timer` — 5분마다 `update_data.py --no-push` |
 | 레이더 | systemd 타이머 `cbweather-radar.timer` — 1분마다 `update_data.py --radar-only` (이미 받은 5분 칸이면 기상청을 부르지 않는다) |
 | 화면 | nginx 80 포트, 화면 파일(html·js·png 등)만 연다 — `.env`·`.git`·`tools/`·`.data/` 는 404 |
-| 의견 받기 | `cbweather-feedback.service`(127.0.0.1:8081, `tools/server/feedback_server.py`) ← nginx 가 `/api/feedback` 만 넘긴다. 저장 `/opt/cbweather/.data/feedback.csv`(엑셀용 원본) · `feedback.jsonl`, 보기는 비밀 주소 `http://<서버>/관리자.html#k=<.env 의 FEEDBACK_ADMIN_KEY>`(설치 때 키 자동 생성, '완료'에 주소 출력 · 서버 자신은 키 없이). SELinux `httpd_can_network_connect` 를 켠다 |
+| 의견 받기 | `cbweather-feedback.service`(127.0.0.1:8081, `tools/server/feedback_server.py`) ← nginx 가 `/api/feedback` 만 넘긴다. 저장 `/opt/cbweather/.data/feedback.csv`(엑셀용 원본) · `feedback.jsonl`, 보기·공지 관리는 `http://<서버>/관리자.html` 에서 화면에 `.env` 의 `FEEDBACK_ADMIN_KEY` 를 넣는다(설치 때 키 자동 생성, '완료'에 키 출력 · 서버 자신은 키 없이 · 공지는 `.data/notices.json`). SELinux `httpd_can_network_connect` 를 켠다 |
 | 나가는 주소 | `github.com`(소스 받을 때만) · `apis.data.go.kr` · `apihub.kma.go.kr` · `data.kma.go.kr` · `www.weather.go.kr` · `api.hrfco.go.kr` · `n.flood.go.kr` · `www.safetydata.go.kr` · `d.kbs.co.kr` (모두 443) |
 
 ## 처음 설치
