@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>충북소방 기상재난 상황판</title>
+<title>충북소방 기상재난 통합플랫폼</title>
 <!-- support.js = dc-runtime 본체. 없으면 페이지가 부팅되지 않는다(템플릿이 글자로 노출).
      반드시 진짜 head 안에 둘 것 — helmet에 넣으면 첫 렌더 뒤에 로드돼 부팅이 안 된다.
      leaflet은 이 페이지가 지도를 안 그리므로 생략.
@@ -375,7 +375,7 @@ class Component extends DCLogic {
     this.syncTitle();
   }
   // 브라우저 탭 제목은 모든 화면 공통 이름으로 고정한다
-  syncTitle(){ try{ const t='충북소방 기상재난 상황판'; if(document.title!==t) document.title=t; }catch(e){} }
+  syncTitle(){ try{ const t='충북소방 기상재난 통합플랫폼'; if(document.title!==t) document.title=t; }catch(e){} }
   // ⚠ 이 메서드는 단 한 번만 정의할 것 (중복 정의로 타이머가 누수된 전례가 있음)
   componentWillUnmount(){
     clearInterval(this._clock); clearInterval(this._poll); clearInterval(this._upd); this._upd=null;

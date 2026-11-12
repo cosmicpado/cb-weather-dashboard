@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>충북소방 기상재난 상황판</title>
+<title>충북소방 기상재난 통합플랫폼</title>
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <!-- 지역 설정 — 관할 이름·관서 수를 여기서 읽는다. -->
 <script src="clock-sync.js"></script>
@@ -166,7 +166,7 @@ td.n{white-space:nowrap;font-weight:700}
   <div id="pane-help" role="tabpanel" aria-labelledby="tb-help">
 
   <div class="lead">
-    <p><b id="leadWho">충북소방 기상재난 상황판</b>은 충청북도 <span class="cnt">12</span>개 소방관서의 기상·특보·하천 자료를 한곳에 모아 보여 줍니다.
+    <p><b id="leadWho">충북소방 기상재난 통합플랫폼</b>은 충청북도 <span class="cnt">12</span>개 소방관서의 기상·특보·하천 자료를 한곳에 모아 보여 줍니다.
        자료는 <b>5분마다 자동으로 갱신</b>되니 새로고침할 필요가 없습니다.
        화면의 칸 제목에 <b>마우스를 올리면</b> 그 값의 기준이 나옵니다.</p>
   </div>
@@ -557,9 +557,9 @@ td.n{white-space:nowrap;font-weight:700}
 
   // 지역 이름 반영
   if (C.label) {
-    document.title = '충북소방 기상재난 상황판';
+    document.title = '충북소방 기상재난 통합플랫폼';
     var w = document.getElementById('leadWho');
-    if (w) w.textContent = '충북소방 기상재난 상황판';
+    if (w) w.textContent = '충북소방 기상재난 통합플랫폼';
   }
 
   // 관서 개수 — region.js 에서 (예시에 숫자를 박아두지 않는다)
