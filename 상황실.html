@@ -1642,8 +1642,11 @@ https://scripts.sil.org/OFL
           <div data-card="season" title="{{ seasonTip }}" style="margin:14px;grid-column:var(--wl-season-c,5)/span var(--wl-season-cs,4);grid-row:var(--wl-season-r,1)/span var(--wl-season-rs,5);--fz:var(--wl-season-fz,1);min-height:0;min-width:0;overflow:hidden;display:var(--wl-season-d,flex);">{{ seasonEl }}</div>
           <div data-card="radar" style="margin:14px;background:var(--panel,#151b26);border:2px solid var(--line,#28313f);border-radius:22px;padding:22px 26px;display:flex;flex-direction:column;gap:14px;min-height:0;grid-column:var(--wl-radar-c,5)/span var(--wl-radar-cs,4);grid-row:var(--wl-radar-r,6)/span var(--wl-radar-rs,14);display:var(--wl-radar-d,flex);--fz:var(--wl-radar-fz,1);min-width:0;overflow:hidden;">
             <div style="display:flex;align-items:baseline;justify-content:space-between;">
-              <div style="font-size:calc(40px*var(--fz,1));font-weight:660; cursor:help;" title="기상청 레이더 합성(강수량) 영상에서 한반도 가운데만 잘라 보여 줍니다. 최근 30분을 5분 간격으로 돌려 보여 주고 최신 장에서 3초 멈춥니다. 파랑·초록은 약한 비, 노랑·빨강은 강한 비. 기상청 공개가 약 5분 늦고, 서버가 1분마다 받아 실제보다 5~7분 늦습니다.">기상 레이더</div>
-              <div style="font-size:calc(30px*var(--fz,1));font-weight:570;color:{{ radarSubColor }};">{{ radarSub }}</div>
+              <div style="display:flex;align-items:center;gap:16px;min-width:0;">
+                <div style="font-size:calc(40px*var(--fz,1));font-weight:660; cursor:help;white-space:nowrap;" title="{{ radarTitleTip }}">{{ radarTitle }}</div>
+                {{ radarToggle }}
+              </div>
+              <div style="font-size:calc(30px*var(--fz,1));font-weight:570;color:{{ radarSubColor }};white-space:nowrap;">{{ radarSub }}</div>
             </div>
             <div style="flex:1;min-height:0;display:flex;">{{ radarEl }}</div>
           </div>
@@ -1682,7 +1685,7 @@ https://scripts.sil.org/OFL
     </div>
 
     <div style="height:38px;flex:none;display:flex;align-items:center;gap:28px;font-size:calc(26px*var(--fz,1));font-weight:500;color:var(--dim,#8e9bb0);">
-      <div>데이터 출처 · 행정안전부 / 기상청 / 한강홍수통제소 / 국립산림과학원 / 에어코리아(한국환경공단)</div>
+      <div>데이터 출처 · 행정안전부 / 기상청 / 한강홍수통제소 / 국립산림과학원 / 에어코리아(한국환경공단) / 윈디(Windy.com)</div>
       <div style="width:2px;height:22px;background:var(--line,#28313f);"></div>
       <div style="margin-left:auto;font-variant-numeric:tabular-nums;">관서 자동 순환 {{ rotSec }}초 · 데이터 자동 갱신 5분 · 마지막 갱신 {{ updatedLabel }}</div>
     </div>
@@ -2135,8 +2138,30 @@ class Component extends DCLogic {
     ]);
   }
 
+  /* 레이더 칸 K(기상청 KMA 레이더, 안쪽 값 'R') ↔ W(윈디 정보) — 2026-11-12. 고른 것은 이 PC 에 기억, 처음은 R */
+  radarMode(){
+    if(this.state.radarMode) return this.state.radarMode;
+    try{ return localStorage.getItem('cbRoomRadarMode')==='W' ? 'W' : 'R'; }catch(e){ return 'R'; }
+  }
+  setRadarMode(m){ try{ localStorage.setItem('cbRoomRadarMode', m); }catch(e){} this.setState({radarMode:m}); }
+  radarToggle(){
+    const R = window.React.createElement, cur=this.radarMode();
+    const b=(m,lab,tip)=>R('button',{key:m, type:'button', title:tip, 'aria-pressed':cur===m, onClick:(e)=>{ e.stopPropagation(); this.setRadarMode(m); },
+      style:{width:'calc(68px*var(--fz,1))', height:'calc(60px*var(--fz,1))', borderRadius:'10px', cursor:'pointer', fontFamily:'inherit',
+        fontSize:'calc(34px*var(--fz,1))', fontWeight:800, lineHeight:1,
+        border:'2px solid '+(cur===m?'var(--acc,#ff7a2f)':'var(--line,#28313f)'),
+        background:cur===m?'var(--acc,#ff7a2f)':'transparent', color:cur===m?'#0b1220':'var(--dim,#8e9bb0)'}}, lab);
+    return R('div',{style:{display:'flex',gap:'6px'}}, b('R','K','기상청(KMA) 레이더 — 실제 관측'), b('W','W','윈디 정보(Windy) — 날씨 레이더·위성·바람 등'));
+  }
+  windyEl(){
+    const R = window.React.createElement;
+    return R('div',{onClick:()=>{ if(window.cbWindyOpen) window.cbWindyOpen(); }, title:'누르면 크게 보기',
+        style:{flex:1,minHeight:0,position:'relative',borderRadius:'16px',overflow:'hidden',background:'#0d1118',cursor:'zoom-in'}},
+      R('iframe',{src:window.cbWindyUrl('radar', 9), title:'윈디 정보', style:{position:'absolute',inset:0,width:'100%',height:'100%',border:0,pointerEvents:'none'}}));
+  }
   radarEl(){
     const R = window.React.createElement, DIM='var(--dim,#8e9bb0)';
+    if(this.radarMode()==='W') return this.windyEl();
     /* 서버가 1분마다 따로 받는 목록(images/radar/frames.json)이 있으면 그게 먼저 — data.js(5분)보다 새롭다 */
     const ki=(EXT().kmaImages)||{}, rd=(window.RADAR_LIVE&&window.RADAR_LIVE.ok)?window.RADAR_LIVE:(ki.radar||{}), ok=rd.ok;
     if(!ok) return R('div',{style:{flex:1,display:'flex',alignItems:'center',justifyContent:'center',fontSize:'38px',fontWeight:570,color:DIM}},'레이더 영상 없음');
@@ -2547,7 +2572,13 @@ class Component extends DCLogic {
       seasonTitle: _ssn.title, seasonSub: _ssn.why, seasonEl: this.seasonEl(s, _ssn),
       seasonTip: '계절 감시 · '+_ssn.title+' ('+_ssn.why+') — 한파·대설특보 또는 11~3월 결빙·한파, 폭염특보 또는 6~9월 폭염·열대야, 건조특보 또는 4·5·10월 건조·산불. 값은 날씨누리 시간별 예보.',
       radarTs: (((EXT().kmaImages||{}).radar||{}).ts||'').slice(11,16),
-      radarSub: this.radarInfo().t, radarSubColor: (this.radarInfo().old ? 'var(--cAmber,#ffb020)' : 'var(--dim,#8e9bb0)'),
+      radarTitle: this.radarMode()==='W' ? '윈디 정보' : '기상 레이더',
+      radarTitleTip: this.radarMode()==='W'
+        ? 'Windy(windy.com) 지도 — 처음엔 날씨 레이더(실제 관측)로 보여 줍니다. 위성도 관측이고, 바람·돌풍·비·기온·구름은 유럽중기예보센터(ECMWF) 모델 예보입니다. 누르면 크게 보고 층을 바꿀 수 있습니다.'
+        : '기상청 레이더 합성(강수량) 영상에서 한반도 가운데만 잘라 보여 줍니다. 최근 30분을 5분 간격으로 돌려 보여 주고 최신 장에서 3초 멈춥니다. 파랑·초록은 약한 비, 노랑·빨강은 강한 비. 기상청 공개가 약 5분 늦고, 서버가 1분마다 받아 실제보다 5~7분 늦습니다.',
+      radarToggle: this.radarToggle(),
+      radarSub: this.radarMode()==='W' ? '날씨 레이더 · 누르면 크게' : this.radarInfo().t,
+      radarSubColor: (this.radarMode()!=='W' && this.radarInfo().old ? 'var(--cAmber,#ffb020)' : 'var(--dim,#8e9bb0)'),
       ultraSum: (function(a){ if(!a||!a.length) return '\u2014';
         var t=a.reduce(function(x,o){ return x+(o.rain||0); },0);
         var p=a.reduce(function(x,o){ return Math.max(x,o.pop||0); },0);
@@ -2642,7 +2673,12 @@ class Component extends DCLogic {
     if(!ws.length) card.appendChild(el('div','font-size:'+F(18,1.4,34)+';color:var(--dim,#8e9bb0);padding:'+F(14,1.4,34)+' 0;','발효 중인 기상특보가 없습니다.'));
     ws.forEach(function(w){
       var col=w.sev?'var(--cRed,#ff5a5a)':'var(--cAmber,#ffb020)';
-      var row=el('div','border-radius:14px;padding:'+F(12,1.1,26)+' '+F(14,1.3,30)+';background:'+(w.sev?'rgba(255,77,77,.14)':'rgba(255,176,32,.12)')+';border:2px solid '+col+';');
+      var row=el('div','cursor:pointer;border-radius:14px;padding:'+F(12,1.1,26)+' '+F(14,1.3,30)+';background:'+(w.sev?'rgba(255,77,77,.14)':'rgba(255,176,32,.12)')+';border:2px solid '+col+';');
+      /* 특보 줄을 누르면 그 특보의 통보문 창, 없으면 날씨누리 통보문 목록(2026-11-12) */
+      row.title='누르면 '+w.type+' 통보문(기상청 발효현황 그림·원문)';
+      row.onclick=(function(t){ return function(){ var bl=raw.bulletins||{}, lst=(bl.warnings_full||[]).filter(function(b){ return b && (b.title||b.current); }), k=-1;
+        lst.some(function(b,i){ if(String(b.title||'').indexOf('해제')<0 && (String(b.title||'')+String(b.current||'')+String(b.summary||'')).indexOf(t)>=0){ k=i; return true; } });
+        if(k>=0) openBulletin(lst, k, bl.stn); else window.open('https://www.weather.go.kr/w/special-report/list.do?stn='+(bl.stn||131)+'&kind=met','_blank','noopener'); }; })(w.type);
       var top=el('div','display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;');
       top.appendChild(el('span','font-size:'+F(20,1.7,42)+';font-weight:800;color:'+col+';',w.type));
       if(here && w.areas.indexOf(here)>=0) top.appendChild(el('span','font-size:'+F(13,.95,22)+';font-weight:800;color:#0b1220;background:'+col+';border-radius:8px;padding:2px 10px;',here+' 해당'));
@@ -2735,9 +2771,16 @@ class Component extends DCLogic {
     openBulletin(list, idx, bl.stn);
   }
   var openList=open;
+  /* 충북에 발효 특보도 예비특보도 없으면 누를 것이 없다 — 클릭 막고 손가락 커서도 끈다(2026-11-12) */
+  function hasAny(){ var raw=window.WALL_RAW||{};
+    return (raw.warnings||[]).length>0 || (raw.prelim||[]).some(function(p){ return (p.items||[]).some(function(it){ return it.north_match; }); }); }
+  document.addEventListener('mouseover', function(e){
+    var c=e.target.closest && e.target.closest('[data-card="warn"]'); if(c) c.style.cursor = hasAny() ? 'pointer' : 'default';
+  });
   document.addEventListener('click', function(e){
     if(window.WALL_EDITING || box) return;
     var c=e.target.closest && e.target.closest('[data-card="warn"]'); if(!c) return;
+    if(!hasAny()) return;
     var row=e.target.closest('[data-wtype]');
     openFor(row ? row.getAttribute('data-wtype') : '');
   });
@@ -3128,4 +3171,44 @@ class Component extends DCLogic {
 })();
 </script>
 
+<script>
+/* 윈디(Windy) 무료 임베드(2026-11-12) — 충북 가운데. 레이더 칸 W 모드와 크게 보기 창에서 쓴다. 처음 층은 날씨 레이더 */
+window.cbWindyUrl = function(overlay, zoom){
+  return 'https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=%C2%B0C&metricWind=m%2Fs'
+    + '&zoom='+(zoom||8)+'&overlay='+(overlay||'wind')+'&product=ecmwf&level=surface&lat=36.75&lon=127.75&message=true';
+};
+(function(){
+  var box=null, timer=0;
+  function el(t,css,txt){ var e=document.createElement(t); if(css) e.style.cssText=css; if(txt!=null) e.textContent=txt; return e; }
+  function close(){ if(box){ box.remove(); box=null; } clearTimeout(timer); document.removeEventListener('keydown', onKey, true); }
+  function onKey(e){ if(e.key==='Escape'){ e.stopPropagation(); close(); } }
+  var F=function(a,b,c){ return 'clamp('+a+'px,'+b+'vw,'+c+'px)'; };
+  var LAYERS=[['radar','날씨 레이더'],['satellite','위성'],['wind','바람'],['gust','돌풍'],['rain','비·눈 예보'],['temp','기온'],['clouds','구름']];
+  window.cbWindyOpen = function(layer){
+    close(); layer=layer||'radar';
+    box=el('div','position:fixed;inset:0;z-index:2147482000;background:rgba(5,8,14,.62);display:flex;align-items:center;justify-content:center;padding:3vh 3vw;font-family:inherit;');
+    box.setAttribute('role','dialog'); box.setAttribute('aria-modal','true'); box.setAttribute('aria-label','윈디 정보 크게 보기');
+    box.addEventListener('mousedown', function(e){ if(e.target===box) close(); });
+    var card=el('div','width:94vw;height:92vh;background:var(--panel,#151b26);color:var(--fg,#f2f5fa);border:2px solid var(--line,#28313f);border-radius:20px;box-shadow:0 30px 80px rgba(0,0,0,.55);padding:'+F(14,1.2,30)+';display:flex;flex-direction:column;gap:'+F(10,.8,18)+';');
+    box.appendChild(card);
+    var hd=el('div','display:flex;align-items:center;gap:'+F(10,.8,18)+';flex-wrap:wrap;');
+    hd.appendChild(el('div','font-size:'+F(22,1.9,46)+';font-weight:800;letter-spacing:-.02em;','윈디 정보'));
+    var frame=el('iframe','flex:1;min-height:0;width:100%;border:0;border-radius:14px;background:#0d1118;');
+    frame.title='Windy';
+    var btns=[];
+    function pick(k){ frame.src=window.cbWindyUrl(k, 9);
+      btns.forEach(function(b){ var on=b.dataset.k===k; b.style.background=on?'var(--acc,#ff7a2f)':'transparent'; b.style.color=on?'#0b1220':'var(--fg,#f2f5fa)'; b.style.borderColor=on?'var(--acc,#ff7a2f)':'var(--dim,#8e9bb0)'; }); }
+    LAYERS.forEach(function(x){ var b=el('button','padding:'+F(6,.5,12)+' '+F(12,1,24)+';border-radius:12px;border:2px solid var(--dim,#8e9bb0);background:transparent;color:var(--fg,#f2f5fa);font-size:'+F(15,1.1,28)+';font-weight:800;cursor:pointer;font-family:inherit;', x[1]);
+      b.dataset.k=x[0]; b.onclick=function(){ pick(x[0]); }; btns.push(b); hd.appendChild(b); });
+    var x=el('button','margin-left:auto;width:'+F(36,2.4,58)+';height:'+F(36,2.4,58)+';border-radius:12px;border:2px solid var(--dim,#8e9bb0);background:transparent;color:var(--fg,#f2f5fa);font-size:'+F(18,1.3,30)+';cursor:pointer;','✕');
+    x.setAttribute('aria-label','닫기'); x.onclick=close; hd.appendChild(x);
+    card.appendChild(hd); card.appendChild(frame);
+    card.appendChild(el('div','font-size:'+F(12,.85,20)+';color:var(--dim,#8e9bb0);display:flex;gap:16px;flex-wrap:wrap;',
+      '날씨 레이더·위성은 관측, 나머지는 ECMWF 모델 예보 · 아래 ▶ 로 흐름 재생 · 닫기: ✕ · 바깥 누르기 · Esc'));
+    pick(layer);
+    document.body.appendChild(box);
+    document.addEventListener('keydown', onKey, true);   /* 윈디 창은 저절로 닫지 않는다(2026-11-12 요청) — ✕·바깥·Esc 로만 */
+  };
+})();
+</script>
 </body></html>

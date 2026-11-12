@@ -115,7 +115,8 @@
   [data-dash="fire"]{ container-type:inline-size; }
   @container (max-width:700px){ .fire-grid{ grid-template-columns:repeat(3, minmax(0,1fr)); } .fire-map{ flex-basis:165px; } }
   /* 휴대폰처럼 아주 좁으면 지도를 시군 칸 아래로 내려 가로 전체로 */
-  @container (max-width:520px){ .fire-body{ flex-direction:column; } .fire-grid{ grid-template-columns:repeat(3, minmax(0,1fr)); grid-auto-rows:auto !important; } .fire-map{ align-self:center !important; width:100%; max-width:300px; flex:0 0 auto !important; } }
+  /* 위아래로 쌓을 땐 시군 칸 묶음이 가로 전체로 늘어나야 한다 — 전엔 글자 폭만큼만 차지해 오른쪽이 비었다(2026-11-12) */
+  @container (max-width:520px){ .fire-body{ flex-direction:column; align-items:stretch !important; } .fire-left{ flex:0 0 auto !important; width:100%; } .fire-grid{ grid-template-columns:repeat(3, minmax(0,1fr)); grid-auto-rows:auto !important; } .fire-map{ align-self:center !important; width:100%; max-width:340px; flex:0 0 auto !important; } }
   @keyframes alertDrop{ 0%{ transform:translateY(-6px) scale(.98); opacity:0 } 100%{ transform:none; opacity:1 } }
   @keyframes dashPop{ 0%{ transform:scale(.96); opacity:0 } 100%{ transform:scale(1); opacity:1 } }
   /* 호우 버튼 글로우 — 비 오거나 기상특보 있을 때만. 클래스로 켠다.
@@ -676,7 +677,7 @@
       <!-- 왼쪽: 시군 11칸 + 범례 · 오른쪽: 국가산불위험예보시스템 전국 산불위험 지도(작게, 2026-11-12).
            지도를 누르면 「산불발생위험예측」, 그 팝업이 없는 날은 시스템으로 바로 간다. -->
       <div class="fire-body" style="display:flex; gap:10px; padding:10px 12px 9px; align-items:flex-start;">
-      <div style="flex:1 1 0; min-width:0; display:flex; flex-direction:column; gap:8px;">
+      <div class="fire-left" style="flex:1 1 0; min-width:0; display:flex; flex-direction:column; gap:8px;">
       <div class="fire-grid" style="display:grid; gap:6px; align-content:start;">
         <sc-for list="{{fire}}" as="f" hint-placeholder-count="11">
           <div title="{{f.tip}}" style="display:flex; flex-direction:column; justify-content:center; gap:4px; padding:6px 9px 7px; border-radius:10px; background:{{f.tileBg}}; border:2px solid {{f.tileBorder}}; box-shadow:{{f.tileShadow}}; min-width:0;">
@@ -746,6 +747,10 @@
         <div style="padding:10px 13px 9px;"><div style="font-size:14.5px; font-weight:800; color:var(--ink); cursor:help;" title="천리안 2A호(GK2A) 적외 영상입니다.">천리안 위성 (적외)</div><div style="font-size:12.5px; color:var(--ink3); margin-top:2px;">GK2A</div></div>
         <div style="aspect-ratio:1/1; background:var(--surface2); overflow:hidden;"><img src="{{imgSatSrc}}" alt="천리안 위성 (적외)" style="width:100%; height:100%; object-fit:contain; display:block;"></div>
       </div>
+      <div onClick="{{openWindy}}" style="background:var(--surface); border:1px solid var(--border); border-radius:14px; box-shadow:var(--sh1); overflow:hidden; cursor:pointer;" style-hover="box-shadow:var(--sh2); border-color:var(--brand2)">
+        <div style="padding:10px 13px 9px;"><div style="font-size:14.5px; font-weight:800; color:var(--ink); cursor:help;" title="Windy(windy.com) 지도 — 처음엔 날씨 레이더(실제 관측)로 보여 줍니다. 위성도 관측이고, 바람·돌풍·비·기온·구름은 유럽중기예보센터(ECMWF) 모델 예보입니다.">윈디 정보</div><div style="font-size:12.5px; color:var(--ink3); margin-top:2px;">날씨 레이더 · 누르면 크게</div></div>
+        <div style="aspect-ratio:1/1; background:var(--surface2); overflow:hidden; position:relative;"><iframe src="{{windySmallSrc}}" title="윈디 정보" loading="lazy" style="width:100%; height:100%; border:0; display:block; pointer-events:none;"></iframe></div>
+      </div>
     </div>
     {{weatherText}}
   </section>
@@ -753,7 +758,7 @@
 
   <!-- ============ FOOTER ============ -->
   <footer style="margin:26px 22px 0; padding-top:16px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;">
-    <div style="font-size:13px; color:var(--ink3); line-height:1.6;">데이터 : 기상청 · 행정안전부 · 한강홍수통제소 · 에어코리아 · 국립산림과학원 &nbsp;|&nbsp; 자동 갱신 5분<br>문의 : 충북소방본부 소방정보통신팀</div>
+    <div style="font-size:13px; color:var(--ink3); line-height:1.6;">데이터 : 기상청 · 행정안전부 · 한강홍수통제소 · 에어코리아 · 국립산림과학원 · 윈디(Windy.com) &nbsp;|&nbsp; 자동 갱신 5분<br>문의 : 충북소방본부 소방정보통신팀</div>
     <div style="font-size:13px; color:var(--ink3); text-align:right; margin-left:auto;">마지막 업데이트<br><span style="font-weight:700; color:var(--ink2);">{{updatedTxt}}</span></div>
   </footer>
 
@@ -1289,7 +1294,17 @@ class Component extends DCLogic {
       R('div',{style:{display:'flex',gap:'8px',marginTop:'16px',flexWrap:'wrap'}},
         R('a',{href:x.url,target:'_blank',rel:'noopener',style:{flex:'1 1 200px',display:'flex',alignItems:'center',justifyContent:'center',padding:'10px',borderRadius:'10px',border:'1px solid var(--border)',background:'var(--surface2)',color:'var(--brand)',fontSize:'14.5px',fontWeight:800,textDecoration:'none'}}, '🌐 날씨누리에서 원문 보기 ↗')));
   }
-  msgBody(m){ var R=React.createElement; return R('div',{}, R('div',{style:{display:'flex',justifyContent:'space-between',marginBottom:'10px'}}, R('span',{style:{fontSize:'14.5px',fontWeight:800,color:'var(--warn)'}}, m.sender||'재난문자'), R('span',{style:{fontSize:'14px',color:'var(--ink3)'}}, m.time||'')), R('div',{style:{fontSize:'15.5px',color:'var(--ink)',lineHeight:1.75,whiteSpace:'pre-wrap'}}, m.text||'')); }
+  /* 재난문자 창 — 문자를 누르면 국민재난안전포털 재난문자 목록(충청북도로 거른 것)을 새 창으로(2026-11-12).
+     포털에 문자 한 건으로 바로 가는 주소는 없다(목록에 전문이 다 나온다). 시군 거르기 코드는 포털이 따로 불러와 충북 전체로. */
+  msgBody(m){ var R=React.createElement, url='https://www.safekorea.go.kr/safekorea-kor/ctim/cmsg/calamitySms.do?menuSn=34&currentPage=1&readYn=Y&sbLawArea1=4300000000&sbLawArea2=&firstYn=N';
+    return R('div',{},
+      R('div',{style:{display:'flex',justifyContent:'space-between',marginBottom:'10px'}}, R('span',{style:{fontSize:'14.5px',fontWeight:800,color:'var(--warn)'}}, m.sender||'재난문자'), R('span',{style:{fontSize:'14px',color:'var(--ink3)'}}, m.time||'')),
+      R('a',{href:url, target:'_blank', rel:'noopener', title:'국민재난안전포털 재난문자 목록(충청북도)에서 보기',
+        style:{display:'block', textDecoration:'none', fontSize:'15.5px', color:'var(--ink)', lineHeight:1.75, whiteSpace:'pre-wrap', padding:'10px 12px', margin:'0 -12px', borderRadius:'10px', cursor:'pointer'},
+        onMouseEnter:function(e){ e.currentTarget.style.background='var(--surface2)'; }, onMouseLeave:function(e){ e.currentTarget.style.background='transparent'; }}, m.text||''),
+      R('div',{style:{marginTop:'12px'}}, R('a',{href:url, target:'_blank', rel:'noopener', style:{display:'inline-flex', alignItems:'center', padding:'9px 14px', borderRadius:'10px', fontSize:'14px', fontWeight:800, textDecoration:'none', background:'var(--surface2)', color:'var(--ink2)', border:'1px solid var(--border)'}}, '국민재난안전포털에서 보기 ↗'),
+        R('span',{style:{marginLeft:'10px', fontSize:'12.5px', color:'var(--ink3)'}}, '충청북도 재난문자 목록')));
+  }
   floodBody(list){ var R=React.createElement; if(!list || !list.length) return R('div',{style:{fontSize:'15px',color:'var(--ink3)'}}, '발령된 홍수예보가 없습니다.'); return R('div',{style:{display:'flex',flexDirection:'column',gap:'9px'}}, list.map(function(f,i){ var sev=(f.kind||'').indexOf('경보')>=0; return R('div',{key:i,style:{padding:'12px 14px',borderRadius:'12px',background:sev?'var(--severeSoft)':'var(--warnSoft)',border:'1px solid '+(sev?'var(--severe)':'var(--warn)')}}, R('div',{style:{display:'flex',justifyContent:'space-between'}}, R('span',{style:{fontSize:'15.5px',fontWeight:800,color:'var(--ink)'}}, (f.river||'')+' '+(f.kind||'')), R('span',{style:{fontSize:'13px',color:'var(--ink3)'}}, f.announced||'')), R('div',{style:{fontSize:'14.5px',color:'var(--ink2)',marginTop:'4px'}}, (f.obs||'')+(f.area?' · '+f.area:'')+(f.forecast?' · 도달 '+f.forecast:''))); })); }
   animateZoom(name){
     const el=(this.zoomRef&&this.zoomRef.current)||document.getElementById('dashZoomLayer'); if(!el) return;
@@ -2129,7 +2144,7 @@ class Component extends DCLogic {
         R('div',{style:{display:'flex', alignItems:'baseline', justifyContent:'center', gap:'5px', marginTop:'1px'}}, R('span',{style:{fontSize:'clamp(12px,1.1vw,16px)', fontWeight:700, color:'var(--ink2)'}}, (s2.temp!=null?Math.round(s2.temp)+'°':'')), R('span',{style:{fontSize:'13px', fontWeight:700, color:col2c}}, w2?String(w2.type).replace(/(주의보|경보|특보)$/,''):'평상'))); }));
 
     const footer=R('div',{style:{display:'flex', alignItems:'center', gap:'14px', padding:'2px 26px 10px', fontSize:'13.5px', color:'var(--ink3)', whiteSpace:'nowrap'}},
-      R('span',{style:{overflow:'hidden', textOverflow:'ellipsis'}}, '데이터 출처 · 기상청 / 행정안전부 / 한강홍수통제소 / 에어코리아 / 국립산림과학원'),
+      R('span',{style:{overflow:'hidden', textOverflow:'ellipsis'}}, '데이터 출처 · 기상청 / 행정안전부 / 한강홍수통제소 / 에어코리아 / 국립산림과학원 / 윈디(Windy.com)'),
       R('span',{style:{marginLeft:'auto', flexShrink:0}}, '관서 자동 순환 14초 · 데이터 자동 갱신 5분 · 마지막 갱신 '+String(d.updated||'').replace(/^\d{4}-/,'').replace(/:\d\d$/,'')));
 
     return R('div',{style:{width:'100%', height:'100%', display:'flex', flexDirection:'column', position:'relative'}},
@@ -2498,6 +2513,9 @@ class Component extends DCLogic {
       wxInfoListUrl:'https://www.weather.go.kr/w/special-report/list.do?stn='+_wstn+'&kind='+((wxInfoItems[0]||{}).kind||'inf'),
       openImgRadar:()=>this.setState({wimgTab:'radar', modal:{kind:'weatherimg'}}),
       openImgSat:()=>this.setState({wimgTab:'satellite', modal:{kind:'weatherimg'}}),
+      /* 윈디(Windy) 움직이는 지도(2026-11-12) — 무료 임베드. 처음은 날씨 레이더, 누르면 크게 + 층 고르기 */
+      windySmallSrc:this.windyUrl('radar', 9),
+      openWindy:()=>this.setState({modal:{kind:'windy'}}),
       /* 산불위험 지도 칸 — 「산불발생위험예측」 팝업이 있으면 그 창을, 없으면 국가산불위험예보시스템을 바로 연다 */
       ...(()=>{ const fi=d.fireImg||{}, mp=fi.map, pp=fi.popup, site=fi.site||'https://forestfire.nifos.go.kr/';
         return { hasFireMap:!!(mp&&mp.file), fireMapSrc: mp&&mp.file ? mp.file+'?v='+encodeURIComponent(mp.ts||'') : '',
@@ -2657,6 +2675,11 @@ class Component extends DCLogic {
     return parts.join(' · ');
   }
 
+  /* Windy 임베드 주소 — 충북 가운데, 단위는 m/s·mm·°C */
+  windyUrl(overlay, zoom){
+    return 'https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=%C2%B0C&metricWind=m%2Fs'
+      + '&zoom='+(zoom||8)+'&overlay='+(overlay||'wind')+'&product=ecmwf&level=surface&lat=36.75&lon=127.7&message=true';
+  }
   modalVals(modal, d, rivers, warns){
     if(!modal) return {modalTitle:'', modalAccent:'var(--brand)', modalMax:'560px', modalBody:''};
     if(modal.kind==='weatherimg'){
@@ -2693,7 +2716,7 @@ class Component extends DCLogic {
       return {modalTitle:r.name||'하천', modalAccent:this.cvar(this.riverLevel(r)), modalMax:'620px', modalBody:this.riverBody(r)};
     }
     if(modal.kind==='warn'){
-      return {modalTitle:'기상특보 상세', modalAccent:'var(--severe)', modalMax:'560px', modalBody:this.warnBody(this.groupWarns(d.warnings||[]), d.prelim||[])};
+      return {modalTitle:'기상특보 상세', modalAccent:'var(--severe)', modalMax:'560px', modalBody:this.warnBody(this.groupWarns(d.warnings||[]), d.prelim||[], d)};
     }
     if(modal.kind==='loc'){
       const z=modal.zone||{};
@@ -2733,6 +2756,19 @@ class Component extends DCLogic {
             src ? R('button',{type:'button', onClick:()=>this.setState({fireZoom:!zoom}), style:{padding:'9px 14px', borderRadius:'10px', fontSize:'14px', fontWeight:800, background:'var(--surface2)', color:'var(--ink2)', border:'1px solid var(--border)', cursor:'pointer', fontFamily:'inherit'}}, zoom?(msrc?'↩ 지도와 함께 보기':'🔍 창에 맞춰 보기'):'🔍 위험예측 원본 크기로') : null,
             src ? link(src,'위험예측 새 창으로',false) : null,
             R('span',{style:{fontSize:'12.5px', color:'var(--ink3)'}}, '국립산림과학원 · 매일 아침 발표'+(pp.ts?' · '+pp.ts.slice(5).replace('-','/')+' 받음':''))))};
+    }
+    if(modal.kind==='windy'){
+      const R=React.createElement, cur=this.state.windyLayer||'radar';
+      const layers=[['radar','📡 날씨 레이더'],['satellite','🛰️ 위성'],['wind','🌬️ 바람'],['gust','💨 돌풍'],['rain','🌧️ 비·눈 예보'],['temp','🌡️ 기온'],['clouds','☁️ 구름']];
+      const btn=(k,l)=>R('button',{key:k, type:'button', onClick:()=>this.setState({windyLayer:k}), style:{padding:'8px 13px', borderRadius:'10px', fontSize:'14px', fontWeight:800, cursor:'pointer', fontFamily:'inherit',
+        background:k===cur?'var(--brand)':'var(--surface2)', color:k===cur?'#fff':'var(--ink2)', border:'1px solid '+(k===cur?'var(--brand)':'var(--border)')}}, l);
+      return {modalTitle:'윈디 정보', modalAccent:'var(--brand)', modalMax:'min(1320px, 96vw)',
+        modalBody:R('div',null,
+          R('div',{style:{display:'flex', flexWrap:'wrap', gap:'6px', marginBottom:'10px'}}, layers.map(x=>btn(x[0],x[1]))),
+          R('iframe',{key:cur, src:this.windyUrl(cur, 9), title:'Windy '+cur, style:{display:'block', width:'100%', height:'calc(88vh - 220px)', minHeight:'360px', border:'1px solid var(--border)', borderRadius:'12px', background:'var(--surface2)'}}),
+          R('div',{style:{display:'flex', flexWrap:'wrap', gap:'8px', marginTop:'10px', alignItems:'center'}},
+            R('a',{href:'https://www.windy.com/?'+cur+',36.75,127.7,8', target:'_blank', rel:'noopener', style:{display:'inline-flex', padding:'8px 13px', borderRadius:'10px', fontSize:'14px', fontWeight:800, textDecoration:'none', background:'var(--surface2)', color:'var(--ink2)', border:'1px solid var(--border)'}}, 'windy.com 에서 열기 ↗'),
+            R('span',{style:{fontSize:'12.5px', color:'var(--ink3)', lineHeight:1.5}}, '날씨 레이더·위성은 관측, 바람·돌풍·비·눈 예보·기온·구름은 ECMWF 모델 예보입니다. 아래 ▶ 로 흐름을 재생할 수 있습니다.')))};
     }
     if(modal.kind==='image'){
       return {modalTitle:modal.title||'기상 이미지', modalAccent:'var(--brand)', modalMax:'860px',
@@ -2992,16 +3028,23 @@ class Component extends DCLogic {
           '조차 '+ampM+'m · 🌅'+fmtMin(sunR)+' 🌇'+fmtMin(sunS)+' · 강화대교 예보 +2시간 환산 · 국립해양조사원' + (upcoming.length? '' : ' · 오늘 물때 종료(자정 후 갱신)'))));
   }
   riverBody(r){ return window.cbRiverBody(this, r); }   /* 본문은 river-popup.js (재해 화면과 같이 씀) */
-  warnBody(warns, prelim){
-    const R=React.createElement;
+  warnBody(warns, prelim, d){
+    const R=React.createElement, bl=(d&&d.bulletins)||{}, stn=bl.stn||131;
+    /* 특보 줄을 누르면 그 특보의 통보문 창(발표구역·발효현황 그림 + 날씨누리 원문) — 상황실과 같게(2026-11-12).
+       맞는 통보문이 없으면 날씨누리 특보 통보문 목록을 새 창으로 */
+    const findB = t => (bl.warnings_full||[]).find(y=>String(y.title||'').indexOf('해제')<0 && (String(y.title||'')+String(y.current||'')+String(y.summary||'')).indexOf(t)>=0);
+    const go = t => { const b=findB(t); if(b) this.setState({modal:{kind:'bulletin', b:this.bulletinInfo(b, stn)}}); else window.open(this.WRN_LIST_URL(stn), '_blank', 'noopener'); };
     return R('div',{},
       warns.length? R('div',{style:{display:'flex', flexDirection:'column', gap:'9px'}}, warns.map((w,i)=>{
         const sev=w.level==='severe'||(w.type||'').includes('경보');
-        return R('div',{key:i, style:{padding:'12px 14px', borderRadius:'12px', background:sev?'var(--severeSoft)':'var(--warnSoft)', border:'1px solid '+(sev?'var(--severe)':'var(--warn)')}},
+        return R('div',{key:i, onClick:()=>go(w.type), title:'누르면 '+w.type+' 통보문(기상청 발효현황 그림·원문)',
+            style:{padding:'12px 14px', borderRadius:'12px', cursor:'pointer', background:sev?'var(--severeSoft)':'var(--warnSoft)', border:'1px solid '+(sev?'var(--severe)':'var(--warn)')}},
           R('div',{style:{display:'flex', justifyContent:'space-between', alignItems:'center'}},
             R('span',{style:{fontSize:'15.5px', fontWeight:800, color:'var(--ink)'}}, w.type),
             R('span',{style:{fontSize:'13px', color:'var(--ink3)'}}, w.time)),
-          R('div',{style:{fontSize:'14.5px', color:'var(--ink2)', marginTop:'4px'}}, w.area));
+          R('div',{style:{display:'flex', justifyContent:'space-between', alignItems:'flex-end', gap:'10px', marginTop:'4px'}},
+            R('span',{style:{fontSize:'14.5px', color:'var(--ink2)'}}, w.area),
+            R('span',{style:{fontSize:'13px', fontWeight:800, color:'var(--brand)', whiteSpace:'nowrap'}}, (findB(w.type)?'통보문 보기 ›':'날씨누리 ↗'))));
       })): R('div',{style:{fontSize:'15px', color:'var(--ink3)', padding:'8px 0'}}, '발효 중인 기상특보가 없습니다.'),
       (prelim&&prelim.some(p=>p.north>0))? R('div',{style:{marginTop:'16px'}},
         R('div',{style:{fontSize:'14px', fontWeight:800, color:'var(--ink2)', marginBottom:'8px'}}, '예비특보 (충청북도)'),
