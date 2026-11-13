@@ -108,8 +108,7 @@
   <section id="pane-fb">
   <div class="bar">
     <select id="kind"><option value="">모든 구분</option><option>오류</option><option>기능 제안</option><option>새 사이트 제안</option><option>기타</option></select>
-    <select id="page"><option value="">모든 화면</option></select>
-    <input id="q" type="search" placeholder="내용·부서·관서·처리 내용 검색" style="flex:1;min-width:180px">
+    <input id="q" type="search" placeholder="내용·부서·이름·처리 내용 검색" style="flex:1;min-width:180px">
     <button id="reload">새로고침</button>
     <button id="csv">CSV 받기</button>
     <span class="n" id="count"></span>
@@ -160,15 +159,12 @@
       opened();
       if(!j.ok){ items=[]; render(j.err||'볼 수 없는 주소입니다'); return; }
       items=j.items||[];
-      var pages={}; items.forEach(function(x){ if(x.page) pages[x.page]=1; });
-      var sel=$('page'), cur=sel.value; sel.innerHTML='<option value="">모든 화면</option>';
-      Object.keys(pages).sort().forEach(function(p){ var o=el('option',null,p); o.value=p; sel.appendChild(o); }); sel.value=cur;
       render();
     }).catch(function(){ render('서버에 연결하지 못했습니다'); });
   }
   function filtered(ignoreSt){
-    var p=$('page').value, k=$('kind').value, q=$('q').value.trim().toLowerCase();
-    return items.filter(function(x){ if(p && x.page!==p) return false; if(k && (x.kind||'기타')!==k) return false;
+    var k=$('kind').value, q=$('q').value.trim().toLowerCase();   /* 화면·관서는 의견에 붙이지 않는다(2026-11-12) */
+    return items.filter(function(x){ if(k && (x.kind||'기타')!==k) return false;
       if(!ignoreSt && stFilter && (x.status||'대기')!==stFilter) return false;
       if(q){ var s=[x.text,x.who,x.station,x.page,x.note].join(' ').toLowerCase(); if(s.indexOf(q)<0) return false; } return true; });
   }
@@ -194,8 +190,6 @@
     var st=x.status||'대기', it=el('div','item st-'+CLS[st]), m=el('div','meta');
     var kd=x.kind||'기타'; m.appendChild(el('span','k k-'+kd.split(' ')[0],kd));
     m.appendChild(el('span',null,x.ts||''));
-    if(x.page) m.appendChild(el('span','tag',x.page));
-    if(x.station) m.appendChild(el('span',null,x.station));
     m.appendChild(el('span','who',x.who||'익명'));
     var badge=el('span','badge b-'+CLS[st],st); m.appendChild(badge);
     it.appendChild(m); it.appendChild(el('div','txt',x.text||''));
@@ -238,7 +232,7 @@
     var a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='의견_'+new Date().toISOString().slice(0,10)+'.csv'; a.click();
     setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);
   }
-  $('page').onchange=function(){ render(); }; $('kind').onchange=function(){ render(); }; $('q').oninput=function(){ render(); };
+  $('kind').onchange=function(){ render(); }; $('q').oninput=function(){ render(); };
   $('reload').onclick=load; $('csv').onclick=csv;
   /* 키 입력 화면 */
   function gate(msg){ $('main').hidden=true; $('gate').hidden=false; $('logout').hidden=true; $('gerr').textContent=msg||''; $('gkey').value=''; $('gkey').focus(); }

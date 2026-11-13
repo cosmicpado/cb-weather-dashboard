@@ -221,7 +221,7 @@
 
     <!-- ── ③-2 전국 산불위험 지도 + 「산불발생위험예측」 — 건조·산불 탭에서만(2026-11-12) ── -->
     <sc-if value="{{isFire}}">
-      <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; box-shadow:var(--sh2); padding:15px 17px;">
+      <div style="order:{{fireImgOrder}}; background:var(--surface); border:1px solid var(--border); border-radius:16px; box-shadow:var(--sh2); padding:15px 17px;">
         <div style="display:flex; align-items:baseline; justify-content:space-between; gap:8px; margin-bottom:11px; flex-wrap:wrap;">
           <span style="font-size:15px; font-weight:900; color:var(--ink); cursor:help;" title="국가산불위험예보시스템(국립산림과학원) 첫 화면의 전국 산불위험 지도(매시)와, 매일 아침 올라오는 「산불발생위험예측」 보고서입니다.">산불위험 지도 · 산불발생위험예측</span>
           <span style="font-size:13.5px; color:var(--ink3);">국립산림과학원</span>
@@ -648,9 +648,9 @@ class Component extends DCLogic {
        · 건조·산불: … → 관서별 실효습도 → 시간대별 예보 → 나머지(특보 그림·위성 포함)
        · 대설·한파: 호우와 같게(… → 시간대별 예보 → 관서별 적설·기온 → 나머지)
        글자: 13px 미만은 2px 키움(2026-11-12, 종합 현황과 같은 기준) */
-    const O = v.isRain ? {midOrder:1, imgOrder:2, fcstOrder:3, rankOrder:4, lateOrder:5}
-            : v.isFire ? {midOrder:0, rankOrder:1, fcstOrder:2, lateOrder:2, imgOrder:2}
-            :            {midOrder:1, imgOrder:2, fcstOrder:3, rankOrder:4, lateOrder:5};   // 대설·한파도 호우와 같은 흐름
+    /* 2026-11-13 — 모든 탭에서 관서별 순위(그래프)를 맨 위로: 배너 → 관서별 순위 → 관할 세 장 → 그림 → 시간대별 예보 → 나머지 */
+    const O = v.isFire ? {rankOrder:1, midOrder:2, fireImgOrder:3, fcstOrder:4, lateOrder:5, imgOrder:5}
+            :            {rankOrder:1, midOrder:2, imgOrder:3, fireImgOrder:3, fcstOrder:4, lateOrder:5};   // 호우·대설·한파
     return Object.assign(v, mv, O, {
       closeModal:()=>this.setState({modal:null, riverCctvPaused:false, riverCctvResume:false}),
       stopEv:(e)=>{ e && e.stopPropagation && e.stopPropagation(); } });

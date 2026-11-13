@@ -1,6 +1,6 @@
 /* 💬 의견 보내기 — 종합 현황(지도.html)·119종합상황실(상황실.html) 공용.
    cbFeedback.open({page:'화면 이름'}) 으로 입력창을 띄우고 /api/feedback 에 보낸다(서버: tools/feedback.py).
-   보던 관서는 화면에서 [data-fb-station] 이 붙은 글자를 읽어 자동으로 붙인다.
+   보던 화면·관서는 붙이지 않는다(2026-11-12 — 보던 관서가 의견 쓴 사람 관서처럼 읽혀 헷갈렸다).
    받은 의견은 관리자.html 에서 본다. */
 (function () {
   var box = null, KEY = 'cbFeedbackWho';
@@ -14,8 +14,6 @@
     opt = opt || {};
     close();
     var page = opt.page || document.title || location.pathname;
-    var stEl = document.querySelector('[data-fb-station]');
-    var station = opt.station || (stEl ? stEl.textContent.trim() : '');
 
     box = el('div', 'position:fixed;inset:0;z-index:2147483000;background:rgba(8,12,20,.55);display:flex;align-items:center;justify-content:center;padding:16px;font-family:Pretendard,system-ui,-apple-system,"Malgun Gothic",sans-serif;');
     box.setAttribute('role', 'dialog'); box.setAttribute('aria-modal', 'true'); box.setAttribute('aria-label', '의견 보내기');
@@ -43,15 +41,11 @@
       if (k[1]) b.appendChild(el('span', 'font-size:10.5px;color:#7a8597;', k[1]));
       b.onclick = function () { kind = k[0]; kbtns.forEach(function (x) { var on = x === b; x.setAttribute('aria-pressed', on ? 'true' : 'false');
         x.style.borderColor = on ? '#2563eb' : '#c9d1de'; x.style.background = on ? '#eef3ff' : '#fff'; x.style.color = on ? '#1d4ed8' : '#1b2333'; });
-        msg.textContent = ''; ctx.style.display = kind === '오류' ? 'block' : 'none'; siteMode(kind === '새 사이트 제안'); };
+        msg.textContent = ''; siteMode(kind === '새 사이트 제안'); };
       kbtns.push(b); krow.appendChild(b);
     });
     card.appendChild(krow);
 
-    /* 보던 화면·관서·시각 — 오류를 다시 재현해 찾을 때 쓴다(오류일 때만 보여 주고, 저장은 늘 한다) */
-    var ctx = el('div', 'display:none;font-size:12px;color:#7a8597;background:#f4f6fa;border-radius:8px;padding:7px 10px;',
-      '오류를 찾는 데 함께 보냅니다: ' + page + (station ? ' · ' + station : '') + ' · ' + new Date().toLocaleString('ko-KR', { hour12: false }));
-    card.appendChild(ctx);
 
     var ta = el('textarea', 'width:100%;box-sizing:border-box;min-height:140px;resize:vertical;border:1px solid #c9d1de;border-radius:10px;padding:10px 12px;font-size:15px;line-height:1.5;font-family:inherit;color:#1b2333;background:#fff;outline:none;');
     ta.maxLength = 2000; ta.placeholder = '예) 기온이 실제와 달라요 / 상황실 레이더를 더 크게 / 출동 차량 현황 사이트가 있으면 좋겠어요';
@@ -97,7 +91,7 @@
       fetch('api/feedback', {
         method: 'POST', cache: 'no-store',
         headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'cbweather' },
-        body: JSON.stringify({ kind: kind, text: text, who: who.value.trim(), page: page, station: station })
+        body: JSON.stringify({ kind: kind, text: text, who: who.value.trim() })
       }).then(function (r) {
         return r.json().catch(function () { return { ok: false, err: r.status === 404 || r.status === 405 || r.status === 501 ? '이 서버에서는 아직 의견 받기가 켜져 있지 않습니다' : '서버 응답 오류 (' + r.status + ')' }; });
       }).then(function (j) {
