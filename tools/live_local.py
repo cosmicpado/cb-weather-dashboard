@@ -85,7 +85,8 @@ def loop(every, job=sync):
 
 
 # 짧은 주소(2026-11-12) — 주소창에 한글 파일 이름 대신. 화면의 short-url.js · Rocky nginx(setup-rocky.sh)와 같은 표
-SHORT = {'/': '/지도.html', '/room': '/상황실.html', '/watch': '/재해.html',
+# 첫 화면(/)은 119종합상황실(2026-11-13), 종합 현황은 /map
+SHORT = {'/': '/상황실.html', '/map': '/지도.html', '/room': '/상황실.html', '/watch': '/재해.html',
          '/admin': '/관리자.html', '/help': '/도움말.html', '/easy': '/쉬운.html'}
 
 
@@ -215,7 +216,7 @@ def main():
             ip = socket.gethostbyname(socket.gethostname())
         except OSError:
             ip = '<이 PC IP>'
-        print(f'다른 PC 에서: http://{ip}:{a.port}/   (상황실 /room · 집중 감시 /watch · 관리자 /admin)', flush=True)
+        print(f'다른 PC 에서: http://{ip}:{a.port}/   (첫 화면 = 상황실 · 종합 현황 /map · 집중 감시 /watch · 관리자 /admin)', flush=True)
     try:
         srv.serve_forever()
     except KeyboardInterrupt:
