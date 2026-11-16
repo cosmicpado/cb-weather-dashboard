@@ -15,6 +15,53 @@
 .wall-ic .tx{max-width:0;opacity:0;overflow:hidden;margin-left:0;transition:max-width .22s ease,opacity .18s ease,margin-left .22s ease;}
 .wall-ic:hover,.wall-ic:focus-visible{border-color:var(--acc,#ff7a2f);outline:none;}
 .wall-ic:hover .tx,.wall-ic:focus-visible .tx,.wall-ic.open .tx{max-width:180px;opacity:1;margin-left:6px;}
+
+/* ── 휴대폰 보기(2026-11-16) — 화면 폭 820px 이하이면 html.wall-m. 벽면(3840×2160 축소)과 같은 칸들을
+   폭 1080 기준 세로 한 줄로 다시 쌓고 zoom 으로 휴대폰 폭에 맞춘다(세로로 밀어서 봄). 넓은 화면에는 아무 영향 없음. */
+/* 휴대폰에선 화면 자체가 스크롤(고정 틀을 풀어 맨 위 관서 고르기 → 상황판이 차례로 흐르게) */
+html.wall-m,html.wall-m body{height:auto!important;overflow-y:auto!important;overflow-x:hidden!important;}
+html.wall-m body{margin:0;background:var(--bg,#0d1118);}
+html.wall-m #dc-root,html.wall-m #dc-root>div{height:auto!important;overflow:visible!important;}
+html.wall-m [data-wall-wrap]{position:static!important;display:block!important;}
+html.wall-m [data-stage]{width:1080px!important;height:auto!important;padding:24px 24px 40px!important;gap:24px!important;transform:none!important;}
+#wall-msel{display:none;}
+[data-monly]{display:none;}
+html.wall-m [data-monly]{display:inline;}   /* 휴대폰에서만 보이는 글자(충북 특보통계) */
+html.wall-m #wall-msel{display:flex;gap:8px;padding:50px 9px 0;background:var(--bg,#0d1118);}
+#wall-msel select{flex:1;min-width:0;height:46px;border-radius:12px;border:1px solid var(--line,#28313f);background:var(--panel,#151b26);color:var(--fg,#f2f5fa);font:700 18px 'Pretendard Variable',Pretendard,system-ui,sans-serif;padding:0 12px;}
+#wall-msel button{flex:none;width:46px;height:46px;border-radius:12px;border:1px solid var(--line,#28313f);background:var(--panel,#151b26);color:var(--fg,#f2f5fa);font-size:20px;cursor:pointer;}
+html.wall-m [data-clock]{display:none!important;}
+html.wall-m [data-topbar]{height:auto!important;display:flex!important;flex-direction:column;gap:24px!important;}
+html.wall-m [data-topbar]>div{min-height:200px;}
+html.wall-m [data-topbar] [data-namecard]{padding:0 32px!important;}
+html.wall-m [data-stagecard]{padding:24px 32px!important;}
+html.wall-m [data-tally]{min-height:250px!important;}
+html.wall-m [data-prog]{display:none!important;}
+html.wall-m [data-wall-grid]{display:flex!important;flex-direction:column;margin:0!important;gap:24px!important;}
+html.wall-m #wall-tools{position:absolute!important;right:10px;flex-wrap:wrap;}
+html.wall-m #wall-tools>div{flex-wrap:wrap;min-width:0;max-width:100%;}   /* 시연 단추 묶음이 한 줄로 834px 까지 늘어 페이지 폭을 넓혔다 */   /* 휴대폰: 도구 막대가 화면에 떠서 내용을 가리지 않게 맨 위에만 */
+html.wall-m [data-wall-grid] [data-card]{margin:0!important;flex:none;}
+html.wall-m [data-card="warn"]{order:1;height:auto!important;}
+html.wall-m [data-warnlist]{flex:none!important;--wz:1!important;}
+html.wall-m [data-warnlist]>div{flex:none!important;height:120px;max-height:none!important;}
+html.wall-m [data-card="msg"]{order:2;height:auto!important;}
+html.wall-m [data-msglist]{flex:none!important;flex-wrap:nowrap!important;}
+html.wall-m [data-msglist]>div{min-height:150px;}
+html.wall-m #wall-tools [aria-label*="배치"]{display:none!important;}   /* 배치 편집은 벽면 화면 전용 */
+html.wall-m [data-card="obs"]{order:3;height:520px;}
+html.wall-m [data-card="obs"]>div:nth-child(2){flex:1!important;}   /* 습도·풍속·풍향 줄을 강수량 줄과 같은 높이로 */
+/* 특보·재난문자가 0건이면 제목 줄(… 0건)만 남기고 접는다 */
+html.wall-m [data-warnlist]:has([data-empty]),html.wall-m [data-msglist]:has([data-empty]){display:none!important;}
+html.wall-m [data-card="warn"]:has([data-empty]),html.wall-m [data-card="msg"]:has([data-empty]){padding-top:22px!important;padding-bottom:22px!important;}
+html.wall-m [data-card="idx"]{order:6;height:260px;}
+html.wall-m [data-card="season"]{order:7;height:300px;}
+html.wall-m [data-card="typhoon"]{order:8;height:900px;}
+html.wall-m [data-card="hourly"]{order:4;height:1000px;--fz:.82!important;padding:26px 20px!important;}
+html.wall-m [data-card="radar"]{order:5;height:1000px;}
+html.wall-m [data-rail]{height:auto!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;grid-auto-rows:150px;grid-template-rows:none!important;}
+html.wall-m [data-foot]{height:auto!important;flex-wrap:wrap;gap:12px 28px!important;font-size:30px!important;}
+html.wall-m [data-foot]>div:nth-child(2){display:none;}
+html.wall-m [data-foot]>div:last-child{margin-left:0!important;white-space:normal!important;flex-wrap:wrap;}
 </style>
 </head>
 <body>
@@ -1392,14 +1439,14 @@ https://scripts.sil.org/OFL
 </style>
 
 </helmet>
-<div style="position:fixed;inset:0;background:var(--bg,#0d1118);display:flex;align-items:center;justify-content:center;font-family:'Pretendard Variable',Pretendard,system-ui,sans-serif;">
-  <div ref="{{ stageRef }}" style="width:3840px;height:2160px;flex:none;transform-origin:center center;padding:56px;display:flex;flex-direction:column;gap:28px;color:var(--fg,#f2f5fa);background:var(--bg,#0d1118);position:relative;">
+<div data-wall-wrap style="position:fixed;inset:0;background:var(--bg,#0d1118);display:flex;align-items:center;justify-content:center;font-family:'Pretendard Variable',Pretendard,system-ui,sans-serif;">
+  <div data-stage ref="{{ stageRef }}" style="width:3840px;height:2160px;flex:none;transform-origin:center center;padding:56px;display:flex;flex-direction:column;gap:28px;color:var(--fg,#f2f5fa);background:var(--bg,#0d1118);position:relative;">
 
     <!-- ===== TOP BAR ===== -->
-    <div style="{{ topBarStyle }}">
+    <div data-topbar style="{{ topBarStyle }}">
 
       <!-- 관서 이름 + 날씨 한 칸(2026-11-16) — 위 줄에 특보통계·비상근무를 올리느라 합쳤다. 이름·기온 큰 글자, 날씨·체감·LIVE 는 아래 한 줄 -->
-      <div style="display:flex;align-items:center;gap:30px;background:var(--panel,#151b26);border:2px solid var(--line,#28313f);border-radius:24px;padding:0 36px;min-width:0;overflow:hidden;">
+      <div data-namecard style="display:flex;align-items:center;gap:30px;background:var(--panel,#151b26);border:2px solid var(--line,#28313f);border-radius:24px;padding:0 36px;min-width:0;overflow:hidden;">
         <div title="{{ lvTip }}" style="width:16px;align-self:stretch;margin:34px 0;border-radius:8px;background:{{ lvBar }};flex:none;cursor:help;"></div>
         <div style="display:flex;flex-direction:column;justify-content:center;gap:18px;min-width:0;">
           <div style="display:flex;align-items:center;gap:40px;min-width:0;white-space:nowrap;">
@@ -1472,7 +1519,7 @@ https://scripts.sil.org/OFL
       <!-- 특보통계(2026-11-16, 위 줄로 올림) — 재대본 기준(호우·대설·태풍) 예비특보·주의보·경보 시·군 수 -->
       <div data-tally="1" title="충북 재대본 비상단계를 정하는 호우·대설·태풍 특보가 걸린 시·군 수입니다(청주동부·서부는 '청주' 하나로 셈). 주의보 수에는 경보 시·군을 뺐습니다. 누르면 충북 전체 특보·예비특보." style="background:var(--panel,#151b26);border:2px solid var(--line,#28313f);border-radius:24px;padding:20px 24px;display:flex;flex-direction:column;gap:12px;cursor:help;min-width:0;">
         <div style="display:flex;align-items:baseline;justify-content:space-between;gap:16px;white-space:nowrap;">
-          <div style="font-size:calc(40px*var(--fz,1));font-weight:570;letter-spacing:.06em;color:var(--dim,#8e9bb0);">특보통계</div>
+          <div style="font-size:calc(40px*var(--fz,1));font-weight:570;letter-spacing:.06em;color:var(--dim,#8e9bb0);"><span data-monly>충북 </span>특보통계</div>
           <div style="font-size:calc(38px*var(--fz,1));font-weight:520;color:var(--dim,#8e9bb0);">호우·대설·태풍</div>
         </div>
         <!-- 칸 바탕 없음(2026-11-16) — 숫자 색만 -->
@@ -1486,7 +1533,7 @@ https://scripts.sil.org/OFL
         </div>
       </div>
 
-      <div style="width:640px;background:var(--panel,#151b26);border:2px solid var(--line,#28313f);border-radius:24px;padding:0 40px;display:flex;flex-direction:column;justify-content:center;gap:8px;">
+      <div data-clock style="width:640px;background:var(--panel,#151b26);border:2px solid var(--line,#28313f);border-radius:24px;padding:0 40px;display:flex;flex-direction:column;justify-content:center;gap:8px;">
         <div style="font-size:calc(132px*var(--fz,1));font-weight:660;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.02em;">{{ clock }}</div>
         <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;">
           <div style="font-size:calc(36px*var(--fz,1));font-weight:520;color:var(--dim,#8e9bb0);white-space:nowrap;">{{ dateText }}</div>
@@ -1501,7 +1548,7 @@ https://scripts.sil.org/OFL
     </div>
 
     <!-- ===== ROTATION PROGRESS ===== -->
-    <div style="height:10px;flex:none;background:var(--panel2,#1b2230);border-radius:6px;overflow:hidden;">
+    <div data-prog style="height:10px;flex:none;background:var(--panel2,#1b2230);border-radius:6px;overflow:hidden;">
       <div style="height:100%;background:var(--dim,#8e9bb0);opacity:.45;border-radius:6px;transition:width .5s linear;width:{{ progressPct }};"></div>
     </div>
 
@@ -1602,7 +1649,7 @@ https://scripts.sil.org/OFL
             <div style="font-size:calc(40px*var(--fz,1));font-weight:660; cursor:help;" title="기상청 특보현황과 API 허브 자료를 합친 발효 특보·예비특보 중 이 관서에 해당하는 것입니다. 칸을 누르면 충북 전체 특보를 창으로 봅니다.">기상특보</div>
             <div style="font-size:calc(38px*var(--fz,1));font-weight:570;color:var(--dim,#8e9bb0);">{{ warnHead }}</div>
           </div>
-          <div style="flex:1;min-height:0;display:flex;flex-direction:column;gap:calc(14px*var(--wz,1));overflow:hidden;--wz:{{ warnZ }};">
+          <div data-warnlist style="flex:1;min-height:0;display:flex;flex-direction:column;gap:calc(14px*var(--wz,1));overflow:hidden;--wz:{{ warnZ }};">
             <sc-for list="{{ alertRows }}" as="a" hint-placeholder-count="0">
               <!-- 지진·낙뢰 줄 — 아래 특보 줄과 같은 모양(테두리 없음, 2026-11-16) -->
               <div style="flex:1 1 0;min-height:0;max-height:calc(150px*var(--fz,1));display:flex;align-items:center;gap:24px;border-radius:16px;padding:0 calc(28px*var(--wz,1));background:{{ a.bg }};" title="{{ a.tip }}">
@@ -1627,7 +1674,7 @@ https://scripts.sil.org/OFL
               </div>
             </sc-for>
             <sc-if value="{{ noWarn }}" hint-placeholder-val="{{ false }}">
-              <div style="flex:1;display:flex;align-items:center;justify-content:center;font-size:calc(44px*var(--fz,1));font-weight:570;color:var(--dim,#8e9bb0);">발효 중인 기상특보 없음</div>
+              <div data-empty style="flex:1;display:flex;align-items:center;justify-content:center;font-size:calc(44px*var(--fz,1));font-weight:570;color:var(--dim,#8e9bb0);">발효 중인 기상특보 없음</div>
             </sc-if>
           </div>
         </div>
@@ -1686,7 +1733,7 @@ https://scripts.sil.org/OFL
               </div>
             </sc-for>
             <sc-if value="{{ noMsg }}" hint-placeholder-val="{{ false }}">
-              <div style="flex:1;width:100%;display:flex;align-items:center;justify-content:center;font-size:calc(44px*var(--fz,1));font-weight:570;color:var(--dim,#8e9bb0);">발령된 재난문자 없음</div>
+              <div data-empty style="flex:1;width:100%;display:flex;align-items:center;justify-content:center;font-size:calc(44px*var(--fz,1));font-weight:570;color:var(--dim,#8e9bb0);">발령된 재난문자 없음</div>
             </sc-if>
           </div>
         </div>
@@ -1736,7 +1783,7 @@ https://scripts.sil.org/OFL
     </div>
 
     <!-- ===== STATION RAIL ===== -->
-    <div style="{{ railStyle }}">
+    <div data-rail style="{{ railStyle }}">
       <sc-for list="{{ rail }}" as="s" hint-placeholder-count="11">
         <div sc-camel-on-click="{{ s.go }}" style="cursor:pointer;border-radius:18px;padding:12px 12px;display:flex;flex-direction:column;justify-content:center;gap:5px;background:{{ s.bg }};border:{{ s.bw }} solid {{ s.border }};box-shadow:{{ s.glow }};">
           <div style="display:flex;align-items:center;gap:10px;">
@@ -1751,7 +1798,7 @@ https://scripts.sil.org/OFL
       </sc-for>
     </div>
 
-    <div style="height:38px;flex:none;display:flex;align-items:center;gap:28px;font-size:calc(34px*var(--fz,1));font-weight:500;color:var(--dim,#8e9bb0);">
+    <div data-foot style="height:38px;flex:none;display:flex;align-items:center;gap:28px;font-size:calc(34px*var(--fz,1));font-weight:500;color:var(--dim,#8e9bb0);">
       <div>데이터 출처 · 행정안전부 / 기상청 / 한강홍수통제소 / 국립산림과학원 / 에어코리아(한국환경공단) / 윈디(Windy.com)</div>
       <div style="width:2px;height:22px;background:var(--line,#28313f);"></div>
       <div style="margin-left:auto;font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:12px;white-space:nowrap;"><span>관서 자동 순환 {{ rotSec }}초 · 데이터 자동 갱신 5분 · 마지막 갱신 {{ updatedLabel }}</span>
@@ -1832,6 +1879,10 @@ class Component extends DCLogic {
 
   componentDidMount(){
     this.setState({ theme: this.props.startTheme || 'dark' });
+    /* 휴대폰 보기 맨 위 관서 고르기(#wall-msel)가 쓰는 연결 — 관서 목록·현재 관서·관서 바꾸기 */
+    window.cbWallStation = { names: NAMES.slice(), get: ()=>this.state.idx, set: (i)=>this.setState({ idx:i, started:Date.now() }),
+      theme: ()=>this.setState(st=>({ theme: st.theme==='light' ? 'dark' : 'light' })) };
+    if(window.cbWallSelInit) window.cbWallSelInit();
     this.fit(); window.addEventListener('resize', this._fit = ()=>this.fit());
     /* 배치 편집기(wall_layout.js)가 켜지면 순환을 멈추고, 끄면 편집 전 상태로 복원 */
     window.addEventListener('wall:edit', this._edit = (e)=>{ if(e.detail.on){ this._wasPlaying=this.state.playing; this.setState({playing:false}); } else { this.setState({playing:this._wasPlaying!==false}); } });
@@ -1845,13 +1896,35 @@ class Component extends DCLogic {
       this.setState(next);
     }, 500);
   }
-  componentDidUpdate(){ this.fit(); this.paint(); }
+  componentDidUpdate(){ this.fit(); this.paint(); if(window.cbWallSelSync) window.cbWallSelSync(this.state.idx); }
   componentWillUnmount(){ clearInterval(this.timer); window.removeEventListener('resize', this._fit); }
 
   fit(){
     const el = this.stageRef && this.stageRef.current; if(!el) return;
-    const s = Math.min(window.innerWidth/3840, window.innerHeight/2160);
-    el.style.transform = 'scale('+s+')';
+    /* 휴대폰 보기(2026-11-16) — 폭 820px 이하(또는 ?m=1)면 세로 한 줄 배치. 처음 들어갈 때 관서 자동 순환을 멈춘다(밀어 보는 중에 관서가 바뀌지 않게) */
+    let force=null; try{ const q=new URLSearchParams(location.search).get('m'); if(q==='1') force=true; else if(q==='0') force=false; }catch(e){}
+    /* 휴대폰 판정은 기기 화면 크기로도 본다 — 내용이 넘치면 휴대폰 브라우저가 페이지 폭을 넓혀 innerWidth 가 커지고,
+       그러면 벽면 배치로 돌아갔다가 다시 휴대폰 배치로… 오가며 칸이 겹쳐 보였다(2026-11-16) */
+    const coarse = !!(window.matchMedia && window.matchMedia('(pointer:coarse)').matches);
+    const land = /landscape/.test((screen.orientation && screen.orientation.type) || '') || window.orientation===90 || window.orientation===-90;
+    const devW = land ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
+    const mob = force!==null ? force : (window.innerWidth <= 820 || (coarse && devW <= 820));
+    const was = document.documentElement.classList.contains('wall-m');
+    document.documentElement.classList.toggle('wall-m', mob);
+    if(mob){
+      el.style.transform = 'none';
+      let vw = document.documentElement.clientWidth || window.innerWidth;
+      if(coarse && devW > 0 && devW < vw) vw = devW;   // 넓어진 페이지 폭 말고 실제 기기 폭에 맞춘다
+      el.style.zoom = String(vw/1080);
+      const tl=document.getElementById('wall-tools'), ms=document.getElementById('wall-msel');
+      if(tl && ms){ const p=(tl.offsetHeight+18)+'px'; if(ms.style.paddingTop!==p) ms.style.paddingTop=p; }   // 도구 막대가 두 줄이 돼도 관서 고르기를 가리지 않게
+      if(!was && this.state.playing) this.setState({ playing:false });
+      if(!this._mobTheme){ this._mobTheme=true; this.setState({ theme:'light' }); }   // 휴대폰은 처음에 밝은 화면(☀ 단추로 바꿀 수 있음)
+    } else {
+      el.style.zoom = '';
+      const s = Math.min(window.innerWidth/3840, window.innerHeight/2160);
+      el.style.transform = 'scale('+s+')';
+    }
   }
   paint(){
     const dark = this.state.theme !== 'light';
@@ -2667,7 +2740,7 @@ class Component extends DCLogic {
     const _ssn = this.seasonMode(s), _alerts = this.alertRows(s), _du = this.duty();
     /* 기상특보 칸은 최대 2줄(2026-11-16) — 지진·낙뢰 → 발효 특보 → 예비특보 순. 넘치면 제목 줄에 '외 N건'(칸을 누르면 전체) */
     const _wb = (function(){
-      const allW=this.warnsOf(s), pre=((EXT().prelim||{})[s.name]||[]), MAX=2;
+      const allW=this.warnsOf(s), pre=((EXT().prelim||{})[s.name]||[]), MAX=document.documentElement.classList.contains('wall-m') ? 8 : 2;   // 휴대폰 보기는 칸이 아래로 늘어나니 다 보여 준다
       const a=_alerts.slice(0,MAX), w=allW.slice(0,MAX-a.length), p=pre.slice(0,MAX-a.length-w.length);
       const more=(_alerts.length+allW.length+pre.length)-(a.length+w.length+p.length);
       return { warns:w, warnCount:allW.length, prelimCount:allW.length?1:0, prelimRows:p, alertRows:a,
@@ -3567,6 +3640,27 @@ window.cbWindyUrl = function(overlay, zoom){
     document.body.appendChild(box);
     document.addEventListener('keydown', onKey, true);   /* 윈디 창은 저절로 닫지 않는다(2026-11-12 요청) — ✕·바깥·Esc 로만 */
   };
+})();
+</script>
+<script>
+/* 휴대폰 보기 맨 위 관서 고르기(2026-11-16) — 시계 칸 대신. html.wall-m 일 때만 보인다(CSS).
+   화면(React) 밖 body 맨 앞에 두어 다시 그려도 지워지지 않는다. 밝게/어둡게 단추도 시계 칸에서 옮겨 왔다. */
+(function(){
+  var box=null, sel=null;
+  window.cbWallSelInit=function(){
+    var W=window.cbWallStation; if(!W || box) return;
+    box=document.createElement('div'); box.id='wall-msel';
+    sel=document.createElement('select'); sel.setAttribute('aria-label','관서 고르기');
+    W.names.forEach(function(n,i){ var o=document.createElement('option'); o.value=String(i); o.textContent=n; sel.appendChild(o); });
+    sel.value=String(W.get());
+    sel.onchange=function(){ W.set(+sel.value); try{ window.scrollTo(0,0); }catch(e){} };
+    var th=document.createElement('button'); th.type='button'; th.textContent='☀'; th.title='밝게/어둡게'; th.setAttribute('aria-label','밝게/어둡게');
+    th.onclick=function(){ W.theme(); };
+    box.appendChild(sel); box.appendChild(th);
+    document.body.insertBefore(box, document.body.firstChild);
+  };
+  window.cbWallSelSync=function(i){ if(sel && sel.value!==String(i)) sel.value=String(i); };
+  if(window.cbWallStation) window.cbWallSelInit();
 })();
 </script>
 </body></html>
