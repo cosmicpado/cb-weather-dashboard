@@ -4,15 +4,40 @@
 
 ## 운영 구조
 
-- 네이버클라우드 서버가 5분마다 `tools/update_data.py` 로 수집해 `main` 에 커밋·푸시한다(`update.sh`, 설치는 `tools/server/README.md`).
-- 배포가 필요하면 서버가 `deploy-trigger` 브랜치를 밀고, GitHub Actions 가 Cloudflare Workers 로 배포한다.
-- PR 을 Merge 하면 서버가 다음 회차에 새 코드를 받아 바로 배포한다.
-- 이 PC 에서 상황판을 띄우려면 **`서버.bat` 더블클릭** (= `python tools/live_local.py --port 8000 --lan --collect`)
-  → 이 PC 는 `http://localhost:8000/지도.html`, 내부망의 다른 PC 는 `http://<이 PC IP>:8000/지도.html`.
-  이 PC 가 5분마다 직접 API 로 수집하고(`.env` 필요, GitHub 에는 올리지 않음) 웹서버도 같이 띄운다.
-  `--collect` 를 빼면 API 를 부르지 않고 운영 서버가 올린 데이터를 1분마다 받아 온다.
-  이 PC 에서만 볼 때는 `--lan` 을 뺀다(데이터만: `--no-serve`). 수집·수신한 데이터 파일은 커밋하지 말 것.
-- API 를 직접 불러 시험하려면 `python tools/update_data.py --no-push` (푸시 모드는 서버 커밋과 엇갈리니 쓰지 말 것).
+한 대의 서버가 **5분마다 API 로 수집하고, 화면도 직접 띄운다.** 수집한 데이터는 GitHub 에 올리지 않는다.
+(예전의 네이버클라우드 수집 서버 · GitHub 데이터 커밋 · Cloudflare 배포는 2026-11 에 그만뒀다.)
+
+- **운영** — 윈도우 PC(지금 시범운영 PC → 행정망 윈도우 서버로 옮길 예정)에서 **`서버.bat` 더블클릭**
+  (= `python tools/live_local.py --port 8000 --lan --collect`). 수집·웹서버·의견 받기가 한 번에 뜬다.
+  그 PC 는 `http://localhost:8000/`, 내부망의 다른 PC 는 `http://<그 PC IP>:8000/`.
+  `.env`(API 키)와 Python 이 있어야 한다. 그 PC 에서만 볼 때는 `--lan` 을 뺀다.
+- 코드를 고치면: PR 을 Merge → 운영 PC 에서 새 코드 받기(`git pull`) → **`서버.bat` 을 껐다 켠다**
+  (`tools/feedback.py` 등 서버 코드는 켤 때 한 번만 읽는다. 화면 파일만 고쳤으면 새로고침으로 충분).
+- `tools/server/` 의 리눅스 설치 스크립트(Rocky·Ubuntu)는 지금 쓰지 않는다.
+- API 를 직접 불러 시험하려면 `python tools/update_data.py --no-push`. 수집한 데이터 파일(`data.js`·`data-cctv.js`·`images/*.png`)은 커밋하지 말 것.
+
+### 짧은 주소
+
+| 주소 | 화면 |
+|---|---|
+| `/` · `/room` | 119종합상황실 (첫 화면) |
+| `/map` | 종합 현황 |
+| `/watch` | 재해별 집중 감시 |
+| `/easy` | 큰 글씨 보기 |
+| `/help` | 사용설명서 · 공지사항 |
+| `/admin` | 관리자 (서버 PC 또는 관리자 키) |
+
+### 서버에 저장되는 것 (`.data/`, 커밋 안 함)
+
+`tools/feedback.py` 가 `/api/feedback` 으로 받아 둔다. 코드 반영(git)으로 지워지지 않는다.
+
+| 파일 | 내용 | 바꾸는 곳 |
+|---|---|---|
+| `feedback.csv` · `feedback.jsonl` · `feedback_status.json` | 💬 의견과 처리 상태 | 각 화면 💬 · 관리자 페이지 |
+| `notices.json` | 공지사항(기본 공지 `notices.js` 위에 덮어씀) | 관리자 페이지 공지사항 탭 |
+| `duty.json` | 비상근무 기준표(기본값 `duty.js`) | 관리자 페이지 비상근무 탭 |
+| `stage.json` · `stage_log.jsonl` | 재대본 비상단계 수동 지정(24시간 유효)과 변경 기록 | 상황실 비상단계 칸 · `/` → `stage` |
+| `stage_pin.json` | 단계 지정 번호(해시만) | 관리자 페이지 비상근무 탭 |
 
 데이터 수집에는 공공 API 키가 필요하다. 저장소 루트에 `.env` 를 만들고 아래 값을 넣는다(커밋 금지, `.gitignore` 처리됨).
 
@@ -69,11 +94,12 @@ KMA_APIHUB_KEY=...      # 기상청 API 허브 (AWS·특보)
 
 | 파일 | 내용 |
 |---|---|
-| `지도.html` | 종합 현황(메인) — 관서 지도, 특보·재난문자·하천·시간대별 예보 (`index.html` 이 여기로 보냄) |
-| `재해.html` | 재해별 집중 감시 — 🌧 호우 · ❄ 대설·한파 · 🔥 건조·산불 탭 (`호우.html` 은 호우 탭으로 넘기는 옛 주소) |
-| `상황실.html` | 119종합상황실 화면(벽면 대형화면) — 관서를 차례로 순환 표출(한 바퀴 약 3분) |
+| `상황실.html` | 119종합상황실 화면(벽면 대형화면, 첫 화면 — `index.html` 이 여기로 보냄) — 관서를 14초씩 순환. 위 줄에 재대본 비상단계·비상근무·특보통계. `/` 키 명령 칸(test 시연 단추 · stage 단계 지정 · help · admin) |
+| `지도.html` | 종합 현황 — 관서 지도, 특보·재난문자·하천·시간대별 예보, 특보·재난문자·댐 방류 급증 알림 |
+| `재해.html` | 재해별 집중 감시 — 🌧 호우(하천 수위·댐 방류) · ❄ 대설·한파 · 🔥 건조·산불 탭 (`호우.html` 은 호우 탭으로 넘기는 옛 주소) |
 | `쉬운.html` | 큰 글씨 보기 |
-| `도움말.html` | 사용설명서 |
+| `도움말.html` | 사용설명서 · 공지사항 |
+| `관리자.html` | 의견 처리 · 공지사항 · 비상근무 기준표 · 비상단계 지정 번호 |
 
 ## 구조 — 화면 코드는 그대로, 지역 값만 3개 파일
 
@@ -122,15 +148,16 @@ python tools/build_all_sido.py
 
 ## 배포
 
-- `wrangler.toml` — Cloudflare Workers 정적 자산(`cb-weather-dashboard`). 제외 목록은 `.assetsignore`.
-- `.github/workflows/cloudflare-deploy.yml` — `deploy-trigger` 브랜치 push 시 배포. `update_data.py`(푸시 모드)가 배포 조건이 되면 이 브랜치를 민다.
-- `.github/workflows/data-refresh.yml` — 수동 실행: 수집 → 배포.
-- `update.sh` — 리눅스 서버 cron(5분)용 수집·커밋·푸시 스크립트.
-- 저장소 Secrets 필요: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, 그리고 위 API 키들.
+외부 배포는 하지 않는다. 화면은 운영 PC 의 `서버.bat` 이 내부망에 직접 띄운다.
+
+예전 방식(2026-11 에 그만둠 — 파일은 정리 전까지 남아 있다):
+- `wrangler.toml` · `.github/workflows/cloudflare-deploy.yml` · `data-refresh.yml` — Cloudflare Workers 배포. GitHub Actions 에서 끈다.
+- `update.sh` · `tools/server/setup-ubuntu.sh` — 네이버클라우드 수집 서버(cron 5분, `main` 에 데이터 커밋).
 
 ## 출처
 
-경기북부 기상·재난 상황판의 코드를 바탕으로 충청북도용으로 정리했다.
+경기북부 기상·재난 상황판의 코드를 바탕으로 시작해, 충북소방 119종합상황실 운영에 맞춘 충청북도 특화 플랫폼으로 지속 개선하고 있다.
 
 - 원작: [visanu81/gyeonggi-dashboard](https://github.com/visanu81/gyeonggi-dashboard)
-- 제작: 소방위 한경승 · 동두천소방서
+- 원작 제작: 소방위 한경승 · 동두천소방서
+- 충북 구축·개선·운영: 충청북도 소방본부 소방정보통신팀
