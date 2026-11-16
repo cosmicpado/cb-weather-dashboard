@@ -20,9 +20,14 @@
   function esc(t) { return String(t == null ? '' : t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function areas(a) { return String(a || '').split(/\s*,\s*/).map(function (x) { return x.trim(); }).filter(Boolean); }
 
-  /* 지금 떠 있는 것 → {키: 표시정보} */
-  function snapshot(warnings, prelim, messages) {
+  /* 지금 떠 있는 것 → {키: 표시정보}. dams = dam-watch.js 판단 중 '방류량 급증'인 댐(2026-11-16) */
+  function snapshot(warnings, prelim, messages, dams) {
     var cur = {};
+    if (!off('cbAlertDamOff')) (dams || []).forEach(function (x) {
+      var body = '총 방류량 ' + Math.round(x.out).toLocaleString() + '㎥/s' + (x.d3 != null ? ' (3시간 +' + Math.round(x.d3).toLocaleString() + ')' : '')
+        + ' · 하류 ' + (x.down || []).join('·') + ' — 하천변·둔치 접근 통제 확인';
+      cur['D|' + x.code] = { kind: 'D', name: x.name, body: body };
+    });
     (warnings || []).forEach(function (w) {
       var t = String(w.type || '특보'), sev = /경보/.test(t) || w.level === 'severe';
       areas(w.area).forEach(function (a) { cur['W|' + t + '|' + a] = { kind: 'W', type: t, area: a, sev: sev, time: w.time || '' }; });
@@ -46,6 +51,7 @@
     var by = {}, out = [];
     list.forEach(function (x) {
       if (x.kind === 'M') { out.push({ icon: '📢', tone: 'msg', title: '새 재난문자 · ' + x.sender, body: x.text, time: x.time }); return; }
+      if (x.kind === 'D') { if (verb !== '해제') out.push({ icon: '🌊', tone: 'sev', title: '댐 방류량 급증 · ' + x.name, body: x.body, time: '' }); return; }
       var g = (x.kind === 'W' ? 'W' : 'P') + x.type; (by[g] = by[g] || { x: x, areas: [] }).areas.push(x.area);
     });
     Object.keys(by).forEach(function (g) {
@@ -127,7 +133,7 @@
   /* 데이터가 바뀔 때마다 부른다. opts.demo = 시연 데이터, opts.page = 'map' | 'wall' (본 것 기억을 화면별로) */
   window.cbAlerts = function (warnings, prelim, messages, opts) {
     opts = opts || {};
-    var cur = snapshot(warnings, prelim, messages);
+    var cur = snapshot(warnings, prelim, messages, opts.dams);
     if (opts.demo) {                                   // 시연: 기억하지 않고 이 창 안에서만 비교
       var prev = demoSeen; demoSeen = cur; if (!prev) return;
       var add = Object.keys(cur).filter(function (k) { return !prev[k]; }).map(function (k) { return cur[k]; });
