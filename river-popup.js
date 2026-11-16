@@ -2,6 +2,20 @@
    self = 화면 컴포넌트. self.working() 이 { flood:[…] } 를 주고, self.state.riverCctvResume /
    self.setState 로 CCTV 90초 멈춤·계속 보기를 다룬다. 지도.html 에서 2026-11-09 옮겨 옴. */
 (function(){
+  /* 24시간 그래프 세로 폭의 최소값(m) — 2026-11-16.
+     최저~최고로만 잡으면 1cm 잡음도 그래프 높이 전체로 늘어나(괴산댐 132.91↔132.92) 늘 출렁여 보였다.
+     기준 U = 관측소의 '관심→경계' 수위 간격(관측소마다 홍수통제소가 정한 값 — 충북 0.6~7.7m).
+       안전 U×0.5 · 관심 U×0.25 · 경계 이상 U×0.12  (하한 하천 0.1m · 댐 0.3m)
+     → 평상시 잡음(충북 하천 24시간 폭 0~0.15m = 0.5U 의 0~17%)은 거의 평평하고,
+       관심·경계에 들면 폭이 좁아져 같은 10cm 상승도 2~4배 크게 보인다. 실제 큰 변화는 원래대로 최저~최고. */
+  window.cbRiverMinSpan = function(r){
+    const isDam = r.api==='dam' || !!r.dam || !!r.dam_info;
+    const w = (r.warning!=null && !isNaN(r.warning)) ? +r.warning : null, d = (r.danger!=null && !isNaN(r.danger)) ? +r.danger : null;
+    const U = (w!=null && d!=null && d>w) ? d-w : (isDam ? 3 : (d ? d*0.3 : 1));
+    const v = +r.value;
+    const lvl = (d!=null && v>=d) ? 2 : (w!=null && v>=w) ? 1 : 0;
+    return Math.max(U*[0.5, 0.25, 0.12][lvl], isDam ? 0.3 : 0.1);
+  };
   window.cbRiverBody = function(self, r){
     const R=window.React.createElement;
     const d=self.working();
@@ -19,9 +33,11 @@
     let thresholds, curStage;
     if(isDam){
       thresholds=[];
+      /* 댐의 danger 는 계획홍수위 그 자체(build_dams)라 '위험'과 '계획홍수위'가 같은 값으로 두 번 붙었다 → 하나로(2026-11-16) */
       if(r.warning!=null) thresholds.push({v:+r.warning, name:'관심', col:'var(--caution)'});
-      if(r.danger!=null) thresholds.push({v:+r.danger, name:'위험', col:'var(--severe)'});
-      if(meta&&meta.pfh!=null) thresholds.push({v:+meta.pfh, name:'계획홍수위', col:'var(--danger)'});
+      const _pfh=(meta&&meta.pfh!=null)?+meta.pfh:null;
+      if(r.danger!=null && (_pfh==null || Math.abs(+r.danger-_pfh)>0.005)) thresholds.push({v:+r.danger, name:'위험', col:'var(--severe)'});
+      if(_pfh!=null || r.danger!=null) thresholds.push({v:(_pfh!=null?_pfh:+r.danger), name:'계획홍수위', col:'var(--severe)'});
       curStage=(r.danger!=null&&r.value>=r.danger)?4:(r.warning!=null&&r.value>=r.warning)?2:0;
     } else if(meta){
       thresholds=[{v:+meta.att,name:'관심',col:'var(--brand)'},{v:+meta.wrn,name:'주의',col:'var(--caution)'},{v:+meta.alm,name:'경계',col:'var(--warn)'},{v:+meta.srs,name:'심각',col:'var(--severe)'}];
@@ -60,7 +76,9 @@
     // ---- 24시간 추이 차트 (최고수위 지점·시각 표시) ----
     let chart=null;
     if(H.length>=2){
-      let mn=Math.min.apply(null,H), mx=Math.max.apply(null,H); if(mx-mn<0.001) mx=mn+1;
+      let mn=Math.min.apply(null,H), mx=Math.max.apply(null,H);
+      /* 세로 폭 최소값 — 위 cbRiverMinSpan(관심→경계 간격 기준, 단계가 오를수록 좁게). 좁으면 가운데를 두고 넓힌다 */
+      { const ms=window.cbRiverMinSpan(r); if(mx-mn<ms){ const c=(mx+mn)/2; mn=c-ms/2; mx=c+ms/2; } }
       /* ⚠ 이 차트는 좌표계(100×34)를 실제 크기(약 500×116)로 preserveAspectRatio:none으로
          늘린다. 그대로 두면 가로 5배·세로 3.4배로 '선 굵기'까지 불균등하게 늘어나 선이
          뭉개져 보이고, <circle>은 타원으로 찌그러진다(빨간 최고점이 실제로 그랬다).
@@ -74,6 +92,9 @@
       const area=PADX+','+HT+' '+line+' '+(W-PADX)+','+HT;
       let pk=0; for(let i=1;i<H.length;i++) if(H[i]>H[pk]) pk=i;
       const pkPt=pts[pk], last=pts[pts.length-1];
+      /* 기준수위 선 — 그래프 범위 안에 들어온 단계선만(관심·경계에 다가가면 보인다) */
+      const yOf=v=>+(HT-(v-lo)/(hi-lo)*HT).toFixed(2);
+      const tIn=thresholds.filter(t=>isFinite(t.v) && t.v>lo && t.v<hi);
       const dot=(p,size,bg,ring)=>R('span',{style:{position:'absolute', left:p[0]+'%', top:(p[1]/HT*100)+'%',
         width:size+'px', height:size+'px', borderRadius:'50%', background:bg, boxSizing:'border-box',
         border:(ring?('2px solid '+ring):'none'), transform:'translate(-50%,-50%)', pointerEvents:'none'}});
@@ -85,7 +106,10 @@
           [0.25,0.5,0.75].map((f,gi)=>R('line',{key:'g'+gi, x1:0, y1:+(HT*f).toFixed(2), x2:W, y2:+(HT*f).toFixed(2),
             stroke:'var(--border2)', strokeWidth:1, strokeDasharray:'4 4', opacity:0.65, vectorEffect:'non-scaling-stroke'})),
           R('polyline',{points:area, fill:curCol, opacity:0.13, stroke:'none'}),
+          tIn.map((t,ti)=>R('line',{key:'t'+ti, x1:0, y1:yOf(t.v), x2:W, y2:yOf(t.v), stroke:t.col, strokeWidth:1.5, strokeDasharray:'6 4', vectorEffect:'non-scaling-stroke'})),
           R('polyline',{points:line, fill:'none', stroke:curCol, strokeWidth:2, strokeLinecap:'round', strokeLinejoin:'round', vectorEffect:'non-scaling-stroke'})),
+        tIn.map((t,ti)=>R('span',{key:'tl'+ti, style:{position:'absolute', left:'8px', top:(yOf(t.v)/HT*100)+'%', transform:'translateY(-110%)',
+          fontSize:'10.5px', fontWeight:800, color:t.col, background:'var(--surface2)', padding:'0 3px', borderRadius:'3px', pointerEvents:'none'}}, t.name+' '+num(t.v,2)+'m')),
         dot(pkPt, 7, 'var(--severe)', null),
         dot(last, 10, curCol, 'var(--surface)')),
         R('div',{style:{display:'flex', justifyContent:'space-between', fontSize:'10.5px', color:'var(--ink3)', marginTop:'4px'}},
@@ -99,11 +123,15 @@
     let gauge=null;
     if(thresholds.length){
       const allV=thresholds.map(t=>t.v).concat([r.value]);
-      const dmax=(Math.max.apply(null,allV)||1)*1.04;
+      /* 댐은 수위가 해발 높이(충주조정지댐 64m)라 0m 부터 그리면 늘 초록 한가운데였다(2026-11-16).
+         → 24시간 최저와 가장 높은 기준 사이 폭의 절반만큼 아래에서 시작. 하천은 그대로 0m(바닥)부터 */
+      const _top=Math.max.apply(null,allV);
+      const g0 = isDam ? (function(){ const lowV=Math.min.apply(null,H.concat([+r.value])); return lowV-Math.max(1,(_top-lowV)*0.5); })() : 0;
+      const dmax = isDam ? _top+(_top-g0)*0.06 : ((_top||1)*1.04);
       // 칸마다 최소 너비 — 기준이 붙어 있어도(관심 0.7m·주의 1.0m) 이름·수치가 안 겹치게. 구간 너비 = max(실제 비율, 12%)
       // 를 다시 100% 로 맞춘 눈금. 현재 수위 표식은 자기 구간 안에서 비례 위치.
       const _ts=thresholds.slice().sort((a,b)=>(+a.v||0)-(+b.v||0));
-      const _bnd=[0].concat(_ts.map(t=>Math.max(0,+t.v||0)), [dmax]);
+      const _bnd=[g0].concat(_ts.map(t=>Math.max(g0,+t.v||0)), [dmax]);
       // 칸 최소 너비 = 이웃한 두 이름표가 반씩 들어가고 6px 남는 폭. 고정 12% 는 좁은 화면(게이지 290px)에서
       // '계획홍수위'(41px)를 못 담아 여전히 겹쳤다. 이름표 폭은 글자 수로, 게이지 폭은 창 너비로 어림한다.
       const _gw=Math.max(200, Math.min(560, ((typeof window!=='undefined'&&window.innerWidth)||800)-90));
@@ -111,17 +139,18 @@
       const _w=[]; let _sum=0;
       for(let i=0;i<_bnd.length-1;i++){
         const need=((i>0?_lw[i-1]/2:0)+(i<_lw.length?_lw[i]/2:0)+6)/_gw;      // 앞 이름표 반 + 뒤 이름표 반 + 여유
-        const w=Math.max((_bnd[i+1]-_bnd[i])/dmax, 0.08, need); _w.push(w); _sum+=w; }
+        const w=Math.max((_bnd[i+1]-_bnd[i])/(dmax-g0), 0.08, need); _w.push(w); _sum+=w; }
       const _cum=[0]; _w.forEach((w,i)=>_cum.push(_cum[i]+w/_sum));
-      const pct=(v)=>{ v=Math.max(0,Math.min(dmax,+v||0));
+      const pct=(v)=>{ v=Math.max(g0,Math.min(dmax,+v||0));
         for(let i=0;i<_bnd.length-1;i++){ if(v<=_bnd[i+1]){ const span=_bnd[i+1]-_bnd[i]; const f=span>0?(v-_bnd[i])/span:1; return Math.max(0,Math.min(100,(_cum[i]+f*(_cum[i+1]-_cum[i]))*100)); } }
         return 100; };
       let grad;
       if(!isDam && meta){
         grad='linear-gradient(90deg, var(--safe) 0 '+pct(+meta.att)+'%, var(--brand) '+pct(+meta.att)+'% '+pct(+meta.wrn)+'%, var(--caution) '+pct(+meta.wrn)+'% '+pct(+meta.alm)+'%, var(--warn) '+pct(+meta.alm)+'% '+pct(+meta.srs)+'%, var(--severe) '+pct(+meta.srs)+'% 100%)';
       } else {
-        const pw=pct(r.warning!=null?+r.warning:dmax), pd=pct(r.danger!=null?+r.danger:dmax);
-        grad='linear-gradient(90deg, var(--safe) 0 '+pw+'%, var(--caution) '+pw+'% '+pd+'%, var(--severe) '+pd+'% 100%)';
+        /* 칸마다 '그 칸이 넘은 기준'의 색 — 관심이 없는 댐(충주조정지댐)에서 색 계산이 꼬여 전부 초록이던 것 고침(2026-11-16) */
+        const _cols=['var(--safe)'].concat(_ts.map(t=>t.col));
+        grad='linear-gradient(90deg, '+_cols.map((c,i)=>c+' '+(_cum[i]*100).toFixed(2)+'% '+(_cum[i+1]*100).toFixed(2)+'%').join(', ')+')';
       }
       const cpct=pct(r.value);
       gauge=R('div',{style:{marginTop:'4px', paddingTop:'15px'}},
@@ -171,11 +200,19 @@
       (isDam&&r.dam)? R('div',{style:{marginTop:'18px'}},
         R('div',{style:{fontSize:'12px', fontWeight:800, color:'var(--ink2)', marginBottom:'7px'}}, '💧 댐 운영 현황'),
         R('div',{style:{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px'}},
-          dcell('저수율', num(r.dam.storage_rate,1)+'%'),
+          /* 홍수통제소 명세대로(2026-11-16): sfw=저수량, ecpc=공용량. 예전 이름(outflow·storage_rate)으로 온 자료도 같은 뜻으로 읽는다 */
           dcell('유입량', num(r.dam.inflow,1)+' ㎥/s'),
-          dcell('방류량(수문)', num(r.dam.outflow,1)+' ㎥/s'),
-          dcell('총유출량', num(r.dam.total_outflow,1)+' ㎥/s')),
-        R('div',{style:{marginTop:'8px', fontSize:'11px', color:'var(--ink3)', lineHeight:1.5}}, '※ 저수위는 유입·유출 외 수문 조작으로 조절됩니다. 하류 위험은 방류량 급증에 유의.')
+          dcell('총 방류량', num(r.dam.total_outflow,1)+' ㎥/s'),
+          dcell('저수량', num(r.dam.storage!=null?r.dam.storage:r.dam.outflow,1)+' 백만㎥'),
+          dcell('공용량', num(r.dam.free_cap!=null?r.dam.free_cap:r.dam.storage_rate,1)+' 백만㎥')),
+        R('div',{style:{marginTop:'8px', fontSize:'11px', color:'var(--ink3)', lineHeight:1.5}}, '※ 저수위는 유입·유출 외 수문 조작으로 조절됩니다. 하류 위험은 방류량 급증에 유의.'),
+        /* 하류 영향·과거 사례 (dam-watch.js — 충북에 영향 주는 댐만, 2026-11-16) */
+        (function(){ const w=window.cbDamWatch&&window.cbDamWatch.judge(r); if(!w) return null;
+          const c = w.state==='surge'?'var(--severe)':w.state==='gate'?'var(--warn)':'var(--safe)';
+          return R('div',{style:{marginTop:'10px', padding:'10px 12px', borderRadius:'10px', background:'var(--surface2)', border:'1px solid '+(w.state==='normal'?'var(--border)':c), fontSize:'12.5px', color:'var(--ink2)', lineHeight:1.6}},
+            R('div',{}, R('b',{style:{color:c}}, w.label), ' · 수문 방류 수준 '+w.gate.toLocaleString()+'㎥/s 이상'+(w.d3!=null?(' · 3시간 '+(w.d3>0?'+':'')+Math.round(w.d3)+'㎥/s'):'')),
+            R('div',{}, R('b',{}, '하류 '+w.down.join('·')), ' — '+w.path),
+            w.past ? R('div',{style:{marginTop:'3px'}}, '📌 과거 사례 · '+w.past) : null); })()
       ):null,
 
       // 홍수예보 발령

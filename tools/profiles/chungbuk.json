@@ -818,6 +818,15 @@
    "api": "waterlevel"
   },
   {
+   "code": "3007640",
+   "name": "(보은) 삼가천 탄부교",
+   "sigun": "보은",
+   "warning": 1.5,
+   "danger": 2.8,
+   "has_cctv": true,
+   "api": "waterlevel"
+  },
+  {
    "code": "3004685",
    "name": "(영동) 영동천 초강교",
    "sigun": "영동",
@@ -845,6 +854,15 @@
    "api": "waterlevel"
   },
   {
+   "code": "3004680",
+   "name": "(영동) 영동천 영동제2교",
+   "sigun": "영동",
+   "warning": 3.3,
+   "danger": 4.7,
+   "has_cctv": true,
+   "api": "waterlevel"
+  },
+  {
    "code": "3007660",
    "name": "(옥천) 보청천 산계교",
    "sigun": "옥천",
@@ -869,6 +887,15 @@
    "warning": 3.2,
    "danger": 7.9,
    "has_cctv": false,
+   "api": "waterlevel"
+  },
+  {
+   "code": "3006690",
+   "name": "(옥천) 금강 (구)금강2교",
+   "sigun": "옥천",
+   "warning": 4.7,
+   "danger": 12.4,
+   "has_cctv": true,
    "api": "waterlevel"
   },
   {
@@ -971,6 +998,24 @@
    "api": "waterlevel"
   },
   {
+   "code": "3011617",
+   "name": "(진천) 초평천 금곡교",
+   "sigun": "진천",
+   "warning": 1.2,
+   "danger": 3.0,
+   "has_cctv": true,
+   "api": "waterlevel"
+  },
+  {
+   "code": "3011628",
+   "name": "(진천) 초평천 화산교",
+   "sigun": "진천",
+   "warning": 3.0,
+   "danger": 6.2,
+   "has_cctv": true,
+   "api": "waterlevel"
+  },
+  {
    "code": "1004695",
    "name": "(충주) 요도천 국원대교",
    "sigun": "충주",
@@ -995,6 +1040,15 @@
    "warning": 3.8,
    "danger": 5.4,
    "has_cctv": false,
+   "api": "waterlevel"
+  },
+  {
+   "code": "1005640",
+   "name": "(충주) 한강 목계교",
+   "sigun": "충주",
+   "warning": 3.8,
+   "danger": 7.3,
+   "has_cctv": true,
    "api": "waterlevel"
   },
   {
@@ -1052,12 +1106,39 @@
    "api": "waterlevel"
   },
   {
+   "code": "3011639",
+   "name": "(청주동부) 영운천 운암1교",
+   "sigun": "청주동부",
+   "warning": 1.0,
+   "danger": 3.3,
+   "has_cctv": true,
+   "api": "waterlevel"
+  },
+  {
+   "code": "3011646",
+   "name": "(청주동부) 율량천 율량1교",
+   "sigun": "청주동부",
+   "warning": 1.0,
+   "danger": 1.8,
+   "has_cctv": true,
+   "api": "waterlevel"
+  },
+  {
    "code": "3011663",
    "name": "(청주서부) 석남천",
    "sigun": "청주서부",
    "warning": 2.3,
    "danger": 3.9,
    "has_cctv": false,
+   "api": "waterlevel"
+  },
+  {
+   "code": "3011643",
+   "name": "(청주서부) 무심천 용평교",
+   "sigun": "청주서부",
+   "warning": 1.75,
+   "danger": 4.0,
+   "has_cctv": true,
    "api": "waterlevel"
   },
   {
@@ -1084,6 +1165,24 @@
    "sigun": "괴산",
    "warning": 134.0,
    "danger": 136.93,
+   "has_cctv": false,
+   "api": "dam"
+  },
+  {
+   "code": "3008110",
+   "name": "(청주 인근) 대청댐",
+   "sigun": "청주서부",
+   "warning": 76.5,
+   "danger": 80.0,
+   "has_cctv": false,
+   "api": "dam"
+  },
+  {
+   "code": "3001110",
+   "name": "(영동 인근) 용담댐",
+   "sigun": "영동",
+   "warning": 261.5,
+   "danger": 265.5,
    "has_cctv": false,
    "api": "dam"
   }
@@ -1618,6 +1717,150 @@
    "cctv": true,
    "lat": 36.623056,
    "lon": 127.350556
+  },
+  "3011643": {
+   "agc": "기후에너지환경부",
+   "addr": "충청북도 청주시 흥덕구 분평동 용평교",
+   "gdt": 43.869,
+   "att": 1.75,
+   "wrn": 3.2,
+   "alm": 4,
+   "srs": 4.9,
+   "pfh": 4.9,
+   "fstn": false,
+   "cctv": true,
+   "lat": 36.611667,
+   "lon": 127.497222
+  },
+  "3011639": {
+   "agc": "기후에너지환경부",
+   "addr": "충청북도 청주시 상당구 용암동 770-1",
+   "gdt": 50.139,
+   "att": 1,
+   "wrn": 2.6,
+   "alm": 3.3,
+   "srs": 4,
+   "pfh": 4,
+   "fstn": false,
+   "cctv": true,
+   "lat": 36.617222,
+   "lon": 127.505556
+  },
+  "3011646": {
+   "agc": "기후에너지환경부",
+   "addr": "충청북도 청주시상당구 율량동 2531",
+   "gdt": 50.827,
+   "att": 1,
+   "wrn": 1.4,
+   "alm": 1.8,
+   "srs": 2.15,
+   "pfh": 2.15,
+   "fstn": false,
+   "cctv": true,
+   "lat": 36.663611,
+   "lon": 127.495833
+  },
+  "3007640": {
+   "agc": "기후에너지환경부",
+   "addr": "충청북도 보은군 탄부면 임한리 탄부교",
+   "gdt": 135.201,
+   "att": 1.5,
+   "wrn": 2.2,
+   "alm": 2.8,
+   "srs": 3.44,
+   "pfh": 3.44,
+   "fstn": false,
+   "cctv": true,
+   "lat": 36.437222,
+   "lon": 127.811667
+  },
+  "3004680": {
+   "agc": "기후에너지환경부",
+   "addr": "충청북도 영동군 영동읍 계산리 영산교",
+   "gdt": 118.682,
+   "att": 3.3,
+   "wrn": 3.7,
+   "alm": 4.7,
+   "srs": 5.77,
+   "pfh": 5.77,
+   "fstn": false,
+   "cctv": true,
+   "lat": 36.178889,
+   "lon": 127.7725
+  },
+  "3006690": {
+   "agc": "기후에너지환경부",
+   "addr": "충청북도 옥천군 동이면 적하리 17-4 (구)금강2교",
+   "gdt": 79.506,
+   "att": 4.7,
+   "wrn": 9.4,
+   "alm": 12.4,
+   "srs": 15.42,
+   "pfh": 15.42,
+   "fstn": false,
+   "cctv": true,
+   "lat": 36.289444,
+   "lon": 127.645278
+  },
+  "1005640": {
+   "agc": "기후에너지환경부",
+   "addr": "충청북도 충주시 엄정면 목계리 목계교",
+   "gdt": 52.337,
+   "att": 3.8,
+   "wrn": 5.6,
+   "alm": 7.3,
+   "srs": 9.1,
+   "pfh": 9.3,
+   "fstn": false,
+   "cctv": true,
+   "lat": 37.076111,
+   "lon": 127.881111
+  },
+  "3011617": {
+   "agc": "기후에너지환경부",
+   "addr": "충청북도 진천군 초평면 용정리 금곡교",
+   "gdt": 65.256,
+   "att": 1.2,
+   "wrn": 2.3,
+   "alm": 3,
+   "srs": 3.67,
+   "pfh": 3.67,
+   "fstn": false,
+   "cctv": true,
+   "lat": 36.846667,
+   "lon": 127.531667
+  },
+  "3011628": {
+   "agc": "기후에너지환경부",
+   "addr": "충청북도 진천군 초평면  화산리 1010",
+   "gdt": 44.122,
+   "att": 3,
+   "wrn": 4.5,
+   "alm": 6.2,
+   "srs": 7.66,
+   "pfh": 8.77,
+   "fstn": false,
+   "cctv": true,
+   "lat": 36.814444,
+   "lon": 127.493889
+  },
+  "3008110": {
+   "kind": "dam",
+   "agc": "한국수자원공사",
+   "addr": "대전광역시 대덕구 미호동",
+   "pfh": 80,
+   "lat": 36.478611,
+   "lon": 127.480556,
+   "cctv": false
+  },
+  "3001110": {
+   "kind": "dam",
+   "agc": "한국수자원공사",
+   "addr": "전라북도 진안군 안천면 삼락리",
+   "pfh": 265.5,
+   "lat": 35.941667,
+   "lon": 127.528889,
+   "cctv": false
   }
  },
  "keywords": [
@@ -1649,9 +1892,9 @@
   "L1041100": "음성",
   "L1041200": "단양",
   "L1041300": "증평",
-  "L1041400": "청주동부",
+  "L1041400": "청주",
   "L1041410": "청주동부",
-  "L1041420": "청주동부",
+  "L1041420": "청주서부",
   "L1040000": "충청북도(전체)"
  },
  "wrn_areas": {
@@ -1662,6 +1905,20 @@
   "청주시": [
    "청주동부",
    "청주서부"
+  ],
+  "청주서부": [
+   "청주동부",
+   "청주서부"
+  ],
+  "청주시서부": [
+   "청주동부",
+   "청주서부"
+  ],
+  "청주동부": [
+   "청주동부"
+  ],
+  "청주시동부": [
+   "청주동부"
   ]
  },
  "region_order": [

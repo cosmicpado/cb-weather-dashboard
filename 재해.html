@@ -34,6 +34,22 @@
 <script src="cctv-hrfco.js"></script>
 <script src="cctv-links.js"></script>
 <script src="river-popup.js"></script>
+<script>
+/* 시연 시각을 '지금' 기준으로(2026-11-16) — 시나리오의 고정 시각(특보 15:42 발효 · 문자 15:44 …)은 오후 3시 전에 켜면 미래로 떴다.
+   시각들의 간격은 그대로 두고 '가장 늦은 시각'이 지금 10분 전이 되게 통째로 옮긴다. 가장 늦은 시각 = 시계 한 바퀴에서 그다음 시각까지
+   간격이 가장 큰 것(전날 밤 21:05 와 새벽 05:20~06:12 가 섞여도 06:12 를 고른다). 'HH:MM'으로 시작하는 time 만 바꾼다 */
+window.cbDemoTimes = function(list){
+  var re=/^(\d\d):(\d\d)/, p2=function(n){ return (n<10?'0':'')+n; };
+  var ms=[]; (list||[]).forEach(function(o){ var m=re.exec(String((o&&o.time)||'')); if(m) ms.push((+m[1])*60+(+m[2])); });
+  if(!ms.length) return;
+  var u=ms.filter(function(v,i){ return ms.indexOf(v)===i; }).sort(function(a,b){ return a-b; }), anchor=u[u.length-1], best=-1;
+  u.forEach(function(v,i){ var gap=(i+1<u.length ? u[i+1]-v : u[0]+1440-v); if(gap>best){ best=gap; anchor=v; } });
+  var d=new Date(), sh=(d.getHours()*60+d.getMinutes()-10)-anchor;
+  (list||[]).forEach(function(o){ var s=String((o&&o.time)||''), m=re.exec(s); if(!m) return;
+    var t=(((+m[1])*60+(+m[2])+sh)%1440+1440)%1440; o.time=p2(Math.floor(t/60))+':'+p2(t%60)+s.slice(5); });
+};
+</script>
+<script src="dam-watch.js"></script>
 <script src="data.js"></script>
 <script src="data-adapter.js"></script>
 <script src="dashboard-data.js"></script>
@@ -253,6 +269,17 @@
       </div>
     </sc-if>
 
+    <!-- ── ⑤-1 댐 방류 — 호우 탭에서만 (2026-11-16). 수문 방류 수준 이상이면 위로 올린다 ── -->
+    <sc-if value="{{isRain}}">
+      <div style="order:{{damOrder}}; background:var(--surface); border:1px solid {{damBorder}}; border-radius:16px; box-shadow:var(--sh2); padding:15px 17px;">
+        <div style="display:flex; align-items:baseline; gap:8px; margin-bottom:11px; flex-wrap:wrap;">
+          <span style="font-size:15px; font-weight:900; color:var(--ink); cursor:help;" title="홍수통제소 오픈API 의 댐 총 방류량(1시간 값)입니다. 댐마다 평소 발전 방류를 넘는 '수문 방류 수준'을 정해 두고, 그 이상이면 주황, 3시간 사이 크게 늘면 빨강(급증)으로 표시합니다. 방류 승인 문구는 공식 API가 없어 넣지 않았습니다.">댐 방류</span>
+          <span style="font-size:13.5px; color:var(--ink3);">{{damSub}}</span>
+        </div>
+        {{damBody}}
+      </div>
+    </sc-if>
+
     <!-- ── ⑤-2 올해 충북 산불 — 건조·산불 탭에서만 ── -->
     <sc-if value="{{isFire}}">
       <div style="order:{{lateOrder}}; background:var(--surface); border:1px solid var(--border); border-radius:16px; box-shadow:var(--sh2); padding:15px 17px;">
@@ -384,7 +411,9 @@ class Component extends DCLogic {
 
   applyTheme(){ try{ document.documentElement.setAttribute('data-theme', this.state.theme); if(this.props.accent){ document.documentElement.style.setProperty('--brand', this.props.accent); } }catch(e){} }
   getData(){ return (typeof window!=='undefined' && window.DASH) ? window.DASH : this.FB; }
-  working(){ const b=this.getData(); return this.scoped(this.state.demo ? this.applyDemo(b) : b); }
+  working(){ const b=this.getData(); return this.scoped(this.state.demo ? this.demoTimes(this.applyDemo(b)) : b); }
+  /* 시연 특보·재난문자 시각을 지금 기준으로 — cbDemoTimes(아래 함수 설명) */
+  demoTimes(c){ if(c && !c.__dt){ try{ window.cbDemoTimes((c.warnings||[]).concat(c.messages||[])); }catch(e){} c.__dt=1; } return c; }
 
   /* ── 탭(호우 / 대설·한파 / 건조·산불) ───────────────────────────────
      직원이 고르지 않았으면 자동: ① 발효 중인 특보 ② 24시간 안 눈 예보 ③ 지금 내리는 비 ④ 이 PC에서 마지막으로 고른 탭 ⑤ 계절.
@@ -512,6 +541,11 @@ class Component extends DCLogic {
       r.level = (r.danger!=null && val>=r.danger) ? 'danger' : ((r.warning!=null && val>=r.warning) ? 'warning' : 'safe'); };
     bump('팔결교',6.6,0.44); bump('미호강교',7.2,0.38); bump('석남천',3.1,0.26);
     bump('반탄교',2.3,0.19); bump('목도교',4.5,0.21);
+    // 댐 방류 — 괴산댐 급증·충주댐 수문 방류 수준(dam-watch.js 판단 그대로 보이게, 2026-11-16)
+    const dam=(needle,out,d3)=>{ const r=(c.rivers||[]).filter(x=>(x.name||'').indexOf(needle)>=0)[0]; if(!r) return;
+      const di=Object.assign({}, r.dam||r.dam_info||{}); di.out_h=out; di.total_outflow=out; di.out_d3=d3; di.out_d1=+(d3/3).toFixed(1);
+      if(r.dam) r.dam=di; if(r.dam_info) r.dam_info=di; if(!r.dam && !r.dam_info) r.dam=di; };
+    dam('괴산댐',1200,900); dam('충주댐',1500,300);
     c.messages = [
       {sender:'청주시', time:'15:44', text:'[청주시] 미호강 수위 급상승. 오송읍 궁평2지하차도 등 하천변 지하차도를 전면 통제합니다. 저지대 주민은 즉시 안전한 곳으로 대피하시기 바랍니다.', region:'청주동부'},
       {sender:'증평군', time:'15:31', text:'[증평군] 보강천 수위 상승. 하천변 산책로와 둔치 주차장 이용을 금지합니다. 접근을 삼가시기 바랍니다.', region:'증평'},
@@ -768,6 +802,7 @@ class Component extends DCLogic {
     const _bl=d.bulletins||{}, _stn=_bl.stn||131, _b0=(_bl.warnings_full||[])[0], _t=String((_b0||{}).tmFc||'');
     const wrnUrl='https://www.weather.go.kr/w/special-report/list.do?stn='+_stn+'&kind=met'+((_b0 && _t.length>=12 && _b0.seq!=null) ? ('&date='+_t.slice(0,4)+'-'+_t.slice(4,6)+'-'+_t.slice(6,8)+'&reportId=met:'+_t.slice(0,12)+':'+_b0.seq) : '');
 
+    const _dams = (isRain && window.cbDamWatch) ? window.cbDamWatch.list(d.rivers) : [];   // 댐 방류(dam-watch.js)
     const out = {
       rootRef:this.rootRef, theme:st.theme,
       // 탭
@@ -860,6 +895,9 @@ class Component extends DCLogic {
       // 본문 블록
       fcst24Body: this.fcst24Body(me),
       riverBody: this.riverBody(d),
+      damBody: this.damBody(d, _dams), damSub: this.damSub(_dams),
+      damOrder: (_dams.some(x=>x.state!=='normal') ? 2 : 5),
+      damBorder: (_dams.some(x=>x.state==='surge') ? 'var(--severe)' : _dams.some(x=>x.state==='gate') ? 'var(--warn)' : 'var(--border)'),
       riverSub: '홍수통제소 · ' + (isWide ? '도 전체' : '고른 관서 관할 먼저'),
       msgBody: this.msgBody(d, me),
       // 기상영상 신선도 — 레이더는 관측시각(tm)이 정확하고, 예측강수는 저장시각(ts)뿐이다.
@@ -1294,6 +1332,44 @@ class Component extends DCLogic {
             '도내 최강 — ' + top.name + ' ' + top.w.station + ' ' + this.mm(top.w.wss) + 'm/s'
             + (topLv&&topLv.t?(' · '+topLv.t):''))
         : null);
+  }
+
+  // ── 댐 방류 (dam-watch.js) ─────────────────────────────
+  damSub(L){ const n=L.filter(x=>x.state!=='normal').length;
+    return n ? ('수문 방류 수준 이상 '+n+'곳') : '홍수통제소 · 총 방류량 1시간 값 · 하류 영향 관서'; }
+  damBody(d, L){
+    const R=React.createElement;
+    if(!L.length) return R('div',{style:{fontSize:'13px', color:'var(--ink3)'}}, '댐 자료를 불러오는 중입니다.');
+    const myStation=this.state.myStation || (window.REGION_CONF||{}).home;
+    const byCode={}; (d.rivers||[]).forEach(r=>{ byCode[String(r.code)]=r; });
+    const cols=(this.state.w>=900?'repeat(auto-fill,minmax(300px,1fr))':'1fr');
+    const fmt=v=>v==null?'—':(v>=100?Math.round(v).toLocaleString():(+v).toFixed(1));
+    const card=(x,i)=>{
+      const c = x.state==='surge'?'var(--severe)':x.state==='gate'?'var(--warn)':'var(--safe)';
+      const bg = x.state==='surge'?'var(--severeSoft)':x.state==='gate'?'var(--warnSoft)':'var(--surface2)';
+      const r=byCode[x.code]||{}, mine=x.down.indexOf(myStation)>=0;
+      /* 3시간 변화 — 평상일 때 기준의 25% 미만 오르내림은 발전 방류 켜짐·꺼짐이라 '큰 변화 없음' */
+      const _big = x.d3!=null && (x.state!=='normal' || Math.abs(x.d3)>=x.gate*0.25);
+      const ch = x.d3==null ? '' : !_big ? '3시간 큰 변화 없음' : (x.d3>0?'3시간 ▲ +'+fmt(x.d3):'3시간 ▼ '+fmt(Math.abs(x.d3)));
+      const gnames=x.gauges.map(g=>byCode[g]).filter(Boolean).map(g=>String(g.name||'').replace(/^\([^)]*\)\s*/,'')+' '+(g.value!=null?(+g.value).toFixed(2)+'m':''));
+      return R('div',{key:i, onClick:()=>{ if(r.name) this.setState({modal:{kind:'river', key:r.name}}); }, title:'눌러서 댐 상세 보기',
+        style:{background:bg, border:'1px solid '+(x.state==='normal'?'var(--border)':c), borderRadius:'12px', padding:'11px 13px', cursor:r.name?'pointer':'default', display:'flex', flexDirection:'column', gap:'5px'}},
+        R('div',{style:{display:'flex', alignItems:'center', gap:'7px', flexWrap:'wrap'}},
+          R('span',{style:{fontSize:'15px', fontWeight:900, color:'var(--ink)'}}, x.name),
+          R('span',{style:{fontSize:'12.5px', color:'var(--ink3)'}}, x.river),
+          R('span',{style:{marginLeft:'auto', fontSize:'12px', fontWeight:800, color:'#fff', background:c, padding:'2px 8px', borderRadius:'999px'}}, x.label)),
+        R('div',{style:{display:'flex', alignItems:'baseline', gap:'6px'}},
+          R('span',{style:{fontSize:'12.5px', color:'var(--ink3)'}}, '총 방류량'),
+          R('span',{style:{fontSize:'21px', fontWeight:900, color:(x.state==='normal'?'var(--ink)':c), fontVariantNumeric:'tabular-nums'}}, fmt(x.out)),
+          R('span',{style:{fontSize:'12.5px', color:'var(--ink3)'}}, '㎥/s'),
+          R('span',{style:{marginLeft:'auto', fontSize:'12.5px', fontWeight:700, color:(x.d3!=null&&x.d3>=x.gate*0.25?'var(--warn)':'var(--ink3)')}}, ch)),
+        R('div',{style:{fontSize:'12px', color:'var(--ink3)'}}, '수문 방류 수준 '+x.gate.toLocaleString()+'㎥/s 이상 · 유입 '+fmt(x.inflow)+'㎥/s'),
+        R('div',{style:{fontSize:'13px', color:'var(--ink2)', lineHeight:1.5}},
+          R('b',{style:{color:(mine?'var(--brand)':'var(--ink)')}}, '하류 '+x.down.join('·')+(mine?' (고른 관서)':'')), ' — ', x.path),
+        gnames.length ? R('div',{style:{fontSize:'12.5px', color:'var(--ink3)'}}, '하류 수위: '+gnames.join(' · ')) : null,
+        x.past ? R('div',{style:{fontSize:'12.5px', color:'var(--ink2)', background:'var(--surface)', border:'1px dashed var(--border)', borderRadius:'8px', padding:'6px 8px', lineHeight:1.5}}, '📌 과거 사례 · '+x.past) : null);
+    };
+    return R('div',{style:{display:'grid', gridTemplateColumns:cols, gap:'9px'}}, L.map(card));
   }
 
   // ── 하천 수위 ───────────────────────────────────────────

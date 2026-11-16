@@ -49,6 +49,9 @@
   .note button.save:disabled{opacity:.45;cursor:default}
   .saved{font-size:12px;color:var(--ink3)}
   .saved.err{color:var(--s-no)}
+  /* 의견 지우기(2026-11-16) — 원본 파일에서도 지운다 */
+  .seg button.del{margin-left:auto;color:var(--ink3)}
+  .seg button.del:hover{color:var(--s-no);border-color:var(--s-no)}
   .msg{padding:30px 10px;text-align:center;color:var(--ink3)}
   /* 관리자 탭(2026-11-12) — 받은 의견 · 공지사항 */
   .tabs{display:flex;gap:6px;margin:0 0 14px;border-bottom:1px solid var(--line)}
@@ -73,6 +76,21 @@
   .ed textarea{min-height:130px;resize:vertical;line-height:1.5}
   .ed .go{background:var(--brand);border-color:var(--brand);color:#fff}
   .ed .err{color:var(--s-no);font-size:12.5px}
+  /* 비상근무(2026-11-16) — 상황실 '비상근무' 칸 기준표 */
+  .dt-wrap{overflow-x:auto;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:6px}
+  .dt{border-collapse:collapse;width:100%;min-width:860px}
+  .dt th{font-size:12.5px;color:var(--ink3);font-weight:800;text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);white-space:nowrap}
+  .dt th small{display:block;font-weight:600;color:var(--ink3);font-size:11.5px}
+  .dt td{padding:5px 4px;vertical-align:middle}
+  .dt input{width:100%;box-sizing:border-box;font-size:13.5px;padding:6px 8px}
+  .dt td.who input{font-weight:800}
+  .dt .rm{padding:4px 9px;font-size:12.5px;color:var(--ink3)}
+  .dt .rm:hover{color:var(--s-no);border-color:var(--s-no)}
+  .dt th.s1{color:#2b6fd6}.dt th.s2{color:#b37b00}.dt th.s3{color:#d06a00}.dt th.s4{color:#d63a3a}
+  .dt-note{font-size:13px;color:var(--ink2);line-height:1.6;margin:12px 2px 0}
+  .dt-note table{border-collapse:collapse;margin-top:6px;font-size:12.5px}
+  .dt-note td,.dt-note th{border:1px solid var(--line);padding:4px 8px;text-align:left}
+  .dt-msg{font-size:13px;color:var(--ink3)} .dt-msg.err{color:var(--s-no)} .dt-msg.ok{color:var(--s-done)}
   /* hidden 속성이 display 지정(.gate 의 flex 등)에 지지 않게 */
   [hidden]{display:none!important}
   /* 관리자 키 입력(2026-11-12) — 주소(#k=)에 키를 싣지 않는다 */
@@ -104,6 +122,7 @@
   <div class="tabs" role="tablist">
     <button type="button" role="tab" id="tb-fb" aria-selected="true">받은 의견<span class="c" id="c-fb"></span></button>
     <button type="button" role="tab" id="tb-nt" aria-selected="false">공지사항<span class="c" id="c-nt"></span></button>
+    <button type="button" role="tab" id="tb-dt" aria-selected="false">비상근무</button>
   </div>
   <section id="pane-fb">
   <div class="bar">
@@ -127,11 +146,48 @@
     <div id="ntEd"></div>
     <div id="ntList"><div class="msg">불러오는 중…</div></div>
   </section>
+  <!-- 비상근무(2026-11-16) — 상황실 오른쪽 위 '비상근무' 칸에 나가는 기준표. 저장은 서버 .data/duty.json, 기본값은 duty.js -->
+  <section id="pane-dt" hidden>
+    <div class="bar">
+      <button type="button" id="dtSave" style="background:var(--brand);border-color:var(--brand);color:#fff">저장</button>
+      <button type="button" id="dtAdd">＋ 부서 추가</button>
+      <button type="button" id="dtReset">기본값으로</button>
+      <span class="dt-msg" id="dtMsg"></span>
+      <span class="n" id="dtAt"></span>
+    </div>
+    <div class="dt-wrap"><table class="dt"><thead><tr>
+      <th style="width:150px">부서</th>
+      <th class="s1">준비</th><th class="s2">비상 1단계</th><th class="s3">비상 2단계</th><th class="s4">비상 3단계</th>
+      <th>1단계가 대설주의보일 때<small>비우면 1단계 칸 그대로</small></th><th style="width:44px"></th>
+    </tr></thead><tbody id="dtBody"></tbody></table></div>
+    <div class="dt-note">
+      · 상황실 화면은 맨 위 <b>충북 재대본 비상단계</b>에 맞는 칸을 보여 줍니다. 평상이면 "비상근무 없음". 칸을 비우면 그 단계에서 그 부서 줄은 안 나옵니다.<br>
+      · 저장하면 켜져 있는 상황실 화면에 <b>5분 안에</b> 반영됩니다(새로고침하면 바로). 한 칸 40자까지 — 벽면에서 읽히게 짧게 적어 주세요.<br>
+      · 재대본 비상단계를 정하는 기준(아래)은 화면이 특보로 자동 판단합니다. 이 기준을 바꾸려면 소방정보통신팀에 요청하세요.
+      <table><tr><th></th><th>준비</th><th>비상 1단계</th><th>비상 2단계</th><th>비상 3단계</th></tr>
+        <tr><th>호우·대설</th><td>예비특보 3개 시·군</td><td>주의보 3개 시·군 · 경보 1개 시·군</td><td>경보 3개 시·군 이상</td><td>광역적 경보 발령</td></tr>
+        <tr><th>태풍</th><td>태풍정보 발표</td><td>예비특보</td><td>주의보 및 경보</td><td>광역적 경보 발령</td></tr></table>
+    </div>
+    <!-- 재대본 비상단계 지정 번호(2026-11-16) — 상황실 비상단계 칸을 눌러 단계를 직접 지정할 때 묻는 번호 -->
+    <div class="dt-note" style="margin-top:22px">
+      <b>비상단계 지정 번호</b> — 상황실 화면에서 재대본 발령 단계를 직접 지정할 때 묻는 번호입니다.
+      여기서 정하면 <b>모든 상황실 화면에서 이 번호로</b> 단계를 지정할 수 있습니다.<br>
+      · 정한 번호는 다시 볼 수 없습니다. 잊으면 새 번호로 다시 정하세요.
+      <div class="bar" style="margin-top:8px">
+        <input id="pinIn" type="password" inputmode="numeric" maxlength="8" placeholder="숫자 4~8자리" autocomplete="new-password" style="width:160px">
+        <button type="button" id="pinSave">번호 저장</button>
+        <button type="button" id="pinDel">번호 지우기</button>
+        <span class="dt-msg" id="pinMsg"></span>
+      </div>
+    </div>
+  </section>
   </div>
 </div>
 <script src="clock-sync.js"></script>
 <script src="short-url.js"></script>
 <script src="notices.js"></script>
+<script>window.CB_DUTY_NOAUTO = true;</script>
+<script src="duty.js"></script>
 <script>
 (function(){
   /* 처리 상태(2026-11-12) — 서버 tools/feedback.py 의 STATUSES 와 같은 이름. '대기'는 아직 손대지 않은 의견 */
@@ -200,6 +256,20 @@
     ST.forEach(function(s){ var b=el('button','v-'+s[1],s[0]); b.type='button'; b.setAttribute('aria-pressed', s[0]===pick?'true':'false');
       b.onclick=function(){ pick=s[0]; btns.forEach(function(o){ o.setAttribute('aria-pressed', o.textContent===pick?'true':'false'); }); dirty(); };
       btns.push(b); seg.appendChild(b); });
+    var db=el('button','del','🗑 삭제'); db.type='button'; db.title='이 의견을 완전히 지웁니다 (원본 파일에서도)';
+    db.onclick=function(){
+      var t=(x.text||'').replace(/\s+/g,' '); if(t.length>60) t=t.slice(0,60)+'…';
+      if(!confirm('이 의견을 완전히 지울까요?\n\n「'+t+'」\n\n서버의 원본 파일(feedback.csv)에서도 지워지고 되살릴 수 없습니다.')) return;
+      db.disabled=true; info.className='saved'; info.textContent='지우는 중…';
+      fetch('api/feedback',{method:'POST',cache:'no-store',headers:hdr({'Content-Type':'application/json','X-Requested-With':'cbweather'}),
+        body:JSON.stringify({action:'delete', id:x.id})})
+      .then(function(r){ return r.json().catch(function(){ return {ok:false, err:'서버 응답 오류 ('+r.status+')'}; }); })
+      .then(function(j){
+        if(!j.ok){ db.disabled=false; info.className='saved err'; info.textContent=j.err||'지우지 못했습니다'; return; }
+        items=items.filter(function(o){ return o!==x; }); render();
+      }).catch(function(){ db.disabled=false; info.className='saved err'; info.textContent='서버에 연결하지 못했습니다'; });
+    };
+    seg.appendChild(db);
     var row=el('div','note'), ta=el('textarea'); ta.maxLength=500; ta.rows=1; ta.value=x.note||'';
     ta.placeholder='어떻게 처리했는지 간단히 (예: 11/12 지도 글자 크기 조정 반영 · 공지사항 안내)';
     var save=el('button','save','저장'); save.type='button'; save.disabled=true;
@@ -244,13 +314,11 @@
 
   /* ── 탭 ── */
   function tab(t){
-    var nt = t==='nt';
-    $('pane-fb').hidden=nt; $('pane-nt').hidden=!nt;
-    $('tb-fb').setAttribute('aria-selected', nt?'false':'true'); $('tb-nt').setAttribute('aria-selected', nt?'true':'false');
+    ['fb','nt','dt'].forEach(function(k){ $('pane-'+k).hidden = k!==t; $('tb-'+k).setAttribute('aria-selected', k===t?'true':'false'); });
     try{ sessionStorage.setItem('cbAdminTab', t); }catch(e){}
   }
-  $('tb-fb').onclick=function(){ tab('fb'); }; $('tb-nt').onclick=function(){ tab('nt'); };
-  try{ if(sessionStorage.getItem('cbAdminTab')==='nt') tab('nt'); }catch(e){}
+  $('tb-fb').onclick=function(){ tab('fb'); }; $('tb-nt').onclick=function(){ tab('nt'); }; $('tb-dt').onclick=function(){ tab('dt'); };
+  try{ var _t=sessionStorage.getItem('cbAdminTab'); if(_t==='nt'||_t==='dt') tab(_t); }catch(e){}
 
   /* ── 공지사항 ── notices.js 의 기본 공지 + 서버에서 고친 것(over). 고치기·지우기·새로 쓰기는 서버에 id 로 저장 */
   var NK=['새 기능','개선','오류 수정','안내'], over=[], N=window.cbNotices||{base:[], merge:function(){ return []; }};
@@ -326,6 +394,54 @@
   }
   $('ntNew').onclick=function(){ ntEdit(null); }; $('ntReload').onclick=ntLoad;
   ntLoad();
+
+  /* ── 비상근무 기준표 ── 서버 저장본이 없으면 duty.js 기본값. 저장하면 상황실 화면이 5분 안에 다시 읽는다 */
+  var DK=['s1','s2','s3','s4','snow'], DD=(window.cbDuty&&window.cbDuty.DEFAULT)||{rows:[]};
+  function dtMsg(t, cls){ var m=$('dtMsg'); m.className='dt-msg'+(cls?' '+cls:''); m.textContent=t||''; }
+  function dtRow(r){
+    var tr=el('tr'), td=el('td','who'), w=el('input'); w.maxLength=20; w.placeholder='부서 이름'; w.value=r.who||''; td.appendChild(w); tr.appendChild(td);
+    DK.forEach(function(k){ var c=el('td'), i=el('input'); i.maxLength=40; i.dataset.k=k; i.value=r[k]||''; i.placeholder=(k==='snow')?'(1단계 그대로)':'(안 나옴)'; c.appendChild(i); tr.appendChild(c); });
+    var x=el('td'), b=el('button','rm','✕'); b.type='button'; b.title='이 부서 줄 빼기';
+    b.onclick=function(){ if($('dtBody').children.length<=1){ dtMsg('부서는 1개 이상이어야 합니다','err'); return; } tr.remove(); dtMsg('저장하지 않은 변경이 있습니다'); };
+    x.appendChild(b); tr.appendChild(x);
+    tr.oninput=function(){ dtMsg('저장하지 않은 변경이 있습니다'); };
+    return tr;
+  }
+  function dtFill(d, at){ var B=$('dtBody'); B.innerHTML=''; (d.rows||[]).forEach(function(r){ B.appendChild(dtRow(r)); });
+    $('dtAt').textContent = at ? '마지막 저장 '+at : '기본값(기상특보 단계별 비상근무체계)'; }
+  function dtRows(){ return Array.prototype.map.call($('dtBody').children, function(tr){ var ins=tr.querySelectorAll('input'), r={who:ins[0].value.trim()};
+    Array.prototype.slice.call(ins,1).forEach(function(i){ r[i.dataset.k]=i.value.trim(); }); return r; }); }
+  function dtLoad(){ dtMsg('불러오는 중…');
+    fetch('api/feedback?duty=1',{cache:'no-store'}).then(function(r){ return r.ok?r.json():null; })
+    .then(function(j){ if(!j||!j.ok){ dtFill(DD); dtMsg('서버에서 읽지 못해 기본값을 보여 줍니다','err'); return; }
+      dtFill(j.duty||DD, j.duty&&j.duty.at); dtMsg(''); })
+    .catch(function(){ dtFill(DD); dtMsg('서버에 연결하지 못했습니다','err'); });
+  }
+  $('dtAdd').onclick=function(){ if($('dtBody').children.length>=8){ dtMsg('부서는 8개까지입니다','err'); return; } var tr=dtRow({}); $('dtBody').appendChild(tr); tr.querySelector('input').focus(); dtMsg('저장하지 않은 변경이 있습니다'); };
+  $('dtSave').onclick=function(){
+    var rows=dtRows(); if(rows.some(function(r){ return !r.who; })){ dtMsg('부서 이름이 빈 줄이 있습니다','err'); return; }
+    $('dtSave').disabled=true; dtMsg('저장 중…');
+    post({action:'duty_save', rows:rows}).then(function(j){ $('dtSave').disabled=false;
+      if(!j.ok){ dtMsg(/내용을 적어/.test(j.err||'') ? '서버가 아직 예전 버전입니다 — 서버.bat 을 껐다 켠 뒤 다시 저장하세요' : (j.err||'저장하지 못했습니다'),'err'); return; }   /* 비상근무 저장을 모르는 옛 서버는 의견 보내기로 받는다 */
+      dtFill(j.duty||DD, j.duty&&j.duty.at); dtMsg('저장했습니다 — 상황실 화면에 5분 안에 반영','ok'); });
+  };
+  $('dtReset').onclick=function(){
+    if(!confirm('비상근무 기준을 기본값(기상특보 단계별 비상근무체계 — 소방본부·119종합상황실)으로 되돌릴까요?\n지금 저장된 내용은 지워집니다.')) return;
+    post({action:'duty_save', rows:null}).then(function(j){ if(!j.ok){ dtMsg(/내용을 적어/.test(j.err||'') ? '서버가 아직 예전 버전입니다 — 서버.bat 을 껐다 켠 뒤 다시 하세요' : (j.err||'되돌리지 못했습니다'),'err'); return; } dtFill(DD); dtMsg('기본값으로 되돌렸습니다','ok'); });
+  };
+  dtLoad();
+
+  /* ── 비상단계 지정 번호 ── */
+  function pinMsg(t, cls){ var m=$('pinMsg'); m.className='dt-msg'+(cls?' '+cls:''); m.textContent=t||''; }
+  function pinLoad(){ fetch('api/feedback?stage=1',{cache:'no-store'}).then(function(r){ return r.ok?r.json():null; })
+    .then(function(j){ pinMsg(!j||!j.ok ? '서버에서 읽지 못했습니다' : (j.pin ? '번호가 정해져 있습니다' : '아직 번호가 없습니다 — 번호를 정해야 상황실 화면에서 지정할 수 있습니다'), (!j||!j.ok)?'err':''); })
+    .catch(function(){ pinMsg('서버에 연결하지 못했습니다','err'); }); }
+  function pinErr(j, fallback){ var e=(j&&j.err)||fallback; return /내용을 적어/.test(e) ? '서버가 아직 예전 버전입니다 — 서버.bat 을 껐다 켠 뒤 다시 하세요' : e; }
+  $('pinSave').onclick=function(){ var v=$('pinIn').value.trim(); if(!/^\d{4,8}$/.test(v)){ pinMsg('숫자 4~8자리로 넣어 주세요','err'); return; }
+    post({action:'stage_pin', pin:v}).then(function(j){ if(!j.ok){ pinMsg(pinErr(j,'저장하지 못했습니다'),'err'); return; } $('pinIn').value=''; pinMsg('번호를 저장했습니다','ok'); }); };
+  $('pinDel').onclick=function(){ if(!confirm('비상단계 지정 번호를 지울까요?\n지우면 상황실 화면에서 단계를 지정할 수 없습니다.')) return;
+    post({action:'stage_pin', pin:null}).then(function(j){ if(!j.ok){ pinMsg(pinErr(j,'지우지 못했습니다'),'err'); return; } pinMsg('번호를 지웠습니다 — 상황실 화면에서 지정할 수 없습니다','ok'); }); };
+  pinLoad();
 })();
 </script>
 </body></html>

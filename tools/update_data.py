@@ -3265,11 +3265,14 @@ def fetch_rivers_by_station():
                             x = entry.get(k, '')
                             try: return float(x)
                             except: return None
+                        # ⚠ 홍수통제소 명세(hrfco.go.kr openapiPage/reference.do): sfw=저수량, ecpc=공용량,
+                        #   inf=유입량, tototf=총 방류량. 저수율·수문방류량 항목은 없다(2026-11-16 바로잡음 —
+                        #   예전엔 ecpc 를 '저수율 %', sfw 를 '방류량'으로 읽어 충주댐이 저수율 1196% 로 나왔다)
                         dam_info_latest = {
-                            'storage_rate': safe_f('ecpc'),   # 저수율 %
                             'inflow': safe_f('inf'),          # 유입량 m³/s
-                            'outflow': safe_f('sfw'),         # 방류량 m³/s
-                            'total_outflow': safe_f('tototf'),# 총유출량
+                            'total_outflow': safe_f('tototf'),# 총 방류량 m³/s
+                            'storage': safe_f('sfw'),         # 저수량
+                            'free_cap': safe_f('ecpc'),       # 공용량
                         }
 
                 if not history:
@@ -3396,7 +3399,9 @@ def _river_bootstrap(hist, stations, sess):
     for st in stations:
         api = st.get('api', 'waterlevel')
         key = f"{st['code']}|{api}"
-        if key in seen or len(hist.get(key, [])) >= 2:
+        okey = f"{st['code']}|dam_out"      # 댐 총 방류량 이력(2026-11-16) — 수위 이력이 있어도 이것이 없으면 채운다
+        need_out = api == 'dam' and len(hist.get(okey, [])) < 2
+        if key in seen or (len(hist.get(key, [])) >= 2 and not need_out):
             continue
         seen.add(key)
         if done >= RIVER_BOOT_PER_RUN:
@@ -3412,6 +3417,9 @@ def _river_bootstrap(hist, stations, sess):
                 v = _fnum(entry.get(wl_field))
                 if v is not None and entry.get('ymdhm'):
                     _hist_add(hist, key, entry['ymdhm'], v)
+                o = _fnum(entry.get('tototf')) if api == 'dam' else None
+                if o is not None and entry.get('ymdhm'):
+                    _hist_add(hist, okey, entry['ymdhm'], o)
             done += 1
         except Exception as e:
             print(f'    부트스트랩 실패 {st["name"]}: {type(e).__name__}')
@@ -3420,8 +3428,9 @@ def _river_bootstrap(hist, stations, sess):
     return done
 
 
-def _assemble_river(st, latest, hist):
-    """관측소 1건을 화면 형식으로 조립. latest={'time','value','row'}|None, hist=시간 단위 점 목록."""
+def _assemble_river(st, latest, hist, out_hist=None):
+    """관측소 1건을 화면 형식으로 조립. latest={'time','value','row'}|None, hist=시간 단위 점 목록.
+    out_hist = 댐 총 방류량의 시간 단위 점 목록(댐만)."""
     api = st.get('api', 'waterlevel')
     series = list(hist)
     if latest and (not series or str(latest['time'])[:10] >= str(series[-1]['time'])[:10]):
@@ -3442,8 +3451,18 @@ def _assemble_river(st, latest, hist):
     }
     if api == 'dam' and latest:
         row = latest['row']
-        item['dam_info'] = {'storage_rate': _fnum(row.get('ecpc')), 'inflow': _fnum(row.get('inf')),
-                            'outflow': _fnum(row.get('sfw')), 'total_outflow': _fnum(row.get('tototf'))}
+        # 항목 뜻은 위 dam_info_latest 주석(홍수통제소 명세) 참고 — sfw=저수량, ecpc=공용량
+        item['dam_info'] = {'inflow': _fnum(row.get('inf')), 'total_outflow': _fnum(row.get('tototf')),
+                            'storage': _fnum(row.get('sfw')), 'free_cap': _fnum(row.get('ecpc'))}
+    if api == 'dam' and out_hist:
+        # 총 방류량 24시간(시간 단위) + 1·3시간 변화 — 화면 dam-watch.js 가 '수문 방류 수준·급증'을 판단한다.
+        # ⚠ 10분 값은 발전 방류가 켜졌다 꺼져 출렁인다(충주댐 10분 0.4 ↔ 1시간 124㎥/s) → 변화는 시간 단위 점끼리만
+        ov = [p['value'] for p in out_hist if p.get('value') is not None]
+        di = item.setdefault('dam_info', {})
+        di['out_hist'] = out_hist[-24:]
+        di['out_d1'] = round(ov[-1] - ov[-2], 1) if len(ov) >= 2 else None
+        di['out_d3'] = round(ov[-1] - ov[-4], 1) if len(ov) >= 4 else None
+        di['out_h'] = ov[-1] if ov else None
     return item
 
 
@@ -3473,6 +3492,9 @@ def fetch_rivers():
         row = hourly.get(api, {}).get(st['code'])
         if row and row['time']:
             _hist_add(hist, f"{st['code']}|{api}", row['time'][:10], row['value'])
+            o = _fnum(row['row'].get('tototf')) if api == 'dam' else None
+            if o is not None:
+                _hist_add(hist, f"{st['code']}|dam_out", row['time'][:10], o)
     _river_bootstrap(hist, RIVER_STATIONS, sess)
     _river_hist_save(hist)
 
@@ -3480,7 +3502,7 @@ def fetch_rivers():
     for st in RIVER_STATIONS:
         api = st.get('api', 'waterlevel')
         item = _assemble_river(st, latest.get(api, {}).get(st['code']),
-                               hist.get(f"{st['code']}|{api}", []))
+                               hist.get(f"{st['code']}|{api}", []), hist.get(f"{st['code']}|dam_out"))
         if item is None:
             missing.append(st['name'])
             continue

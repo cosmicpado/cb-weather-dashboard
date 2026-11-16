@@ -71,30 +71,86 @@
     function up(rank, reason, short) { if (rank > best.rank) best = { rank: rank, reason: reason, short: short }; }
     // 대설·호우
     var nW = count(rsW), nA = count(rsA), nP = count(rsP), nAo = nA - nW;
-    var rsShort = rsName + ' ' + [nW ? '경보 ' + nW + '개' : '', nAo > 0 ? '주의보 ' + nAo + '개' : ''].filter(Boolean).join(' · ') + ' 시·군';
+    var rsShort = rsName + ' ' + [nW ? '경보 ' + nW + '개' : '', nAo > 0 ? '주의보 ' + nAo + '개' : ''].filter(Boolean).join(' · ');   // '시·군'은 뺀다 — 개수가 곧 시·군 수(2026-11-16)
     if (rsWide || nW >= WIDE_N) up(4, '광역적 경보 · 경보 ' + nW + '개 시·군(' + names(rsW) + ')', rsShort);
     else if (nW >= 3) up(3, '경보 ' + nW + '개 시·군(' + names(rsW) + ')', rsShort);
     else if (nW >= 1) up(2, '경보 ' + nW + '개 시·군(' + names(rsW) + ')', rsShort);
     if (nA >= 3) up(2, '주의보 이상 ' + nA + '개 시·군(' + names(rsA) + ')', rsShort);
     else if (nA >= 1) up(1, '주의보 ' + nA + '개 시·군(' + names(rsA) + ')', rsShort);
-    if (nP >= 3) up(1, '예비특보 ' + nP + '개 시·군(' + names(rsP) + ')', rsName + ' 예비특보 ' + nP + '개 시·군');
+    if (nP >= 3) up(1, '예비특보 ' + nP + '개 시·군(' + names(rsP) + ')', rsName + ' 예비특보 ' + nP + '개');
     // 태풍
     var tW = count(tyW), tA = count(tyA);
-    var tyShort = '태풍 ' + [tW ? '경보 ' + tW + '개' : '', (tA - tW) > 0 ? '주의보 ' + (tA - tW) + '개' : ''].filter(Boolean).join(' · ') + ' 시·군';
+    var tyShort = '태풍 ' + [tW ? '경보 ' + tW + '개' : '', (tA - tW) > 0 ? '주의보 ' + (tA - tW) + '개' : ''].filter(Boolean).join(' · ');
     if (tyWide || tW >= WIDE_N) up(4, '태풍 광역적 경보 · ' + tW + '개 시·군', tyShort);
     else if (tA >= 1) up(3, '태풍 ' + (tW ? '경보' : '주의보') + ' ' + tA + '개 시·군(' + names(tyA) + ')', tyShort);
     if (count(tyP) >= 1) up(2, '태풍 예비특보 ' + count(tyP) + '개 시·군', '태풍 예비특보');
     if (tyInfo) up(1, '태풍정보 발표(한반도 영향)', '태풍정보 발표');
 
+    // 시·군 수(호우·대설·태풍, 재대본 기준) — 상황실 '특보' 숫자 칸(2026-11-16). 경보 시·군은 주의보에서 뺀다
+    var cW = union(rsW, tyW), cA = union(rsA, tyA), cP = union(rsP, tyP), nAo2 = 0;
+    Object.keys(cA).forEach(function (k) { if (!cW[k]) nAo2++; });
+    var cnt = { w: count(cW), a: nAo2, p: count(cP) };
     var s = STAGES[best.rank];
     var hazard = /태풍/.test(best.reason) ? '태풍' : (best.rank ? '대설·호우' : '');
-    return { rank: s.rank, key: s.key, name: s.name, step: s.step, color: s.color, hazard: hazard,
+    /* 재대본이 직접 발령한 단계(상황실 화면에서 지정, 24시간 유효) — 있으면 자동 계산 대신 그 단계(2026-11-16).
+       자동 계산값은 autoRank·autoBig 로 남겨 화면이 '특보 기준 N단계'를 함께 보여 줄 수 있게 한다 */
+    var ov = window.cbStageOv && window.cbStageOv.active();
+    if (ov) {
+      var auto = s, autoBig = ['평상', '준비', '1단계', '2단계', '3단계'][s.rank];
+      s = STAGES[ov.rank];
+      return { rank: s.rank, key: s.key, name: s.name, step: s.step, color: s.color, hazard: hazard, cnt: cnt,
+               big: ['평상', '준비', '1단계', '2단계', '3단계'][s.rank],
+               short: best.rank ? best.short : ((warnings || []).length ? '호우·대설·태풍 특보 없음' : '발효 특보 없음'),
+               reason: '충북 재대본 발령(' + ov.at + ')',
+               manual: true, manualAt: ov.at, manualDuty: ov.duty || null, autoRank: auto.rank, autoBig: autoBig, blink: s.rank >= 4 };
+    }
+    return { rank: s.rank, key: s.key, name: s.name, step: s.step, color: s.color, hazard: hazard, cnt: cnt,
              big: ['평상', '준비', '1단계', '2단계', '3단계'][s.rank],          // 크게 쓰는 글자
              // 한파·폭염 등 단계에 안 넣는 특보만 있을 때 '발효 특보 없음'이라 쓰면 사실과 다르다
              short: best.rank ? best.short : ((warnings || []).length ? '호우·대설·태풍 특보 없음' : '발효 특보 없음'),   // 단계 이름 옆 한 줄 기준
              reason: best.rank ? (hazard === '태풍' ? best.reason : '대설·호우 ' + best.reason) : ((warnings || []).length ? '호우·대설·태풍 특보 없음' : '발효 특보 없음'), blink: s.rank >= 4 };
   };
   window.cbStage.STAGES = STAGES;
+
+  /* ── 재대본 비상단계 직접 지정(2026-11-16) ── 서버(.data/stage.json)를 1분마다 읽는다. 24시간 지나면 서버·화면 모두 자동으로.
+     set(rank) — 0 평상 ~ 4 3단계, null 이면 자동. 바뀌면 상황실(wallReapply)·다른 화면(cbstage 이벤트)이 다시 그린다 */
+  window.cbStageOv = (function () {
+    var v = null, key = '';
+    function active() { return (v && typeof v.rank === 'number' && (!v.until || v.until * 1000 > Date.now())) ? v : null; }
+    function changed() {
+      try { if (window.wallReapply) window.wallReapply(); } catch (e) {}
+      try { window.dispatchEvent(new Event('cbstage')); } catch (e) {}
+    }
+    function take(d) { var k = JSON.stringify(d || null); v = d || null; if (k !== key) { key = k; changed(); } }
+    function load() {
+      return fetch('api/feedback?stage=1', { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (j) { if (j && j.ok) take(j.stage); return j; }).catch(function () { return null; });
+    }
+    /* 지정 번호 확인만 — 지정 창의 [확인]. 맞아야 단계 단추가 켜진다(2026-11-16) */
+    function check(pin) {
+      return fetch('api/feedback', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'cbweather' },
+        body: JSON.stringify({ action: 'stage_pin_check', pin: pin || '' }) })
+        .then(function (r) { return r.json().catch(function () { return { ok: false, err: '서버 응답 오류(' + r.status + ')' }; }); })
+        .then(function (j) {
+          if (j && !j.ok && /내용을 적어/.test(j.err || '')) j.err = '서버가 아직 예전 버전입니다 — 서버.bat 을 껐다 켠 뒤 다시 하세요';
+          return j;
+        }).catch(function () { return { ok: false, err: '서버에 연결하지 못했습니다' }; });
+    }
+    /* pin = 지정 번호(서버 PC 는 없어도 된다) · duty = 직접 쓴 비상근무 [{who,what}] 또는 null(기준표대로) */
+    function set(rank, pin, duty) {
+      return fetch('api/feedback', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'cbweather' },
+        body: JSON.stringify({ action: 'stage_set', rank: rank, pin: pin || '', duty: duty || null }) })
+        .then(function (r) { return r.json().catch(function () { return { ok: false, err: '서버 응답 오류(' + r.status + ')' }; }); })
+        .then(function (j) {
+          if (j && j.ok) { take(j.stage); return j; }
+          var err = (j && j.err) || '저장하지 못했습니다';
+          if (/내용을 적어/.test(err)) err = '서버가 아직 예전 버전입니다 — 서버.bat 을 껐다 켠 뒤 다시 하세요';
+          return { ok: false, err: err };
+        }).catch(function () { return { ok: false, err: '서버에 연결하지 못했습니다' }; });
+    }
+    if (typeof fetch === 'function' && !window.CB_STAGE_NOAUTO) { load(); setInterval(load, 60000); }
+    return { active: active, load: load, set: set, check: check };
+  })();
 
   /* ❄️ 대설·결빙 카드 판정 — 눈이 오거나 올 때 '침수·수난 출동' 자리에 대신 띄운다(지도·상황실 공통).
      warnTypes: 그 관서 특보 종류들 · hourly: 단기예보 시간별 [{snow(cm), weather}] · fcst6: 초단기예보 [{pty_txt|pty}]

@@ -32,6 +32,22 @@
 <script src="cctv-hrfco.js"></script>
 <script src="cctv-links.js"></script>
 <script src="river-popup.js"></script>
+<script>
+/* 시연 시각을 '지금' 기준으로(2026-11-16) — 시나리오의 고정 시각(특보 15:42 발효 · 문자 15:44 …)은 오후 3시 전에 켜면 미래로 떴다.
+   시각들의 간격은 그대로 두고 '가장 늦은 시각'이 지금 10분 전이 되게 통째로 옮긴다. 가장 늦은 시각 = 시계 한 바퀴에서 그다음 시각까지
+   간격이 가장 큰 것(전날 밤 21:05 와 새벽 05:20~06:12 가 섞여도 06:12 를 고른다). 'HH:MM'으로 시작하는 time 만 바꾼다 */
+window.cbDemoTimes = function(list){
+  var re=/^(\d\d):(\d\d)/, p2=function(n){ return (n<10?'0':'')+n; };
+  var ms=[]; (list||[]).forEach(function(o){ var m=re.exec(String((o&&o.time)||'')); if(m) ms.push((+m[1])*60+(+m[2])); });
+  if(!ms.length) return;
+  var u=ms.filter(function(v,i){ return ms.indexOf(v)===i; }).sort(function(a,b){ return a-b; }), anchor=u[u.length-1], best=-1;
+  u.forEach(function(v,i){ var gap=(i+1<u.length ? u[i+1]-v : u[0]+1440-v); if(gap>best){ best=gap; anchor=v; } });
+  var d=new Date(), sh=(d.getHours()*60+d.getMinutes()-10)-anchor;
+  (list||[]).forEach(function(o){ var s=String((o&&o.time)||''), m=re.exec(s); if(!m) return;
+    var t=(((+m[1])*60+(+m[2])+sh)%1440+1440)%1440; o.time=p2(Math.floor(t/60))+':'+p2(t%60)+s.slice(5); });
+};
+</script>
+<script src="dam-watch.js"></script>
 <script src="data-cctv.js"></script>
 <style data-dash-sheet>
   /* 배치 편집기(dash_layout.js) — 섹션·카드 표시/순서. 인라인 style 은 런타임이 다시 쓰므로 시트로 건다. */
@@ -1340,7 +1356,9 @@ class Component extends DCLogic {
   fitMap(){ const el=this.mapRef.current; if(!el) return; const w=el.clientWidth; if(!w) return; let s=(w-12)/this.MAPW; s=Math.max(.5, Math.min(1.5, s)); if(Math.abs(s-this.state.mapScale)>0.008) this.setState({mapScale:s}); }
 
   getData(){ return (typeof window!=='undefined' && window.DASH) ? window.DASH : this.FB; }
-  working(){ const b=this.getData(); return this.scoped(this.state.demo ? this.applyDemo(b) : b); }
+  working(){ const b=this.getData(); return this.scoped(this.state.demo ? this.demoTimes(this.applyDemo(b)) : b); }
+  /* 시연 특보·재난문자 시각을 지금 기준으로 — cbDemoTimes(아래 함수 설명) */
+  demoTimes(c){ if(c && !c.__dt){ try{ window.cbDemoTimes((c.warnings||[]).concat(c.messages||[])); }catch(e){} c.__dt=1; } return c; }
   /* 권역 필터 — 화면 위에서 '충청북도/경기남부'를 고르면 그 권역만 남긴다.
      여기 한 곳에서 거르면 지도·관서목록·상단요약·특보·하천·미세먼지가 모두 따라온다
      (모든 화면이 working() 을 거쳐 데이터를 읽는다).
@@ -1419,6 +1437,9 @@ class Component extends DCLogic {
     (function(){ const s=(c.stations||[]).find(x=>x.name==='단양'), m=(((window.REGION_CONF||{}).awsStations||{})['단양']||[]).find(x=>x.name==='영춘'), o=s&&s.aws&&s.aws.stations&&m&&s.aws.stations[m.stn];
       if(o){ o.rn60=35; o.rn12h=120; o.rnday=120; } })();
     bump('팔결교',6.6,0.44); bump('미호강교',7.2,0.38); bump('석남천',3.1,0.26); bump('반탄교',2.3,0.19); bump('목도교',4.5,0.21);
+    // 댐 방류량 급증(dam-watch.js) — 3단계 시연에서 괴산댐 급증 알림·카드가 보이게(2026-11-16)
+    { const r=(c.rivers||[]).find(x=>String(x.code)==='1004310'); if(r){ const di=Object.assign({}, r.dam||r.dam_info||{}, {out_h:1200, total_outflow:1200, out_d3:900, out_d1:300});
+      if(r.dam_info) r.dam_info=di; r.dam=di; } }
     c.messages = [
       {sender:'청주시', time:'15:44', text:'[청주시] 미호강 수위 급상승. 오송읍 궁평2지하차도 등 하천변 지하차도를 전면 통제합니다. 저지대 주민은 즉시 안전한 곳으로 대피하시기 바랍니다.', region:'청주동부'},
       {sender:'증평군', time:'15:31', text:'[증평군] 보강천 수위 상승. 하천변 산책로와 둔치 주차장 이용을 금지합니다. 접근을 삼가시기 바랍니다.', region:'증평'},
@@ -1448,10 +1469,11 @@ class Component extends DCLogic {
   /* 산불 단계 색(한 곳에서) — 국립산림과학원 색표 순서(빨강·주황·노랑)를 우리 경보 색으로, 낮음은 초록 */
   fireLvColor(l){ return l>=4 ? 'var(--severe)' : l>=3 ? 'var(--warn)' : l>=2 ? 'var(--fireY)' : 'var(--safe)'; }
   cvar(lv){ return lv==='danger'?'var(--severe)':lv==='warning'?'var(--warn)':'var(--safe)'; }
-  spark(hist){
+  spark(hist, minSpan){
     const h=(hist||[]).filter(v=>typeof v==='number' && !isNaN(v));
     if(h.length<2) return {line:'', area:'', dotX:100, dotY:15};
-    let mn=Math.min(...h), mx=Math.max(...h); if(mx-mn<0.0001){ mx=mn+1; }
+    /* 세로 폭 최소값 — river-popup.js cbRiverMinSpan(관심→경계 간격 기준, 단계가 오를수록 좁게). 1cm 잡음이 크게 출렁여 보이지 않게 */
+    let mn=Math.min(...h), mx=Math.max(...h); const ms=minSpan||0.5; if(mx-mn<ms){ const c=(mx+mn)/2; mn=c-ms/2; mx=c+ms/2; }
     const pad=(mx-mn)*0.18; mn-=pad; mx+=pad; const W=100,H=30;
     const pts=h.map((v,i)=>[ +(i/(h.length-1)*W).toFixed(2), +(H-(v-mn)/(mx-mn)*H).toFixed(2) ]);
     const line=pts.map(p=>p.join(',')).join(' ');
@@ -1563,7 +1585,9 @@ class Component extends DCLogic {
     const RC=window.REGION_CONF||{}, WIDE=(RC.warnOrder||[])[0]||'충청북도', my=this.state.myStation;
     const st=(d.stations||[]).find(x=>x.name===my)||{}, sg=st.sigun||my;
     const msgs=(my===WIDE) ? (d.messages||[]) : (d.messages||[]).filter(m=>m.region===sg || m.region===my || m.region===WIDE);
-    try{ window.cbAlerts(d.warnings, d.prelim, msgs, {demo:!!this.state.demo, page:'map'}); }catch(e){}
+    /* 댐 방류량 급증(dam-watch.js) — 관서와 상관없이 충북 영향 댐 전부. 급증이 풀리면 기억에서 빠져 다시 급증하면 또 알린다 */
+    const dams=(window.cbDamWatch ? window.cbDamWatch.list(d.rivers) : []).filter(x=>x.state==='surge');
+    try{ window.cbAlerts(d.warnings, d.prelim, msgs, {demo:!!this.state.demo, page:'map', dams}); }catch(e){}
   }
   /* 자동 위험지역 — 사람이 정하지 않고 5분마다 들어오는 실측으로 정한다.
      · 하천: 경계수위 이상 '경계', 관심수위 이상 '관심수위', 1시간 0.3m 이상 급상승 '관심'  (자리 = 관측소 좌표, region.js riverMeta)
@@ -2174,7 +2198,7 @@ class Component extends DCLogic {
     const clockDate = n.getFullYear()+'.'+p2(n.getMonth()+1)+'.'+p2(n.getDate())+' ('+days[n.getDay()]+')';
     // rivers ranked
     const riversByRisk = (d.rivers||[]).map(r=>{
-      const lv=this.riverLevel(r); const sp=this.spark(r.history); const pct=r.danger? Math.min(1, r.value/r.danger):0;
+      const lv=this.riverLevel(r); const sp=this.spark(r.history, window.cbRiverMinSpan ? window.cbRiverMinSpan(r) : 0.5); const pct=r.danger? Math.min(1, r.value/r.danger):0;
       return { name:r.name, value:this.fmtNum(r.value,2), raw:r, lv, color:this.cvar(lv),
         sparkLine:sp.line, sparkArea:sp.area, sparkFill:this.cvar(lv), dotX:sp.dotX, dotY:sp.dotY,
         pctW:Math.round(pct*100)+'%', deltaTxt:this.deltaTxt(r.delta1),
@@ -2648,6 +2672,7 @@ class Component extends DCLogic {
             on: perm==='granted' && !off('cbOsNotifyOff'),
             toggle:()=>{ if(perm==='granted'){ flip('cbOsNotifyOff'); return; }
               if(perm==='default'){ try{ localStorage.setItem('cbOsNotifyOff','0'); Notification.requestPermission().then(()=>this.setState({alertTick:Date.now()})); }catch(e){} } } },
+          { label:'댐 방류량 급증', desc:'괴산·충주·용담·대청댐 방류량이 수문 방류 수준을 넘어 3시간 사이 크게 늘면 카드·소리', on:!off('cbAlertDamOff'), toggle:()=>flip('cbAlertDamOff') },
           { label:'새 공지 알림', desc:'공지사항에 새 글이 올라오면 오른쪽 아래 카드', on:!off('cbNoticeToastOff'), toggle:()=>flip('cbNoticeToastOff') }
         ];
         return rows.map(r=>({ ...r, aria:r.on?'true':'false', state:r.on?'켜짐':'꺼짐', track:r.on?'var(--brand)':'var(--border2)', knob:r.on?'23px':'3px' }));
