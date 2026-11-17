@@ -65,8 +65,20 @@ if defined OLD (
   %G% log --oneline -15 %OLD%..%NEW% 2> nul
 )
 
-echo  [3/5] 서버를 잠깐 멈춥니다
+rem HTTPS(Caddy) 는 Caddyfile 이 바뀔 때만 껐다 켠다 - 안 바뀌면 HTTPS 접속이 끊기지 않고 그대로 이어진다
+set "CADDY=0"
+if not defined OLD set "CADDY=1"
+if defined OLD (
+  %G% diff --quiet %OLD% %NEW% -- tools/caddy/Caddyfile 2> nul
+  if errorlevel 1 set "CADDY=1"
+)
+if "%CADDY%"=="1" (echo  [3/5] 서버를 잠깐 멈춥니다 - HTTPS 설정이 바뀌어 Caddy 도 같이 다시 켭니다) else (echo  [3/5] 서버를 잠깐 멈춥니다 - HTTPS 는 바뀐 게 없어 그대로 둡니다)
 if defined CB_UPDATE_TEST goto :stopped
+rem HTTPS 창(https켜기.bat)까지 닫아야 Caddy 가 멈춘 빈 창이 남지 않는다
+if "%CADDY%"=="1" (
+  taskkill /f /fi "WINDOWTITLE eq HTTPS (Caddy)*" > nul 2> nul
+  powershell -NoProfile -Command "Get-Process caddy -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue"
+)
 powershell -NoProfile -Command "Get-CimInstance Win32_Process | Where-Object { $_.ProcessId -ne $PID -and $_.CommandLine -match 'live_local[.]py|update_data[.]py' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"
 timeout /t 2 /nobreak > nul
 :stopped
