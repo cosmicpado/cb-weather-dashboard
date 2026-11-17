@@ -22,8 +22,8 @@
 html.wall-m,html.wall-m body{height:auto!important;overflow-y:auto!important;overflow-x:hidden!important;}
 html.wall-m body{margin:0;background:var(--bg,#0d1118);}
 html.wall-m #dc-root,html.wall-m #dc-root>div{height:auto!important;overflow:visible!important;}
-html.wall-m [data-wall-wrap]{position:static!important;display:block!important;}
-html.wall-m [data-stage]{width:1080px!important;height:auto!important;padding:24px 24px 40px!important;gap:24px!important;transform:none!important;}
+html.wall-m [data-wall-wrap]{position:relative!important;inset:auto!important;display:block!important;overflow:hidden!important;width:100%;}
+html.wall-m [data-stage]{width:1080px!important;height:auto!important;padding:24px 24px 40px!important;gap:24px!important;}
 /* 휴대폰 브라우저의 글자 자동 확대(크롬 글꼴 부스팅·사파리 글자 크기 조정)를 끈다 — 넓게 그려 줄이는 화면이라
    브라우저가 글자만 키우면 칸이 다 깨졌다(2026-11-16 실기기) */
 /* 카카오톡 등 앱 안 브라우저는 '가가'(글자 크기)로 body 에 확대 설정을 넣는다 — 모든 요소에 !important 로 걸어 그보다 이기게.
@@ -1916,17 +1916,26 @@ class Component extends DCLogic {
     const mob = force!==null ? force : (window.innerWidth <= 820 || (coarse && devW <= 820));
     const was = document.documentElement.classList.contains('wall-m');
     document.documentElement.classList.toggle('wall-m', mob);
+    const wrap = el.parentElement;
     if(mob){
-      el.style.transform = 'none';
       let vw = document.documentElement.clientWidth || window.innerWidth;
       if(coarse && devW > 0 && devW < vw) vw = devW;   // 넓어진 페이지 폭 말고 실제 기기 폭에 맞춘다
-      el.style.zoom = String(vw/1080);
+      /* zoom 대신 transform 으로 줄인다(2026-11-17) — 아이폰(사파리·카카오톡)은 text-size-adjust 가 % 로 걸려 있으면
+         글자에는 zoom 을 적용하지 않아 칸만 줄고 글자는 원래 크기로 삐져나왔다. transform 은 글자까지 통째로 줄인다.
+         transform 은 차지하는 자리를 안 줄이므로 바깥 틀 높이를 직접 맞추고 넘치는 폭은 잘라 페이지가 넓어지지 않게 한다 */
+      const s = vw/1080;
+      el.style.zoom = '';
+      el.style.transformOrigin = '0 0';
+      el.style.transform = 'scale('+s+')';
+      if(wrap){ const h = Math.ceil(el.offsetHeight*s)+'px'; if(wrap.style.height!==h) wrap.style.height=h; }
       const tl=document.getElementById('wall-tools'), ms=document.getElementById('wall-msel');
       if(tl && ms){ const p=(tl.offsetHeight+18)+'px'; if(ms.style.paddingTop!==p) ms.style.paddingTop=p; }   // 도구 막대가 두 줄이 돼도 관서 고르기를 가리지 않게
       if(!was && this.state.playing) this.setState({ playing:false });
       if(!this._mobTheme){ this._mobTheme=true; this.setState({ theme:'light' }); }   // 휴대폰은 처음에 밝은 화면(☀ 단추로 바꿀 수 있음)
     } else {
       el.style.zoom = '';
+      el.style.transformOrigin = 'center center';
+      if(wrap && wrap.style.height) wrap.style.height = '';
       const s = Math.min(window.innerWidth/3840, window.innerHeight/2160);
       el.style.transform = 'scale('+s+')';
     }
