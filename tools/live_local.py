@@ -155,12 +155,33 @@ class Quiet(http.server.SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(b)
 
+    HTTPS_HOST = ''                            # --https-redirect 일 때 Caddyfile 의 주소(예: xxx.duckdns.org)
+    def _to_https(self, code=301):
+        """다른 PC 가 http://…:8000 으로 바로 들어오면 https 주소로 넘긴다.
+        서버 PC 자신(127.0.0.1)과 Caddy 를 거친 요청(같은 PC 에서 오므로 127.0.0.1)은 그대로 보여 준다."""
+        if not self.HTTPS_HOST or feedback._is_local(self.client_address[0]):
+            return False
+        self.send_response(code)
+        self.send_header('Location', 'https://' + self.HTTPS_HOST + self.path)
+        self.send_header('Content-Length', '0')
+        self.end_headers()
+        return True
+
+    def do_HEAD(self):
+        if self._to_https():
+            return
+        return super().do_HEAD()
+
     def do_GET(self):
+        if self._to_https():
+            return
         if self.path.split('?', 1)[0] == '/api/feedback':
             return self._feedback('GET')
         return super().do_GET()
 
     def do_POST(self):
+        if self._to_https(308):
+            return
         if self.path.split('?', 1)[0] == '/api/feedback':
             return self._feedback('POST')
         self.send_error(405)
@@ -179,6 +200,23 @@ class Quiet(http.server.SimpleHTTPRequestHandler):
         super().end_headers()
 
 
+def caddy_host():
+    """tools/caddy/Caddyfile 에서 # 로 막지 않은 첫 사이트 주소(예: 'xxx.duckdns.org', 'https://1.2.3.4' → '1.2.3.4')."""
+    try:
+        lines = (ROOT / 'tools' / 'caddy' / 'Caddyfile').read_text(encoding='utf-8').splitlines()
+    except OSError:
+        return ''
+    for ln in lines:
+        t = ln.split('#', 1)[0].strip()
+        if t.endswith('{') and not ln[:1].isspace():
+            host = t[:-1].strip().split(',')[0].strip()
+            for pre in ('https://', 'http://'):
+                if host.startswith(pre):
+                    host = host[len(pre):]
+            return host.rstrip('/')
+    return ''
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--port', type=int, default=8765)
@@ -186,7 +224,11 @@ def main():
     ap.add_argument('--collect', action='store_true', help='운영 서버 데이터 대신 이 PC 가 직접 API 로 수집한다')
     ap.add_argument('--no-serve', action='store_true', help='데이터만 받아 오고 웹서버는 띄우지 않는다(이미 다른 서버를 쓸 때)')
     ap.add_argument('--lan', action='store_true', help='다른 PC 에서도 접속하게 연다(기본은 이 PC 만)')
+    ap.add_argument('--https-redirect', action='store_true', help='다른 PC 의 http 접속을 tools/caddy/Caddyfile 의 https 주소로 넘긴다')
     a = ap.parse_args()
+    if a.https_redirect:
+        Quiet.HTTPS_HOST = caddy_host()
+        print(f'http → https 자동 이동: https://{Quiet.HTTPS_HOST}/' if Quiet.HTTPS_HOST else 'Caddyfile 에서 https 주소를 못 찾아 http 그대로 둡니다.', flush=True)
     job = collect if a.collect else sync
     every = a.every or (300 if a.collect else 60)
     if a.collect:
