@@ -3617,16 +3617,22 @@ class Component extends DCLogic {
         try{ apply(JSON.parse(t.slice(i,j+1))); }catch(e){} }).catch(function(){});
   }
   setInterval(reload, 300000);
-  /* 처음 data.js 를 못 받으면(접속 순간 끊김 등) 화면이 시연용 예시 자료(여름 폭염 등)로 채워진다(2026-11-17) —
-     실제 자료가 들어올 때까지 5초마다 다시 받고, 그동안은 '예시 화면' 띠를 크게 띄워 실제 상황으로 오해하지 않게 한다 */
+  /* 처음 data.js 를 못 받으면(접속 순간 끊김 등) 화면 밑바탕의 시연용 예시 자료(여름 폭염 등)가 실제처럼 보였다(2026-11-17) —
+     실제 자료가 들어올 때까지 화면 전체를 '불러오는 중' 가림막으로 덮어 예시 값은 한 번도 보이지 않게 하고, 5초마다 다시 받는다 */
   (function(){
-    var bar=null, tries=0, t=setInterval(function(){
-      if(window.WALL_DATA){ clearInterval(t); if(bar){ bar.remove(); bar=null; } return; }
-      if(!bar){ bar=document.createElement('div'); bar.setAttribute('role','alert');
-        bar.style.cssText='position:fixed;left:0;right:0;top:0;z-index:2147483000;background:#b91c1c;color:#fff;font:800 clamp(15px,1.6vw,40px)/1.35 inherit;text-align:center;padding:clamp(8px,.8vw,20px);box-shadow:0 4px 18px rgba(0,0,0,.4);';
-        bar.textContent='⚠ 실시간 자료를 아직 받지 못했습니다 — 지금 보이는 특보·재난문자·기온은 예시입니다. 다시 연결하는 중…';
-        document.body.appendChild(bar); }
-      if(++tries % 5 === 1) reload();
+    if(window.WALL_DATA) return;
+    var cover=document.createElement('div'), msg=document.createElement('div'), sub=document.createElement('div'), tries=0;
+    cover.setAttribute('role','status'); cover.id='wall-loading';
+    cover.style.cssText='position:fixed;inset:0;z-index:2147483000;background:#0b1018;color:#e8edf5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(8px,1vw,24px);font-family:inherit;text-align:center;padding:16px;';
+    msg.style.cssText='font-weight:800;font-size:clamp(20px,2.4vw,64px);'; msg.textContent='실시간 자료를 불러오는 중…';
+    sub.style.cssText='font-size:clamp(14px,1.2vw,32px);color:#9aa7ba;'; sub.textContent='';
+    cover.appendChild(msg); cover.appendChild(sub);
+    (document.body||document.documentElement).appendChild(cover);
+    var t=setInterval(function(){
+      if(window.WALL_DATA){ clearInterval(t); cover.remove(); return; }
+      tries++;
+      if(tries>=8) sub.textContent='연결이 늦어지고 있습니다 — 자동으로 다시 시도하는 중입니다 ('+tries+'초)';
+      if(tries % 5 === 1) reload();
     }, 1000);
   })();
 })();
