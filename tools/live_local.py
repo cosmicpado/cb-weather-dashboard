@@ -245,6 +245,8 @@ def main():
     handler = functools.partial(Quiet, directory=str(ROOT))
     class Server(http.server.ThreadingHTTPServer):
         allow_reuse_address = False                # Windows 는 켜 두면 이미 쓰는 포트에도 겹쳐 붙는다
+        request_queue_size = 128                   # 기본 5 — https(Caddy·HTTP/2)는 화면 파일 20여 개를 한꺼번에 넘겨, 대기열이 넘치면 일부 파일이 끊긴다
+        daemon_threads = True
 
         def handle_error(self, request, client_address):
             # 화면을 받다가 브라우저·휴대폰이 먼저 끊은 것(페이지 이동·새로고침·앱 전환)은 정상 — 긴 오류 글을 찍지 않는다

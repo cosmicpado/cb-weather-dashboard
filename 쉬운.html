@@ -20,6 +20,7 @@
 <script src="cctv-links.js"></script>
 <script src="data-cctv.js"></script>
 <script src="data.js"></script>
+<script src="data-guard.js"></script>
 <script src="float-tools.js"></script>
 <style>
   :root{ --bg:#f3f5f9; --card:#ffffff; --ink:#0f172a; --ink2:#334155; --ink3:#64748b; --line:#e2e8f0;
@@ -137,7 +138,7 @@
     list.forEach(function(n){ var o=document.createElement('option'); o.value=n; o.textContent=n; if(n===cur) o.selected=true; s.appendChild(o); });
     s.onchange=function(){ memStation=s.value; storeSet('ggMyStation', s.value); hideCctv(); render(); };
     if(SCOPES){ var sc=$('selScope'); sc.style.display=''; sc.innerHTML='';
-      ['전체'].concat(Object.keys(SCOPES)).forEach(function(k){ var o=document.createElement('option'); o.value=k; o.textContent=(k==='전체'?'경기 전체':k); if(k===scopeNow()) o.selected=true; sc.appendChild(o); });
+      ['전체'].concat(Object.keys(SCOPES)).forEach(function(k){ var o=document.createElement('option'); o.value=k; o.textContent=(k==='전체'?'전체':k); if(k===scopeNow()) o.selected=true; sc.appendChild(o); });
       sc.onchange=function(){ memScope=sc.value; storeSet('ggScope', sc.value); var l=stationList(), cur=memStation||storeGet('ggMyStation'); if(l.indexOf(cur)<0){ memStation=l[0]||''; storeSet('ggMyStation', memStation); } fillSelects(); hideCctv(); render(); };
     }
     if(SIDOS.length){ var sd=$('selSido'); sd.style.display=''; sd.innerHTML='';
@@ -152,7 +153,7 @@
   var SEA = /(앞바다|먼바다|전해상|해상|연안바다|평수구역)/;
   function canon(n){
     n=String(n||'').trim(); if(!n) return null;
-    if(n==='충청북도'||n==='충청북도'||n==='수도권'||n==='경기') return WIDE;
+    if(n==='충청북도') return WIDE;
     if(ZONE[n]) return ZONE[n];   /* 섬 특보구역 → 관서(서버 프로파일에도 같은 표가 있지만 옛 자료·중간 구간 대비) */
     if((RC.wideNames||[]).indexOf(n)>=0) return WIDE;
     if(ORDER.indexOf(n)>=0) return n;
@@ -202,7 +203,7 @@
     }
 
     /* 특보 */
-    var warns = (D.warnings||[]).filter(function(w){ return areaHits(w.area, sg); });   /* 본체 시군으로(일산→고양) — 지도.html 과 같음 */
+    var warns = (D.warnings||[]).filter(function(w){ return areaHits(w.area, sg); });   /* 별칭 관서는 소속 시군으로 — 지도.html 과 같음 */
     var CH=/폭염|한파|건조|황사|오존/;                                                      /* 만성 특보 — 최고 '주의'까지(벽면과 같은 경보 위계) */
     var isBo=function(w){ return w.level==='severe' || String(w.type||'').indexOf('경보')>=0; };
     var sev = warns.some(function(w){ return isBo(w) && !CH.test(String(w.type||'')); });

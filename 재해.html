@@ -28,8 +28,7 @@
 <link rel="apple-touch-icon" href="icon.svg">
 <!-- 순서 고정: data.js → data-adapter.js → dashboard-data.js(폴백은 반드시 어댑터 뒤).
      뒤집으면 폴백이 실데이터를 이겨 영영 가짜 값이 보인다. -->
-<!-- 지역 설정 — 반드시 data-adapter.js보다 먼저. 없으면 어댑터가 충청북도 기본값으로
-     떨어져 남부 사이트에 북부 관서·강수량이 뜬다(2026-08-07 실제로 발생). -->
+<!-- 지역 설정 — 반드시 data-adapter.js보다 먼저(관서 목록·별칭을 어댑터가 읽는다). -->
 <script src="region.js"></script>
 <script src="cctv-hrfco.js"></script>
 <script src="cctv-links.js"></script>
@@ -52,6 +51,7 @@ window.cbDemoTimes = function(list){
 <script src="dam-watch.js"></script>
 <script src="float-tools.js"></script>
 <script src="data.js"></script>
+<script src="data-guard.js"></script>
 <script src="data-adapter.js"></script>
 <script src="dashboard-data.js"></script>
 <style>
@@ -366,7 +366,7 @@ class Component extends DCLogic {
       fireTab: null,
       // 탭 — 주소 ?mode=rain|snow 가 있으면 그것(호우.html·대설.html 옛 주소가 넘겨줌), 없으면 null = 자동
       mode: (function(){ try{ var m=new URLSearchParams(location.search).get('mode'); return (m==='rain'||m==='snow'||m==='fire') ? m : null; }catch(e){ return null; } })(),
-      myStation: (function(){ var RC=(window.REGION_CONF||{}); var h=RC.home||'동두천'; try{ var sv=(typeof localStorage!=='undefined' && localStorage.getItem('ggMyStation')) || h;
+      myStation: (function(){ var RC=(window.REGION_CONF||{}); var h=RC.home||'청주동부'; try{ var sv=(typeof localStorage!=='undefined' && localStorage.getItem('ggMyStation')) || h;
         var W=(RC.warnOrder||[])[0]||'충청북도'; if(sv!==W && RC.order && RC.order.length && RC.order.indexOf(sv)<0) sv=h; return sv; }catch(e){ return h; } })(),
       stationPickerOpen: (function(){ try{ if(sessionStorage.getItem('ggPickerOpen')==='1'){ sessionStorage.removeItem('ggPickerOpen'); return true; } }catch(e){} return false; })(),
       /* 권역(충청북도/남부/전체) — 지도.html 과 같은 저장값(ggScope). 없으면 접속 주소의 권역(hostScope), 그것도 없으면 전체.
@@ -377,8 +377,7 @@ class Component extends DCLogic {
         try{ var hs=(RC.hostScope||{})[location.hostname.split('.')[0]]; if(hs && g[hs]) return hs; }catch(e){}
         return '전체'; })()
     };
-    /* 권역이 정해져 있는데 보던/기본 관서가 그 권역에 없으면 권역 첫 관서로 — 전체판은 기본 관서가 수원인데 저장된 권역이
-       북부면 버튼엔 '수원', 자료는 고양이 되던 어긋남(2026-09-21) */
+    /* 권역이 정해져 있는데 보던/기본 관서가 그 권역에 없으면 권역 첫 관서로(버튼과 자료가 어긋나지 않게) */
     (function(self){ var RC=(window.REGION_CONF||{}), g=RC.scopes||{}, sc=self.state.scope;
       if(sc && sc!=='전체' && g[sc] && g[sc].indexOf(self.state.myStation)<0) self.state.myStation=g[sc][0]; })(this);
   }
@@ -718,8 +717,7 @@ class Component extends DCLogic {
 
     // ── 위험 배너 ②우리 실측 (AWS) ──────────────────────
     // 최악 관서 = 등급이 높은 곳. 등급이 같으면 '더 많이 온' 곳을 집는다.
-    // (등급만 비교하면 목록 순서상 앞선 관서가 이겨서, 경보 때 배너가 최악을 안 짚는다.
-    //  시연에서 포천 196mm·시간당 73mm(극한호우)를 두고 동두천 188mm가 뜨던 결함.)
+    // (등급만 비교하면 목록 순서상 앞선 관서가 이겨서, 경보 때 배너가 최악을 안 짚는다.)
     let worst=null, worstLv=null;
     stations.forEach(s=>{
       const a=s.aws||{}; if(!a.ok) return;
@@ -838,7 +836,7 @@ class Component extends DCLogic {
         const RC=(window.REGION_CONF||{}), g=RC.scopes; if(!g) return [];
         const cur=self.state.scope||'전체';
         return ['전체'].concat(Object.keys(g)).map(function(k){
-          const label=(k==='전체'?'경기 전체':k), on=(cur===k);
+          const label=(k==='전체'?'전체':k), on=(cur===k);
           return { key:k, label:label, bg:(on?'var(--brand)':'var(--surface2)'), fg:(on?'#fff':'var(--ink2)'),
             bd:(on?'var(--brand)':'var(--border2)'), pick:()=>self.setScope(k) };
         });
@@ -851,7 +849,7 @@ class Component extends DCLogic {
           bd:(on?'var(--brand)':'var(--border2)'),
           pick:function(){ if(on) return;
             /* 시도가 바뀌면 그 시도 파일을 새로 읽어야 해서 화면이 다시 열린다. 다시 열린 화면에서
-               창을 자동으로 펼쳐 이어서 관서를 고르게 한다(2026-09-19 사장님: "계속 선택 가능하면") */
+               창을 자동으로 펼쳐 이어서 관서를 고르게 한다 */
             try{ localStorage.setItem('ggSido', sd.base); sessionStorage.setItem('ggPickerOpen', '1'); }catch(e){}
             location.href = sd.base + location.pathname.split('/').pop(); } };
       }),
@@ -1288,7 +1286,7 @@ class Component extends DCLogic {
     if(v>=13.9) return '작은 나무가 흔들림';
     return '';
   }
-  /* 선택 관서 중심의 강풍 카드. '동두천 지금'(강수)과 나란히 놓이므로 같은 얼개로 짠다.
+  /* 선택 관서 중심의 강풍 카드. '관서 지금'(강수)과 나란히 놓이므로 같은 얼개로 짠다.
      12개 관서 랭킹 대신 내 관서를 크게 보여주되, '도내 최강'은 한 줄로 남긴다 —
      지원 판단(어느 관서가 제일 위험한가)을 잃지 않기 위해서. */
   windBody(me, stations, myStation){

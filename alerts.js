@@ -72,8 +72,12 @@
     box.style.cssText = 'position:fixed;top:72px;right:16px;z-index:9600;display:flex;flex-direction:column;gap:8px;width:min(360px,calc(100vw - 32px));pointer-events:none;';
     document.body.appendChild(box); return box;
   }
+  /* 휴대폰·태블릿에서는 알림 팝업·소리·Windows 알림을 띄우지 않는다 — 작은 화면을 가리고, 특보·재난문자는 화면 칸에 이미 나온다 */
+  function phone() {
+    try { return window.matchMedia('(pointer:coarse)').matches && Math.min(screen.width, screen.height) <= 820; } catch (e) { return false; }
+  }
   function card(c, demo) {
-    if (off('cbAlertCardsOff')) return;          // 화면 알림 카드 끔
+    if (off('cbAlertCardsOff') || phone()) return;          // 화면 알림 카드 끔
     var t = TONE[c.tone] || TONE.msg, el = document.createElement('div');
     el.style.cssText = 'pointer-events:auto;background:#fff;color:#0f1b2d;border:1px solid ' + t[0] + ';border-left:5px solid ' + t[0] + ';border-radius:12px;box-shadow:0 10px 30px -8px rgba(15,27,45,.35);padding:11px 13px 11px 12px;font:500 13px/1.5 Pretendard,system-ui,sans-serif;animation:cbAlertIn .25s ease-out;';
     el.innerHTML = '<div style="display:flex;align-items:flex-start;gap:9px">'
@@ -90,7 +94,7 @@
     while (box.children.length > 6) box.lastChild.remove();
   }
   function chime() {
-    if (muted()) return;
+    if (muted() || phone()) return;
     try {
       var AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
       var ac = window.__cbAlertAC || (window.__cbAlertAC = new AC()); if (ac.state === 'suspended') ac.resume();
@@ -104,7 +108,7 @@
   }
   function osNotify(c) {
     try {
-      if (off('cbOsNotifyOff') || !('Notification' in window) || Notification.permission !== 'granted') return;
+      if (phone() || off('cbOsNotifyOff') || !('Notification' in window) || Notification.permission !== 'granted') return;
       var n = new Notification(c.title, { body: c.body, icon: 'icon.svg', tag: 'cb-' + c.title + c.body.slice(0, 20) });
       n.onclick = function () { try { window.focus(); n.close(); } catch (e) {} };
     } catch (e) {}
@@ -112,7 +116,7 @@
   /* 처음 한 번: Windows 알림도 받을지 묻는 작은 띠(닫으면 다시 안 묻는다) */
   function askOnce() {
     try {
-      if (!('Notification' in window) || Notification.permission !== 'default' || localStorage.getItem(ASK)) return;
+      if (phone() || !('Notification' in window) || Notification.permission !== 'default' || localStorage.getItem(ASK)) return;
     } catch (e) { return; }
     var el = document.createElement('div');
     el.style.cssText = 'position:fixed;left:16px;bottom:60px;z-index:9600;max-width:min(420px,calc(100vw - 32px));background:#0f1b2d;color:#fff;border-radius:12px;padding:10px 12px;font:600 12.5px/1.5 Pretendard,system-ui,sans-serif;box-shadow:0 10px 30px -8px rgba(0,0,0,.4);display:flex;gap:10px;align-items:center;flex-wrap:wrap;';

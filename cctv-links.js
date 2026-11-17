@@ -1,6 +1,6 @@
 /* 외부 하천 CCTV — 홍수통제소(n.flood.go.kr, 하천 상세에 이미 삽입) 밖에서 일반에 공개된 실시간 영상.
    2026-09-21 16개 시도 조사(지자체·홍수통제소·KBS 재난포털·유튜브 라이브). 운영 주체가 바뀌거나 주소가 죽으면 여기만 고친다.
-   · 시도 키(region.js 의 key) → 관서 이름 → 항목 목록. '*' 는 그 시도 모든 관서에. 경기(all·north·south)는 같은 표.
+   · 시도 키(region.js 의 key) → 관서 이름 → 항목 목록. '*' 는 그 시도 모든 관서에.
    · 항목 종류(화면이 이 순서로 판정):
        {n, kbs:id}          KBS 재난감시 CCTV — 서버가 올리는 data-cctv.js(하루 토큰)에서 재생 주소를 찾아 화면 안 hls 재생
        {n, hls:m3u8, thumb} 직접 HLS(CORS 허용 확인된 곳: 포항시 방재 CCTV) — 화면 안 재생
@@ -11,64 +11,10 @@
    · 조사 기록: workflows/운영현황.md '하천 CCTV 출처 조사'. */
 (function () {
   var KBS = function (id, name) { return { n: 'KBS ' + name, u: 'https://d.kbs.co.kr/special/cctvShare?cctvId=' + id, kbs: id }; };
-  var PH = function (cam, name) { return { n: '포항시 ' + name, u: 'https://rain.pohang.go.kr/Front/Camera',
-    hls: 'https://safecctv.pohang.go.kr/media/api/v1/hls/vurix/192499/' + cam + '/0/0',
-    thumb: 'https://safecctv.pohang.go.kr/media/api/v1/snapshot/vurix/192499/' + cam + '/0/0' }; };
-  var CC = function (code, name) { return { n: '춘천시 ' + name, u: 'https://www.chuncheon.go.kr/disaster-safety/rainfall-info/cctv/',
-    frame: 'https://rivercctv.chuncheon.go.kr/' + code + '.html' }; };
-  var GG = {
-    '가평': [KBS('9972', '가평2교 (북한강)')],
-    '구리': [KBS('9974', '수택동 (왕숙천)')],
-    '용인': [{ n: '용인시 재난CCTV — 하천 60대', u: 'http://safe.yongin.go.kr/m/cctv.html?cd=1&ct=3&ns=' }],
-  };
   var CHEONGJU = [KBS('9968', '사직동 (무심천)')];
-  /* 포항 방재 CCTV 25대 중 하천·배수 관련(2026-09-21 rain.pohang.go.kr 목록). 남구/북구는 설치 주소로 */
-  var POHANG_S = [PH('100028', '냉천교 (냉천)'), PH('100031', '문덕교 (냉천)'), PH('100046', '원용교 (냉천)'), PH('100026', '연일대교'),
-    PH('100037', '형산강 하구 (송도)'), PH('100068', '신형산교 상류'), PH('100088', '항만교 (청림동)'), PH('100079', '자명천 (연일읍)'),
-    PH('100064', '송동1교 (대송면)'), PH('100027', '대송배수펌프장'), PH('100057', '장기2교'), PH('100075', '상전천 (구룡포)'),
-    PH('100054', '오어지'), PH('100034', '오천 양북'), { n: '포항시 방재기상정보 CCTV 전체(25대)', u: 'https://rain.pohang.go.kr/Front/Camera' }];
-  var POHANG_N = [PH('100024', '곡강교 (곡강천)'), PH('100060', '송내교 (죽장면)'), PH('100020', '세월교 (하옥)'),
-    { n: '포항시 방재기상정보 CCTV 전체(25대)', u: 'https://rain.pohang.go.kr/Front/Camera' }];
-  /* 춘천 하천감시 CCTV 16대 — 뷰어 페이지(rivercctv.chuncheon.go.kr/CTV…html)는 iframe 가능(2026-09-21 확인) */
-  var CHUNCHEON = [CC('CTV0000002', '태백교'), CC('CTV0000003', '팔미천'), CC('CTV0000004', '오탄리'), CC('CTV0000005', '윗샘밭교'),
-    CC('CTV0000006', '강촌교'), CC('CTV0000007', '효자교'), CC('CTV0000008', '한계천'), CC('CTV0000009', '공지천교'), CC('CTV0000010', '한덕교'),
-    CC('CTV0000011', '납실교'), CC('CTV0000012', '신연교'), CC('CTV0000013', '퇴계교'), CC('CTV0000014', '소양1교'), CC('CTV0000015', '하일교'),
-    CC('CTV0000016', '장학교'), CC('CTV0000017', '만천천')];
   window.CCTV_LINKS = {
-    all: GG, north: GG, south: GG,
-    seoul: {
-      '노원구': [KBS('9966', '월계동 (중랑천)'), { n: '노원구 하천 유튜브 라이브 (중랑천·우이천·당현천)', u: 'https://www.youtube.com/@healinglivenowon7260' }],
-      '마포구': [KBS('9965', '성산교 (홍제천)')],
-      '서초구': [KBS('9973', '양재동 (양재천)'), KBS('9998', '반포한강공원')],
-      '용산구': [KBS('9959', '한남동 (한강)')],
-      '관악구': [{ n: '관악구 도림천(별빛내린천) 유튜브 라이브', u: 'https://www.youtube.com/@WelcomeToGwanak' }],
-    },
-    gangwon: { '춘천': CHUNCHEON },
-    busan: { '*': [{ n: '부산 안전ON 재난 CCTV (도시침수 통합플랫폼)', u: 'https://safecity.busan.go.kr/' }], '동래구': [KBS('9967', '세병교 (온천천)')] },
-    daegu: { '동구': [KBS('9969', '신천동 (신천)')] },
-    daejeon: { '*': [{ n: '금강홍수통제소 하천수위 영상 (대전 12지점)', u: 'https://www.geumriver.go.kr/html/sumun/river_movie_all.jsp' }], '유성구': [KBS('9970', '구성동 (갑천)')] },
-    sejong: { '세종': [{ n: '세종엔 재난 CCTV', u: 'https://smart.sejong.go.kr/m/calamitycctvs' }, { n: '금강홍수통제소 하천수위 영상', u: 'https://www.geumriver.go.kr/html/sumun/river_movie_all.jsp' }] },
     chungbuk: { '청주동부': CHEONGJU, '청주서부': CHEONGJU, '단양': [KBS('9975', '도담삼봉 (남한강)')] },
-    chungnam: { '공주': [KBS('9976', '금강교 (금강)')], '*': [{ n: '금강홍수통제소 하천수위 영상', u: 'https://www.geumriver.go.kr/html/sumun/river_movie_all.jsp' }] },
-    jeonbuk: { '*': [{ n: '영산강홍수통제소 주요지점 수위 영상 (만경강·동진강·섬진강)', u: 'https://www.yeongsanriver.go.kr/sumun/video.do?S=S01&M=0202000000' }] },
-    jngj: { '나주': [KBS('9978', '나주대교 (영산강)')], '*': [{ n: '영산강홍수통제소 주요지점 수위 영상', u: 'https://www.yeongsanriver.go.kr/sumun/video.do?S=S01&M=0202000000' }] },
-    gyeongbuk: { '포항남부': POHANG_S, '포항북부': POHANG_N },
-    gyeongnam: { '밀양': [KBS('9977', '삼랑진 (낙동강)')] },
-    jeju: {
-      '제주': [{ n: '제주시 하천감시 CCTV 62대', u: 'https://www.jejusi.go.kr/bangjae/realcctvHls/riverHlsCctv.do' }],
-      '서귀포': [{ n: '서귀포시 실시간 하천 CCTV 27대', u: 'https://www.seogwipo.go.kr/field/safety/live/hls.htm' }],
-    },
   };
-
-  /* 부산 안전ON 재난 CCTV(하천·수문·배수, cctv-busan.js — tools/build_busan_cctv.py) — 직접 HLS(CORS *, 2026-09-22 실측) */
-  if (window.BUSAN_CCTV) {
-    var B = window.CCTV_LINKS.busan;
-    Object.keys(window.BUSAN_CCTV).forEach(function (unit) {
-      var items = window.BUSAN_CCTV[unit].map(function (c) { return { n: '부산 안전ON ' + c.n, u: 'https://safecity.busan.go.kr/',
-        hls: 'https://safecity.busan.go.kr:30443/play/hls/' + c.cd + '/index.m3u8' }; });
-      B[unit] = items.concat(B[unit] || []);
-    });
-  }
 
   /* ── 항목 판정 ── */
   window.cctvKey = function (x) { return x.kbs ? 'kbs:' + x.kbs : x.hls ? 'hls:' + x.hls : x.frame ? 'frame:' + x.frame : null; };

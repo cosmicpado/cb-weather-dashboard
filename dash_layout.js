@@ -1,5 +1,5 @@
 /* ============================================================================
-   대시보드(지도.html) 배치 편집기 — 2026-09-18 사장님 지시(상황실 편집기의 확장)
+   대시보드(지도.html) 배치 편집기 — 상황실 편집기의 확장
    ----------------------------------------------------------------------------
    지도 화면은 폰~벽면까지 반응형이라 상황실처럼 격자에 못 놓는다. 여기서 뜻이 있는 편집은
      · 섹션 순서 바꾸기 (리본 / 상황도 / 관서별 기상 / 예보·산불·미세먼지 / 기상 이미지)
@@ -35,7 +35,7 @@
   var MAPS = [[1, '보통'], [1.35, '크게'], [1.8, '아주 크게']];
   /* 위쪽 칸 후보 — 시간대별 예보는 가로 1,300px 남짓이 필요해 위쪽(600~700px)에선 절반 넘게 잘려 뺀다 */
   var TOPS = [['river', '하천 수위'], ['fire', '산불 위험도'], ['pm', '미세먼지']];
-  /* 기본은 미세먼지가 위(상황도 옆), 하천 수위는 아래 산불 밑(2026-11-12 결정) */
+  /* 기본은 미세먼지가 위(상황도 옆), 하천 수위는 아래 산불 밑(결정) */
   var DEFAULT_TOP = 'pm';
   var DEFAULT = { order: SECTIONS.map(function (s) { return s.id; }), hide: {}, map: 1, top: DEFAULT_TOP };
   var DISP = { ribbon: 'block', hero: 'grid', stations: 'block', trio: 'grid', imgs: 'block',
@@ -44,7 +44,6 @@
   function scopeKey() {
     var RC = window.REGION_CONF || {}, g = RC.scopes || {}, sc = null;
     try { sc = new URLSearchParams(location.search).get('scope'); } catch (e) {}
-    if (sc && !g[sc] && g['경기' + sc]) sc = '경기' + sc;
     if (!sc) { try { var v = localStorage.getItem('ggScope'); if (v === '전체') return '전체'; if (v && g[v]) sc = v; } catch (e) {} }
     if (!sc) { try { sc = (RC.hostScope || {})[location.hostname.split('.')[0]] || null; } catch (e) {} }
     return (sc && g[sc]) ? sc : '전체';
@@ -72,7 +71,7 @@
   var INITIAL = { ribbon: 'r', hero: 'h', stations: 's', trio: 't', imgs: 'i', warn: 'w', info: 'n', msg: 'm', river: 'v', hourly: 'y', fire: 'f', pm: 'p' };
   var BY_INI = {}; Object.keys(INITIAL).forEach(function (k) { BY_INI[INITIAL[k]] = k; });
   function encode(L) {
-    return 'D' + VER + SCOPE.replace('경기', '').charAt(0) + '.' + L.order.map(function (x) { return INITIAL[x]; }).join('')
+    return 'D' + VER + SCOPE.charAt(0) + '.' + L.order.map(function (x) { return INITIAL[x]; }).join('')
       + '.' + Object.keys(L.hide).map(function (x) { return INITIAL[x]; }).join('') + '.' + (MAPS.map(function (m) { return m[0]; }).indexOf(L.map) + 1)
       + (L.top && L.top !== DEFAULT_TOP ? '.' + INITIAL[L.top] : '');
   }
@@ -122,11 +121,11 @@
   function touch() { clearTimeout(idleT); if (EDIT) idleT = setTimeout(function () { setEdit(false); toast('3분 동안 조작이 없어 편집을 끝냈습니다'); }, IDLE_MS); }
 
   function renderBadge() {
-    /* 휴대폰처럼 좁은 화면에선 배치 편집을 감춘다(2026-11-17) — 편집 창이 PC 폭 기준이라 깨져 보였고, 배치는 그 브라우저에만 저장되는 PC 화면용 */
+    /* 휴대폰처럼 좁은 화면에선 배치 편집을 감춘다 — 편집 창이 PC 폭 기준이라 깨져 보였고, 배치는 그 브라우저에만 저장되는 PC 화면용 */
     var narrow = window.innerWidth < 820;
     if (narrow && !EDIT) { if (window.cbFab) window.cbFab.slot('edit', []); if (badge) badge.style.display = 'none'; return; }
     if (badge) badge.style.display = 'flex';
-    /* 2026-11-17 — 오른쪽 아래 단추 묶음(float-tools.js)이 있으면 그 위에 아이콘만(✎ 배치 편집 · ↺ 사용자 배치 되돌리기) */
+    /* 오른쪽 아래 단추 묶음(float-tools.js)이 있으면 그 위에 아이콘만(✎ 배치 편집 · ↺ 사용자 배치 되돌리기) */
     if (window.cbFab) {
       var e1 = window.cbFab.btn('✎', EDIT ? '배치 편집 끝내기' : '배치 편집', function () { setEdit(!EDIT); });
       if (EDIT) { e1.style.background = '#e0930a'; e1.style.color = '#fff'; e1.style.borderColor = '#e0930a'; }
@@ -154,7 +153,7 @@
     EDIT = on; touch();
     if (!hud) { hud = $('div', 'position:fixed;left:50%;top:12px;transform:translateX(-50%);z-index:9450;display:none;max-width:min(96vw,980px);background:var(--surface,#fff);border:2px solid #e0930a;border-radius:14px;padding:12px 14px;color:var(--ink,#0f1b2d);font:600 13px/1.35 system-ui,sans-serif;box-shadow:0 12px 40px rgba(0,0,0,.28);user-select:none;'); document.body.appendChild(hud); }
     hud.style.display = on ? 'block' : 'none';
-    if (!on) clearMarks();   // ✎ 다시 누르기·3분 자동 종료도 [완료]처럼 테두리까지 지운다(2026-11-17 — 테두리만 남아 오류처럼 보였다)
+    if (!on) clearMarks();   // ✎ 다시 누르기·3분 자동 종료도 [완료]처럼 테두리까지 지운다(테두리만 남아 오류처럼 보였다)
     if (on) toast('편집 모드 · 3분 무조작 시 자동 종료');
     refresh();
   }

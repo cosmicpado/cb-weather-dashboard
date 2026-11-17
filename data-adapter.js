@@ -14,10 +14,9 @@
 
     var byName = {}; (SRC.regions||[]).forEach(function(r){ byName[r.name] = r; });
     // 관서 목록·별칭은 region.js에서. 지역이 바뀌면 그 파일만 갈아끼운다.
-    // (경기북부는 고양시를 고양·일산 두 관서로 나눠 11개, 경기남부는 21개 시군)
     var RC = (window.REGION_CONF||{});
-    var ORDER = RC.order || ['연천','파주','동두천','포천','양주','가평','일산','고양','의정부','남양주','구리'];
-    var ALIAS = RC.alias || {'일산':'고양'};   // 관서명 → 데이터상의 시군명
+    var ORDER = RC.order || ['청주동부','청주서부','충주','제천','보은','옥천','영동','증평','진천','괴산','음성','단양'];
+    var ALIAS = RC.alias || {};   // 관서명 → 데이터상의 시군명
     var stations = ORDER.map(function(nm){
       var src = byName[ALIAS[nm] || nm];
       if(!src) return { name:nm, sigun:nm, level:'normal' };
@@ -37,10 +36,8 @@
         feels: (own && own.feels != null) ? round(own.feels) : round(det.feels_like),
         cum1h: cum['1h']||0, cum3h: cum['3h']||0, cum6h: cum['6h']||0, cum12h: cum['12h']||0,
         // AWS 실측(기상청 공식 누적) — 자체누적(cum*)보다 신뢰도가 높다.
-        //  · 실측 격차 예: 남양주 12시간 자체 10.0mm vs AWS 27.0mm. 자체누적은 서버가 멈춘
-        //    시간을 0으로 빼먹어 '실제보다 적게' 나온다 → 호우에서 가장 나쁜 방향.
-        //  · 반드시 최상위 SRC.aws[nm]를 먼저 본다. det는 일산일 때 '고양'의 detail이라
-        //    det.aws를 먼저 보면 일산이 영영 고양 값에 묶인다(SRC.aws에는 일산 키가 따로 있음).
+        //  · 자체누적은 서버가 멈춘 시간을 0으로 빼먹어 '실제보다 적게' 나온다 → 호우에서 가장 나쁜 방향.
+        //  · 반드시 최상위 SRC.aws[nm](관서 고유 키)를 먼저 본다. det 는 별칭 관서면 소속 시군의 detail 이다.
         //  · 결측은 0이 아니라 null이다. rn60/rn12h가 null이면 '자료없음'으로 표시할 것.
         //  · ok:0 이면 그 관서 관측소가 전멸(rn* 키 자체가 없음), alt가 있으면 대체 관서 표기 필수.
         aws: (SRC.aws && SRC.aws[nm]) || det.aws || {},
@@ -95,15 +92,14 @@
     var damR = (SRC.rivers||[]).filter(function(r){ return r.dam_info; })[0] || null;
 
     // 홍수예보 발령 (한강홍수통제소 fldfct) — 평상시 빈 배열
-    var NORTH = (window.REGION_CONF||{}).floodKeywords || ['동두천','연천','포천','가평','고양','양주','의정부','파주','구리','남양주','일산','임진강','한탄강','신천','왕숙천','중랑천'];
+    var NORTH = (window.REGION_CONF||{}).floodKeywords || ['충청북도','충북','한강','금강','미호천','달천'];
     // ⚠ update_data.py fetch_flood_forecast()는 '소문자 키'로 내보낸다
     //   (kind/river/station/area/announce_time/forecast_time/current_level/north_match).
-    //   예전엔 원본 대문자(RVRNM·KIND·ANCDT…)를 읽어 전 항목이 빈 문자열이 됐고,
-    //   북부 판정까지 빈 글자 매칭으로 실패 → 홍수예보 '발령될 때만' 조용히 사라졌다.
+    //   원본 대문자(RVRNM·KIND·ANCDT…)를 읽으면 전 항목이 빈 문자열이 된다.
     var flood = (SRC.flood_forecast||[]).map(function(f){
       var river=f.river||'', obs=f.station||'', area=f.area||'';
       var txt = river + obs + area;
-      // 파이썬이 이미 북부 판정(north_match)을 해서 준다. 없을 때만 여기서 다시 계산.
+      // 파이썬이 이미 관할 판정(north_match)을 해서 준다. 없을 때만 여기서 다시 계산.
       var north = (typeof f.north_match === 'boolean') ? f.north_match
                 : NORTH.some(function(k){ return txt.indexOf(k) >= 0; });
       // ⚠ 'level' 이름 충돌 주의: 파이썬의 level은 심각도(severe/warning/info)이고,
@@ -135,7 +131,7 @@
         var g = v<=30 ? ['good','좋음'] : v<=80 ? ['normal','보통'] : v<=150 ? ['bad','나쁨'] : ['vbad','매우나쁨'];
         return Object.assign({}, p, { grade:g[0], gradeText:g[1], gradeAll:p.grade, gradeTextAll:p.gradeText }); }),
       messages: (SRC.messages||[]).map(function(m){ return { sender:m.sender, time:m.time, text:m.text, region:m.region }; }),
-      forecast: forecast, focusRegion: (RC.home || '동두천'),
+      forecast: forecast, focusRegion: (RC.home || '청주동부'),
       dam: damR ? { name: damR.name, info: damR.dam_info } : null,
       flood: flood, kmaImages: kmaImages,
       // 태풍 — 진행 중인 것만 온다. 없으면 빈 배열이 '정상'이다(1년의 대부분).
@@ -147,7 +143,7 @@
       // info_full·commentary — '기상정보·날씨해설' 카드(지방청 기상정보 본문 · 날씨해설 최신 1건)
       bulletins: { warnings_full: (SRC.bulletins && SRC.bulletins.warnings_full) || [], stn: (SRC.bulletins && SRC.bulletins.stn) || 131,
                    info_full: (SRC.bulletins && SRC.bulletins.info_full) || [], commentary: (SRC.bulletins && SRC.bulletins.commentary) || null },
-      // 물때(조석) — 파주 임진강 두포리(강화대교 예보 +2h). 없으면 null(파주 외엔 카드 미표시).
+      // 물때(조석) — 충청북도는 없음(null).
       tide: SRC.tide || null,
       sun: SRC.sun || null   // 한국천문연구원 출몰시각 {date, src, by:{관서:{rise,set}}}
     };

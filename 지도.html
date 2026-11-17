@@ -60,7 +60,7 @@ window.cbDemoTimes = function(list){
   [data-dash="warn"]{display:var(--ds-warn-d,flex)!important;} [data-dash="info"]{display:var(--ds-info-d,flex)!important;} [data-dash="msg"]{display:var(--ds-msg-d,flex)!important;}
   [data-dash="river"]{display:var(--ds-river-d,flex)!important;} [data-dash="hourly"]{display:var(--ds-hourly-d,block)!important;}
   [data-dash="fire"]{display:var(--ds-fire-d,flex)!important;} [data-dash="pm"]{display:var(--ds-pm-d,flex)!important;}
-  /* 위쪽 칸 고르기(2026-11-12) — 하천·산불·미세먼지는 위(상황도 옆)·아래(예보 오른쪽 열) 두 벌이 있고 고른 쪽만 보인다.
+  /* 위쪽 칸 고르기 — 하천·산불·미세먼지는 위(상황도 옆)·아래(예보 오른쪽 열) 두 벌이 있고 고른 쪽만 보인다.
      기본: 미세먼지가 위, 아래 오른쪽 열은 산불(위) + 하천(아래). 값은 dash_layout.js 가 --ds-<id>-top-d / -bot-d 로 준다. */
   [data-dash="river"][data-place="top"]{display:var(--ds-river-top-d,none)!important;}
   [data-dash="river"][data-place="bot"]{display:var(--ds-river-bot-d,flex)!important;}
@@ -85,6 +85,7 @@ window.cbDemoTimes = function(list){
 <script src="dash_layout.js"></script>
 <!-- 테스트2는 운영의 실시간 data.js를 직접 참조 (document.write는 dc-runtime 파싱과 충돌하므로 정적 로드) -->
 <script src="data.js"></script>
+<script src="data-guard.js"></script>
 <script src="data-adapter.js"></script>
 <script src="dashboard-data.js"></script>
 <script src="map-geo.js"></script>
@@ -99,7 +100,7 @@ window.cbDemoTimes = function(list){
     --border:#e4e9f2; --border2:#d3dbe9; --ink:#0f1b2d; --ink2:#4b5a74; --ink3:#5f6d85;   /* 2026-11-10 대비 4.0→5.3 (#71809a) */
     --brand:#2563eb; --brand2:#1d4ed8; --brandSoft:#e9f0ff; --cyan:#0e7490;
     --safe:#0a8058; --safeSoft:#e5f7f0;   /* 2026-11-10 글자 대비 2.9→4.6 (#0ea371) */ --caution:#e0930a; --cautionSoft:#fdf2df;
-    /* 산불 다소높음 노랑(2026-11-12) — 주의색(#e0930a)은 높음(주황)과 비슷해 보여 산불만 따로. 글자는 조금 진하게, 막대·견본은 밝게 */ --fireY:#b89200; --fireYBar:#f2c200;
+    /* 산불 다소높음 노랑 — 주의색(#e0930a)은 높음(주황)과 비슷해 보여 산불만 따로. 글자는 조금 진하게, 막대·견본은 밝게 */ --fireY:#b89200; --fireYBar:#f2c200;
     --warn:#ef6c1a; --warnSoft:#ffece0; --danger:#e5484d; --dangerSoft:#fdebec; --severe:#d42a2f; --severeSoft:#fbe3e3;
     --sh1:0 1px 2px rgba(16,27,45,.06); --sh2:0 8px 26px -12px rgba(16,27,45,.16),0 2px 6px -3px rgba(16,27,45,.07);
     --sh3:0 24px 56px -18px rgba(16,27,45,.30); --hexEmpty:#dde5f1; --headerBg:rgba(255,255,255,.82); --lblShadow:rgba(255,255,255,.8); --grid:rgba(16,27,45,.05);
@@ -125,14 +126,14 @@ window.cbDemoTimes = function(list){
   @keyframes dashFlow{ to{ stroke-dashoffset:-14 } }
   @keyframes dashSpin{ to{ transform:rotate(360deg) } }
   /* 산불 위험도 — 11개 시군을 6칸씩(6+5), 좁은 화면은 4칸씩 */
-  /* 시군 칸(4열) + 오른쪽 작은 전국 산불위험 지도(2026-11-12) */
+  /* 시군 칸(4열) + 오른쪽 작은 전국 산불위험 지도 */
   .fire-grid{ grid-template-columns:repeat(4, minmax(0,1fr)); }
   .fire-map{ flex:0 0 190px; }
   /* 칸 너비 기준(화면 너비가 아니라) — 위쪽 좁은 자리에 올려도 줄어든다 */
   [data-dash="fire"]{ container-type:inline-size; }
   @container (max-width:700px){ .fire-grid{ grid-template-columns:repeat(3, minmax(0,1fr)); } .fire-map{ flex-basis:165px; } }
   /* 휴대폰처럼 아주 좁으면 지도를 시군 칸 아래로 내려 가로 전체로 */
-  /* 위아래로 쌓을 땐 시군 칸 묶음이 가로 전체로 늘어나야 한다 — 전엔 글자 폭만큼만 차지해 오른쪽이 비었다(2026-11-12) */
+  /* 위아래로 쌓을 땐 시군 칸 묶음이 가로 전체로 늘어나야 한다 — 전엔 글자 폭만큼만 차지해 오른쪽이 비었다 */
   @container (max-width:520px){ .fire-body{ flex-direction:column; align-items:stretch !important; } .fire-left{ flex:0 0 auto !important; width:100%; } .fire-grid{ grid-template-columns:repeat(3, minmax(0,1fr)); grid-auto-rows:auto !important; } .fire-map{ align-self:center !important; width:100%; max-width:340px; flex:0 0 auto !important; } }
   @keyframes alertDrop{ 0%{ transform:translateY(-6px) scale(.98); opacity:0 } 100%{ transform:none; opacity:1 } }
   @keyframes dashPop{ 0%{ transform:scale(.96); opacity:0 } 100%{ transform:scale(1); opacity:1 } }
@@ -156,7 +157,7 @@ window.cbDemoTimes = function(list){
      라벨이 다 들어가지 않는다. 온도는 아래 관서 목록과 상세에서 볼 수 있다. */
   @media (max-width:640px){ .mapLbl.sm .lblT{ display:none; } }
   .leaflet-container{ background:transparent !important; }
-  /* 지도 칸의 층(Leaflet 400~1000)을 칸 안에 가둔다 — 안 그러면 위 머리줄(50)의 관서 고르기 목록을 덮었다(2026-11-17) */
+  /* 지도 칸의 층(Leaflet 400~1000)을 칸 안에 가둔다 — 안 그러면 위 머리줄(50)의 관서 고르기 목록을 덮었다 */
   [data-mapwrap]{ isolation:isolate; }
   /* 상황실(벽면) 모드 — 위험 시 화면 테두리가 경보색으로 맥동. dc-runtime이 인라인 animation을
      떨구므로 여기 스타일시트에 두고 wallCls 클래스만 토글한다. */
@@ -203,7 +204,7 @@ window.cbDemoTimes = function(list){
             <span style="width:6px; height:6px; border-radius:50%; background:var(--safe); animation:dashBlink 1.6s infinite;"></span>LIVE
           </span>
         </div>
-        <div style="font-size:13.5px; color:var(--ink3); margin-top:1px; white-space:nowrap;">{{scopeCountText}} 실시간 모니터링</div>
+        <div style="font-size:13.5px; color:var(--ink3); margin-top:1px; white-space:nowrap; display:flex; align-items:center; gap:6px; flex-wrap:wrap;">{{scopeCountText}} 실시간 모니터링 · <b style="color:var(--ink2);">자료 {{updHM}} 기준</b><sc-if value="{{dataLate}}" hint-placeholder-val="{{false}}"><span style="font-size:12.5px; font-weight:800; color:#fff; background:var(--severe); padding:1px 8px; border-radius:999px;">⚠ {{lateMin}}분째 갱신 안 됨</span></sc-if></div>
       </div>
     </div>
 
@@ -254,8 +255,8 @@ window.cbDemoTimes = function(list){
              배경을 채우면(brandSoft) 혼자 세 번째 스타일이 되어 과하게 튄다. -->
         <a href="{{boardHref}}" class="{{boardCls}}" title="재해별 집중 감시 — 🌧 호우 / ❄ 대설·한파 / 🔥 건조·산불 탭. 특보가 있으면 그 특보에 맞는 탭으로 열립니다" style="height:36px; padding:0 13px; border-radius:10px; border:1px solid var(--brand); background:var(--surface); color:var(--brand); font-size:14.5px; font-weight:800; font-family:inherit; text-decoration:none; display:flex; align-items:center; gap:6px; white-space:nowrap;">{{boardLabel}}</a>
         <a href="상황실.html" title="119종합상황실 화면 — 관할 전 관서를 차례로 표출(한 바퀴 약 3분 — 충북 12관서면 관서당 14초). 대형 화면에 띄우고 F11 전체화면으로 사용" style="height:36px; padding:0 13px; border-radius:10px; border:1px solid var(--brand); background:var(--surface); color:var(--brand); font-size:14.5px; font-weight:800; font-family:inherit; text-decoration:none; display:flex; align-items:center; gap:6px; white-space:nowrap;" style-hover="background:var(--surface2)">119종합상황실</a>
-        <!-- 유틸 4개(설명서·시연·경보음·테마)는 아이콘만, 오른쪽 끝 한 묶음 — 이동 링크(호우·상황실)와 구분
-             (2026-09-21 사장님 "아이콘으로만 해서 한쪽으로"). 뜻은 title(마우스 올리면)로. -->
+        <!-- 유틸 4개(설명서·시연·경보음·테마)는 아이콘만, 오른쪽 끝 한 묶음 — 이동 링크(호우·상황실)와 구분.
+             뜻은 title(마우스 올리면)로. -->
         <span style="display:inline-flex; align-items:center; gap:5px;">
         <span style="width:1px; height:22px; background:var(--border2); margin:0 4px;"></span>
         <!-- 📱 쉬운 화면(쉬운.html, 휴대폰용) 버튼은 내부망 배포에선 휴대폰 접속이 안 돼 숨겼다. 다시 쓰려면 이 자리에 쉬운.html 링크 버튼(style 은 utilBtnStyle, 글자 📱)을 넣는다. -->
@@ -382,7 +383,7 @@ window.cbDemoTimes = function(list){
                 <sc-for list="{{mapRegions}}" as="r" hint-placeholder-count="11">
                   <path d="{{r.d}}" fill="{{r.fill}}" stroke="{{r.stroke}}" stroke-width="{{r.strokeW}}" stroke-linejoin="round" opacity="{{r.pathOpacity}}" onClick="{{r.open}}" style="cursor:pointer; transition:fill .3s ease, opacity .3s ease, filter .15s ease;" style-hover="filter:brightness(0.93)"></path>
                 </sc-for>
-                <!-- 특보 펄스 링 제거: 작은 지역(구리 등)에서 링이 과도하게 퍼져 튀는 문제 → 특보는 지역 색·흰 테두리로만 표시 -->
+                <!-- 특보는 지역 색·흰 테두리로만 표시(펄스 링은 작은 지역에서 과하게 퍼져 쓰지 않는다) -->
               </g>
             </svg>
           </div>
@@ -816,7 +817,7 @@ window.cbDemoTimes = function(list){
 </div>
 </x-dc>
 <script>
-/* 위쪽 칸 고르기(2026-11-12) — 카드 정의는 한 곳에만 두고(고칠 때 한 번만), 런타임이 읽기 전에 한 벌 더 복사해 둔다.
+/* 위쪽 칸 고르기 — 카드 정의는 한 곳에만 두고(고칠 때 한 번만), 런타임이 읽기 전에 한 벌 더 복사해 둔다.
    하천 수위(위 원본) → 아래 2×2 자리, 산불 위험도·미세먼지(아래 원본) → 위쪽 자리.
    어느 쪽을 보일지는 dash_layout.js 의 CSS 변수가 정한다.
    ⚠ dc-runtime 은 시작 뒤 이 페이지 원문을 fetch(location.href)로 한 번 더 받아 틀을 갈아 끼운다.
@@ -850,33 +851,12 @@ class Component extends DCLogic {
     this.rootRef = React.createRef();
     this.mapRef = React.createRef();
     this.zoomRef = React.createRef();
-    this.POS = (window.REGION_CONF||{}).pos || {'연천':[2,0],'파주':[1,1],'동두천':[2,1],'포천':[3,1],'양주':[2,2],'가평':[4,2],'일산':[0,3],'고양':[1,3],'의정부':[2,3],'남양주':[3,3],'구리':[2,4]};
+    this.POS = (window.REGION_CONF||{}).pos || {};
     this.FB = { updated:'--', stations:[], rivers:[], warnings:[], prelim:[], fire:[], pm:[], messages:[], forecast:[], dam:null };
     // 관측소 정적 메타 (한강홍수통제소 API info 엔드포인트에서 확보한 공식 값 — 홍수 4단계·관할·주소·영점표고)
     // att=관심 wrn=주의 alm=경계 srs=심각 pfh=계획홍수위 (m) / gdt=영점표고 / fstn=홍수예보지점
-    // 지역마다 다른 값이라 region.js 에서 읽는다. 예전엔 여기에 충청북도 18개소만
-    // 손으로 박아 두어 경기남부는 상세가 빈약했다. 아래 목록은 폴백으로만 남긴다.
-    this.RIVER_META = ((typeof window!=='undefined'&&window.REGION_CONF)||{}).riverMeta || {
-      '1022668': {agc:'기후에너지환경부', addr:'충청북도 동두천시 송내동 송천교', gdt:57.033, att:3.4, wrn:4, alm:5, srs:5.8, pfh:6.5, fstn:true},
-      '1021650': {agc:'기후에너지환경부', addr:'충청북도 연천군 중면 횡산리 필승교', gdt:31, att:0.7, wrn:1, alm:7.5, srs:12, pfh:12.39, fstn:false},
-      '1022670': {agc:'기후에너지환경부', addr:'충청북도 연천군 청산면 대전리 신천교', gdt:27.429, att:3.5, wrn:4.8, alm:5.5, srs:6.7, pfh:6.7, fstn:true},
-      '1021680': {agc:'기후에너지환경부', addr:'충청북도 연천군 군남면 진상리 임진교', gdt:16.964, att:5.9, wrn:8.3, alm:10.8, srs:13.3, pfh:13.3, fstn:true},
-      '1022640': {agc:'기후에너지환경부', addr:'충청북도 포천시 영북면 자일리 용담교', gdt:92.13, att:9.5, wrn:13.7, alm:18, srs:22.3, pfh:22.3, fstn:false},
-      '1018638': {agc:'기후에너지환경부', addr:'충청북도 남양주시 다산동 왕숙교', gdt:10.336, att:4.9, wrn:6, alm:8, srs:9.7, pfh:9.7, fstn:true},
-      '1018665': {agc:'기후에너지환경부', addr:'충청북도 의정부시 의정부동 신곡교', gdt:33.058, att:2.6, wrn:5.1, alm:6, srs:7, pfh:7, fstn:true},
-      '1021701': {kind:'dam', agc:'한국수자원공사', addr:'충청북도 연천군 군남면 선곡리 606-2', pfh:40},
-      // ── 2026-07-23 추가분 (동일하게 info 엔드포인트에서 확보한 공식값) ──
-      '1013655': {agc:'기후에너지환경부', addr:'충청북도 가평군 가평읍 읍내리 가평교', gdt:50.857, att:2.8, wrn:4, alm:5, srs:6.2, pfh:6.2, fstn:true},
-      '1023660': {agc:'기후에너지환경부', addr:'충청북도 파주시 적성면 가월리 비룡대교 상류 좌안', gdt:5.428, att:8.9, wrn:11.5, alm:13.5, srs:16.5, pfh:16.5, fstn:true},
-      '1023670': {agc:'기후에너지환경부', addr:'충청북도 파주시 문산읍 마정리 통일대교', gdt:0.302, att:5.3, wrn:7.4, alm:9.5, srs:11.6, pfh:11.6, fstn:false},
-      '1019667': {agc:'기후에너지환경부', addr:'충청북도 고양시 덕양구 원당동 원당교', gdt:20.803, att:1.6, wrn:2.5, alm:3, srs:3.7, pfh:3.7, fstn:true},
-      '1018661': {agc:'기후에너지환경부', addr:'충청북도 양주시 마전동 마전3교', gdt:44.893, att:3.7, wrn:4.5, alm:5.4, srs:6.3, pfh:6.3, fstn:false},
-      '1022647': {agc:'기후에너지환경부', addr:'충청북도 포천시 군내면 구읍리 포천대교', gdt:87.074, att:4.3, wrn:6.1, alm:7.4, srs:8.7, pfh:8.7, fstn:true},
-      '1018666': {agc:'기후에너지환경부', addr:'충청북도 의정부시 신곡동 금신교', gdt:33.952, att:4.4, wrn:5.4, alm:6.5, srs:7.6, pfh:7.6, fstn:false},
-      '1015310': {kind:'dam', agc:'한국수력원자력', addr:'충청북도 가평군 설악면 유명로 2630', pfh:52},
-      '1017310': {kind:'dam', agc:'한국수력원자력', addr:'충청북도 남양주시 조안면 다산로 320', pfh:27},
-      '1022701': {kind:'dam', agc:'한국수자원공사', addr:'충청북도 연천군 연천읍 고문리', pfh:114.4}
-    };
+    // 관측소 목록은 region.js riverMeta 에서 읽는다.
+    this.RIVER_META = ((typeof window!=='undefined'&&window.REGION_CONF)||{}).riverMeta || {};
     // 상황실 모드 — URL ?wall=1(전역 개요) / ?wall=2(관서별 순차 상황판). 벽면 기본 다크(테마 토글 가능).
     const _wp = (function(){ try{ return new URLSearchParams(location.search).get('wall'); }catch(e){ return null; } })();
     const _wall = _wp !== null;
@@ -910,22 +890,20 @@ class Component extends DCLogic {
       openRiskTypes: {},
       myStation: (function(){ var RC=(window.REGION_CONF||{}); var h=null;
         try{ h=(RC.hostHome||{})[location.hostname.split('.')[0]]; }catch(e){}
-        h=h||RC.home||'동두천'; try{ var sv=(typeof localStorage!=='undefined' && localStorage.getItem('ggMyStation')) || h;
+        h=h||RC.home||'청주동부'; try{ var sv=(typeof localStorage!=='undefined' && localStorage.getItem('ggMyStation')) || h;
           /* 전국판: 다른 시도에서 고른 관서 이름이 남아 있으면 이 시도 기본 관서로 */
           /* 시도 전체('충청북도', warnOrder[0])도 고를 수 있다 — 관서 목록엔 없지만 유효한 값 */
           if(RC.order && RC.order.length && RC.order.indexOf(sv)<0 && sv!==(RC.warnOrder||[])[0]) sv=h; return sv; }catch(e){ return h; } })(),
-      /* 마지막에 고른 권역을 기억한다. 저장된 값이 지금 지역에 없는 권역이면(예: 북부
-         전용 사이트에서 옛 값이 남아 있으면) 전체로 되돌린다. */
+      /* 마지막에 고른 권역을 기억한다. 저장된 값이 지금 지역에 없는 권역이면 전체로 되돌린다. */
       scope: (function(){ var RC=(window.REGION_CONF||{}), g=RC.scopes||null; if(!g) return '전체';
         try{ var v=(typeof localStorage!=='undefined') && localStorage.getItem('ggScope');
           if(v && (v==='전체' || g[v])) return v; }catch(e){}
-        /* 저장된 선택이 없으면 접속 주소의 권역이 기본 — 북부 주소는 북부부터(hostScope) */
+        /* 저장된 선택이 없으면 접속 주소의 권역이 기본(hostScope) */
         try{ var hs=(RC.hostScope||{})[location.hostname.split('.')[0]]; if(hs && g[hs]) return hs; }catch(e){}
         return '전체'; })(),
       stationPickerOpen: (function(){ try{ if(sessionStorage.getItem('ggPickerOpen')==='1'){ sessionStorage.removeItem('ggPickerOpen'); return true; } }catch(e){} return false; })()
     };
-    /* 권역이 정해져 있는데 보던/기본 관서가 그 권역에 없으면 권역 첫 관서로 — 전체판은 기본 관서가 수원인데 저장된 권역이
-       북부면 버튼엔 '수원', 자료는 고양이 되던 어긋남(2026-09-21) */
+    /* 권역이 정해져 있는데 보던/기본 관서가 그 권역에 없으면 권역 첫 관서로(버튼과 자료가 어긋나지 않게) */
     (function(self){ var RC=(window.REGION_CONF||{}), g=RC.scopes||{}, sc=self.state.scope;
       if(sc && sc!=='전체' && g[sc] && g[sc].indexOf(self.state.myStation)<0) self.state.myStation=g[sc][0]; })(this);
   }
@@ -1181,8 +1159,8 @@ class Component extends DCLogic {
   }
   nowSummaryBody(d){
     var R=React.createElement;
-    var ms=(this.state&&this.state.myStation)||(window.REGION_CONF||{}).home||'동두천';
-    var s=(d.stations||[]).find(function(x){ return x.name===ms; }) || (d.stations||[]).find(function(x){ return x.name===((window.REGION_CONF||{}).home||'동두천'); }) || (d.stations||[])[0] || {};
+    var ms=(this.state&&this.state.myStation)||(window.REGION_CONF||{}).home||'청주동부';
+    var s=(d.stations||[]).find(function(x){ return x.name===ms; }) || (d.stations||[]).find(function(x){ return x.name===((window.REGION_CONF||{}).home||'청주동부'); }) || (d.stations||[])[0] || {};
     var obs=s.obs||{};
     var num=function(v,dd){ return (v!=null && !isNaN(v)) ? (+v).toFixed(dd==null?0:dd) : '-'; };
     var chip=function(label,val,unit,sub){ return R('div',{style:{flex:'1 1 0', minWidth:'66px', background:'var(--surface2)', border:'1px solid var(--border)', borderRadius:'12px', padding:'9px 8px', textAlign:'center'}},
@@ -1313,7 +1291,7 @@ class Component extends DCLogic {
       R('div',{style:{display:'flex',gap:'8px',marginTop:'16px',flexWrap:'wrap'}},
         R('a',{href:x.url,target:'_blank',rel:'noopener',style:{flex:'1 1 200px',display:'flex',alignItems:'center',justifyContent:'center',padding:'10px',borderRadius:'10px',border:'1px solid var(--border)',background:'var(--surface2)',color:'var(--brand)',fontSize:'14.5px',fontWeight:800,textDecoration:'none'}}, '🌐 날씨누리에서 원문 보기 ↗')));
   }
-  /* 재난문자 창 — 문자를 누르면 국민재난안전포털 재난문자 목록(충청북도로 거른 것)을 새 창으로(2026-11-12).
+  /* 재난문자 창 — 문자를 누르면 국민재난안전포털 재난문자 목록(충청북도로 거른 것)을 새 창으로.
      포털에 문자 한 건으로 바로 가는 주소는 없다(목록에 전문이 다 나온다). 시군 거르기 코드는 포털이 따로 불러와 충북 전체로. */
   msgBody(m){ var R=React.createElement, url='https://www.safekorea.go.kr/safekorea-kor/ctim/cmsg/calamitySms.do?menuSn=34&currentPage=1&readYn=Y&sbLawArea1=4300000000&sbLawArea2=&firstYn=N';
     return R('div',{},
@@ -1362,10 +1340,10 @@ class Component extends DCLogic {
   working(){ const b=this.getData(); return this.scoped(this.state.demo ? this.demoTimes(this.applyDemo(b)) : b); }
   /* 시연 특보·재난문자 시각을 지금 기준으로 — cbDemoTimes(아래 함수 설명) */
   demoTimes(c){ if(c && !c.__dt){ try{ window.cbDemoTimes((c.warnings||[]).concat(c.messages||[])); }catch(e){} c.__dt=1; } return c; }
-  /* 권역 필터 — 화면 위에서 '충청북도/경기남부'를 고르면 그 권역만 남긴다.
+  /* 권역 필터 — region.js 에 scopes(권역)가 있으면 고른 권역만 남긴다.
      여기 한 곳에서 거르면 지도·관서목록·상단요약·특보·하천·미세먼지가 모두 따라온다
      (모든 화면이 working() 을 거쳐 데이터를 읽는다).
-     region.js 에 scopes 가 없는 지역(충청북도·남부 전용 사이트)은 그대로 통과한다. */
+     scopes 가 없으면(충청북도) 그대로 통과한다. */
   scoped(d){
     const RC=(window.REGION_CONF||{}), sc=this.state.scope;
     const g=RC.scopes;
@@ -1453,14 +1431,11 @@ class Component extends DCLogic {
   }
 
   riverLevel(r){ if(r.danger!=null && r.value>=r.danger) return 'danger'; if(r.warning!=null && r.value>=r.warning) return 'warning'; return 'safe'; }
-  /* 관서별 하천 추리기. 예전엔 이름 문자열 매칭(r.name.includes(관서명))이었는데
-     '양주'가 '남양주'에도 걸려, 남양주 하천(왕숙교·팔당댐)이 양주 관서에 뜨는 충돌이 있었다.
-     이제 서버가 sigun을 명시해 준다. sigun이 없는 옛 데이터만 이름 매칭으로 폴백. */
+  /* 관서별 하천 추리기. 서버가 붙여 주는 sigun 으로 고르고, sigun 이 없는 자료만 이름 매칭으로 찾는다
+     (이름 포함 매칭은 짧은 시군명이 긴 시군명 안에 걸릴 수 있어 마지막 수단). */
   riversOf(rivers, sigun, office){
-    /* 소방서가 시(市)를 나눠 맡는 곳은 시군으로 고르면 안 된다.
-       예: 송탄소방서에 평택 도심 안성천 군문교가 '관할'로 뜨고, 성남소방서에
-       분당구 궁내교가 뜬다(2026-08-19 사장님 지적). region.js 의 riverCodes 가
-       그런 관서만 관측소 코드로 직접 지정한다. 표에 없는 관서는 지금처럼 시군으로. */
+    /* 한 시를 나눠 맡는 관서는 시군으로 고르면 남의 관할 하천까지 섞인다.
+       region.js 의 riverCodes 가 그런 관서만 관측소 코드로 직접 지정하고, 나머지는 시군으로 고른다. */
     const _rc=((window.REGION_CONF||{}).riverCodes)||{};
     if(office && _rc[office]) {
       const _set=_rc[office];
@@ -1501,15 +1476,14 @@ class Component extends DCLogic {
       return { ...s, x:+x.toFixed(1), y:+y.toFixed(1), ...hs,
         tempTxt:this.fmtNum(s.temp,1), title:s.name+' 관서 · '+this.fmtNum(s.temp,1)+'°',
         accent:this.cvar(s.level==='danger'?'danger':s.level==='warning'?'warning':'safe'),
-        isG:(s.name===((this.state&&this.state.myStation)||(window.REGION_CONF||{}).home||'동두천')),
+        isG:(s.name===((this.state&&this.state.myStation)||(window.REGION_CONF||{}).home||'청주동부')),
         open:()=>this.focusRegion(s.name, true) };
     });
   }
 
   /* 권역을 고르면 그 권역만 감싸는 지도 틀(x y w h)을 돌려준다. 없으면 null.
      틀(viewBox)과 상자 비율(aspect-ratio)이 반드시 같은 값을 써야 한다 —
-     하나만 좁히면 남는 쪽에 빈칸이 생긴다(2026-08-20 사장님 지적: 북부 선택 시
-     지도 아래 540px 공백). 그래서 계산을 여기 한 곳에 둔다. */
+     하나만 좁히면 남는 쪽에 빈칸이 생긴다. 그래서 계산을 여기 한 곳에 둔다. */
   scopeBox(){
     const geo=(typeof window!=='undefined'&&window.MAPGEO)?window.MAPGEO:null;
     if(!geo||!geo.regions) return null;
@@ -1538,13 +1512,11 @@ class Component extends DCLogic {
     const by={}; (stations||[]).forEach(s=>by[s.name]=s);
     // 지도 색은 '실제 발효특보(warnings)' 기준 — 강수량이 아님. 특보 없으면 평상(흰색).
     const D=this.working(); const warnLv={};
-    // ⚠ 지역명 정규화는 _canonRegion 사용. 순진하게 '시$|군$'만 떼면 '파주시동북부'처럼
-    //   시가 중간에 있고 뒤에 방위(동북부/남부)가 붙는 특보구역은 그대로 남아 관서명('파주')과
-    //   안 맞아 지도에 색이 안 뜬다(파주만 폭염주의보가 방위별로 발효돼 이 버그에 걸렸음).
+    // ⚠ 지역명 정규화는 _canonRegion 사용. '시$|군$'만 떼면 'OO시동부'처럼 뒤에 방위가 붙는
+    //   특보구역이 관서명과 안 맞아 지도에 색이 안 뜬다.
     (D.warnings||[]).forEach(w=>{ const wl=(w.level==='severe'||String(w.type||'').indexOf('경보')>=0)?'danger':'warning'; String(w.area||'').split(/[,·\/]/).forEach(a=>{ const n=this._canonRegion(a); if(n && warnLv[n]!=='danger') warnLv[n]=wl; }); });
     /* 권역을 고르면 그 권역 관서만 그린다. by 는 이미 걸러진 stations 로 만들었으므로
-       거기 없는 지역은 지도에서도 뺀다(충청북도를 골랐는데 남부가 그려지면 안 된다).
-       권역 필터가 없는 지역(북부·남부 전용 사이트)에서는 by 에 전 관서가 있어 그대로다. */
+       거기 없는 지역은 지도에서도 뺀다. 권역이 없으면(충청북도) by 에 전 관서가 있어 그대로다. */
     const _sc=this.state.scope, _hasScope=!!((window.REGION_CONF||{}).scopes) && _sc && _sc!=='전체';
     return geo.regions.filter(g=> !_hasScope || by[g.name]).map(g=>{
       const s=by[g.name]||{};
@@ -1555,7 +1527,7 @@ class Component extends DCLogic {
       const fill=lv==='danger'?'var(--severe)':lv==='warning'?'var(--warn)':'var(--mapFill)';
       const ring=lv==='danger'?'var(--severe)':'var(--warn)'; const cnt=rc[g.name]||0;
       // 라벨 배율 — 작은 지역일수록 작게. 지도 전체 크기 대비 상대값이라
-      // 지역(북부/남부)이 달라도 같은 규칙이 통한다. 0.6 아래로는 안 줄인다(가독성).
+      // 지도가 달라도 같은 규칙이 통한다. 0.6 아래로는 안 줄인다(가독성).
       const area=Math.sqrt(Math.max(1,(g.bw||120)*(g.bh||120)));
       const ref=Math.sqrt(geo.W*geo.H)/7.4;      // 지도 크기 대비 '보통 크기 지역'
       const lblScale=Math.max(0.6, Math.min(1, Math.sqrt(area/ref))).toFixed(3);
@@ -1703,16 +1675,7 @@ class Component extends DCLogic {
     const warnsRB=(d.warnings||[]).filter(w=>this._areaHits(w.area, sg));
     const pm=(d.pm||[]).find(p=>p.region===f)||(d.pm||[]).find(p=>p.region===sg);   // 청주서부는 자기 측정소
     const fire=(d.fire||[]).find(z=>(z.region||'').includes(sg));
-    let detail=this.regionBody(s, nearRB, msgs, warnsRB, pm, fire);
-    // 파주 등 서해 조석영향 관서: 물때 카드를 상세 최상단에 삽입.
-    //   만조+호우 겹침 경고는 '지금 대응' 신호에만 — 실측 강수>0, 인근 하천 주의+,
-    //   호우/홍수/풍랑/해일 특보. (날씨 '비' 표시만으로는 0mm 이슬비도 잡혀 과경보)
-    const _obs = s.obs||{};
-    const _rainNow = ((_obs.rn1!=null?_obs.rn1:s.rain)||0) > 0;
-    const _riverWarn = nearRB.some(r=>{ const lv=this.riverLevel(r); return lv==='warning' || lv==='danger'; });
-    const _warnRain = (warnsRB||[]).some(w=> /호우|홍수|풍랑|해일/.test(String(w.type||'')));
-    const tideEl = this.tideCard(d.tide, f, {rainy:(_rainNow||_warnRain), riverWarn:_riverWarn});
-    if(tideEl) detail = React.createElement('div',{}, tideEl, detail);
+    const detail=this.regionBody(s, nearRB, msgs, warnsRB, pm, fire);
     return { name:f, status, stats, risks, riskGroups, rivers:near, warns:fw, riskTotal:risks.length, riskHi:hi, detail };
   }
   toggleRiskType(t){ const o=Object.assign({}, this.state.openRiskTypes); o[t]=!o[t]; this.setState({openRiskTypes:o}); }
@@ -1757,12 +1720,12 @@ class Component extends DCLogic {
   }
   _areaHits(area, name){
     // 특보 지역 문자열에 이 관서가 들어 있나 — 낱말(쉼표 조각) 단위 + _canonRegion 으로 판정.
-    // 글자 포함(includes)은 '양주'가 '남양주'에, 인천 '동구'가 '남동구'에, 부산 '서구'가 '강서구'에 걸렸다.
+    // 글자 포함(includes)은 짧은 이름이 긴 이름 안에 걸린다('동구'가 '남동구'에).
     var RC=window.REGION_CONF||{}, wide=(RC.warnOrder||[])[0]||'충청북도', g=RC.scopes||{}, alias=RC.alias||{};
     var me=this._canonRegion(name), self=this;
     return String(area||'').split(/[,·\/()]/).some(function(p){
       p=p.trim(); if(!p) return false; if(p.indexOf('전역')>=0) return true;
-      // 전체판(권역이 있는 화면)에서 '충청북도' 같은 권역 표기는 그 권역 관서에만 — 남부 카드에 북부 특보가 뜨지 않게
+      // 권역이 있는 화면에서 권역 표기 특보는 그 권역 관서에만 붙인다
       if(g[p]) return g[p].some(function(n){ return n===name || (alias[n]||n)===name; });
       var c=self._canonRegion(p); return c===wide || c===me;
     });
@@ -1771,7 +1734,7 @@ class Component extends DCLogic {
     var n=String(name||'').trim();
     if(!n) return null;
     var RC=window.REGION_CONF||{}, UNITS=RC.order||[];
-    if(n==='충청북도'||n==='충청북도'||n==='수도권'||n==='경기') return '충청북도';
+    if(n==='충청북도') return '충청북도';
     var ZONE={'울릉도.독도':'울릉', '흑산도.홍도':'신안', '서해5도':'옹진', '백령도.대청도':'옹진', '연평도.우도':'옹진'};   // 섬 특보구역 → 관서(시도 전역이 아님)
     if(ZONE[n]) return ZONE[n];
     if((RC.wideNames||[]).indexOf(n)>=0) return (RC.warnOrder||[])[0]||n;   // 시도 전역 표기('강원도'·'충청북도') → 표시명
@@ -1784,8 +1747,8 @@ class Component extends DCLogic {
   }
   groupWarns(raw){
     // 같은 종류(종류+등급)의 특보를 한 줄로 묶고, 지역을 시군 단위로 중복 제거해 합친다.
-    // 묶음형("충청북도, 동두천, …")과 개별형("고양시")이 섞여 15건씩 뜨던 걸 종류별 1줄로.
-    var ORDER=(window.REGION_CONF||{}).warnOrder || ['충청북도','연천','파주','동두천','포천','양주','가평','고양','의정부','남양주','구리'];
+    // 묶음형("충청북도, 청주, …")과 개별형("충주시")이 섞여 들어와도 종류별 1줄로.
+    var ORDER=(window.REGION_CONF||{}).warnOrder || ['충청북도','청주동부','청주서부','충주','제천','보은','옥천','영동','증평','진천','괴산','음성','단양'];
     var self=this, groups={}, order=[];
     (raw||[]).forEach(function(w){
       var type=String(w.type||'').trim(); if(!type) return;
@@ -1863,7 +1826,7 @@ class Component extends DCLogic {
 
     // ── 존B1: 11관서 레일 ──
     const byName={}; stations.forEach(s=>byName[s.name]=s);
-    const railItems=((window.REGION_CONF||{}).order || ['연천','파주','동두천','포천','양주','가평','일산','고양','의정부','남양주','구리']).map(nm=>byName[nm]).filter(Boolean);
+    const railItems=((window.REGION_CONF||{}).order || ['청주동부','청주서부','충주','제천','보은','옥천','영동','증평','진천','괴산','음성','단양']).map(nm=>byName[nm]).filter(Boolean);
     const zoneB1=R('div',{style:{width:'15%', minWidth:'148px', display:'flex', flexDirection:'column', gap:'5px'}},
       railItems.map((s,i)=>{ const w=regWarnOf(s); const lv=s.level||'normal'; const col=lv==='danger'?'var(--severe)':lv==='warning'?'var(--warn)':(w?'var(--caution)':'var(--safe)');
         return R('div',{key:i, style:{flex:'1 1 0', minHeight:0, display:'flex', alignItems:'center', gap:'7px', background:'var(--surface)', border:'1px solid var(--border)', borderLeft:'4px solid '+col, borderRadius:'10px', padding:'0 9px'}},
@@ -1943,19 +1906,14 @@ class Component extends DCLogic {
         R('div',{style:{fontSize:'14px', fontWeight:700, color:'var(--ink2)', textAlign:'center'}}, im[1]),
         R('div',{style:{flex:1, minHeight:0, borderRadius:'10px', overflow:'hidden', border:'1px solid var(--border)', background:'var(--surface2)'}}, R('img',{src:imgSrc(im[0]), alt:im[1], style:{width:'100%', height:'100%', objectFit:'cover', display:'block'}})))));
     }
-    if(idx===3){ // 시간대별 예보 + 물때
+    if(idx===3){ // 시간대별 예보
       const fc=(d.forecast||[]).slice(0,10);
-      const tide=d.tide;
       return R('div',{style:{display:'flex', gap:'12px', height:'100%'}},
         R('div',{style:{flex:3, display:'flex', gap:'6px', minWidth:0}}, fc.map((f,i)=>R('div',{key:i, style:{flex:'1 1 0', minWidth:0, background:'var(--surface2)', border:'1px solid var(--border)', borderRadius:'10px', padding:'6px 2px', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'2px'}},
           R('div',{style:{fontSize:'14px', color:'var(--ink3)', fontWeight:700}}, i===0?'지금':f.hour),
           R('div',{style:{fontSize:'22px'}}, f.icon),
           R('div',{style:{fontSize:'clamp(15px,1.4vw,20px)', fontWeight:800, color:'var(--ink)'}}, (f.temp!=null?Math.round(f.temp)+'°':'')),
-          R('div',{style:{fontSize:'13px', color:'var(--brand)', fontWeight:700}}, (f.rain>0?f.rain+'mm':'')) ))),
-        tide?R('div',{style:{flex:1, minWidth:'160px', background:'var(--surface2)', border:'1px solid var(--border)', borderRadius:'11px', padding:'8px 12px', display:'flex', flexDirection:'column', justifyContent:'center'}},
-          R('div',{style:{fontSize:'14px', fontWeight:800, color:'var(--ink2)'}}, '🌊 파주 물때(두포리)'),
-          R('div',{style:{fontSize:'14px', color:'var(--ink3)', marginTop:'2px'}}, (tide.mulddae||tide.spring+'물때')+(tide.lunar?(' · 음력 '+tide.lunar):'')),
-          R('div',{style:{display:'flex', flexWrap:'wrap', gap:'4px 10px', marginTop:'5px'}}, (tide.events||[]).map((e,i)=>R('span',{key:i, style:{fontSize:'15px', fontWeight:700, color:(e.kind==='high'?'var(--brand)':'var(--ink2)')}}, (e.kind==='high'?'▲':'▼')+e.dupo)))):null);
+          R('div',{style:{fontSize:'13px', color:'var(--brand)', fontWeight:700}}, (f.rain>0?f.rain+'mm':'')) ))));
     }
     // idx===4: 기상 해설
     const wi=d.weatherInfo, mf=d.midForecast;
@@ -1996,7 +1954,7 @@ class Component extends DCLogic {
     const fmtM=m=>m==null?'-':(p2(Math.floor(m/60)%24)+':'+p2(m%60));
     const C={safe:'var(--safe)',caution:'var(--caution)',warn:'var(--warn)',severe:'var(--severe)'};
     const CSFT={safe:'var(--safeSoft)',caution:'var(--cautionSoft)',warn:'var(--warnSoft)',severe:'var(--severeSoft)'};
-    const ORDER=(window.REGION_CONF||{}).order || ['연천','파주','동두천','포천','양주','가평','일산','고양','의정부','남양주','구리'];
+    const ORDER=(window.REGION_CONF||{}).order || ['청주동부','청주서부','충주','제천','보은','옥천','영동','증평','진천','괴산','음성','단양'];
     const idx=(this.state.wallStn||0)%ORDER.length, f=ORDER[idx], nextF=ORDER[(idx+1)%ORDER.length];
     // 순환 진행률(0~100%) — 경과시간 기반(노드 재생성돼도 정확). 매초 재렌더라 1초 단위로 차오름.
     const _st0 = this._stnStart || Date.now();
@@ -2190,8 +2148,8 @@ class Component extends DCLogic {
     const _RCw = window.REGION_CONF||{}, WIDE = (_RCw.warnOrder||[])[0] || '';
     const isWide = !!WIDE && st.myStation===WIDE;
     const pickLabel = isWide ? WIDE : (st.myStation || _RCw.home || '');
-    const myStation = isWide ? (_RCw.home || '') : (st.myStation || _RCw.home || '동두천');
-    const myS = (d.stations||[]).find(x=>x.name===myStation) || (d.stations||[]).find(x=>x.name===((window.REGION_CONF||{}).home||'동두천')) || {};
+    const myStation = isWide ? (_RCw.home || '') : (st.myStation || _RCw.home || '청주동부');
+    const myS = (d.stations||[]).find(x=>x.name===myStation) || (d.stations||[]).find(x=>x.name===((window.REGION_CONF||{}).home||'청주동부')) || {};
     const mySg = myS.sigun || myStation;
     const myFc = (myS.forecast && myS.forecast.length) ? myS.forecast : (d.forecast||[]);
     // clock
@@ -2212,8 +2170,8 @@ class Component extends DCLogic {
     // 하천 카드: 선택 관서 인근(하천명에 시군 포함) 먼저 + 그 안에서 위험 근접순(stable)
     const rivers = riversByRisk.slice().sort((a,b)=> (a.near?0:1)-(b.near?0:1));
     // 카드에 실제로 보이는 행 — 기본 8행. 우선순위: 주의 이상 → 내 관할(riversOf: sigun·riverCodes 기준,
-    // 이름 포함 매칭은 '양주'가 '남양주'에 걸려 못 쓴다) → 상단바 감시 지점(topRivers) → 위험 근접순.
-    // 같은 관측소가 여러 관서에 복제된 행(남부 충훈1교×4)은 코드 기준으로 한 번만.
+    // 이름 포함 매칭은 쓰지 않는다) → 상단바 감시 지점(topRivers) → 위험 근접순.
+    // 같은 관측소가 여러 관서에 복제된 행은 코드 기준으로 한 번만.
     // (시도판은 관측소가 55~72곳이라 전부 나열하면 페이지 절반이 하천 목록이었다)
     const _RM = this.RIVER_META || {};
     const _mineSet = new Set(this.riversOf(d.rivers||[], mySg, myStation).map(r=>String(r.code)+'|'+String(r.sigun||'')));
@@ -2359,8 +2317,8 @@ class Component extends DCLogic {
     const _mineRivers = riversByRisk.filter(r => _isMine(r) && !_isDamRow(r));
     const worstRiver = _mineRivers[0] || riversByRisk.find(r => !_isDamRow(r)) || riversByRisk[0];
     const _wrScope = _mineRivers.length ? '관할' : '전역';
-    // 최고수위 하천의 지점 축약명 (예: "임진강 (군남댐)" → "군남댐", "임진강 (연천 필승교)" → "필승교", "양주 마전3교" → "마전3교")
-    // 괄호 안이 시군 이름뿐이면('신천 (연천)') 지점명이 없는 것 → 하천 이름을 쓴다(상황실 shortRiver 와 같은 규칙)
+    // 최고수위 하천의 지점 축약명 (예: "미호천 (청주 석화)" → "석화", "남한강 (충주댐)" → "충주댐")
+    // 괄호 안이 시군 이름뿐이면('달천 (충주)') 지점명이 없는 것 → 하천 이름을 쓴다(상황실 shortRiver 와 같은 규칙)
     const _wrPlace = worstRiver ? (function(nm){ var s0=String(nm||''); var m=s0.match(/^\s*([^(]+?)\s*\(([^)]+)\)/); if(!m) return s0.trim().split(' ').pop();
       var ws=m[2].trim().split(/\s+/); var last=ws[ws.length-1]; var RC=window.REGION_CONF||{}; var units=(RC.order||[]).concat(Object.values(RC.alias||{}));
       if(ws.length===1 && (units.indexOf(last)>=0 || last===mySg)) return m[1].trim(); return last; })(worstRiver.name) : '';
@@ -2399,9 +2357,7 @@ class Component extends DCLogic {
     const fdata = this.focusData(d);
     const rpins = this.riskPins();
     // 지도 영역 비율 — 지도 파일의 실제 viewBox에서 가져온다.
-    // 지역마다 지도 모양이 다르다(충청북도는 세로로 긺, 경기남부는 가로로 넓음).
-    // 예전엔 1000/1030(북부 모양)이 박혀 있어, 남부 지도를 세로로 긴 틀에 넣느라
-    // 위아래 여백만 생기고 지도는 작게 그려졌다.
+    // 지도 모양에 맞춰 틀 비율을 정한다(고정값이면 여백만 생기고 지도가 작게 그려진다).
     const _mg = (typeof window!=='undefined' && window.MAPGEO) ? window.MAPGEO : null;
     /* 상자 비율 — 권역이 걸려 있으면 그 권역 틀의 비율. viewBox 와 같은 값이어야 한다. */
     const _sb = this.scopeBox();
@@ -2428,6 +2384,10 @@ class Component extends DCLogic {
       //   (update_data.py의 deploy_decision). 전엔 15분이라 평상시에도 배지가 떠서 오경보였다.
       //   평소 최악: 배포간격 40분 + 수집시간 3분 + 배포반영 2분 ≈ 45분. 딱 45로 잡으면
       //   경계에서 깜빡이므로 5분 여유를 뒀다. 배포 주기를 당기면 이 값도 같이 내릴 것.
+      /* 맨 위 제목 아래 '자료 HH:MM 기준' — 휴대폰에서도 바로 보이게. 수집은 5분마다라 15분 넘게 그대로면 빨간 경고 */
+      updHM:(String(d.updated||'').match(/(\d{2}:\d{2})/)||[,'--:--'])[1],
+      lateMin:(function(){ try{ var m=String(d.updated||'').match(/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})/); if(!m) return 0; return Math.max(0,Math.round((n-new Date(+m[1],+m[2]-1,+m[3],+m[4],+m[5]))/60000)); }catch(e){ return 0; } })(),
+      dataLate:(function(){ try{ var m=String(d.updated||'').match(/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})/); if(!m) return false; return (n-new Date(+m[1],+m[2]-1,+m[3],+m[4],+m[5]))>15*60*1000; }catch(e){ return false; } })(),
       dataStale:(function(){ try{ var m=String(d.updated||'').match(/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})/); if(!m) return false; var t=new Date(+m[1],+m[2]-1,+m[3],+m[4],+m[5]); return (n-t)>50*60*1000; }catch(e){ return false; } })(),
       staleTxt:(function(){ try{ var m=String(d.updated||'').match(/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})/); if(!m) return ''; var t=new Date(+m[1],+m[2]-1,+m[3],+m[4],+m[5]); return '⚠ '+Math.round((n-t)/60000)+'분째 갱신 없음'; }catch(e){ return ''; } })(),
       heroCols, rightDisplay, rightCols, riverCardStyle, riverBodyStyle, chipsWrapStyle,
@@ -2506,8 +2466,7 @@ class Component extends DCLogic {
       mapLegend:[ {label:'평상', color:'var(--mapFill)'}, {label:'주의보', color:'var(--warn)'}, {label:'경보', color:'var(--severe)'} ],
       // focus zoom + risk zones
       focus:st.focus, noFocus:!st.focus,
-      // 지도 영역 비율 = 실제 지도 파일의 viewBox 비율. 지역마다 지도 모양이 달라
-      // (북부는 세로로 김, 남부는 가로로 넓음) 고정값을 쓰면 한쪽이 반드시 찌그러진다.
+      // 지도 영역 비율 = 실제 지도 파일의 viewBox 비율(고정값을 쓰면 지도가 찌그러진다).
       mapAR: _mapAR,
       mapCardStyle: 'background:var(--surface); border:1px solid var(--border); border-radius:18px; box-shadow:var(--sh2); overflow:hidden;' + (st.focus?' display:flex; flex-direction:column;':''),
       mapWrapStyle: 'position:relative; background:var(--mapBg); border-radius:14px; margin:0 6px 2px; padding:12px 10px;' + (st.focus?' flex:1 1 auto; min-height:0;':''),
@@ -2540,7 +2499,7 @@ class Component extends DCLogic {
       wxInfoListUrl:'https://www.weather.go.kr/w/special-report/list.do?stn='+_wstn+'&kind='+((wxInfoItems[0]||{}).kind||'inf'),
       openImgRadar:()=>this.setState({wimgTab:'radar', modal:{kind:'weatherimg'}}),
       openImgSat:()=>this.setState({wimgTab:'satellite', modal:{kind:'weatherimg'}}),
-      /* 윈디(Windy) 움직이는 지도(2026-11-12) — 무료 임베드. 처음은 바람(2026-11-17 — 날씨 레이더는 비가 없으면 멈춘 화면 같아서), 누르면 크게 + 층 고르기 */
+      /* 윈디(Windy) 움직이는 지도 — 무료 임베드. 처음은 바람(날씨 레이더는 비가 없으면 멈춘 화면 같아서), 누르면 크게 + 층 고르기 */
       windySmallSrc:this.windyUrl('wind', 9),
       openWindy:()=>this.setState({modal:{kind:'windy'}}),
       /* 산불위험 지도 칸 — 「산불발생위험예측」 팝업이 있으면 그 창을, 없으면 국가산불위험예보시스템을 바로 연다 */
@@ -2604,7 +2563,7 @@ class Component extends DCLogic {
         if(!g) return [];
         const cur=self.state.scope||'전체';
         return ['전체'].concat(Object.keys(g)).map(function(k){
-          const label=(k==='전체'?'경기 전체':k), on=(cur===k);
+          const label=k, on=(cur===k);
           return { key:k, label:label, isSel:on,
             bg:(on?'var(--brand)':'var(--surface2)'), fg:(on?'#fff':'var(--ink2)'),
             bd:(on?'var(--brand)':'var(--border2)'),
@@ -2624,7 +2583,7 @@ class Component extends DCLogic {
           bd:(on?'var(--brand)':'var(--border2)'),
           pick:function(){ if(on) return;
             /* 시도가 바뀌면 그 시도 파일을 새로 읽어야 해서 화면이 다시 열린다. 다시 열린 화면에서
-               창을 자동으로 펼쳐 이어서 관서를 고르게 한다(2026-09-19 사장님: "계속 선택 가능하면") */
+               창을 자동으로 펼쳐 이어서 관서를 고르게 한다 */
             try{ localStorage.setItem('ggSido', sd.base); sessionStorage.setItem('ggPickerOpen', '1'); }catch(e){}
             location.href = sd.base + location.pathname.split('/').pop(); } };
       }),
@@ -2754,11 +2713,11 @@ class Component extends DCLogic {
       const R=React.createElement, fi=d.fireImg||{}, pp=fi.popup||{}, mp=fi.map||{}, site=fi.site||'https://forestfire.nifos.go.kr/';
       const link=(href,txt,primary)=>R('a',{href, target:'_blank', rel:'noopener', style:{display:'inline-flex', alignItems:'center', gap:'6px', padding:'9px 14px', borderRadius:'10px', fontSize:'14px', fontWeight:800, textDecoration:'none',
         background:primary?'var(--brand)':'var(--surface2)', color:primary?'#fff':'var(--ink2)', border:'1px solid '+(primary?'var(--brand)':'var(--border)')}}, txt);
-      /* 원본이 가로 1,488px 라 640px 창에 줄여 넣으면 작은 한글이 뭉개졌다(2026-11-12).
+      /* 원본이 가로 1,488px 라 640px 창에 줄여 넣으면 작은 한글이 뭉개졌다.
          처음엔 한 장이 다 보이게(창 높이에 맞춤), 그림을 누르면 원본 크기 ↔ 맞춤. */
       const zoom=!!this.state.fireZoom, src=pp.file ? pp.file+'?v='+encodeURIComponent(pp.ts||'') : '';
       const msrc=mp.file ? mp.file+'?v='+encodeURIComponent(mp.ts||'') : '';
-      /* 전국 산불위험 지도(실시간) + 「산불발생위험예측」을 나란히(2026-11-12). 열 비율을 두 그림의 가로세로 비율(0.92 : 0.71)에
+      /* 전국 산불위험 지도(실시간) + 「산불발생위험예측」을 나란히. 열 비율을 두 그림의 가로세로 비율(0.92 : 0.71)에
          맞춰 같은 높이로 선다. 좁은 화면은 위아래. 보고서를 누르면 보고서만 원본 크기로. */
       const H='calc(88vh - 230px)', narrow=(typeof window!=='undefined' && window.innerWidth<760);
       const cap=(t,sub)=>R('div',{style:{display:'flex', alignItems:'baseline', gap:'8px', margin:'0 2px 6px'}},
@@ -2889,176 +2848,10 @@ class Component extends DCLogic {
         : R('div',{style:{fontSize:'14px', color:'var(--ink3)', padding:'6px 2px'}}, '최근 24시간 내 재난문자 없음'))
     );
   }
-  // 물때(조석) 카드 — 서해 조석 영향 관서에서만. 강화대교 예보 +2시간 = 임진강 두포리(파주).
-  //   조석 극값은 하루 종일 불변이지만 '다음 만조/간조'와 '밀물/썰물'은 현재시각 기준으로 계산.
-  // 일출/일몰 — 순수 NOAA 알고리즘(외부 의존성 0, ±1분). 반환: 분(minutes of day) 또는 null.
-  //   검증: 강화/파주 좌표로 badatime과 ±1분 일치 확인(2026-07). Korea는 서머타임 없음(tz=9 고정).
-  sunRiseSet(date, lat, lng, tz, which){
-    const rad=Math.PI/180, deg=180/Math.PI, zenith=90.833;
-    const y=date.getFullYear(), mo=date.getMonth(), da=date.getDate();
-    const N=Math.round((Date.UTC(y,mo,da)-Date.UTC(y,0,0))/86400000);   // 연중 일수(DST무관)
-    const lngHour=lng/15;
-    const t = which==='rise' ? N+((6-lngHour)/24) : N+((18-lngHour)/24);
-    const M=(0.9856*t)-3.289;
-    let L=M+(1.916*Math.sin(rad*M))+(0.020*Math.sin(rad*2*M))+282.634; L=((L%360)+360)%360;
-    let RA=deg*Math.atan(0.91764*Math.tan(rad*L)); RA=((RA%360)+360)%360;
-    RA=(RA+(Math.floor(L/90)*90-Math.floor(RA/90)*90))/15;
-    const sinDec=0.39782*Math.sin(rad*L), cosDec=Math.cos(Math.asin(sinDec));
-    const cosH=(Math.cos(rad*zenith)-(sinDec*Math.sin(rad*lat)))/(cosDec*Math.cos(rad*lat));
-    if(cosH>1||cosH<-1) return null;
-    let H = which==='rise' ? 360-deg*Math.acos(cosH) : deg*Math.acos(cosH); H=H/15;
-    const T=H+RA-(0.06571*t)-6.622;
-    const UT=(((T-lngHour)%24)+24)%24;
-    return Math.round(((UT+tz)%24+24)%24*60);
-  }
-  tideCard(tide, region, ctx){
-    const TIDE_REGIONS = { '파주': 1 };   // 조석 영향 관서(추후 고양 등 추가 가능)
-    if(!tide || !tide.events || !tide.events.length || !TIDE_REGIONS[region]) return null;
-    const R=React.createElement;
-    const now = this.state.now || new Date();
-    const nowMin = now.getHours()*60 + now.getMinutes();
-    const toMin = hm=>{ const p=String(hm||'').split(':'); return (+p[0])*60 + (+p[1]); };
-    const fmtMin = m=> m==null?'-':(String(Math.floor(m/60)%24).padStart(2,'0')+':'+String(m%60).padStart(2,'0'));
-    const evs = tide.events.map(e=>{ const m=toMin(e.dupo); return { kind:e.kind, dupo:e.dupo, ganghwa:e.ganghwa, cm:(e.cm==null?null:+e.cm), min:m, past:m<nowMin }; });
-    // 상승/하강폭(delta) — 직전 극값 대비 조위 변화
-    evs.forEach((e,i)=>{ e.delta = (i>0 && e.cm!=null && evs[i-1].cm!=null) ? Math.round(e.cm-evs[i-1].cm) : null; });
-    const upcoming = evs.filter(e=>!e.past);
-    const nextAny  = upcoming[0] || null;
-    const nextHigh = upcoming.filter(e=>e.kind==='high')[0] || null;
-    const nextLow  = upcoming.filter(e=>e.kind==='low')[0] || null;
-    // 밀물/썰물 — 다음 극값이 만조면 물 들어오는 중, 간조면 빠지는 중
-    const phase = nextAny ? (nextAny.kind==='high' ? {t:'밀물', s:'들어오는 중'} : {t:'썰물', s:'빠지는 중'}) : null;
-    const ampM = (tide.amp_cm/100).toFixed(1);
-    const rainy = !!(ctx && ctx.rainy), riverWarn = !!(ctx && ctx.riverWarn);
-    const warnHigh = nextHigh && (rainy || riverWarn);
-    // 물때(몇물)·음력·달모양 — 수집기(korean_lunar_calendar)가 줄 때만
-    const mul = tide.mulddae || null, moon = tide.moon || null, lunar = tide.lunar || null;
-    // 일출/일몰 (파주, 클라이언트 계산)
-    const sunR = this.sunRiseSet(now, 37.760, 126.780, 9, 'rise');
-    const sunS = this.sunRiseSet(now, 37.760, 126.780, 9, 'set');
-
-    // ── 하루 물때 곡선(4극값 반코사인 보간) ──
-    const exv = evs.filter(e=>e.cm!=null).map(e=>({t:e.min, h:e.cm, kind:e.kind}));
-    let curve=null;
-    if(exv.length>=2){
-      const f0=exv[0], f1=exv[1], lN=exv[exv.length-1], lP=exv[exv.length-2];
-      const full=[{t:f0.t-(f1.t-f0.t), h:f1.h}, ...exv, {t:lN.t+(lN.t-lP.t), h:lP.h}];  // 가장자리 추정 극값
-      const hAt=t=>{ for(let i=0;i<full.length-1;i++){ const a=full[i], b=full[i+1]; if(t>=a.t&&t<=b.t){ const x=(t-a.t)/(b.t-a.t); return (a.h+b.h)/2+(a.h-b.h)/2*Math.cos(Math.PI*x); } } return t<full[0].t?full[0].h:full[full.length-1].h; };
-      const hs=[]; for(let t=0;t<=1440;t+=12) hs.push(hAt(t));
-      const hMin=Math.min(...hs), hMax=Math.max(...hs), span=(hMax-hMin)||1;
-      const X=t=>t/1440*100, Y=h=>16+(1-(h-hMin)/span)*30;   // 곡선을 세로 중앙대[16..46]에 가둬 위/아래 라벨공간 확보
-      let line=''; hs.forEach((h,k)=>{ line+=(k?'L':'M')+X(k*12).toFixed(2)+' '+Y(h).toFixed(2)+' '; });
-      const area='M0 60 '+hs.map((h,k)=>'L'+X(k*12).toFixed(2)+' '+Y(h).toFixed(2)).join(' ')+' L100 60 Z';
-      curve={ line, area,
-        dayX0: sunR!=null?X(sunR):null, dayX1: sunS!=null?X(sunS):null,
-        nowLeft:X(nowMin), nowTop:Y(hAt(nowMin))/60*100,
-        dots: exv.map(e=>({ left:X(e.t), top:Y(e.h)/60*100, kind:e.kind, cm:Math.round(e.h), time:fmtMin(e.t) })) };
-    }
-
-    const pill=(label,val,color)=>R('div',{style:{display:'flex', flexDirection:'column', alignItems:'center', padding:'6px 12px', background:'var(--surface)', border:'1px solid '+(color||'var(--border)'), borderRadius:'11px', minWidth:'72px'}},
-      R('div',{style:{fontSize:'11px', color:'var(--ink3)', fontWeight:600}}, label),
-      R('div',{style:{fontSize:'17px', fontWeight:800, color:color||'var(--ink)', marginTop:'1px', fontVariantNumeric:'tabular-nums'}}, val));
-    const deltaEl=(e)=> e.delta==null ? null : R('span',{style:{fontSize:'10px', fontWeight:800, marginLeft:'2px', color:(e.delta>=0?'var(--severe)':'var(--brand)')}}, (e.delta>=0?'▲':'▼')+Math.abs(e.delta));
-
-    // 곡선 블록 (SVG 곡선 + HTML 오버레이 라벨). 라벨은 상/하단 고정행에 둬 곡선·pill과 겹침 방지.
-    const cl = x=>Math.min(92, Math.max(8, x));
-    const curveBlock = curve ? R('div',{style:{position:'relative', width:'100%', height:'120px', margin:'10px 0 2px'}},
-      R('svg',{viewBox:'0 0 100 60', preserveAspectRatio:'none', style:{position:'absolute', inset:0, width:'100%', height:'100%'}},
-        (curve.dayX0!=null&&curve.dayX1!=null) ? R('rect',{x:curve.dayX0, y:0, width:Math.max(0,curve.dayX1-curve.dayX0), height:60, fill:'rgba(255,193,64,.12)'}) : null,
-        R('path',{d:curve.area, fill:'rgba(42,134,224,.13)'}),
-        R('path',{d:curve.line, fill:'none', stroke:'#2a86e0', strokeWidth:1.6, vectorEffect:'non-scaling-stroke', strokeLinejoin:'round', strokeLinecap:'round'}),
-        R('line',{x1:curve.nowLeft, y1:0, x2:curve.nowLeft, y2:60, stroke:'var(--severe)', strokeWidth:1, vectorEffect:'non-scaling-stroke', strokeDasharray:'2.5 2'})),
-      // 극값 점 (곡선 위)
-      curve.dots.map((d,i)=>R('div',{key:'d'+i, style:{position:'absolute', left:d.left+'%', top:d.top+'%', width:'7px', height:'7px', borderRadius:'50%', background:(d.kind==='high'?'var(--brand)':'#5a7fa6'), border:'1.5px solid var(--surface)', transform:'translate(-50%,-50%)', boxShadow:'0 0 0 1px '+(d.kind==='high'?'var(--brand)':'#5a7fa6')}})),
-      // 극값 라벨 (만조=상단 고정행 / 간조=하단 고정행)
-      curve.dots.map((d,i)=>R('div',{key:'l'+i, style:Object.assign({position:'absolute', left:cl(d.left)+'%', transform:'translateX(-50%)', textAlign:'center', whiteSpace:'nowrap', lineHeight:1.1}, d.kind==='high'?{top:'0px'}:{bottom:'0px'})},
-        R('div',{style:{fontSize:'13px', fontWeight:800, color:(d.kind==='high'?'var(--brand)':'#456'), fontVariantNumeric:'tabular-nums'}}, d.time),
-        R('div',{style:{fontSize:'9.5px', color:'var(--ink3)'}}, d.cm+'cm'))),
-      // 지금 마커
-      R('div',{style:{position:'absolute', left:curve.nowLeft+'%', top:curve.nowTop+'%', width:'8px', height:'8px', borderRadius:'50%', background:'var(--severe)', border:'1.5px solid var(--surface)', transform:'translate(-50%,-50%)', boxShadow:'0 0 0 1.5px var(--severe)', zIndex:2}}),
-      R('div',{style:{position:'absolute', left:cl(curve.nowLeft)+'%', top:'calc('+curve.nowTop+'% + 7px)', transform:'translateX(-50%)', fontSize:'9.5px', fontWeight:800, color:'var(--severe)', whiteSpace:'nowrap'}}, '지금')
-    ) : null;
-
-    // ── 물살(조류) — 수난구조 참고. 조석 기반 추정: 정조(물멈춤)=만조/간조, 최강=중간조.
-    //    ⚠ 호우·수위상승 시엔 강물 유량이 조류를 압도(정조 무의미) → 그 경고를 우선한다.
-    const _srt = evs.slice().sort((a,b)=>a.min-b.min);
-    let _pv=null; _srt.forEach(e=>{ if(e.min<=nowMin) _pv=e; });
-    const _nx = _srt.find(e=>e.min>nowMin) || null;
-    let flow=null;
-    if(_pv && _nx && _nx.min>_pv.min){
-      const _x=(nowMin-_pv.min)/(_nx.min-_pv.min), _s=Math.abs(Math.sin(Math.PI*_x));
-      flow={ lvl:_s>0.66?'강함':_s>0.33?'보통':'약함(정조 부근)',
-        lvlColor:_s>0.66?'var(--severe)':_s>0.33?'var(--warn)':'var(--safe)',
-        dir:(_nx.kind==='high')?'상류(내륙)로 · 밀물':'하류(바다쪽)로 · 썰물',
-        slack:_nx.dupo, slackKind:(_nx.kind==='high'?'만조':'간조') };
-    }
-    const floodDom = rainy || riverWarn;
-    const flowPanel = R('div',{style:{marginTop:'10px', padding:'9px 11px', borderRadius:'10px', background:(floodDom?'var(--severeSoft)':'var(--surface)'), border:'1px solid '+(floodDom?'var(--severe)':'var(--border)')}},
-      R('div',{style:{display:'flex', alignItems:'center', gap:'6px', marginBottom:'3px'}},
-        R('span',{style:{fontSize:'14px'}}, '🌀'),
-        R('span',{style:{fontSize:'13.5px', fontWeight:800, color:(floodDom?'var(--severe)':'var(--ink)')}}, '물살(조류) · 수난구조 참고')),
-      floodDom
-        ? R('div',{style:{fontSize:'13px', color:'var(--ink2)', lineHeight:1.5}}, '⚠ 호우·수위 상승 중 — 강물 유량이 조류를 압도합니다. 조석과 무관하게 상시 하류(바다쪽) 급류이며 정조(물 멈춤)는 나타나지 않습니다. 진입 전 유속·표류물 확인.')
-        : (flow
-          ? R('div',{style:{fontSize:'13px', color:'var(--ink2)', lineHeight:1.55}},
-              R('div',null, R('b',{style:{color:'var(--ink)'}}, '지금 물살 '), flow.dir+' · 세기 ', R('b',{style:{color:flow.lvlColor}}, flow.lvl)),
-              R('div',null, '물 멈춤(정조): ', R('b',{style:{color:'var(--ink)'}}, flow.slack), ' '+flow.slackKind+' 무렵 · 오늘 '+(mul||(tide.spring+'물때'))+' (사리일수록 셈)'))
-          : R('div',{style:{fontSize:'13px', color:'var(--ink3)'}}, '오늘 물때 시간대가 지났습니다(자정 후 갱신).')),
-      floodDom ? null : R('div',{style:{fontSize:'10px', color:'var(--ink3)', marginTop:'3px'}}, '※ 조석 기반 추정 — 실측 유속 아님. 강 유량·바람은 별도 고려.'));
-
-    // 📹 실황 CCTV 바로가기 — 두포리 자체엔 관측소·CCTV가 없어, 두포리를 위아래로 감싸는
-    //   임진강 파주 관측소(하류 통일대교·상류 비룡대교) CCTV로 현장 실황을 본다. 누르면 그 하천
-    //   상세(홍수통제소 실시간 CCTV)가 열린다. 데이터에 있고 cctv 있는 것만 표시.
-    const _rmap={}; ((this.working().rivers)||[]).forEach(r=>{ if(r.code) _rmap[r.code]=r; });
-    const cctvBtns = [{code:'1023670',label:'통일대교',sub:'하류'},{code:'1023660',label:'비룡대교',sub:'상류'}]
-      .map(c=>{ const r=_rmap[c.code]; return (r && r.cctv)? {name:r.name, label:c.label, sub:c.sub} : null; }).filter(Boolean);
-    const cctvRow = cctvBtns.length ? R('div',{style:{marginTop:'9px', display:'flex', alignItems:'center', gap:'7px', flexWrap:'wrap'}},
-      R('span',{style:{fontSize:'12.5px', fontWeight:800, color:'var(--ink2)'}}, '📹 실황 CCTV'),
-      cctvBtns.map((b,i)=> R('button',{key:i, onClick:()=>this.setState({modal:{kind:'river', key:b.name}}),
-        style:{fontFamily:'inherit', cursor:'pointer', fontSize:'13px', fontWeight:800, color:'#fff', background:'var(--brand)', border:'none', borderRadius:'8px', padding:'5px 11px'}},
-        '▶ '+b.label+' ('+b.sub+')')),
-      R('span',{style:{fontSize:'10.5px', color:'var(--ink3)'}}, '두포리 상·하류')) : null;
-
-    return R('div',{style:{marginBottom:'18px', borderRadius:'14px', overflow:'hidden', border:'1px solid var(--border)', boxShadow:'var(--sh1)'}},
-      // 헤더 (그라데이션)
-      R('div',{style:{display:'flex', alignItems:'center', gap:'10px', padding:'12px 14px', background:'linear-gradient(135deg, #1560c4, #2a86e0)', color:'#fff'}},
-        R('span',{style:{fontSize:'22px', lineHeight:1}}, '🌊'),
-        R('div',{style:{flex:1, minWidth:0}},
-          R('div',{style:{fontSize:'15.5px', fontWeight:800, letterSpacing:'-.3px'}}, '임진강 물때 · 두포리'),
-          R('div',{style:{fontSize:'12.5px', opacity:.92, marginTop:'1px'}},
-            (phase?(phase.t+' — '+phase.s):'') + (mul?(' · '+mul):(' · '+tide.spring+'물때')) + (lunar?(' · 음력 '+lunar):'') )),
-        moon ? R('div',{style:{fontSize:'20px', lineHeight:1}, title:moon.name}, moon.emoji)
-             : (phase ? R('div',{style:{fontSize:'13px', fontWeight:800, background:'rgba(255,255,255,.22)', padding:'4px 10px', borderRadius:'999px'}}, phase.t) : null)),
-      R('div',{style:{padding:'12px 12px 11px', background:'var(--surface2)'}},
-        // 다음 만조/간조 요약
-        R('div',{style:{display:'flex', gap:'8px', justifyContent:'center', flexWrap:'wrap'}},
-          pill('다음 만조', nextHigh?nextHigh.dupo:'내일', nextHigh?'var(--brand)':'var(--ink3)'),
-          pill('다음 간조', nextLow?nextLow.dupo:'내일', nextLow?'var(--ink2)':'var(--ink3)')),
-        // 하루 물때 곡선
-        curveBlock,
-        // 오늘 4개 타임라인 (조위 + 상승/하강폭)
-        R('div',{style:{display:'flex', gap:'6px', marginTop:'8px'}}, evs.map((e,i)=>
-          R('div',{key:i, style:{flex:'1 1 0', minWidth:0, textAlign:'center', padding:'8px 3px', borderRadius:'10px', background:(e===nextAny?'var(--brandSoft)':'var(--surface)'), border:'1px solid '+(e===nextAny?'var(--brand)':'var(--border)'), opacity:(e.past?0.45:1)}},
-            R('div',{style:{fontSize:'12.5px', fontWeight:700, color:(e.kind==='high'?'var(--brand)':'var(--ink2)')}}, e.kind==='high'?'🔺만조':'🔻간조'),
-            R('div',{style:{fontSize:'16.5px', fontWeight:800, color:'var(--ink)', marginTop:'2px', fontVariantNumeric:'tabular-nums'}}, e.dupo),
-            R('div',{style:{fontSize:'10.5px', color:'var(--ink3)', marginTop:'1px'}}, (e.cm!=null?e.cm+'cm':''), deltaEl(e)),
-            R('div',{style:{fontSize:'10px', color:'var(--ink4,var(--ink3))', marginTop:'1px', opacity:.75}}, '강화 '+e.ganghwa)))),
-        // 물살(조류) — 수난구조 참고
-        flowPanel,
-        // 실황 CCTV 바로가기 (두포리 상·하류 임진강 관측소)
-        cctvRow,
-        // 만조+호우 겹침 경고
-        warnHigh ? R('div',{style:{marginTop:'10px', padding:'9px 11px', borderRadius:'10px', background:'var(--severeSoft)', border:'1px solid var(--severe)'}},
-          R('div',{style:{fontSize:'14px', fontWeight:800, color:'var(--severe)'}}, '⚠ '+nextHigh.dupo+' 만조 겹침 주의'),
-          R('div',{style:{fontSize:'13px', color:'var(--ink2)', marginTop:'2px', lineHeight:1.5}}, (rainy?'비가 오는 중 ':'하천 수위 상승 중 ')+'— 만조 때 임진강 하구 배수가 막혀 저지대·지하 침수가 빨라질 수 있습니다.')) : null,
-        // 각주
-        R('div',{style:{marginTop:'9px', fontSize:'11px', color:'var(--ink3)', lineHeight:1.5}},
-          '조차 '+ampM+'m · 🌅'+fmtMin(sunR)+' 🌇'+fmtMin(sunS)+' · 강화대교 예보 +2시간 환산 · 국립해양조사원' + (upcoming.length? '' : ' · 오늘 물때 종료(자정 후 갱신)'))));
-  }
   riverBody(r){ return window.cbRiverBody(this, r); }   /* 본문은 river-popup.js (재해 화면과 같이 씀) */
   warnBody(warns, prelim, d){
     const R=React.createElement, bl=(d&&d.bulletins)||{}, stn=bl.stn||131;
-    /* 특보 줄을 누르면 그 특보의 통보문 창(발표구역·발효현황 그림 + 날씨누리 원문) — 상황실과 같게(2026-11-12).
+    /* 특보 줄을 누르면 그 특보의 통보문 창(발표구역·발효현황 그림 + 날씨누리 원문) — 상황실과 같게.
        맞는 통보문이 없으면 날씨누리 특보 통보문 목록을 새 창으로 */
     const findB = t => (bl.warnings_full||[]).find(y=>String(y.title||'').indexOf('해제')<0 && (String(y.title||'')+String(y.current||'')+String(y.summary||'')).indexOf(t)>=0);
     const go = t => { const b=findB(t); if(b) this.setState({modal:{kind:'bulletin', b:this.bulletinInfo(b, stn)}}); else window.open(this.WRN_LIST_URL(stn), '_blank', 'noopener'); };

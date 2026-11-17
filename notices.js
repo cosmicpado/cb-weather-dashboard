@@ -8,9 +8,11 @@
    안 본 공지가 있으면 각 화면의 설명서 버튼(❓·?)에 빨간 점이 붙고, 누르면 공지사항 탭으로 바로 열린다.
    본 공지는 이 PC 브라우저에 기억한다(cbNoticeSeen). */
 window.CB_NOTICES = [
-  { id: '2026-11-17-2', date: '2026-11-17', kind: '오류 수정', title: '119종합상황실: 자료를 못 받았을 때 예시 화면이 실제처럼 보이던 문제',
-    body: '접속 순간 실시간 자료를 받지 못하면 화면이 예시 자료(폭염 재난문자·여름 기온 등)로 채워지던 문제를 고쳤습니다.\n' +
-          '이제는 자료가 들어올 때까지 "실시간 자료를 불러오는 중" 화면만 보이고, 5초마다 다시 받아 연결되는 즉시 실제 화면으로 바뀝니다.' },
+  { id: '2026-11-17-3', date: '2026-11-17', kind: '개선', title: '화면 안정성 개선 · 휴대폰 화면 정리',
+    body: '접속 순간 자료를 다 받지 못하면 빈 화면 대신 "실시간 자료를 불러오는 중"이 뜨고, 받아지는 대로 자동으로 화면이 열립니다.\n' +
+          '종합현황 맨 위, 상황실 휴대폰 화면 맨 위에 "자료 ○○:○○ 기준"이 표시됩니다. 15분 넘게 갱신되지 않으면 빨간색으로 알려 드립니다.\n' +
+          '휴대폰에서는 새 특보·재난문자 알림 팝업과 알림음이 뜨지 않습니다(화면 칸에는 그대로 나옵니다).\n' +
+          '화면에 남아 있던 예전 예시 자료를 모두 지우고 충청북도 자료만 보이게 했습니다.' },
   { id: '2026-11-17-1', date: '2026-11-17', kind: '개선', title: '오른쪽 아래 바로가기 버튼 · 윈디 바람 화면', from: '의견 반영',
     body: '종합 현황·재해·쉬운 화면 오른쪽 아래에 ↑(맨 위로)·W(윈디 바로 보기)·✎(배치 편집) 버튼이 생겼습니다. 스크롤해도 따라옵니다.\n' +
           '윈디는 처음부터 바람 흐름 화면으로 열립니다.\n' +
@@ -76,7 +78,7 @@ window.CB_NOTICES = [
       try { if (sessionStorage.getItem('cbNoticeToastClosed') === latest()) return; } catch (e) {}
       var n = window.cbNotices.unseen(), top = L[0];
       var c = document.createElement('div'); c.id = 'cb-ntoast'; c.setAttribute('role', 'status');
-      c.style.cssText = 'position:fixed;right:calc(18px + var(--cb-fab-w,0px));bottom:18px;z-index:9000;width:min(360px,calc(100vw - 36px));box-sizing:border-box;' +
+      c.style.cssText = 'position:fixed;right:calc(18px + var(--cb-fab-w,0px));bottom:18px;z-index:9000;width:min(360px,calc(100vw - 36px - var(--cb-fab-w,0px)));box-sizing:border-box;' +
         'background:var(--surface,#fff);color:var(--ink,#0f1b2d);border:1px solid var(--border2,#d3dbe9);border-left:4px solid var(--brand,#1d4ed8);' +
         'border-radius:12px;box-shadow:0 12px 32px rgba(15,27,45,.22);padding:13px 14px 12px;font-family:inherit;';
       var h = document.createElement('div'); h.style.cssText = 'font-size:12px;font-weight:800;color:var(--brand,#1d4ed8);margin-bottom:3px;';

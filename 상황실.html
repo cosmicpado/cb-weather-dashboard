@@ -27,12 +27,12 @@ html.wall-m [data-stage]{width:1080px!important;height:auto!important;padding:24
 /* 휴대폰 브라우저의 글자 자동 확대(크롬 글꼴 부스팅·사파리 글자 크기 조정)를 끈다 — 넓게 그려 줄이는 화면이라
    브라우저가 글자만 키우면 칸이 다 깨졌다(2026-11-16 실기기) */
 /* 카카오톡 등 앱 안 브라우저는 '가가'(글자 크기)로 body 에 확대 설정을 넣는다 — 모든 요소에 !important 로 걸어 그보다 이기게.
-   (2026-11-17 측정해서 글자 배율을 줄이는 보정은 칸 너비까지 줄여 오히려 깨져 뺐다) */
+   (측정해서 글자 배율을 줄이는 보정은 칸 너비까지 줄여 오히려 깨져 뺐다) */
 html,body,body *{-webkit-text-size-adjust:100%!important;-moz-text-size-adjust:100%!important;text-size-adjust:100%!important;}
 #wall-msel{display:none;}
 [data-monly]{display:none;}
 html.wall-m [data-monly]{display:inline;}   /* 휴대폰에서만 보이는 글자(충북 특보통계) */
-html.wall-m #wall-msel{display:flex;gap:8px;padding:50px 9px 0;background:var(--bg,#0d1118);}
+html.wall-m #wall-msel{display:flex;flex-wrap:wrap;gap:8px;padding:50px 9px 0;background:var(--bg,#0d1118);}
 #wall-msel select{flex:1;min-width:0;height:46px;border-radius:12px;border:1px solid var(--line,#28313f);background:var(--panel,#151b26);color:var(--fg,#f2f5fa);font:700 18px 'Pretendard Variable',Pretendard,system-ui,sans-serif;padding:0 12px;}
 #wall-msel button{flex:none;width:46px;height:46px;border-radius:12px;border:1px solid var(--line,#28313f);background:var(--panel,#151b26);color:var(--fg,#f2f5fa);font-size:20px;cursor:pointer;}
 html.wall-m [data-clock]{display:none!important;}
@@ -83,7 +83,7 @@ html.wall-m [data-foot]>div:last-child{margin-left:0!important;white-space:norma
     stop:SF+'<rect x="6" y="6" width="12" height="12" rx="2"/></svg>',
     notice:SV+'<path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>',
     chat:SV+'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
-    /* 비상단계 지정 = 경광등(2026-11-17) — 깃발은 의견 보내기 말풍선과 비슷해 헷갈렸다 */
+    /* 비상단계 지정 = 경광등 — 깃발은 의견 보내기 말풍선과 비슷해 헷갈렸다 */
     flag:SV+'<path d="M7 18v-6a5 5 0 1 1 10 0v6"/><path d="M5 21a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-1a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2z"/><path d="M12 2v1"/><path d="M2 12h1"/><path d="M21 12h1"/><path d="M4.9 4.9l.7.7"/><path d="M19.1 4.9l-.7.7"/></svg>' };
   window.wallIcon = function(el, ic, txt, order){ el.className='wall-ic'; el.innerHTML=IC[ic]+'<span class="tx"></span>';
     el.lastChild.textContent=txt; if(!el.title) el.title=txt; el.setAttribute('aria-label', txt); if(order!=null) el.style.order=order; return el; };
@@ -107,7 +107,7 @@ html.wall-m [data-foot]>div:last-child{margin-left:0!important;white-space:norma
 <script src="./region.js"></script>
 <script>
 /* ============================================================================
-   상황실 카드 배치 편집기 — 2026-09-17 사장님 지시("내 입맛대로 카드를 넣고 빼고 배치")
+   상황실 카드 배치 편집기 — 카드를 넣고 빼고 자리를 바꾼다
    ----------------------------------------------------------------------------
    화면(React/dc-runtime)은 건드리지 않는다. 카드 위치는 CSS 변수(--wl-<id>-*)로만
    전달하고, 이 파일은 그 변수를 :root 에 쓴다. React 가 0.5초마다 다시 그려도
@@ -138,7 +138,7 @@ html.wall-m [data-foot]>div:last-child{margin-left:0!important;white-space:norma
     /* 2026-09-18 추가 — 기본 숨김. 자리가 겹치므로 켜기 전에 다른 카드를 줄여 자리를 내야 한다 */
     { id: 'radar',  name: '기상 레이더',     min: [3, 5] },   /* 2026-11-09 다시 켬 — 한반도 가운데만 잘라 보여 준다 */
     { id: 'typhoon',name: '태풍 현황',       min: [4, 4] },
-    { id: 'tide',   name: '물때 (파주)',      min: [3, 4], gone: true },
+    { id: 'tide',   name: '물때',             min: [3, 4], gone: true },
     /* 2026-09-22 추가 — 기본 숨김. 권역 하천 CCTV 를 60초마다 한 지점씩 */
     { id: 'cctv',   name: '하천 CCTV',       min: [3, 4], gone: true },   /* 2026-11-10 뺌 */
     /* 2026-11-09 추가 — 없앤 출동 영향 판단·6시간 강수예측 자리. 뒤에 붙여 옛 배치 코드도 그대로 읽힌다 */
@@ -175,7 +175,6 @@ html.wall-m [data-foot]>div:last-child{margin-left:0!important;white-space:norma
   function scopeKey() {
     var RC = window.REGION_CONF || {}, g = RC.scopes || {}, sc = null;
     try { sc = new URLSearchParams(location.search).get('scope'); } catch (e) {}
-    if (sc && !g[sc] && g['경기' + sc]) sc = '경기' + sc;
     if (!sc) { try { var v = localStorage.getItem('ggScope'); if (v === '전체') return '전체'; if (v && g[v]) sc = v; } catch (e) {} }
     if (!sc) { try { sc = (RC.hostScope || {})[location.hostname.split('.')[0]] || null; } catch (e) {} }
     return (sc && g[sc]) ? sc : '전체';
@@ -207,7 +206,7 @@ html.wall-m [data-foot]>div:last-child{margin-left:0!important;white-space:norma
   /* ── 짧은 코드: 카드 순서대로 c r cs rs 를 한 자리(36진)씩 + 숨김/배율 플래그 ──
      예) obs=1,1,4,9 → "1149"  → 8장이면 32자 + 헤더. 사람이 전화로 불러줄 수 있는 길이. */
   function encode(L) {
-    var s = 'W' + VER + SCOPE.replace('경기', '').charAt(0) + '.';
+    var s = 'W' + VER + SCOPE.charAt(0) + '.';
     CARDS.forEach(function (k) { var p = L[k.id];
       s += p.c.toString(36) + p.r.toString(36) + p.cs.toString(36) + p.rs.toString(36)
          + (p.hide ? 'x' : '') + (p.fz !== 1 ? ({0.8: 's', 1.2: 'l', 1.4: 'h'})[p.fz] : ''); s += '.'; });
@@ -428,79 +427,6 @@ html.wall-m [data-foot]>div:last-child{margin-left:0!important;white-space:norma
   function boot() { if (!gridEl()) { setTimeout(boot, 300); return; } renderBadge(); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
   window.WALL_EDITOR = { open: function () { setEdit(true); }, code: function () { return encode(LAYOUT); }, layout: function () { return clone(LAYOUT); } };
-})();
-
-</script>
-<script>
-/* 상황실 벽면 — 시도 바꾸기 (전국판,)
-   · region.js 에 sidoList 가 주입된 화면(작업장/전국판)에서만 나타난다. 경기 전용 사이트엔 없다.
-   · 좌상단 오버레이 둘째 줄에 '🗺 시도 · 강원도' 배지. 누르면 시도 칩이 뜨고, 고르면 그 시도
-     폴더의 상황실로 이동한다(시도마다 데이터·지도·설정 파일이 달라 한 화면 안에서는 못 바꾼다).
-   · 충청북도는 권역이 있어 칩이 셋(경기 전체·충청북도·경기남부) — 2026-09-20 사장님 "충청북도 선택하면 북부만 나와":
-     벽면은 localStorage.ggScope(지도 화면의 권역 선택)를 따르므로 그냥 이동하면 전에 골라 둔 권역(북부)만 나왔다.
-     칩을 누르면 ggScope 를 그 권역으로 바꾸고 이동한다('전체' = 34개 관서 전부).
-   · React 밖 고정 레이어 — 순환·배치 편집기와 무관. */
-(function () {
-  var RC = window.REGION_CONF || {};
-  var LIST = RC.sidoList || [];
-  if (!LIST.length) return;
-  var CUR = RC.sidoCurrent || '';
-  /* 작업장 빌드(build_weather_dev.py)가 HTML 안의 '충청북도' 글자를 '충청북도'로 바꾸므로 권역 이름은 이어 붙여 만든다 */
-  var GG = '경기' + '도', N = '경기' + '북부', S = '경기' + '남부';   /* 시도 폴더 빌드는 '충청북도'도 그 시도 이름으로 바꾼다 */
-  var GG_SCOPES = [{ label: '경기 전체', scope: '전체' }, { label: N, scope: N }, { label: S, scope: S }];
-
-  function $(tag, style, text) { var e = document.createElement(tag); if (style) e.style.cssText = style; if (text != null) e.textContent = text; return e; }
-  function curScope() { try { return localStorage.getItem('ggScope') || ''; } catch (e) { return ''; } }
-  function go(sd, scope) {
-    try {
-      localStorage.setItem('ggSido', sd.base);
-      if (scope) localStorage.setItem('ggScope', scope);   /* 경기 권역 — 벽면 NAMES 와 배치 저장 키가 이 값을 읽는다 */
-    } catch (e) {}
-    var page = location.pathname.split('/').pop() || '상황실.html';
-    location.href = sd.base + page;
-  }
-  function chip(label, on, onclick) {
-    var c = $('a', 'cursor:pointer;padding:7px 11px;border-radius:9px;border:1px solid ' + (on ? 'var(--cAmber,#ffb020)' : 'var(--line,#28313f)') + ';background:' + (on ? 'var(--cAmber,#ffb020)' : 'var(--panel2,#151b26)') + ';color:' + (on ? '#101725' : 'var(--fg,#f2f5fa)') + ';font:700 13px system-ui,sans-serif;white-space:nowrap;', label);
-    if (!on) c.onclick = onclick;
-    return c;
-  }
-
-  var panel = null;
-  function togglePanel() {
-    if (panel) { panel.remove(); panel = null; return; }
-    panel = $('div', 'position:fixed;left:10px;top:70px;z-index:45;background:var(--panel,#141e33);border:2px solid var(--cAmber,#ffb020);border-radius:14px;padding:12px 14px;color:var(--fg,#f3f6fc);font:600 14px/1.3 system-ui,sans-serif;box-shadow:0 10px 40px rgba(0,0,0,.45);max-width:560px;');
-    panel.appendChild($('div', 'font-size:12px;color:var(--dim,#93a5c4);margin-bottom:8px;', '시도를 고르면 그 시도 119종합상황실 화면으로 이동합니다 · 충청북도는 전체/북부/남부 중 하나'));
-    var wrap = $('div', 'display:flex;flex-wrap:wrap;gap:6px;');
-    var isGG = (CUR === GG), sc = curScope();
-    LIST.forEach(function (sd) {
-      if (sd.label === GG) {
-        /* 충청북도 = 권역 칩 셋. 지금 경기 화면이면 현재 권역(ggScope, 없으면 전체)에 불을 켠다 */
-        var scNow = isGG ? ((sc === N || sc === S) ? sc : '전체') : null;
-        GG_SCOPES.forEach(function (g) {
-          wrap.appendChild(chip(g.label, scNow === g.scope, function () { go(sd, g.scope); }));
-        });
-        return;
-      }
-      wrap.appendChild(chip(sd.label, sd.label === CUR, function () { go(sd); }));
-    });
-    panel.appendChild(wrap);
-    var close = $('a', 'display:inline-block;margin-top:10px;cursor:pointer;color:var(--dim,#93a5c4);font-size:12px;', '닫기');
-    close.onclick = togglePanel;
-    panel.appendChild(close);
-    document.body.appendChild(panel);
-  }
-
-  function mount() {
-    if (!document.body) return setTimeout(mount, 50);
-    var label = CUR;
-    if (CUR === GG) { var sc = curScope(); label = (sc === N || sc === S) ? sc : '경기 전체'; }
-    var b = $('a', 'position:absolute;left:10px;top:40px;z-index:20;cursor:pointer;opacity:.6;padding:6px 11px;border-radius:9px;border:1px solid var(--line,#28313f);background:var(--panel,#151b26);color:var(--fg,#f2f5fa);font:600 12px system-ui,sans-serif;white-space:nowrap;', '🗺 시도 · ' + label);
-    b.title = '다른 시도 119종합상황실 화면으로 바꾸기';
-    b.onmouseenter = function () { b.style.opacity = 1; }; b.onmouseleave = function () { b.style.opacity = .6; };
-    b.onclick = togglePanel;
-    document.body.appendChild(b);
-  }
-  mount();
 })();
 
 </script>
@@ -1818,64 +1744,24 @@ https://scripts.sil.org/OFL
 const C = {
   red:'#ff4d4d', amber:'var(--cAmber,#ffb020)', green:'var(--cSafe,#aeb8c8)', blue:'var(--cBlue,#54aaff)', dim:'#8e9bb0'
 };
-const NAMES = (function(){ var RC=(typeof window!=='undefined'&&window.REGION_CONF)||{}; var base=RC.order||['고양','일산','파주','연천','의정부','양주','동두천','포천','가평','남양주','구리']; var sc=null; try{ sc=new URLSearchParams(location.search).get('scope'); }catch(e){} var g=RC.scopes||{}; try{ if(sc && !g[sc] && g['경기'+sc]) sc='경기'+sc; }catch(e){} try{ if(!sc && typeof localStorage!=='undefined'){ var v=localStorage.getItem('ggScope'); if(v==='전체') return base; if(v && g[v]) sc=v; } }catch(e){} try{ if(!sc) sc=(RC.hostScope||{})[location.hostname.split('.')[0]]||null; }catch(e){} if(sc && g[sc]) base=base.filter(function(n){ return g[sc].indexOf(n)>=0; }); return base; })();
+const NAMES = (function(){ var RC=(typeof window!=='undefined'&&window.REGION_CONF)||{}; var base=RC.order||['청주동부','청주서부','충주','제천','보은','옥천','영동','증평','진천','괴산','음성','단양']; var sc=null; try{ sc=new URLSearchParams(location.search).get('scope'); }catch(e){} var g=RC.scopes||{}; try{ if(!sc && typeof localStorage!=='undefined'){ var v=localStorage.getItem('ggScope'); if(v==='전체') return base; if(v && g[v]) sc=v; } }catch(e){} try{ if(!sc) sc=(RC.hostScope||{})[location.hostname.split('.')[0]]||null; }catch(e){} if(sc && g[sc]) base=base.filter(function(n){ return g[sc].indexOf(n)>=0; }); return base; })();
 const SKY = [['맑음','☀️'],['구름많음','⛅'],['흐림','☁️'],['비','🌧️'],['소나기','⛈️']];
-const RIVERS = {
-  고양:[['창릉천 화전교',2.1,4.5],['공릉천 신원교',1.8,4.2]],
-  일산:[['한강 행주대교',3.4,6.2],['장월평천 백석교',1.2,3.4]],
-  파주:[['임진강 적성',4.1,8.0],['문산천 문산교',2.6,5.5],['공릉천 조리',1.9,4.4]],
-  김포:[['한강 전류리',3.2,6.5],['나진포천 하성교',1.4,3.6]],
-  의정부:[['중랑천 신곡교',1.6,3.8],['부용천 가능교',0.9,2.6]],
-  양주:[['신천 양주대교',2.69,5.4],['광사천 광적교',1.1,3.0]],
-  동두천:[['신천 동두천교',2.2,5.0],['상패천 상패교',1.0,2.8]],
-  포천:[['영평천 영중교',2.4,5.6],['포천천 신읍교',1.7,4.0],['한탄강 관인',3.1,7.2]],
-  가평:[['가평천 가평교',2.0,5.2],['조종천 현리교',1.5,4.0]],
-  남양주:[['왕숙천 진관교',2.3,5.0],['묵현천 오남교',1.2,3.2]],
-  구리:[['왕숙천 구리교',2.5,5.2],['한강 강동대교',3.6,6.8]]
-};
-const RISKS = {
-  고양:[['일산호수공원 일대','저지대 침수 우려','침수'],['킨텍스 지하주차장','대형 지하공간','침수']],
-  일산:[['장항습지','수난사고 다발','수난'],['호수로 지하차도','집중호우 시 통제','침수']],
-  파주:[['임진강 두지리','급류·수난','수난'],['감악산 등산로','산불 취약','산불'],['문산 저지대','상습 침수구역','침수']],
-  김포:[['한강 신곡수중보','급류 위험','수난'],['대곶 공단','위험물 저장','화학']],
-  의정부:[['중랑천 산책로','급류 유입','수난'],['호원동 절개지','산사태 우려','붕괴']],
-  양주:[['신천 둔치 주차장','침수 상습','침수'],['불곡산 등산로','산불 취약','산불']],
-  동두천:[['신천 하상도로','통제 기준 2.8m','침수'],['소요산 등산로','산불 취약','산불'],['보산동 저지대','반지하 밀집','침수']],
-  포천:[['한탄강 비둘기낭','급류·추락','수난'],['왕방산 임도','산불 진입로','산불'],['영중 공장지대','위험물 취급','화학']],
-  가평:[['북한강 자라섬','수상레저 사고','수난'],['축령산 등산로','산불 취약','산불'],['가평천 계곡','급류 고립','수난']],
-  남양주:[['왕숙천 캠핑장','야영객 고립','수난'],['천마산 등산로','산불 취약','산불']],
-  구리:[['왕숙천 체육공원','저지대 침수','침수'],['아차산 등산로','산불 취약','산불']]
-};
-const DOMSG = ['충청북도','폭염','11:30','폭염이 지속되고 있습니다. ▲낮 시간 야외활동 자제 ▲그늘 휴식, 수분섭취 등 건강관리에 유의 바랍니다.[충청북도청]'];
-const OZONE = ['충청북도','오존','14:10','오존주의보 발령. 호흡기 질환자·어린이·노약자는 실외활동을 자제하고 자동차 운행을 줄여주시기 바랍니다.[충청북도청]'];
-const MSGS = {
-  고양:[['고양시','폭염','13:12','폭염경보 발효중. 무더위쉼터(경로당·행정복지센터)를 이용하시고 낮 12~17시 야외활동을 자제하시기 바랍니다.'], DOMSG],
-  일산:[['고양시','폭염','13:12','폭염경보 발효중. 일산호수공원 등 야외 방문 시 충분한 수분섭취와 그늘 휴식을 실천하시기 바랍니다.'], OZONE],
-  파주:[['파주시','폭염','12:50','폭염경보 발효중. 농작업·건설현장 근로자는 무더위 시간대 작업을 중지하고 휴식하시기 바랍니다.'], DOMSG],
-  김포:[['김포시','폭염','13:40','폭염경보 발효중. 독거어르신 안부확인 및 축사·비닐하우스 온도관리에 유의하시기 바랍니다.'], OZONE],
-  의정부:[['의정부시','폭염','12:20','폭염경보 발효중. 무더위쉼터 운영시간이 21시까지 연장되었습니다. 가까운 쉼터를 이용해 주세요.'], DOMSG],
-  양주:[['양주시','폭염','13:31','연일 무더운 날씨가 지속중 ▲옥외근로자는 낮시간 작업 자제 및 규칙적인 휴식 ▲물놀이객은 안전유의 및 구명조끼를 반드시 착용하시기 바랍니다.'], DOMSG],
-  동두천:[['동두천시','폭염','13:05','폭염경보 발효중. 신천 둔치·소요산 방문객은 수분을 충분히 섭취하고 무리한 산행을 자제하시기 바랍니다.'], DOMSG],
-  포천:[['포천시','폭염','12:45','폭염경보 발효중. 축산농가는 축사 환기·급수 관리에 유의하고 옥외작업을 자제하시기 바랍니다.'], OZONE],
-  가평:[['가평군','폭염','13:55','폭염경보 발효중. 계곡·강가 물놀이객은 구명조끼를 착용하고 음주 후 입수를 절대 금지하시기 바랍니다.'], DOMSG],
-  남양주:[['남양주시','폭염','13:18','폭염경보 발효중. 야외 캠핑·물놀이 시 안전수칙을 준수하고 어린이 보호자 동반을 당부드립니다.'], DOMSG],
-  구리:[['구리시','폭염','12:35','폭염경보 발효중. 무더위쉼터를 이용하시고 어르신·만성질환자는 외출을 자제하시기 바랍니다.'], OZONE],
-  기본:[DOMSG]
-};
+/* 관서별 하천·위험지역·재난문자 — 실자료(WALL_DATA)에 그 관서가 없으면 빈 칸으로 둔다 */
+const RIVERS = {};
+const RISKS = {};
+const MSGS = {};
 
 function rnd(seed){ let x = Math.sin(seed*9301+49297)*233280; return x - Math.floor(x); }
-// 시연용 기상 시나리오 — 파주=호우경보(심각), 포천=호우주의보(경계), 나머지=폭염
-const REGIME = { 2:{rain:26.5,wind:13.4,temp:24.2,humid:94}, 7:{rain:11.2,wind:8.6,temp:25.8,humid:88} };
+const REGIME = {};   /* 관서 실황이 없을 때 쓰던 예시 값 — 비워 둠(자료가 없으면 화면을 '불러오는 중'으로 가린다) */
 
 /* ─── 실데이터 연결 지점 ───────────────────────────────────────────────
-   페이지 어디서든 window.WALL_DATA 를 아래 형태로 넣으면 그대로 표시됩니다.
-   (없으면 시연용 샘플 데이터로 동작)
+   아래 data.js 연결 스크립트가 window.WALL_DATA 를 이 형태로 채운다.
 
    window.WALL_DATA = {
-     stations: [ {temp:31.2, humid:58, wind:2.4, rain:0, pm10:31}, ... ],  // NAMES 순서 11개
-     rivers:   { 동두천:[ ['신천 동두천교', 2.2, 5.0] ] },   // [지점명, 현재수위m, 위험수위m]
-     risks:    { 동두천:[ ['소요산 등산로','산불 취약','산불'] ] },
-     msgs:     { 동두천:[ ['동두천시','폭염','13:05','문자 본문'] ] }
+     stations: [ {temp:16.2, humid:58, wind:2.4, rain:0, pm10:31}, ... ],  // NAMES 순서(12개 관서)
+     rivers:   { 청주동부:[ ['무심천 흥덕교', 1.2, 4.5] ] },   // [지점명, 현재수위m, 위험수위m]
+     risks:    { 청주동부:[ ['지점','설명','종류'] ] },
+     msgs:     { 청주동부:[ ['충청북도','호우','13:05','문자 본문'] ] }
    };
    특보·상황단계·경보모드·출동영향 판단은 위 실황값에서 자동으로 파생됩니다. */
 const EXT = () => (typeof window !== 'undefined' && window.WALL_DATA) || {};
@@ -1921,7 +1807,7 @@ class Component extends DCLogic {
     if(mob){
       let vw = document.documentElement.clientWidth || window.innerWidth;
       if(coarse && devW > 0 && devW < vw) vw = devW;   // 넓어진 페이지 폭 말고 실제 기기 폭에 맞춘다
-      /* zoom 대신 transform 으로 줄인다(2026-11-17) — 아이폰(사파리·카카오톡)은 text-size-adjust 가 % 로 걸려 있으면
+      /* zoom 대신 transform 으로 줄인다 — 아이폰(사파리·카카오톡)은 text-size-adjust 가 % 로 걸려 있으면
          글자에는 zoom 을 적용하지 않아 칸만 줄고 글자는 원래 크기로 삐져나왔다. transform 은 글자까지 통째로 줄인다.
          transform 은 차지하는 자리를 안 줄이므로 바깥 틀 높이를 직접 맞추고 넘치는 폭은 잘라 페이지가 넓어지지 않게 한다 */
       const s = vw/1080;
@@ -1952,7 +1838,7 @@ class Component extends DCLogic {
     Object.keys(v).forEach(k=>r.setProperty('--'+k, v[k]));
     /* 강조색 = 충청북도 로고 색(2026-11-10) — 어두운 화면은 아래 청록, 밝은 화면은 위 보라(흰 바탕에선 청록 글자가 흐려서) */
     r.setProperty('--acc', dark ? acc : '#5E3790');
-    r.setProperty('--accFg', dark ? '#0b1220' : '#ffffff');   // 강조색 바탕 위 글자 — 밝은 화면 보라 바탕엔 흰 글자(2026-11-17)
+    r.setProperty('--accFg', dark ? '#0b1220' : '#ffffff');   // 강조색 바탕 위 글자 — 밝은 화면 보라 바탕엔 흰 글자
     // cSafe = 정상·낮음·좋음·안전·평상(문제없음) — 색을 빼서 위험한 곳만 색이 남게. cGreen 은 강조색(관서 이름 줄·진행 막대)용으로 남긴다
     const A = dark ? {cGreen:'#17AFAB',cSafe:'#AEB8C8',cAmber:'#FFB020',cOrange:'#FF9A3C',cRed:'#FF5A5A',cBlue:'#54AAFF',cIndigo:'#B7C4FF'}
                    : {cGreen:'#5E3790',cSafe:'#6B7891',cAmber:'#A86A00',cOrange:'#C75400',cRed:'#C9302C',cBlue:'#1D6FD1',cIndigo:'#4F63D6'};   // 밝은 화면: 흰 바탕 위 글자로 읽히게 진하게(2026-11-16)
@@ -2258,7 +2144,7 @@ class Component extends DCLogic {
         tile('a',(mo.tomorrow?'내일':'오늘')+' 아침 최저', r0(t), '℃', lv,
           im.on?['영향예보 '+im.today, im.col] : (mh ? [mh.hour+'시 · 체감 '+r0(mh.feels)+'℃', (mh.feels!=null&&mh.feels<=-10)?ORANGE:null] : null), null),
         /* 둘째 칸 — 아침 최저가 내일 것이면 '오늘 최저보다', 오늘 것(아침 9시 전후)이면 오늘 최저와 같은 값이라 비교가 안 되므로
-           '내일 아침 최저'를 보여 주고 오늘 아침과 비교한다(2026-11-12 — 아침에 '—'로 비어 있었다) */
+           '내일 아침 최저'를 보여 주고 오늘 아침과 비교한다(아침에 '—'로 비어 있었다) */
         /* '5℃ 높음'은 한 덩어리 말이라 '높음'만 아랫줄로 떨어지면 어색했다 → 부호로(+5℃ · −2℃, 2026-11-16) */
         (()=>{ if(mo.tomorrow) return tile('b','오늘 최저보다', drop==null?'—':(drop===0?'같음':(drop>0?'+':'−')+Math.abs(drop)), (drop==null||drop===0)?'':'℃',
             null, ['오늘 최저 '+r0(s.tmin)+'℃ — '+(drop==null?'':drop===0?'같음':Math.abs(drop)+'℃ '+(drop<0?'낮음':'높음')),null],
@@ -2427,7 +2313,7 @@ class Component extends DCLogic {
     if(!td || !td.events || !td.events.length) return R('div',{style:{flex:1,display:'flex',alignItems:'center',justifyContent:'center',fontSize:'38px',fontWeight:570,color:DIM}},'물때 자료 없음');
     const now=new Date(), hm=now.getHours()*60+now.getMinutes();
     const toMin=s=>{ const m=String(s||'').match(/^(\d+):(\d+)$/); return m?(+m[1]*60+ +m[2]):null; };
-    /* 다음 고조/저조 하나를 강조 — 파주 두포리 시각(dupo) 기준 */
+    /* 다음 고조/저조 하나를 강조 */
     let nextIdx=-1; td.events.forEach((e,i)=>{ const mm=toMin(e.dupo); if(nextIdx<0 && mm!=null && mm>=hm) nextIdx=i; });
     const cells=td.events.map((e,i)=>{
       const hi=e.kind==='high', isNext=i===nextIdx;
@@ -2587,8 +2473,8 @@ class Component extends DCLogic {
 
 
     // rivers
-    const _rlist = ((EXT().rivers || RIVERS)[s.name] || RIVERS['양주']);
-    /* 행이 많으면(연천=하천3+댐2) 고정 글자크기가 카드를 넘겨 막대와 글자가 겹친다 → 밀도 자동 조정 */
+    const _rlist = ((EXT().rivers || RIVERS)[s.name] || []);
+    /* 행이 많으면(하천3+댐2 등) 고정 글자크기가 카드를 넘겨 막대와 글자가 겹친다 → 밀도 자동 조정 */
     const _SZ = [{n:'44px',d:'31px',v:'54px',s:'36px',b:'22px',p:'14px 24px',g:'10px'},
                  {n:'34px',d:'26px',v:'40px',s:'28px',b:'15px',p:'9px 20px',g:'7px'},
                  {n:'28px',d:'21px',v:'32px',s:'23px',b:'10px',p:'6px 16px',g:'4px'}
@@ -2676,7 +2562,7 @@ class Component extends DCLogic {
         text:'강풍경보 발효. 간판·비계 등 낙하물에 주의하고 야외 작업과 시설물 접근을 자제하시기 바랍니다.',
         color:'var(--cAmber,#ffb020)', bg:'rgba(255,176,32,.12)' });
     } else {
-      msgs = ((EXT().msgs || MSGS)[s.name] || MSGS['기본']).map(function(m){
+      msgs = ((EXT().msgs || MSGS)[s.name] || []).map(function(m){
         var _t = String(m[3]||''), _k = m[1] || '';
         if(!_k){ var _kw=['호우','침수','태풍','대설','한파','폭염','강풍','산불','화재','지진','실종','교통','대피','미세먼지','해일','홍수'];
                  for(var _i=0;_i<_kw.length;_i++){ if(_t.indexOf(_kw[_i])>=0){ _k=_kw[_i]; break; } } }
@@ -2688,7 +2574,7 @@ class Component extends DCLogic {
     }
 
     // risks
-    const risks = ((EXT().risks || RISKS)[s.name] || RISKS['양주']).map(k=>({ name:k[0], note:k[1], type:k[2],
+    const risks = ((EXT().risks || RISKS)[s.name] || []).map(k=>({ name:k[0], note:k[1], type:k[2],
       color: k[2]==='침수'||k[2]==='수난' ? 'var(--cBlue,#54aaff)' : (k[2]==='산불' ? 'var(--cOrange,#ff9a3c)' : 'var(--cRed,#ff5a5a)') }));
 
     // rail — 각 관서도 동일한 파생 로직을 사용해 본 화면과 어긋나지 않게
@@ -2697,9 +2583,8 @@ class Component extends DCLogic {
       const ss = this.stAt(k), ws = this.warnsOf(ss);
       const sev = ws.length ? Math.max.apply(null, ws.map(x=>x.sev)) : 0;
       const _r1 = ss.rain1h || 0, _rd = ss.rday || 0, _wetR = (_r1 > 0);   // 지난 1시간 비가 없으면(그쳤으면) 일 강수량도 숨긴다. 현재 실황 칸의 일누적은 그대로
-      /* 칸이 좁으면(경기 전체 31개 = 16칸, 한 칸 220px) 긴 문구가 잘린다.
-         잘린 숫자는 '무엇의 값인지' 모르게 되어 위험하므로, 좁을 땐 누적 하나만
-         이름표를 붙여 보여준다. 넓을 땐(11·21개 = 326px) 둘 다 보여준다. */
+      /* 칸이 좁으면 긴 문구가 잘린다. 잘린 숫자는 '무엇의 값인지' 모르게 되어 위험하므로,
+         좁을 땐 누적 하나만 이름표를 붙여 보여주고 넓을 땐 둘 다 보여준다. */
       const _narrow = NAMES.length > 22;
       return { name:n, temp:ss.temp.toFixed(1), tag: ws.length ? ws[0].type.replace(/경보|주의보/,'') : '평상',
         /* 100mm 이상은 소수점을 빼서 칸 안에 들어가게 — 잘리면 무엇의 값인지 모르게 된다 */
@@ -2729,8 +2614,7 @@ class Component extends DCLogic {
     const _rcols = _rn <= 12 ? _rn : Math.ceil(_rn / 2);
     const _rrows = Math.ceil(_rn / _rcols);
     /* minmax(0,1fr) 를 쓴다. 그냥 1fr 이면 칸의 최소폭이 auto라, 줄바꿈 없는 글자가
-       칸을 밀어내 무대 밖으로 넘친다 — 34개(17칸)에서 실제로 141px 넘쳐 맨 오른쪽
-       안성·연천이 화면 밖으로 나갔다(2026-08-19 사장님 발견). */
+       칸을 밀어내 무대 밖으로 넘친다. */
     const _RAIL = 'height:' + (_rrows * 150 + (_rrows - 1) * 14) + 'px;flex:none;display:grid;'
                 + 'grid-template-columns:repeat(' + _rcols + ',minmax(0,1fr));gap:14px;';
     const _RC = (typeof window!=='undefined' && window.REGION_CONF) || {};
@@ -2874,7 +2758,7 @@ class Component extends DCLogic {
   var STAGES=[['normal','평상','#aeb8c8'],['ready','준비','#54aaff'],['caution','1단계','#ffb020'],['warn','2단계','#ff7a2f'],['severe','3단계','#ff5a5a'],
               /* 계절 시연 — 계절 감시 칸이 한파·결빙 / 폭염 / 건조·산불로 바뀌는 것(2026-11-10) */
               ['cold','❄ 한파·결빙','#7cc4ff',1],['heat','☀ 폭염','#ff8a5c'],['dry','🔥 건조·산불','#ffc247'],
-              /* 지진 시연 — 기상특보 카드의 지진 줄 + 재난문자(2026-11-12) */
+              /* 지진 시연 — 기상특보 카드의 지진 줄 + 재난문자 */
               ['quake','🌏 지진','#ff5a5a',1]];
   function cur(){ try{ return new URLSearchParams(location.search).get('demo'); }catch(e){ return null; } }
   function set(v){ try{ var u=new URL(location.href); u.searchParams.delete('stage'); if(v) u.searchParams.set('demo',v); else u.searchParams.delete('demo'); history.replaceState(null,'',u); }catch(e){}
@@ -2991,7 +2875,7 @@ class Component extends DCLogic {
       var col=w.sev?'var(--cRed,#ff5a5a)':(chronic?'var(--cAmber,#ffb020)':'var(--cOrange,#ff9a3c)');
       var bg=!stageT?'var(--panel2,#1b2230)':(w.sev?'rgba(255,77,77,.18)':(chronic?'rgba(255,176,32,.14)':'rgba(255,154,60,.16)'));
       var row=el('div','cursor:pointer;border-radius:14px;padding:'+F(12,1.1,26)+' '+F(14,1.3,30)+';background:'+bg+';');
-      /* 특보 줄을 누르면 그 특보의 통보문 창, 없으면 날씨누리 통보문 목록(2026-11-12) */
+      /* 특보 줄을 누르면 그 특보의 통보문 창, 없으면 날씨누리 통보문 목록 */
       row.title='누르면 '+w.type+' 통보문(기상청 발효현황 그림·원문)';
       row.onclick=(function(t){ return function(){ var bl=raw.bulletins||{}, lst=(bl.warnings_full||[]).filter(function(b){ return b && (b.title||b.current); }), k=-1;
         lst.some(function(b,i){ if(String(b.title||'').indexOf('해제')<0 && (String(b.title||'')+String(b.current||'')+String(b.summary||'')).indexOf(t)>=0){ k=i; return true; } });
@@ -3089,7 +2973,7 @@ class Component extends DCLogic {
     openBulletin(list, idx, bl.stn);
   }
   var openList=open;
-  /* 충북에 발효 특보도 예비특보도 없으면 누를 것이 없다 — 클릭 막고 손가락 커서도 끈다(2026-11-12) */
+  /* 충북에 발효 특보도 예비특보도 없으면 누를 것이 없다 — 클릭 막고 손가락 커서도 끈다 */
   function hasAny(){ var raw=window.WALL_RAW||{};
     return (raw.warnings||[]).length>0 || (raw.prelim||[]).some(function(p){ return (p.items||[]).some(function(it){ return it.north_match; }); }); }
   document.addEventListener('mouseover', function(e){
@@ -3142,7 +3026,7 @@ class Component extends DCLogic {
     pinRow.appendChild(pin); pinRow.appendChild(ok);
     pinRow.appendChild(el('span','width:100%;text-align:center;font-size:'+F(12,.9,22)+';color:var(--dim,#8e9bb0);','번호는 관리자에게 문의하세요'));
     card.appendChild(pinRow);
-    /* 휴대폰처럼 좁으면 3칸씩 두 줄(한 줄 6칸이면 '1 단 계'처럼 세로로 꺾였다, 2026-11-17) */
+    /* 휴대폰처럼 좁으면 3칸씩 두 줄(한 줄 6칸이면 '1 단 계'처럼 세로로 꺾였다) */
     var row=el('div','display:grid;grid-template-columns:'+(window.innerWidth<560?'repeat(3,1fr)':'1.4fr repeat(5,1fr)')+';gap:'+F(8,.8,18)+';opacity:.35;pointer-events:none;transition:opacity .2s;');
     var msg=el('div','min-height:1.4em;text-align:center;font-size:'+F(15,1.15,28)+';font-weight:700;color:var(--cRed,#ff5a5a);');
     var okPin=null;
@@ -3223,32 +3107,27 @@ class Component extends DCLogic {
      region.js가 없으면 지금까지 쓰던 충청북도 값으로 동작한다(하위호환). */
   var RC=(typeof window!=='undefined'&&window.REGION_CONF)||{};
   /* 권역 필터 — 화면 컴포넌트의 NAMES와 반드시 같은 규칙일 것(둘이 다르면 데이터-화면이 어긋난다) */
-  var NAMES=(function(){ var RC=(typeof window!=='undefined'&&window.REGION_CONF)||{}; var base=RC.order||['고양','일산','파주','연천','의정부','양주','동두천','포천','가평','남양주','구리']; var sc=null; try{ sc=new URLSearchParams(location.search).get('scope'); }catch(e){} var g=RC.scopes||{}; try{ if(sc && !g[sc] && g['경기'+sc]) sc='경기'+sc; }catch(e){} try{ if(!sc && typeof localStorage!=='undefined'){ var v=localStorage.getItem('ggScope'); if(v==='전체') return base; if(v && g[v]) sc=v; } }catch(e){} try{ if(!sc) sc=(RC.hostScope||{})[location.hostname.split('.')[0]]||null; }catch(e){} if(sc && g[sc]) base=base.filter(function(n){ return g[sc].indexOf(n)>=0; }); return base; })();
-  var ADMIN=RC.admin||{고양:'고양시',파주:'파주시',연천:'연천군',의정부:'의정부시',양주:'양주시',동두천:'동두천시',포천:'포천시',가평:'가평군',남양주:'남양주시',구리:'구리시'};
-  /* SIG = 실제 시군(일산은 고양의 일부라 제외). 하천 표시명에서 '괄호 안이 시군인지' 판정용. */
-  /* 관서명 → 데이터상의 시군명. 소방서가 시(市)를 나눠 맡는 곳(분당·송탄·일산)은
-     기상청 자료가 시군 단위로만 나오므로 소속 시군 값을 본다.
-     ⚠ 예전엔 '일산'만 하드코딩돼 있었다. 경기 전체(34관서)를 붙이면서 분당·송탄이
-       소속 시군을 못 찾아 기온 0.0°·특보 '평상'으로 떴다 — region.js 의 alias 를
-       읽도록 바꿔, 관서가 늘어도 코드를 안 고치게 했다. */
-  var ALIAS=((typeof window!=='undefined'&&window.REGION_CONF)||{}).alias||{'일산':'고양'};
+  var NAMES=(function(){ var RC=(typeof window!=='undefined'&&window.REGION_CONF)||{}; var base=RC.order||['청주동부','청주서부','충주','제천','보은','옥천','영동','증평','진천','괴산','음성','단양']; var sc=null; try{ sc=new URLSearchParams(location.search).get('scope'); }catch(e){} var g=RC.scopes||{}; try{ if(!sc && typeof localStorage!=='undefined'){ var v=localStorage.getItem('ggScope'); if(v==='전체') return base; if(v && g[v]) sc=v; } }catch(e){} try{ if(!sc) sc=(RC.hostScope||{})[location.hostname.split('.')[0]]||null; }catch(e){} if(sc && g[sc]) base=base.filter(function(n){ return g[sc].indexOf(n)>=0; }); return base; })();
+  var ADMIN=RC.admin||{};
+  /* SIG = 실제 시군(다른 관서의 별칭인 관서는 제외). 하천 표시명에서 '괄호 안이 시군인지' 판정용. */
+  /* 관서명 → 데이터상의 시군명(region.js alias). 한 시를 나눠 맡는 관서는
+     기상청 자료가 시군 단위로만 나오므로 소속 시군 값을 본다. */
+  var ALIAS=((typeof window!=='undefined'&&window.REGION_CONF)||{}).alias||{};
   var SIG=NAMES.filter(function(n){ return !ALIAS[n]; });
-  /* 이름에서 시군명을 떼어낼 땐 '권역으로 거른 목록'이 아니라 전체 시군을 기준으로 한다.
-     NAMES가 선택 권역만 담게 된 뒤(2026-09-17), 남부를 고르면 임진강 지점의 '연천'이
-     안 떼어져 '연천 필승교'가 상단 카드 칸을 넘쳤다. */
+  /* 이름에서 시군명을 떼어낼 땐 '권역으로 거른 목록'이 아니라 전체 시군을 기준으로 한다. */
   var SIG_ALL=(RC.order||NAMES).filter(function(n){ return !ALIAS[n]; });
   function nv(x){ return (x==null||x===''||isNaN(x))?null:+x; }
   function sig(nm){ return ALIAS[nm]||nm; }
-  /* 표시명: 괄호 안(예 '임진강 (연천 임진교)'→'연천 임진교'). 단 괄호가 시군뿐이면
-     지점 구분이 안 되니 하천명을 붙인다('신천 (연천)'→'연천 신천'). */
+  /* 표시명: 괄호 안(예 '미호천 (청주 석화)'→'청주 석화'). 단 괄호가 시군뿐이면
+     지점 구분이 안 되니 하천명을 붙인다('달천 (충주)'→'충주 달천'). */
   function shortRiver(nm){ var s=String(nm||''), m=s.match(/^\s*([^(]+?)\s*\(([^)]+)\)/);
     if(!m) return s;
     var head=m[1].trim(), inner=m[2].trim();
     if(SIG.indexOf(inner)>=0) return inner+' '+head;
     return inner; }
-  /* 상단바 감시카드용 짧은 이름 — '임진강 (연천 필승교)' → '필승교'.
+  /* 상단바 감시카드용 짧은 이름 — '미호천 (청주 석화)' → '석화'.
      칸이 좁아 시군명까지 넣으면 넘친다. 어차피 고정 지점이라 어디인지 다 안다. */
-  function keyName(nm){ return shortRiver(nm).trim().split(' ').pop(); }   /* '(연천) 임진강 필승교' → '필승교' */
+  function keyName(nm){ return shortRiver(nm).trim().split(' ').pop(); }   /* '청주 석화' → '석화' */
   var ICON={'맑음':'☀️','구름많음':'⛅','구름조금':'🌤️','흐림':'☁️','비':'🌧️','소나기':'🌦️','빗방울':'🌧️','비/눈':'🌨️','눈':'❄️','눈날림':'🌨️','진눈깨비':'🌨️','뇌우':'⛈️'};
   function wicon(w){ return ICON[w]||'☁️'; }
   /* 날씨문자 → 통일 SVG 아이콘 타입(메테오그램 wxSvg). 밤(19~06시)엔 해→달 */
@@ -3264,7 +3143,7 @@ class Component extends DCLogic {
   function canon(name){ var n=String(name||'').trim(); if(!n) return null; var UNITS=RC.order||[];
     /* 시도 전역 표기(충청북도·강원도·서울…)는 '충청북도' 표식으로 — 아래 warnsByStation 이 전 관서 발효로 푼다 */
     var ZONE={'울릉도.독도':'울릉', '흑산도.홍도':'신안', '서해5도':'옹진', '백령도.대청도':'옹진', '연평도.우도':'옹진'}; if(ZONE[n]) return ZONE[n];   /* 섬 특보구역 → 관서 */
-    if(n==='충청북도'||n==='경기남부'||n==='충청북도'||n==='수도권'||n==='경기'||(RC.wideNames||[]).indexOf(n)>=0) return '충청북도';
+    if(n==='충청북도'||(RC.wideNames||[]).indexOf(n)>=0) return '충청북도';
     if(UNITS.indexOf(n)>=0) return n;   /* 관서 이름 그대로면 그대로 — 광역시 '중구'를 '중'으로 깎지 않게 */
     n=n.replace(/(동북부|서북부|동남부|서남부|남부|북부|동부|서부|중부|내륙|산지|앞바다|해안)/g,'');
     n=n.replace(/(특별자치시|특별자치도|특별시|광역시|자치시|자치도)/g,'');
@@ -3304,7 +3183,7 @@ class Component extends DCLogic {
     var fireOf=function(nm){ var sg=sig(nm), hit=function(t){ return (D.fire||[]).filter(function(f){ return String(f.region||'').split('·').some(t); })[0]||null; };
       return hit(function(x){ return x===nm||x===sg; }) || hit(function(x){ return x.slice(0,2)===nm.slice(0,2); }); };   /* 재해.html fireGroupOf 와 같은 찾기 */
     var stations=NAMES.map(function(nm){
-      /* 일산은 regions에 없다 → 지역기상은 '고양'. 단 AWS/미세먼지는 일산 고유 키. */
+      /* 별칭 관서는 지역기상을 소속 시군(sig) 값으로, AWS·미세먼지는 관서 고유 키로 본다. */
       var r=byName[sig(nm)]||{}, a=aws[nm]||{}, w=a.wind||{}, pm=pmBy[nm]||pmBy[sig(nm)]||{}, det=r.detail||{};
       /* 시를 나눠 맡는 관서(청주서부)는 현재값·예보를 자기 동 기준으로(서버가 data.local 에 싣는다) */
       var own=(nm!==sig(nm) && D.local && D.local[nm]) || null, hsrc=(own&&own.hourly)||det.hourly||[];
@@ -3340,8 +3219,8 @@ class Component extends DCLogic {
         rainHot:window.cbRainHot?window.cbRainHot(a,(((window.REGION_CONF||{}).awsStations)||{})[nm]):[],   /* 관할 다른 지점의 집중호우 */
         hourly:(hrs.length?hrs:null) };
     });
-    /* 하천 → 관서. sigun 없으면 이름에서 시군 추출(가장 긴 매칭 우선: '남양주'가 '양주'보다 먼저).
-       전 관서를 []로 초기화 → 하천 없는 관서(예:구리)에 남의 하천 샘플이 뜨는 폴백 차단. */
+    /* 하천 → 관서. sigun 없으면 이름에서 시군 추출(가장 긴 이름 우선).
+       전 관서를 []로 초기화해 하천 없는 관서는 빈 칸으로 둔다. */
     var rivers={}; NAMES.forEach(function(nm){ rivers[nm]=[]; });
     /* 관서별 관측소 코드 목록(하천 CCTV 카드용 — rivers 는 화면용 배열이라 코드가 없다). 댐 제외. */
     var codes={}; NAMES.forEach(function(nm){ codes[nm]=[]; });
@@ -3354,7 +3233,7 @@ class Component extends DCLogic {
          화면에서 저수율·유입·방류로 따로 표기하고, 침수판단(worst)에서는 제외한다. */
       var isDam=(rv.api==='dam')||!!rv.dam_info, di=rv.dam_info||{};
       /* ⚠ 반드시 이 entry(화면용 배열)를 넣을 것 — 원시 rv를 넣으면 이름 없는 '0.00m' 행이 된다.
-         2026-08-25 평택·송탄에서 실제 발생(코드 지정 관서만 원시 rv가 들어가고 있었다). */
+         */
       var entry=[shortRiver(rv.name), nv(rv.value), nv(rv.danger), (isDam?'dam':''), (rv.level||'safe'),
         nv(rv.delta_1h), nv(rv.warning), null /* 저수율 — 홍수통제소 자료에 없음(예전 storage_rate 는 공용량이었다) */, nv(di.inflow),
         nv(di.total_outflow)];
@@ -3369,7 +3248,7 @@ class Component extends DCLogic {
       if(RCODE[sg]) return;   /* 그 시군은 코드로만 받는다 — 남의 하천이 섞이지 않게 */
       if(!sg){ var best=''; SIG.forEach(function(x){ if(String(rv.name||'').indexOf(x)>=0 && x.length>best.length) best=x; }); sg=best; }
       if(!sg) return;
-      NAMES.forEach(function(nm){ if(sig(nm)===sg && nm!=='일산') put(nm); });  /* 시군 관서에만(일산 중복 방지) */
+      NAMES.forEach(function(nm){ if(sig(nm)===sg && !ALIAS[nm]) put(nm); });  /* 시군 관서에만(별칭 관서 중복 방지) */
     });
     /* 자동 위험구역 — 하천 경계·주의수위 이상 · 1시간 0.3m 급상승, 집중호우(1시간 30mm·12시간 110mm 이상).
        구글시트로 손으로 적던 방식은 2026-10-30 폐지. 지도.html autoRisks 와 같은 기준. 행 = [이름, 설명, 유형] */
@@ -3418,9 +3297,7 @@ class Component extends DCLogic {
     }).filter(function(x){ return x; });
 
     /* 6시간 강수예측 — 관서별. ultra_fcst는 시군 키라 관서명을 sig()로 바꿔 찾는다
-       (일산은 고양 값을 쓴다 — 지역기상이 같다). 없으면 빈 배열 → 화면에 '자료 없음'.
-       2026-08-17 추가: 위험구역 카드 자리에 넣는다. 매 회차 수집하면서도 어느 화면에서도
-       안 쓰던 유일한 데이터였다. */
+       없으면 빈 배열 → 화면에 '자료 없음'. 위험구역 카드 자리에 넣는다. */
     var ultra={};
     NAMES.forEach(function(nm){
       var a=(D.ultra_fcst||{})[sig(nm)]||[];
@@ -3525,7 +3402,7 @@ class Component extends DCLogic {
       /* 지진 — 괴산 북동쪽 규모 4.1, 충북 진도 Ⅴ(5분 전). 수집기 fetch_quake 와 같은 모양 */
       var q=ago(5);
       c.quake=[{tp:'3', tp_txt:'국내지진통보', tm_eqk:q.full, mt:4.1, lat:36.88, lon:127.86, loc:'충북 괴산군 북동쪽 11km 지역',
-        int:'최대진도 Ⅴ(충북),Ⅳ(경북),Ⅲ(강원·경기·충남)', int_max:5, int_cb:5, rem:'시연 — 실제 지진이 아닙니다', near:'괴산', dist_km:11}];
+        int:'최대진도 Ⅴ(충북),Ⅳ(경북),Ⅲ(강원·충남)', int_max:5, int_cb:5, rem:'시연 — 실제 지진이 아닙니다', near:'괴산', dist_km:11}];
       msg('기상청', ago(4).hm, '[기상청] '+q.full.slice(5,16).replace('-','/')+' 충북 괴산군 북동쪽 11km 지역 규모4.1 지진발생 / 낙하물로부터 몸 보호, 진동 멈춘 후 야외 대피하며 여진 주의','충청북도');
       msg('괴산군', ago(2).hm, '[괴산군] 지진 발생. 건물 균열·낙석 피해가 있으면 119로 신고하고, 산사태 위험지역 주민은 대피해 주세요.','괴산');
     } else if(key==='cold' || key==='heat' || key==='dry'){
@@ -3617,7 +3494,7 @@ class Component extends DCLogic {
         try{ apply(JSON.parse(t.slice(i,j+1))); }catch(e){} }).catch(function(){});
   }
   setInterval(reload, 300000);
-  /* 처음 data.js 를 못 받으면(접속 순간 끊김 등) 화면 밑바탕의 시연용 예시 자료(여름 폭염 등)가 실제처럼 보였다(2026-11-17) —
+  /* 처음 data.js 를 못 받으면(접속 순간 끊김 등) 화면 밑바탕의 시연용 예시 자료(여름 폭염 등)가 실제처럼 보였다 —
      실제 자료가 들어올 때까지 화면 전체를 '불러오는 중' 가림막으로 덮어 예시 값은 한 번도 보이지 않게 하고, 5초마다 다시 받는다 */
   (function(){
     if(window.WALL_DATA) return;
@@ -3639,7 +3516,7 @@ class Component extends DCLogic {
 </script>
 
 <script>
-/* 윈디(Windy) 무료 임베드(2026-11-12) — 충북 가운데. 레이더 칸 W 모드와 크게 보기 창에서 쓴다. 처음 층은 바람(2026-11-17 — 날씨 레이더는 비가 없으면 멈춘 화면 같아서) */
+/* 윈디(Windy) 무료 임베드 — 충북 가운데. 레이더 칸 W 모드와 크게 보기 창에서 쓴다. 처음 층은 바람(날씨 레이더는 비가 없으면 멈춘 화면 같아서) */
 window.cbWindyUrl = function(overlay, zoom){
   return 'https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=%C2%B0C&metricWind=m%2Fs'
     + '&zoom='+(zoom||8)+'&overlay='+(overlay||'wind')+'&product=ecmwf&level=surface&lat=36.75&lon=127.75&message=true';
@@ -3674,7 +3551,7 @@ window.cbWindyUrl = function(overlay, zoom){
       '날씨 레이더·위성은 관측, 나머지는 ECMWF 모델 예보 · 아래 ▶ 로 흐름 재생 · 닫기: ✕ · 바깥 누르기 · Esc'));
     pick(layer);
     document.body.appendChild(box);
-    document.addEventListener('keydown', onKey, true);   /* 윈디 창은 저절로 닫지 않는다(2026-11-12 요청) — ✕·바깥·Esc 로만 */
+    document.addEventListener('keydown', onKey, true);   /* 윈디 창은 저절로 닫지 않는다(요청) — ✕·바깥·Esc 로만 */
   };
 })();
 </script>
@@ -3693,6 +3570,16 @@ window.cbWindyUrl = function(overlay, zoom){
     var th=document.createElement('button'); th.type='button'; th.textContent='☀'; th.title='밝게/어둡게'; th.setAttribute('aria-label','밝게/어둡게');
     th.onclick=function(){ W.theme(); };
     box.appendChild(sel); box.appendChild(th);
+    /* 자료 기준 시각 — 휴대폰은 맨 아래 '마지막 갱신'까지 내려가야 보여서. 15분 넘게 그대로면 빨간 경고 */
+    var up=document.createElement('div'); up.id='wall-mupd';
+    up.style.cssText='flex:1 0 100%;font:700 15px/1.3 \"Pretendard Variable\",Pretendard,system-ui,sans-serif;color:var(--dim,#8e9bb0);padding:0 4px;';
+    box.appendChild(up);
+    function tick(){ var u=String((window.WALL_RAW||{}).updated||''), m=u.match(/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})/);
+      if(!m){ up.textContent=''; return; }
+      var late=Math.round((Date.now()-new Date(+m[1],+m[2]-1,+m[3],+m[4],+m[5]))/60000);
+      up.textContent='자료 '+m[4]+':'+m[5]+' 기준'+(late>15?' · ⚠ '+late+'분째 갱신 안 됨':'');
+      up.style.color=late>15?'#ef4444':'var(--dim,#8e9bb0)'; }
+    tick(); setInterval(tick, 20000);
     document.body.insertBefore(box, document.body.firstChild);
   };
   window.cbWallSelSync=function(i){ if(sel && sel.value!==String(i)) sel.value=String(i); };
