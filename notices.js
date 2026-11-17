@@ -8,6 +8,11 @@
    안 본 공지가 있으면 각 화면의 설명서 버튼(❓·?)에 빨간 점이 붙고, 누르면 공지사항 탭으로 바로 열린다.
    본 공지는 이 PC 브라우저에 기억한다(cbNoticeSeen). */
 window.CB_NOTICES = [
+  { id: '2026-11-17-1', date: '2026-11-17', kind: '개선', title: '오른쪽 아래 바로가기 버튼 · 윈디 바람 화면', from: '의견 반영',
+    body: '종합 현황·재해·쉬운 화면 오른쪽 아래에 ↑(맨 위로)·W(윈디 바로 보기)·✎(배치 편집) 버튼이 생겼습니다. 스크롤해도 따라옵니다.\n' +
+          '윈디는 처음부터 바람 흐름 화면으로 열립니다.\n' +
+          '관서 상황도를 띄운 뒤 관서 선택 목록이 지도에 가려지던 문제, 배치 편집을 끌 때 테두리가 남던 문제를 고쳤습니다.\n' +
+          '119종합상황실: 밝은 화면의 보라색 버튼 글자를 잘 보이게 바꾸고, 비상단계 지정 아이콘을 🚨 모양으로 바꿨습니다.' },
   { id: '2026-11-10-2', date: '2026-11-10', kind: '새 기능', title: '💬 의견 보내기가 생겼습니다',
     body: '종합 현황 맨 위 오른쪽, 119종합상황실 왼쪽 위의 💬 버튼으로 의견을 보낼 수 있습니다.\n' +
           '보내 주신 의견은 개발 담당자가 확인하고, 반영되면 이 공지사항으로 알려 드립니다.' }
@@ -68,7 +73,7 @@ window.CB_NOTICES = [
       try { if (sessionStorage.getItem('cbNoticeToastClosed') === latest()) return; } catch (e) {}
       var n = window.cbNotices.unseen(), top = L[0];
       var c = document.createElement('div'); c.id = 'cb-ntoast'; c.setAttribute('role', 'status');
-      c.style.cssText = 'position:fixed;right:18px;bottom:18px;z-index:9000;width:min(360px,calc(100vw - 36px));box-sizing:border-box;' +
+      c.style.cssText = 'position:fixed;right:calc(18px + var(--cb-fab-w,0px));bottom:18px;z-index:9000;width:min(360px,calc(100vw - 36px));box-sizing:border-box;' +
         'background:var(--surface,#fff);color:var(--ink,#0f1b2d);border:1px solid var(--border2,#d3dbe9);border-left:4px solid var(--brand,#1d4ed8);' +
         'border-radius:12px;box-shadow:0 12px 32px rgba(15,27,45,.22);padding:13px 14px 12px;font-family:inherit;';
       var h = document.createElement('div'); h.style.cssText = 'font-size:12px;font-weight:800;color:var(--brand,#1d4ed8);margin-bottom:3px;';

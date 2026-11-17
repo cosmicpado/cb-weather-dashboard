@@ -123,6 +123,16 @@ class Quiet(http.server.SimpleHTTPRequestHandler):
     def log_message(self, *x):                 # 요청 로그는 끈다(가져오기 기록만 보이게)
         pass
 
+    def _client_ip(self):
+        """접속한 사람의 주소. Caddy 같은 리버스 프록시가 같은 PC 에서 넘겨 주면 접속 주소가 늘 127.0.0.1 이라
+        모두가 '서버 PC 자신'(관리자)으로 보인다 → 프록시가 붙여 준 X-Forwarded-For 의 실제 주소를 쓴다."""
+        ip = self.client_address[0]
+        if feedback._is_local(ip):
+            fwd = (self.headers.get('X-Forwarded-For') or self.headers.get('X-Real-IP') or '').split(',')[-1].strip()
+            if fwd:
+                return fwd
+        return ip
+
     def _feedback(self, method):
         """화면의 💬 의견 보내기 · 관리자.html — 규칙은 tools/feedback.py(Rocky 서버와 같은 코드)."""
         body = b''
@@ -135,9 +145,9 @@ class Quiet(http.server.SimpleHTTPRequestHandler):
                 code, out = 413, {'ok': False, 'err': '너무 깁니다'}
             else:
                 body = self.rfile.read(n)
-                code, out = feedback.handle(method, self.client_address[0], self.headers, body, self.path)
+                code, out = feedback.handle(method, self._client_ip(), self.headers, body, self.path)
         else:
-            code, out = feedback.handle(method, self.client_address[0], self.headers, b'', self.path)
+            code, out = feedback.handle(method, self._client_ip(), self.headers, b'', self.path)
         b = json.dumps(out, ensure_ascii=False).encode('utf-8')
         self.send_response(code)
         self.send_header('Content-Type', 'application/json; charset=utf-8')

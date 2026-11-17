@@ -122,6 +122,22 @@
   function touch() { clearTimeout(idleT); if (EDIT) idleT = setTimeout(function () { setEdit(false); toast('3분 동안 조작이 없어 편집을 끝냈습니다'); }, IDLE_MS); }
 
   function renderBadge() {
+    /* 휴대폰처럼 좁은 화면에선 배치 편집을 감춘다(2026-11-17) — 편집 창이 PC 폭 기준이라 깨져 보였고, 배치는 그 브라우저에만 저장되는 PC 화면용 */
+    var narrow = window.innerWidth < 820;
+    if (narrow && !EDIT) { if (window.cbFab) window.cbFab.slot('edit', []); if (badge) badge.style.display = 'none'; return; }
+    if (badge) badge.style.display = 'flex';
+    /* 2026-11-17 — 오른쪽 아래 단추 묶음(float-tools.js)이 있으면 그 위에 아이콘만(✎ 배치 편집 · ↺ 사용자 배치 되돌리기) */
+    if (window.cbFab) {
+      var e1 = window.cbFab.btn('✎', EDIT ? '배치 편집 끝내기' : '배치 편집', function () { setEdit(!EDIT); });
+      if (EDIT) { e1.style.background = '#e0930a'; e1.style.color = '#fff'; e1.style.borderColor = '#e0930a'; }
+      var e2 = null;
+      if (!isDefault(LAYOUT)) {
+        e2 = window.cbFab.btn('↺', '사용자 배치 — 기본 배치로 되돌리기', function () { if (confirm('기본 배치로 되돌릴까요? (직전 배치는 1단계 보관됩니다)')) { LAYOUT = validate(clone(DEFAULT)); apply(LAYOUT); save(LAYOUT); refresh(); toast('기본 배치로 되돌렸습니다'); } });
+        e2.style.color = '#e0930a'; e2.style.borderColor = '#e0930a';
+      }
+      window.cbFab.slot('edit', [e2, e1]);
+      return;
+    }
     if (!badge) { badge = $('div', 'position:fixed;left:12px;bottom:14px;z-index:9400;display:flex;gap:6px;'); document.body.appendChild(badge); }
     badge.innerHTML = '';
     var b1 = $('button', 'cursor:pointer;opacity:.45;padding:7px 12px;border-radius:10px;border:1px solid var(--border,#d3dbe9);background:var(--surface,#fff);color:var(--ink,#0f1b2d);font:700 12px system-ui,sans-serif;box-shadow:var(--sh1,0 1px 3px rgba(0,0,0,.1));', '✎ 배치 편집');
@@ -138,6 +154,7 @@
     EDIT = on; touch();
     if (!hud) { hud = $('div', 'position:fixed;left:50%;top:12px;transform:translateX(-50%);z-index:9450;display:none;max-width:min(96vw,980px);background:var(--surface,#fff);border:2px solid #e0930a;border-radius:14px;padding:12px 14px;color:var(--ink,#0f1b2d);font:600 13px/1.35 system-ui,sans-serif;box-shadow:0 12px 40px rgba(0,0,0,.28);user-select:none;'); document.body.appendChild(hud); }
     hud.style.display = on ? 'block' : 'none';
+    if (!on) clearMarks();   // ✎ 다시 누르기·3분 자동 종료도 [완료]처럼 테두리까지 지운다(2026-11-17 — 테두리만 남아 오류처럼 보였다)
     if (on) toast('편집 모드 · 3분 무조작 시 자동 종료');
     refresh();
   }
@@ -212,7 +229,9 @@
     var vv = validate(L); if (!vv) { toast('적용할 수 없는 배치입니다'); return; }
     clearMarks(); LAYOUT = vv; apply(LAYOUT); save(LAYOUT); refresh();
   }
-  window.addEventListener('resize', function () { if (EDIT) drawTags(); });
+  var lastNarrow = null;
+  window.addEventListener('resize', function () { if (EDIT) drawTags();
+    var n = window.innerWidth < 820; if (n !== lastNarrow) { lastNarrow = n; renderBadge(); } });
   window.addEventListener('scroll', function () { if (EDIT) drawTags(); }, { passive: true });
 
   function boot() { if (!document.querySelector('[data-dash-main]')) { setTimeout(boot, 300); return; } renderBadge(); }
