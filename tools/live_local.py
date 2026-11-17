@@ -208,7 +208,7 @@ def caddy_host():
         return ''
     for ln in lines:
         t = ln.split('#', 1)[0].strip()
-        if t.endswith('{') and not ln[:1].isspace():
+        if t.endswith('{') and t != '{' and not ln[:1].isspace():        # 맨 위 '{ … }' 전체 설정 묶음은 건너뜀
             host = t[:-1].strip().split(',')[0].strip()
             for pre in ('https://', 'http://'):
                 if host.startswith(pre):
