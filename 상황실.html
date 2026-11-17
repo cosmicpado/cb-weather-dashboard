@@ -3611,11 +3611,24 @@ class Component extends DCLogic {
   function loadRadar(){ fetch('images/radar/frames.json?_t='+Date.now(),{cache:'no-store'}).then(function(r){ return r.ok?r.json():null; })
     .then(function(j){ if(j && j.ok && j.frames && j.frames.length) window.RADAR_LIVE=j; }).catch(function(){}); }
   loadRadar(); setInterval(loadRadar, 60000);
-  setInterval(function(){
+  function reload(){
     fetch('data.js?_t='+Date.now(),{cache:'no-store'})
       .then(function(r){return r.text();}).then(function(t){ var i=t.indexOf('{'),j=t.lastIndexOf('}'); if(i<0||j<0) return;
         try{ apply(JSON.parse(t.slice(i,j+1))); }catch(e){} }).catch(function(){});
-  }, 300000);
+  }
+  setInterval(reload, 300000);
+  /* 처음 data.js 를 못 받으면(접속 순간 끊김 등) 화면이 시연용 예시 자료(여름 폭염 등)로 채워진다(2026-11-17) —
+     실제 자료가 들어올 때까지 5초마다 다시 받고, 그동안은 '예시 화면' 띠를 크게 띄워 실제 상황으로 오해하지 않게 한다 */
+  (function(){
+    var bar=null, tries=0, t=setInterval(function(){
+      if(window.WALL_DATA){ clearInterval(t); if(bar){ bar.remove(); bar=null; } return; }
+      if(!bar){ bar=document.createElement('div'); bar.setAttribute('role','alert');
+        bar.style.cssText='position:fixed;left:0;right:0;top:0;z-index:2147483000;background:#b91c1c;color:#fff;font:800 clamp(15px,1.6vw,40px)/1.35 inherit;text-align:center;padding:clamp(8px,.8vw,20px);box-shadow:0 4px 18px rgba(0,0,0,.4);';
+        bar.textContent='⚠ 실시간 자료를 아직 받지 못했습니다 — 지금 보이는 특보·재난문자·기온은 예시입니다. 다시 연결하는 중…';
+        document.body.appendChild(bar); }
+      if(++tries % 5 === 1) reload();
+    }, 1000);
+  })();
 })();
 </script>
 
