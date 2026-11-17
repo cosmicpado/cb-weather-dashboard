@@ -11,6 +11,12 @@ echo    이 PC 에서   : http://localhost:8000/지도.html
 echo    다른 PC 에서 : http://이 PC IP:8000/지도.html  (실제 주소는 아래에 표시)
 echo  이 창을 닫으면 서버가 멈춥니다. (처음 실행 때 Windows 방화벽 허용 창이 뜨면 "허용")
 echo.
+rem HTTPS(Caddy) - tools\caddy\caddy.exe 가 있으면 따로 창을 띄워 같이 켠다(이미 켜져 있으면 그대로 둔다)
+if exist "%HERE%tools\caddy\caddy.exe" (
+  tasklist /fi "imagename eq caddy.exe" 2> nul | find /i "caddy.exe" > nul || start "HTTPS (Caddy)" /min "%HERE%tools\caddy\https켜기.bat"
+  echo  HTTPS 도 같이 켜졌습니다 - 작업 표시줄의 "HTTPS ^(Caddy^)" 창. 닫으면 HTTPS 만 꺼집니다.
+  echo.
+)
 set PYTHONUTF8=1
 python "%HERE%tools\live_local.py" --port 8000 --lan --collect
 pause
