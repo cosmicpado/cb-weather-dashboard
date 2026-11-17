@@ -2,7 +2,7 @@
 <html><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>충북소방 기상재난 통합플랫폼</title>
+<title>충북소방 기상재난통합플랫폼</title>
 <script src="clock-sync.js"></script>
 <script src="short-url.js"></script>
 <script src="./support.js"></script>
@@ -30,8 +30,6 @@ html.wall-m [data-stage]{width:1080px!important;height:auto!important;padding:24
    (측정해서 글자 배율을 줄이는 보정은 칸 너비까지 줄여 오히려 깨져 뺐다) */
 html,body,body *{-webkit-text-size-adjust:100%!important;-moz-text-size-adjust:100%!important;text-size-adjust:100%!important;}
 #wall-msel{display:none;}
-[data-monly]{display:none;}
-html.wall-m [data-monly]{display:inline;}   /* 휴대폰에서만 보이는 글자(충북 특보통계) */
 html.wall-m #wall-msel{display:flex;flex-wrap:wrap;gap:8px;padding:50px 9px 0;background:var(--bg,#0d1118);}
 #wall-msel select{flex:1;min-width:0;height:46px;border-radius:12px;border:1px solid var(--line,#28313f);background:var(--panel,#151b26);color:var(--fg,#f2f5fa);font:700 18px 'Pretendard Variable',Pretendard,system-ui,sans-serif;padding:0 12px;}
 #wall-msel button{flex:none;width:46px;height:46px;border-radius:12px;border:1px solid var(--line,#28313f);background:var(--panel,#151b26);color:var(--fg,#f2f5fa);font-size:20px;cursor:pointer;}
@@ -1377,7 +1375,7 @@ https://scripts.sil.org/OFL
     <!-- ===== TOP BAR ===== -->
     <div data-topbar style="{{ topBarStyle }}">
 
-      <!-- 관서 이름 + 날씨 한 칸(2026-11-16) — 위 줄에 특보통계·비상근무를 올리느라 합쳤다. 이름·기온 큰 글자, 날씨·체감·LIVE 는 아래 한 줄 -->
+      <!-- 관서 이름 + 날씨 한 칸(2026-11-16) — 위 줄에 충북 현황·비상근무를 올리느라 합쳤다. 이름·기온 큰 글자, 날씨·체감·LIVE 는 아래 한 줄 -->
       <div data-namecard style="display:flex;align-items:center;gap:30px;background:var(--panel,#151b26);border:2px solid var(--line,#28313f);border-radius:24px;padding:0 36px;min-width:0;overflow:hidden;">
         <div title="{{ lvTip }}" style="width:16px;align-self:stretch;margin:34px 0;border-radius:8px;background:{{ lvBar }};flex:none;cursor:help;"></div>
         <div style="display:flex;flex-direction:column;justify-content:center;gap:18px;min-width:0;">
@@ -1448,10 +1446,10 @@ https://scripts.sil.org/OFL
         </div>
       </div>
 
-      <!-- 특보통계(2026-11-16, 위 줄로 올림) — 재대본 기준(호우·대설·태풍) 예비특보·주의보·경보 시·군 수 -->
+      <!-- 충북 현황 — 재대본 기준(호우·대설·태풍) 예비특보·주의보·경보 시·군 수 -->
       <div data-tally="1" title="충북 재대본 비상단계를 정하는 호우·대설·태풍 특보가 걸린 시·군 수입니다(청주동부·서부는 '청주' 하나로 셈). 주의보 수에는 경보 시·군을 뺐습니다. 누르면 충북 전체 특보·예비특보." style="background:var(--panel,#151b26);border:2px solid var(--line,#28313f);border-radius:24px;padding:20px 24px;display:flex;flex-direction:column;gap:12px;cursor:help;min-width:0;">
         <div style="display:flex;align-items:baseline;justify-content:space-between;gap:16px;white-space:nowrap;">
-          <div style="font-size:calc(40px*var(--fz,1));font-weight:570;letter-spacing:.06em;color:var(--dim,#8e9bb0);"><span data-monly>충북 </span>특보통계</div>
+          <div style="font-size:calc(40px*var(--fz,1));font-weight:570;letter-spacing:.06em;color:var(--dim,#8e9bb0);">충북 현황</div>
           <div style="font-size:calc(38px*var(--fz,1));font-weight:520;color:var(--dim,#8e9bb0);">호우·대설·태풍</div>
         </div>
         <!-- 칸 바탕 없음(2026-11-16) — 숫자 색만 -->
@@ -1546,7 +1544,7 @@ https://scripts.sil.org/OFL
         <!-- 특보 시·군 수(2026-11-16) — 재대본 기준(호우·대설·태풍) 예비특보·주의보·경보 시·군 수만 숫자로 -->
         <div data-card="tally" title="충북 재대본 비상단계를 정하는 호우·대설·태풍 특보가 걸린 시·군 수입니다(청주동부·서부는 '청주' 하나로 셈). 주의보 수에는 경보 시·군을 뺐습니다." style="margin:14px;background:var(--panel,#151b26);border:2px solid var(--line,#28313f);border-radius:22px;padding:22px 26px;display:flex;flex-direction:column;gap:10px;cursor:help;grid-column:var(--wl-tally-c,9)/span var(--wl-tally-cs,2);grid-row:var(--wl-tally-r,1)/span var(--wl-tally-rs,5);display:var(--wl-tally-d,flex);--fz:var(--wl-tally-fz,1);min-height:0;min-width:0;overflow:hidden;">
           <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;white-space:nowrap;">
-            <div style="font-size:calc(40px*var(--fz,1));font-weight:660;">특보통계</div>
+            <div style="font-size:calc(40px*var(--fz,1));font-weight:660;">충북 현황</div>
             <div style="font-size:calc(34px*var(--fz,1));font-weight:520;color:var(--dim,#8e9bb0);overflow:hidden;text-overflow:ellipsis;">호우·대설·태풍 시·군</div>
           </div>
           <div style="flex:1;min-height:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;">
@@ -2981,7 +2979,7 @@ class Component extends DCLogic {
   });
   document.addEventListener('click', function(e){
     if(window.WALL_EDITING || box) return;
-    /* 위 줄 '특보통계' 칸 — 누르면 충북 전체 특보·예비특보 상세(2026-11-16). 기상특보 칸은 자기 관서 것만 보이므로 */
+    /* 위 줄 '충북 현황' 칸 — 누르면 충북 전체 특보·예비특보 상세(2026-11-16). 기상특보 칸은 자기 관서 것만 보이므로 */
     var tl=e.target.closest && e.target.closest('[data-tally]'); if(tl){ if(hasAny()) open(); return; }
     var c=e.target.closest && e.target.closest('[data-card="warn"]'); if(!c) return;
     if(!hasAny()) return;
@@ -3327,7 +3325,7 @@ class Component extends DCLogic {
     cctv.sort(function(a,b){ return (a.rank-b.rank)||(a.si-b.si)||(b.ratio-a.ratio); });
     /* 관서별 예비특보 — 기상특보 카드에 발효 특보 아래 파란 줄로. 그 관서 시·군이 들어간 항목만(발효 특보와 같은 기준).
        시·군 없이 '충청북도'만 있으면 전 관서. 한 줄 = 종류 · 걸린 충북 시·군들 · 시각.
-       (2026-11-16 잠깐 전 관서에 띄웠다가 되돌림 — 자기 관서 것만 보이는 게 맞다는 결정. 충북 전체 건수는 특보통계·상세 창에서) */
+       (2026-11-16 잠깐 전 관서에 띄웠다가 되돌림 — 자기 관서 것만 보이는 게 맞다는 결정. 충북 전체 건수는 충북 현황·상세 창에서) */
     var ADM=(RC.admin||{}), prelim={}; NAMES.forEach(function(nm){ prelim[nm]=[]; });
     (D.prelim_warnings||[]).forEach(function(g){
       var its=(g.items||[]).filter(function(it){ return it.north_match||it.north; }); if(!its.length) return;
