@@ -3,8 +3,21 @@
 # 아래 셋 중 하나만 # 없이 남겨 둔다. (Caddy 2.10 이상)
 
 # 관리용 포트(2019)는 쓰지 않는다 — Windows 가 이 포트를 막아 두면 Caddy 가 켜지지 않는다
+# HTTP/3(UDP 443)은 끈다 — 방화벽에 TCP 443 만 열려 있으면 첫 접속이 멈추고 새로고침해야 뜬다
 {
 	admin off
+	servers {
+		protocols h1 h2
+	}
+}
+
+# 서버(8000)는 응답마다 연결을 닫는다 → Caddy 가 닫힌 연결을 다시 쓰다 502 가 나지 않게 매번 새로 연결
+(to_server) {
+	reverse_proxy 127.0.0.1:8000 {
+		transport http {
+			keepalive off
+		}
+	}
 }
 
 # ── ① IP 주소 그대로 정식 인증서 (Let's Encrypt 'shortlived', 6일짜리 → Caddy 가 자동 갱신) ─
@@ -15,16 +28,16 @@ https://222.116.90.199 {
 			profile shortlived
 		}
 	}
-	reverse_proxy 127.0.0.1:8000
+	import to_server
 }
 
 # ── ② 도메인 → Let's Encrypt 일반 인증서 (예: xxx.duckdns.org) ───────────────
 # xxx.duckdns.org {
-# 	reverse_proxy 127.0.0.1:8000
+# 	import to_server
 # }
 
 # ── ③ 시험: Caddy 자체 인증서 (브라우저 "안전하지 않음" 경고) ──────────────────
 # https://222.116.90.199 {
 # 	tls internal
-# 	reverse_proxy 127.0.0.1:8000
+# 	import to_server
 # }

@@ -208,7 +208,7 @@ def caddy_host():
         return ''
     for ln in lines:
         t = ln.split('#', 1)[0].strip()
-        if t.endswith('{') and t != '{' and not ln[:1].isspace():        # 맨 위 '{ … }' 전체 설정 묶음은 건너뜀
+        if t.endswith('{') and t != '{' and not t.startswith('(') and not ln[:1].isspace():   # 전체 설정 '{ … }'·공통 묶음 '(이름) { … }' 은 건너뜀
             host = t[:-1].strip().split(',')[0].strip()
             for pre in ('https://', 'http://'):
                 if host.startswith(pre):
@@ -245,6 +245,12 @@ def main():
     handler = functools.partial(Quiet, directory=str(ROOT))
     class Server(http.server.ThreadingHTTPServer):
         allow_reuse_address = False                # Windows 는 켜 두면 이미 쓰는 포트에도 겹쳐 붙는다
+
+        def handle_error(self, request, client_address):
+            # 화면을 받다가 브라우저·휴대폰이 먼저 끊은 것(페이지 이동·새로고침·앱 전환)은 정상 — 긴 오류 글을 찍지 않는다
+            if isinstance(sys.exc_info()[1], (ConnectionResetError, ConnectionAbortedError, BrokenPipeError, TimeoutError)):
+                return
+            super().handle_error(request, client_address)
     try:
         srv = Server(('0.0.0.0' if a.lan else '127.0.0.1', a.port), handler)
     except OSError:
