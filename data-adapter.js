@@ -54,6 +54,8 @@
       var hist = (r.history||[]).map(function(h){ return +h.value; }).filter(function(v){ return !isNaN(v); });
       // 시각 포함 이력 (최고수위 시각·시간축 표시용) — 값만 뽑던 history와 별도 보존
       var histRaw = (r.history||[]).map(function(h){ return { t: String(h.time||''), v: +h.value }; }).filter(function(o){ return !isNaN(o.v); });
+      /* 댐은 수위가 해발 높이라 '수위 ÷ 경계수위'가 늘 90%를 넘는다 → 막대(pct)는 저수율(dam-watch.js)로 */
+      var damRate = (r.dam_info && window.cbDamWatch) ? window.cbDamWatch.rate(r) : null;
       return {
         name: r.name, code: r.code, sigun: r.sigun || '', value: r.value, warning: r.warning, danger: r.danger,
         level: r.level, delta1: r.delta_1h, delta3: r.delta_3h,
@@ -61,7 +63,8 @@
         dam: r.dam_info || null,
         history: hist.length>24 ? hist.slice(-24) : hist,
         histRaw: histRaw.length>24 ? histRaw.slice(-24) : histRaw,
-        pct: (r.danger ? r.value / r.danger : 0)
+        damRate: damRate,   /* 저수율 % — 댐이 아니거나 모르면 null */
+        pct: damRate != null ? damRate / 100 : (r.danger ? r.value / r.danger : 0)
       };
     });
 

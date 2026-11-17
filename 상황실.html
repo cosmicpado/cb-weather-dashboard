@@ -3098,6 +3098,8 @@ class Component extends DCLogic {
 <script src="./cctv-hrfco.js"></script>
 <script src="./cctv-links.js"></script>
 <script src="data-cctv.js"></script>
+<script src="loading-screen.js"></script>
+<script src="dam-watch.js"></script>
 <script src="data.js"></script>
 <script>
 /* DASHBOARD_DATA(우리 실시간) → WALL_DATA(디자인 형식) 변환·주입.
@@ -3235,7 +3237,7 @@ class Component extends DCLogic {
       /* ⚠ 반드시 이 entry(화면용 배열)를 넣을 것 — 원시 rv를 넣으면 이름 없는 '0.00m' 행이 된다.
          */
       var entry=[shortRiver(rv.name), nv(rv.value), nv(rv.danger), (isDam?'dam':''), (rv.level||'safe'),
-        nv(rv.delta_1h), nv(rv.warning), null /* 저수율 — 홍수통제소 자료에 없음(예전 storage_rate 는 공용량이었다) */, nv(di.inflow),
+        nv(rv.delta_1h), nv(rv.warning), (isDam && window.cbDamWatch ? window.cbDamWatch.rate(rv) : null) /* 저수율 = 저수량 ÷ 총저수용량(dam-watch.js) */, nv(di.inflow),
         nv(di.total_outflow)];
       /* 코드로 지정된 관서에 먼저 넣는다. 지정 관서가 하나라도 있으면 시군 배분은 건너뛴다. */
       var _placed=false;
@@ -3494,21 +3496,17 @@ class Component extends DCLogic {
         try{ apply(JSON.parse(t.slice(i,j+1))); }catch(e){} }).catch(function(){});
   }
   setInterval(reload, 300000);
-  /* 처음 data.js 를 못 받으면(접속 순간 끊김 등) 화면 밑바탕의 시연용 예시 자료(여름 폭염 등)가 실제처럼 보였다 —
-     실제 자료가 들어올 때까지 화면 전체를 '불러오는 중' 가림막으로 덮어 예시 값은 한 번도 보이지 않게 하고, 5초마다 다시 받는다 */
+  /* 처음 data.js 를 못 받으면(접속 순간 끊김 등) 실제 자료가 들어올 때까지 로딩 화면(loading-screen.js)으로
+     화면 전체를 덮고 5초마다 다시 받는다 */
   (function(){
     if(window.WALL_DATA) return;
-    var cover=document.createElement('div'), msg=document.createElement('div'), sub=document.createElement('div'), tries=0;
-    cover.setAttribute('role','status'); cover.id='wall-loading';
-    cover.style.cssText='position:fixed;inset:0;z-index:2147483000;background:#0b1018;color:#e8edf5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(8px,1vw,24px);font-family:inherit;text-align:center;padding:16px;';
-    msg.style.cssText='font-weight:800;font-size:clamp(20px,2.4vw,64px);'; msg.textContent='실시간 자료를 불러오는 중…';
-    sub.style.cssText='font-size:clamp(14px,1.2vw,32px);color:#9aa7ba;'; sub.textContent='';
-    cover.appendChild(msg); cover.appendChild(sub);
-    (document.body||document.documentElement).appendChild(cover);
+    var L=window.cbLoadingScreen, tries=0;
+    if(L) L.show();
     var t=setInterval(function(){
-      if(window.WALL_DATA){ clearInterval(t); cover.remove(); return; }
+      if(window.WALL_DATA){ clearInterval(t); if(L) L.hide(); return; }
+      if(L) L.show();
       tries++;
-      if(tries>=8) sub.textContent='연결이 늦어지고 있습니다 — 자동으로 다시 시도하는 중입니다 ('+tries+'초)';
+      if(tries>=8 && L) L.sub('연결이 늦어지고 있습니다 — 자동으로 다시 시도하는 중 ('+tries+'초)');
       if(tries % 5 === 1) reload();
     }, 1000);
   })();

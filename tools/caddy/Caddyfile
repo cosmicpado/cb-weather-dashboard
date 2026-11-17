@@ -19,7 +19,9 @@
 }
 
 # 서버(8000)는 응답마다 연결을 닫는다 → Caddy 가 닫힌 연결을 다시 쓰다 502 가 나지 않게 매번 새로 연결
+# 글자 파일(자료·지도·화면)은 압축해 보낸다 — 휴대폰처럼 느린 회선에서 빨라진다(그림 파일은 원래 압축돼 있어 그대로)
 (to_server) {
+	encode zstd gzip
 	reverse_proxy 127.0.0.1:8000 {
 		transport http {
 			keepalive off

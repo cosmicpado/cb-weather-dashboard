@@ -85,6 +85,7 @@ window.cbDemoTimes = function(list){
 <script src="dash_layout.js"></script>
 <!-- 테스트2는 운영의 실시간 data.js를 직접 참조 (document.write는 dc-runtime 파싱과 충돌하므로 정적 로드) -->
 <script src="data.js"></script>
+<script src="loading-screen.js"></script>
 <script src="data-guard.js"></script>
 <script src="data-adapter.js"></script>
 <script src="dashboard-data.js"></script>
@@ -598,12 +599,13 @@ window.cbDemoTimes = function(list){
               <div style="min-width:0; flex:1;">
                 <div style="display:flex; align-items:center; gap:6px;">
                   <span style="font-size:14.5px; font-weight:700; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{r.name}}</span>
+                  <span style="font-size:12px; font-weight:700; color:var(--ink3); white-space:nowrap;">{{r.barNote}}</span>
                 </div>
                 <div style="position:relative; height:6px; border-radius:999px; background:var(--surface3); margin-top:6px; overflow:hidden;">
                   <div style="position:absolute; left:0; top:0; bottom:0; width:{{r.pctW}}; background:{{r.color}}; border-radius:999px;"></div>
                 </div>
               </div>
-              <div style="text-align:right; flex-shrink:0;">
+              <div style="text-align:right; flex-shrink:0; width:84px;">
                 <div style="font-size:16.5px; font-weight:800; color:var(--ink); font-variant-numeric:tabular-nums; line-height:1;">{{r.value}}<span style="font-size:12px; font-weight:600; color:var(--ink3);">m</span></div>
                 <div style="font-size:12.5px; font-weight:700; color:{{r.color}}; margin-top:3px;">{{r.deltaTxt}}</div>
               </div>
@@ -2159,10 +2161,13 @@ class Component extends DCLogic {
     const clockDate = n.getFullYear()+'.'+p2(n.getMonth()+1)+'.'+p2(n.getDate())+' ('+days[n.getDay()]+')';
     // rivers ranked
     const riversByRisk = (d.rivers||[]).map(r=>{
-      const lv=this.riverLevel(r); const sp=this.spark(r.history, window.cbRiverMinSpan ? window.cbRiverMinSpan(r) : 0.5); const pct=r.danger? Math.min(1, r.value/r.danger):0;
+      const lv=this.riverLevel(r); const sp=this.spark(r.history, window.cbRiverMinSpan ? window.cbRiverMinSpan(r) : 0.5);
+      /* 막대 = 수위 ÷ 경계수위. 댐은 수위가 해발 높이라 이 비율이 늘 90%를 넘으므로 저수율(dam-watch.js)로 그린다 */
+      const _dr = r.damRate!=null ? r.damRate : null;   /* data-adapter.js 가 계산 */
+      const pct = _dr!=null ? _dr/100 : (r.danger? Math.min(1, r.value/r.danger):0);
       return { name:r.name, value:this.fmtNum(r.value,2), raw:r, lv, color:this.cvar(lv),
         sparkLine:sp.line, sparkArea:sp.area, sparkFill:this.cvar(lv), dotX:sp.dotX, dotY:sp.dotY,
-        pctW:Math.round(pct*100)+'%', deltaTxt:this.deltaTxt(r.delta1),
+        pctW:Math.round(pct*100)+'%', deltaTxt:this.deltaTxt(r.delta1), barNote:(_dr!=null ? '저수율 '+Math.round(_dr)+'%' : ''),
         statusTxt: lv==='danger'?'경계':lv==='warning'?'관심':'안전',
         near:String(r.name).includes(mySg),
         open:()=>this.setState({modal:{kind:'river', key:r.name}}) };
