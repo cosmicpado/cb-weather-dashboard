@@ -83,7 +83,8 @@ html.wall-m [data-foot]>div:last-child{margin-left:0!important;white-space:norma
     stop:SF+'<rect x="6" y="6" width="12" height="12" rx="2"/></svg>',
     notice:SV+'<path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>',
     chat:SV+'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
-    flag:SV+'<path d="M4 22V4"/><path d="M4 4h12l-2 4 2 4H4"/></svg>' };
+    /* 비상단계 지정 = 경광등(2026-11-17) — 깃발은 의견 보내기 말풍선과 비슷해 헷갈렸다 */
+    flag:SV+'<path d="M7 18v-6a5 5 0 1 1 10 0v6"/><path d="M5 21a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-1a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2z"/><path d="M12 2v1"/><path d="M2 12h1"/><path d="M21 12h1"/><path d="M4.9 4.9l.7.7"/><path d="M19.1 4.9l-.7.7"/></svg>' };
   window.wallIcon = function(el, ic, txt, order){ el.className='wall-ic'; el.innerHTML=IC[ic]+'<span class="tx"></span>';
     el.lastChild.textContent=txt; if(!el.title) el.title=txt; el.setAttribute('aria-label', txt); if(order!=null) el.style.order=order; return el; };
   window.wallTools = function(){
@@ -1951,6 +1952,7 @@ class Component extends DCLogic {
     Object.keys(v).forEach(k=>r.setProperty('--'+k, v[k]));
     /* 강조색 = 충청북도 로고 색(2026-11-10) — 어두운 화면은 아래 청록, 밝은 화면은 위 보라(흰 바탕에선 청록 글자가 흐려서) */
     r.setProperty('--acc', dark ? acc : '#5E3790');
+    r.setProperty('--accFg', dark ? '#0b1220' : '#ffffff');   // 강조색 바탕 위 글자 — 밝은 화면 보라 바탕엔 흰 글자(2026-11-17)
     // cSafe = 정상·낮음·좋음·안전·평상(문제없음) — 색을 빼서 위험한 곳만 색이 남게. cGreen 은 강조색(관서 이름 줄·진행 막대)용으로 남긴다
     const A = dark ? {cGreen:'#17AFAB',cSafe:'#AEB8C8',cAmber:'#FFB020',cOrange:'#FF9A3C',cRed:'#FF5A5A',cBlue:'#54AAFF',cIndigo:'#B7C4FF'}
                    : {cGreen:'#5E3790',cSafe:'#6B7891',cAmber:'#A86A00',cOrange:'#C75400',cRed:'#C9302C',cBlue:'#1D6FD1',cIndigo:'#4F63D6'};   // 밝은 화면: 흰 바탕 위 글자로 읽히게 진하게(2026-11-16)
@@ -2359,14 +2361,14 @@ class Component extends DCLogic {
       style:{width:'calc(68px*var(--fz,1))', height:'calc(60px*var(--fz,1))', borderRadius:'10px', cursor:'pointer', fontFamily:'inherit',
         fontSize:'calc(42px*var(--fz,1))', fontWeight:800, lineHeight:1,
         border:'2px solid '+(cur===m?'var(--acc,#ff7a2f)':'var(--line,#28313f)'),
-        background:cur===m?'var(--acc,#ff7a2f)':'transparent', color:cur===m?'#0b1220':'var(--dim,#8e9bb0)'}}, lab);
-    return R('div',{style:{display:'flex',gap:'6px'}}, b('R','K','기상청(KMA) 레이더 — 실제 관측'), b('W','W','윈디 정보(Windy) — 날씨 레이더·위성·바람 등'));
+        background:cur===m?'var(--acc,#ff7a2f)':'transparent', color:cur===m?'var(--accFg,#0b1220)':'var(--dim,#8e9bb0)'}}, lab);
+    return R('div',{style:{display:'flex',gap:'6px'}}, b('R','K','기상청(KMA) 레이더 — 실제 관측'), b('W','W','윈디 정보(Windy) — 바람 흐름·날씨 레이더·위성 등'));
   }
   windyEl(){
     const R = window.React.createElement;
     return R('div',{onClick:()=>{ if(window.cbWindyOpen) window.cbWindyOpen(); }, title:'누르면 크게 보기',
         style:{flex:1,minHeight:0,position:'relative',borderRadius:'16px',overflow:'hidden',background:'#0d1118',cursor:'zoom-in'}},
-      R('iframe',{src:window.cbWindyUrl('radar', 9), title:'윈디 정보', style:{position:'absolute',inset:0,width:'100%',height:'100%',border:0,pointerEvents:'none'}}));
+      R('iframe',{src:window.cbWindyUrl('wind', 9), title:'윈디 정보', style:{position:'absolute',inset:0,width:'100%',height:'100%',border:0,pointerEvents:'none'}}));
   }
   radarEl(){
     const R = window.React.createElement, DIM='var(--dim,#8e9bb0)';
@@ -2831,10 +2833,10 @@ class Component extends DCLogic {
       radarTs: (((EXT().kmaImages||{}).radar||{}).ts||'').slice(11,16),
       radarTitle: this.radarMode()==='W' ? '윈디 정보' : '기상 레이더',
       radarTitleTip: this.radarMode()==='W'
-        ? 'Windy(windy.com) 지도 — 처음엔 날씨 레이더(실제 관측)로 보여 줍니다. 위성도 관측이고, 바람·돌풍·비·기온·구름은 유럽중기예보센터(ECMWF) 모델 예보입니다. 누르면 크게 보고 층을 바꿀 수 있습니다.'
+        ? 'Windy(windy.com) 지도 — 처음엔 바람 흐름(모델 예보)을 보여 줍니다. 날씨 레이더·위성은 관측이고, 바람·돌풍·비·기온·구름은 유럽중기예보센터(ECMWF) 모델 예보입니다. 누르면 크게 보고 층을 바꿀 수 있습니다.'
         : '기상청 레이더 합성(강수량) 영상에서 한반도 가운데만 잘라 보여 줍니다. 최근 30분을 5분 간격으로 돌려 보여 주고 최신 장에서 3초 멈춥니다. 파랑·초록은 약한 비, 노랑·빨강은 강한 비. 기상청 공개가 약 5분 늦고, 서버가 1분마다 받아 실제보다 5~7분 늦습니다.',
       radarToggle: this.radarToggle(), droneEl: this.droneEl(s),
-      radarSub: this.radarMode()==='W' ? '날씨 레이더 · 누르면 크게' : this.radarInfo().t,
+      radarSub: this.radarMode()==='W' ? '바람 흐름 · 누르면 크게' : this.radarInfo().t,
       radarSubColor: (this.radarMode()!=='W' && this.radarInfo().old ? 'var(--cAmber,#ffb020)' : 'var(--dim,#8e9bb0)'),
       ultraSum: (function(a){ if(!a||!a.length) return '\u2014';
         var t=a.reduce(function(x,o){ return x+(o.rain||0); },0);
@@ -3048,7 +3050,7 @@ class Component extends DCLogic {
     if(list.length>1){   /* 최근 통보문 여러 건 — 눌러서 바꿔 본다 */
       var tabs=el('div','display:flex;gap:8px;flex-wrap:wrap;');
       list.slice(0,6).forEach(function(b,i){ var on=i===idx, lb=String(b.title||'통보문').trim();
-        var tb=el('button','padding:6px '+F(10,.8,18)+';border-radius:10px;border:2px solid '+(on?'var(--acc,#17AFAB)':'var(--line,#28313f)')+';background:'+(on?'var(--acc,#17AFAB)':'transparent')+';color:'+(on?'#0b1220':'var(--fg,#f2f5fa)')+';font-size:'+F(13,.95,22)+';font-weight:700;cursor:pointer;',lb);
+        var tb=el('button','padding:6px '+F(10,.8,18)+';border-radius:10px;border:2px solid '+(on?'var(--acc,#17AFAB)':'var(--line,#28313f)')+';background:'+(on?'var(--acc,#17AFAB)':'transparent')+';color:'+(on?'var(--accFg,#0b1220)':'var(--fg,#f2f5fa)')+';font-size:'+F(13,.95,22)+';font-weight:700;cursor:pointer;',lb);
         tb.onclick=function(){ openBulletin(list, i, stn); }; tabs.appendChild(tb); });
       card.appendChild(tabs);
     }
@@ -3136,11 +3138,12 @@ class Component extends DCLogic {
     pinRow.appendChild(el('span','font-size:'+F(15,1.15,28)+';font-weight:700;color:var(--fg,#f2f5fa);','지정 번호'));
     var pin=el('input','width:'+F(140,10,240)+';text-align:center;font:inherit;font-size:'+F(18,1.4,34)+';letter-spacing:.3em;padding:'+F(6,.5,12)+' '+F(10,.8,18)+';border-radius:10px;border:2px solid var(--line,#28313f);background:var(--panel2,#1b2230);color:var(--fg,#f2f5fa);');
     pin.type='password'; pin.inputMode='numeric'; pin.maxLength=8; pin.autocomplete='off'; pin.placeholder='••••';
-    var ok=el('button','font:inherit;font-size:'+F(15,1.15,28)+';font-weight:800;padding:'+F(6,.5,12)+' '+F(14,1.2,26)+';border-radius:10px;cursor:pointer;border:2px solid var(--acc,#17AFAB);background:var(--acc,#17AFAB);color:#0b1220;','확인');
+    var ok=el('button','font:inherit;font-size:'+F(15,1.15,28)+';font-weight:800;padding:'+F(6,.5,12)+' '+F(14,1.2,26)+';border-radius:10px;cursor:pointer;border:2px solid var(--acc,#17AFAB);background:var(--acc,#17AFAB);color:var(--accFg,#0b1220);','확인');
     pinRow.appendChild(pin); pinRow.appendChild(ok);
     pinRow.appendChild(el('span','width:100%;text-align:center;font-size:'+F(12,.9,22)+';color:var(--dim,#8e9bb0);','번호는 관리자에게 문의하세요'));
     card.appendChild(pinRow);
-    var row=el('div','display:grid;grid-template-columns:1.4fr repeat(5,1fr);gap:'+F(8,.8,18)+';opacity:.35;pointer-events:none;transition:opacity .2s;');
+    /* 휴대폰처럼 좁으면 3칸씩 두 줄(한 줄 6칸이면 '1 단 계'처럼 세로로 꺾였다, 2026-11-17) */
+    var row=el('div','display:grid;grid-template-columns:'+(window.innerWidth<560?'repeat(3,1fr)':'1.4fr repeat(5,1fr)')+';gap:'+F(8,.8,18)+';opacity:.35;pointer-events:none;transition:opacity .2s;');
     var msg=el('div','min-height:1.4em;text-align:center;font-size:'+F(15,1.15,28)+';font-weight:700;color:var(--cRed,#ff5a5a);');
     var okPin=null;
     function unlock(){ row.style.opacity='1'; row.style.pointerEvents='auto'; pin.disabled=true; ok.disabled=true; ok.textContent='확인됨 ✓'; ok.style.cursor='default';
@@ -3184,7 +3187,7 @@ class Component extends DCLogic {
     function btn(label, col, on, rank){
       var b=el('button','border-radius:14px;padding:'+F(12,1.2,28)+' 6px;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:6px;'
         +'border:3px solid '+(on?col:'var(--line,#28313f)')+';background:'+(on?'var(--panel2,#1b2230)':'transparent')+';color:'+col+';');
-      b.appendChild(el('span','font-size:'+F(20,1.7,42)+';font-weight:800;',label));
+      b.appendChild(el('span','font-size:'+F(20,1.7,42)+';font-weight:800;white-space:nowrap;',label));
       b.onclick=function(){ pick(rank); };
       btns.push({el:b, rank:rank, col:col});
       return b;
@@ -3617,7 +3620,7 @@ class Component extends DCLogic {
 </script>
 
 <script>
-/* 윈디(Windy) 무료 임베드(2026-11-12) — 충북 가운데. 레이더 칸 W 모드와 크게 보기 창에서 쓴다. 처음 층은 날씨 레이더 */
+/* 윈디(Windy) 무료 임베드(2026-11-12) — 충북 가운데. 레이더 칸 W 모드와 크게 보기 창에서 쓴다. 처음 층은 바람(2026-11-17 — 날씨 레이더는 비가 없으면 멈춘 화면 같아서) */
 window.cbWindyUrl = function(overlay, zoom){
   return 'https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=%C2%B0C&metricWind=m%2Fs'
     + '&zoom='+(zoom||8)+'&overlay='+(overlay||'wind')+'&product=ecmwf&level=surface&lat=36.75&lon=127.75&message=true';
@@ -3628,9 +3631,9 @@ window.cbWindyUrl = function(overlay, zoom){
   function close(){ if(box){ box.remove(); box=null; } clearTimeout(timer); document.removeEventListener('keydown', onKey, true); }
   function onKey(e){ if(e.key==='Escape'){ e.stopPropagation(); close(); } }
   var F=function(a,b,c){ return 'clamp('+a+'px,'+b+'vw,'+c+'px)'; };
-  var LAYERS=[['radar','날씨 레이더'],['satellite','위성'],['wind','바람'],['gust','돌풍'],['rain','비·눈 예보'],['temp','기온'],['clouds','구름']];
+  var LAYERS=[['wind','바람'],['radar','날씨 레이더'],['satellite','위성'],['gust','돌풍'],['rain','비·눈 예보'],['temp','기온'],['clouds','구름']];
   window.cbWindyOpen = function(layer){
-    close(); layer=layer||'radar';
+    close(); layer=layer||'wind';
     box=el('div','position:fixed;inset:0;z-index:2147482000;background:rgba(5,8,14,.62);display:flex;align-items:center;justify-content:center;padding:3vh 3vw;font-family:inherit;');
     box.setAttribute('role','dialog'); box.setAttribute('aria-modal','true'); box.setAttribute('aria-label','윈디 정보 크게 보기');
     box.addEventListener('mousedown', function(e){ if(e.target===box) close(); });
@@ -3642,7 +3645,7 @@ window.cbWindyUrl = function(overlay, zoom){
     frame.title='Windy';
     var btns=[];
     function pick(k){ frame.src=window.cbWindyUrl(k, 9);
-      btns.forEach(function(b){ var on=b.dataset.k===k; b.style.background=on?'var(--acc,#ff7a2f)':'transparent'; b.style.color=on?'#0b1220':'var(--fg,#f2f5fa)'; b.style.borderColor=on?'var(--acc,#ff7a2f)':'var(--dim,#8e9bb0)'; }); }
+      btns.forEach(function(b){ var on=b.dataset.k===k; b.style.background=on?'var(--acc,#ff7a2f)':'transparent'; b.style.color=on?'var(--accFg,#0b1220)':'var(--fg,#f2f5fa)'; b.style.borderColor=on?'var(--acc,#ff7a2f)':'var(--dim,#8e9bb0)'; }); }
     LAYERS.forEach(function(x){ var b=el('button','padding:'+F(6,.5,12)+' '+F(12,1,24)+';border-radius:12px;border:2px solid var(--dim,#8e9bb0);background:transparent;color:var(--fg,#f2f5fa);font-size:'+F(15,1.1,28)+';font-weight:800;cursor:pointer;font-family:inherit;', x[1]);
       b.dataset.k=x[0]; b.onclick=function(){ pick(x[0]); }; btns.push(b); hd.appendChild(b); });
     var x=el('button','margin-left:auto;width:'+F(36,2.4,58)+';height:'+F(36,2.4,58)+';border-radius:12px;border:2px solid var(--dim,#8e9bb0);background:transparent;color:var(--fg,#f2f5fa);font-size:'+F(18,1.3,30)+';cursor:pointer;','✕');

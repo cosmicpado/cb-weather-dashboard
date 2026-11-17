@@ -42,3 +42,7 @@ images/fire_map.png
 images/fire_popup.jpg
 # 받은 의견(tools/feedback.py) — 서버에만 둔다
 .data/
+
+# Caddy 실행 파일·인증서(키)는 올리지 않는다
+tools/caddy/caddy.exe
+tools/caddy/cert/
