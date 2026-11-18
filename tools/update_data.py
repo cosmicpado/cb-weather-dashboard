@@ -1154,6 +1154,24 @@ def fetch_one_region_forecast(region):
             try: result['tmin'] = float(cats['TMN'])
             except: pass
 
+    # 내일 아침 최저(3~9시 기온 중 최저) — hourly 는 24시간치라 자정을 넘기면 내일 아침이 빠진다(00시에 '내일 아침 최저 —',
+    # 2026-11-19). 단기예보는 3일치가 있으니 여기서 따로 뽑아 둔다. 시간별 값이 없으면 내일 TMN(일 최저)
+    tmr = (now + timedelta(days=1)).strftime('%Y%m%d')
+    _mn = None
+    for (fdate, ftime), cats in by_time.items():
+        if fdate != tmr or not (300 <= int(ftime) <= 900) or 'TMP' not in cats:
+            continue
+        try: tv = float(cats['TMP'])
+        except: continue
+        if _mn is None or tv < _mn['t']:
+            _mn = {'t': round(tv, 1), 'hour': int(ftime) // 100, 'date': tmr}
+    if _mn is None:
+        for (fdate, _ftime), cats in by_time.items():
+            if fdate == tmr and 'TMN' in cats:
+                try: _mn = {'t': float(cats['TMN']), 'hour': None, 'date': tmr}
+                except: pass
+    result['morn_next'] = _mn
+
     # (weather는 위 308-310에서 hourly[0]=현재 시각 값으로 이미 설정됨.
     #  여기서 루프 마지막 pty/sky로 덮으면 '24시간 뒤' 날씨가 되어버려 제거함.)
 
@@ -1647,7 +1665,7 @@ def _roman_num(s):
 
 
 def fetch_quake():
-    """기상청 지진 통보(eqk_now) — 국내 지진만, 관서 거리·충북 진도를 붙인다.
+    """기상청 지진 통보(eqk_now) — 국내·국외(abroad=True) 지진에 관서 거리·충북 진도를 붙인다.
     한 줄 형식: TP TM_FC SEQ TM_EQK.MSC MT LAT LON LOC,INT,REM,COR,=
     ⚠ INT(진도)가 '최대진도 Ⅳ(전북),Ⅲ(전남),Ⅱ(광주)'처럼 쉼표로 여러 칸이라 쉼표로 자르면 안 된다
       → 로마숫자 진도로 시작하는 칸만 진도로 모으고 나머지를 비고로 본다.
@@ -1664,8 +1682,9 @@ def fetch_quake():
         if not s or s.startswith('#'):
             continue
         f = s.split(None, 7)
-        if len(f) < 8 or f[0] not in QUAKE_TP or f[0] in ('2', '12'):   # 국외는 뺀다
+        if len(f) < 8 or f[0] not in QUAKE_TP:
             continue
+        abroad = f[0] in ('2', '12')   # 국외지진 — 기상청이 통보한 것만 오니 거르지 않고 화면에서 회색(참고)으로 낮춘다(2026-11-18)
         try:
             mt, lat, lon = float(f[4]), float(f[5]), float(f[6])
         except ValueError:
@@ -1694,7 +1713,7 @@ def fetch_quake():
             'tm_eqk': f'{te[0:4]}-{te[4:6]}-{te[6:8]} {te[8:10]}:{te[10:12]}:{te[12:14]}',
             'mt': mt, 'lat': lat, 'lon': lon, 'loc': loc,
             'int': ','.join(ints), 'int_max': _roman_num(ints[0]) if ints else None,
-            'int_cb': _roman_num(cb) if cb else None, 'rem': rem[:200],
+            'int_cb': _roman_num(cb) if cb else None, 'rem': rem[:200], 'abroad': abroad,
             'near': near_nm, 'dist_km': round(near_km),
         })
     return out
@@ -2116,6 +2135,7 @@ def fetch_all_regions(aws=None):
         # 24시간 hourly를 detail로 옮김 (단기예보에서 추출한 것)
         detail['hourly'] = item.pop('_hourly', [])
         blend_hourly(detail['hourly'], r['name'], obs)
+        detail['morn_next'] = item.pop('morn_next', None)   # 내일 아침 최저 — hourly(24h)가 내일 아침에 못 미칠 때 화면이 쓴다
 
         # 오늘 최고/최저 — 저녁이 되면 단기예보(TMX/TMN)에서 사라지므로
         # 낮에 받은 값을 파일에 저장해 자정까지 유지. 저장값도 없으면(서버 첫 가동 등)
@@ -3704,8 +3724,18 @@ def fetch_messages():
 
     import re as _re
 
+    def _rc_parts(rcptn):
+        """수신지역은 쉼표로 여러 곳 — '강원특별자치도  ,경기도  ,…,충청북도  ,세종특별자치시  ' 처럼 전국 문자는
+        시도를 다 늘어놓는다. 예전엔 통째로 '충북으로 시작하나'만 봐서 전국 문자(수능 위급재난문자 안내 등)를
+        놓쳤다(2026-11-18) → 한 곳씩 나눠 본다."""
+        return [p.strip() for p in str(rcptn).split(',') if p.strip()]
+
     def is_north_gyeonggi(rcptn):
-        """이 상황판 관할 메시지만 통과.
+        """수신지역 중 한 곳이라도 관할이면 통과(전국 문자 포함)."""
+        return any(_rc_one(p) for p in _rc_parts(rcptn))
+
+    def _rc_one(rcptn):
+        """수신지역 한 곳이 이 상황판 관할인가.
         - 관할 시군이 포함되면 → 포함 (예: 경기도 동두천시)
         - 시군명 없는 '경기도' 전역 → 포함 (관할도 해당)
         - 반대편 광역('경기남부'↔'경기북부') 또는 관할 밖 시군 → 제외
@@ -3762,7 +3792,11 @@ def fetch_messages():
             continue
         time_str = crt[11:16] if len(crt) >= 16 else ''
 
-        # 송출 시군 추출 - 우리 북부 시군 우선
+        # 송출 시군 추출 - 우리 북부 시군 우선. 여러 곳이면 관할인 곳만 보고 판단(다른 시도 이름에 끌리지 않게)
+        _all = _rc_parts(rcptn)
+        _mine = [p for p in _all if _rc_one(p)]
+        multi = len(_mine) < len(_all)          # 다른 시도도 같이 받은 문자
+        rcptn = ','.join(_mine)
         sender, region = None, None
         for k in north_sigun:
             if k in rcptn:
@@ -3777,8 +3811,8 @@ def fetch_messages():
                 sender = m.group(1) + m.group(2)
                 region = _unit_from_match(m)
             else:
-                # "경기도", "경기북부" 등 도 전역
-                sender = WIDE_LABEL
+                # "경기도", "경기북부" 등 도 전역. 다른 시도와 함께 받은 도 전역 문자는 '전국'(10곳 이상)·'여러 시도'로
+                sender = ('전국' if len(_all) >= 10 else '여러 시도') if multi else WIDE_LABEL
                 region = WIDE_LABEL
 
         result.append({

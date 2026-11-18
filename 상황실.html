@@ -70,6 +70,8 @@ html.wall-m [data-warnlist]{flex:none!important;--wz:1!important;}
 html.wall-m [data-warnlist]>div{flex:none!important;height:120px;max-height:none!important;}
 html.wall-m [data-card="msg"]{order:2;height:auto!important;}
 html.wall-m [data-msglist]{flex:none!important;flex-wrap:nowrap!important;}
+/* 참고 지진 점선 줄은 기상특보 칸 맨 아래에 붙인다(첫 줄 위를 자동 여백으로, 2026-11-18) */
+[data-warnlist]>[data-qref]:not([data-qref]+[data-qref]){margin-top:auto;}
 html.wall-m [data-msglist]>div{min-height:150px;}
 html.wall-m #wall-tools [aria-label*="배치"]{display:none!important;}   /* 배치 편집은 벽면 화면 전용 */
 html.wall-m [data-card="obs"]{order:3;height:520px;}
@@ -1643,6 +1645,8 @@ https://scripts.sil.org/OFL
             <sc-for list="{{ alertRows }}" as="a" hint-placeholder-count="0">
               <!-- 지진·낙뢰 줄 — 아래 특보 줄과 같은 모양(테두리 없음, 2026-11-16) -->
               <div style="flex:1 1 0;min-height:0;max-height:calc(150px*var(--fz,1));display:flex;align-items:center;gap:24px;border-radius:16px;padding:0 calc(28px*var(--wz,1));background:{{ a.bg }};" title="{{ a.tip }}">
+                <!-- 충북 진도 배지(2026-11-18) — 줄 맨 앞에 'Ⅲ' 기호만. 풀이는 마우스를 올리면 · 도움말 -->
+                <div title="{{ a.badgeTip }}" style="display:{{ a.bd }};flex:none;align-items:center;justify-content:center;box-sizing:border-box;min-width:1.5em;height:1.5em;padding:0 0.3em;border-radius:0.28em;border:3px solid {{ a.color }};color:{{ a.color }};font-size:calc(46px*var(--fz,1)*var(--wz,1));font-weight:800;line-height:1;cursor:help;">{{ a.badge }}</div>
                 <div style="font-size:calc(58px*var(--fz,1)*var(--wz,1));font-weight:660;color:{{ a.color }};white-space:nowrap;">{{ a.type }}</div>
                 <div style="font-size:calc(42px*var(--fz,1)*var(--wz,1));font-weight:520;color:var(--dim,#8e9bb0);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ a.area }}</div>
                 <div style="margin-left:auto;font-size:calc(42px*var(--fz,1)*var(--wz,1));font-weight:570;color:var(--dim,#8e9bb0);font-variant-numeric:tabular-nums;white-space:nowrap;">{{ a.time }}</div>
@@ -1666,6 +1670,15 @@ https://scripts.sil.org/OFL
             <sc-if value="{{ noWarn }}" hint-placeholder-val="{{ false }}">
               <div data-empty style="flex:1;display:flex;align-items:center;justify-content:center;font-size:calc(44px*var(--fz,1));font-weight:570;color:var(--dim,#8e9bb0);">발효 중인 기상특보 없음</div>
             </sc-if>
+            <sc-for list="{{ quietRows }}" as="q" hint-placeholder-count="0">
+              <!-- 참고 지진(2026-11-18) — 노랑 = 충북 진도 Ⅰ / 회색 = 충북 진도 없음 · 국내영향없음. 특보 줄보다 작게, 점선 테두리 -->
+              <div data-qref style="flex:none;display:flex;align-items:center;gap:18px;border-radius:12px;padding:calc(12px*var(--fz,1)) calc(24px*var(--wz,1));border:2px dashed {{ q.color }};cursor:help;" title="{{ q.tip }}">
+                <div title="{{ q.badgeTip }}" style="display:{{ q.bd }};flex:none;align-items:center;justify-content:center;box-sizing:border-box;min-width:1.45em;height:1.45em;padding:0 0.3em;border-radius:0.28em;border:2px solid {{ q.color }};color:{{ q.color }};font-size:calc(32px*var(--fz,1));font-weight:800;line-height:1;cursor:help;">{{ q.badge }}</div>
+                <div style="font-size:calc(38px*var(--fz,1));font-weight:660;color:{{ q.color }};white-space:nowrap;">{{ q.type }}</div>
+                <div style="font-size:calc(32px*var(--fz,1));font-weight:500;color:var(--dim,#8e9bb0);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ q.area }}</div>
+                <div style="margin-left:auto;font-size:calc(32px*var(--fz,1));font-weight:520;color:var(--dim,#8e9bb0);font-variant-numeric:tabular-nums;white-space:nowrap;">{{ q.time }}</div>
+              </div>
+            </sc-for>
           </div>
         </div>
 
@@ -1725,6 +1738,17 @@ https://scripts.sil.org/OFL
             <sc-if value="{{ noMsg }}" hint-placeholder-val="{{ false }}">
               <div data-empty style="flex:1;width:100%;display:flex;align-items:center;justify-content:center;font-size:calc(44px*var(--fz,1));font-weight:570;color:var(--dim,#8e9bb0);">발령된 재난문자 없음</div>
             </sc-if>
+            <sc-for list="{{ otherMsgs }}" as="o" hint-placeholder-count="0">
+              <!-- 휴대폰 보기만 — 충북 다른 시군 문자(회색 · 점선, 2026-11-18). 관할 문자보다 작고 낮게 -->
+              <div data-other-msg style="flex:0 0 auto;width:100%;box-sizing:border-box;border-radius:14px;padding:14px 22px;border:2px dashed var(--line,#28313f);display:flex;flex-direction:column;gap:6px;overflow:hidden;opacity:.85;">
+                <div style="display:flex;align-items:baseline;gap:14px;">
+                  <div style="font-size:calc(34px*var(--fz,1));font-weight:640;color:var(--dim,#8e9bb0);white-space:nowrap;">{{ o.sender }}</div>
+                  <div style="font-size:calc(30px*var(--fz,1));font-weight:520;color:var(--dim,#8e9bb0);white-space:nowrap;">다른 시군</div>
+                  <div style="margin-left:auto;font-size:calc(34px*var(--fz,1));font-weight:560;color:var(--dim,#8e9bb0);font-variant-numeric:tabular-nums;">{{ o.time }}</div>
+                </div>
+                <div style="font-size:calc(32px*var(--fz,1));font-weight:480;line-height:1.38;color:var(--dim,#8e9bb0);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">{{ o.text }}</div>
+              </div>
+            </sc-for>
           </div>
         </div>
 
@@ -1898,8 +1922,8 @@ class Component extends DCLogic {
     r.setProperty('--acc', dark ? acc : '#5E3790');
     r.setProperty('--accFg', dark ? '#0b1220' : '#ffffff');   // 강조색 바탕 위 글자 — 밝은 화면 보라 바탕엔 흰 글자
     // cSafe = 정상·낮음·좋음·안전·평상(문제없음) — 색을 빼서 위험한 곳만 색이 남게. cGreen 은 강조색(관서 이름 줄·진행 막대)용으로 남긴다
-    const A = dark ? {cGreen:'#17AFAB',cSafe:'#AEB8C8',cAmber:'#FFB020',cOrange:'#FF9A3C',cRed:'#FF5A5A',cBlue:'#54AAFF',cIndigo:'#B7C4FF'}
-                   : {cGreen:'#5E3790',cSafe:'#6B7891',cAmber:'#A86A00',cOrange:'#C75400',cRed:'#C9302C',cBlue:'#1D6FD1',cIndigo:'#4F63D6'};   // 밝은 화면: 흰 바탕 위 글자로 읽히게 진하게(2026-11-16)
+    const A = dark ? {cGreen:'#17AFAB',cSafe:'#AEB8C8',cAmber:'#FFB020',cOrange:'#FF9A3C',cRed:'#FF5A5A',cBlue:'#54AAFF',cIndigo:'#B7C4FF',cYellow:'#F2D53C'}
+                   : {cGreen:'#5E3790',cSafe:'#6B7891',cAmber:'#A86A00',cOrange:'#C75400',cRed:'#C9302C',cBlue:'#1D6FD1',cIndigo:'#4F63D6',cYellow:'#7A6400'};   // 밝은 화면: 흰 바탕 위 글자로 읽히게 진하게(2026-11-16)
     Object.keys(A).forEach(k=>r.setProperty('--'+k, A[k]));
     const L = dark
       ? [['rgba(142,155,176,.08)','#D5DBE6','rgba(174,184,200,.9)','rgba(142,155,176,.45)'],   // 평상 = 회색
@@ -1940,7 +1964,7 @@ class Component extends DCLogic {
       fireColor:['var(--cSafe,#aeb8c8)','var(--cSafe,#aeb8c8)','var(--cAmber,#ffb020)','var(--cOrange,#ff9a3c)','var(--cRed,#ff5a5a)'][fk],
       fireBg:['rgba(142,155,176,.07)','rgba(142,155,176,.07)','rgba(255,176,32,.1)','rgba(255,154,60,.12)','rgba(255,77,77,.12)'][fk],
       obsTime:(g&&g.obsTime)||'', obsStation:(g&&g.obsStation)||'', rn12:(g&&g.rn12!=null)?+g.rn12:null, rdayObs:(g&&g.rday!=null)?+g.rday:null, hourly:(g&&g.hourly)?g.hourly:null,
-      tmax:(g&&g.tmax!=null)?+g.tmax:null, tmin:(g&&g.tmin!=null)?+g.tmin:null, morn:(g&&g.morn)||null, hot:(g&&g.rainHot)||[], snowHr:(g&&g.snowHr)||[], windDeg: (g && g.wdeg != null) ? Math.round(g.wdeg) : null,
+      tmax:(g&&g.tmax!=null)?+g.tmax:null, tmin:(g&&g.tmin!=null)?+g.tmin:null, morn:(g&&g.morn)||null, mornNext:(g&&g.mornNext)||null, hot:(g&&g.rainHot)||[], snowHr:(g&&g.snowHr)||[], windDeg: (g && g.wdeg != null) ? Math.round(g.wdeg) : null,
       h24:(g&&g.h24)||[], eff:(g&&g.eff!=null)?+g.eff:null,
       pm10: (g && g.pm10 != null) ? g.pm10 : null };   /* 측정소 장애 등으로 값이 없으면 — 로 표시 */
   }
@@ -2108,19 +2132,54 @@ class Component extends DCLogic {
   }
 
   /* ── 기상특보 카드의 지진·낙뢰 줄 ──
-     지진 = 24시간 안 국내 지진 중 충북에 진도가 있었거나, 가장 가까운 관서에서 80km 안이거나, 규모 4.0 이상.
+     지진 = 24시간 안 지진 중 충북 진도 Ⅱ 이상(국외 포함) 또는 지진조기경보 — 기상청 지진재난문자 기준(진도 Ⅱ 이상 시군구에 발송).
      낙뢰 = 이 관서 반경 20km 안 최근 1시간(수집이 30분 넘게 멈췄으면 지난 낙뢰라 안 띄운다). */
+  /* 지진 '중요' 판정(2026-11-18 공식 기준으로) — 기상청 지진재난문자는 2024-10-28부터 규모가 아니라 진도로, 진도 Ⅱ 이상인
+     시군구에 보낸다(최대 진도 Ⅴ 이상이면 긴급, 그 아래는 안전안내). 그래서 충북 진도 Ⅱ 이상이면 주황, Ⅴ 이상·지진조기경보면 빨강.
+     국외지진도 충북 진도가 Ⅱ 이상이면 같다. 예전 '관서 80km · 규모 4.0'은 근거가 없어 뺐다. 24시간은 화면에 남기는 시간 */
+  quakeBig(x, now){
+    const t=new Date(String(x.tm_eqk||'').replace(' ','T')).getTime();
+    return !!t && now-t>=-6e5 && now-t<=864e5 && ((x.int_cb||0)>=2 || x.tp==='11' || x.tp==='10');
+  }
+  /* 참고 지진 줄(2026-11-18) — 중요 판정(충북 진도 Ⅱ 이상)에서 빠진 24시간 안 지진. 두 단계, 단계마다 가장 최근 1건 + '외 N건'.
+       노랑 = 충북 진도 Ⅰ(충북에서 느꼈지만 재난문자 대상 아님) / 회색 = 충북 진도 없음 · 국내영향없음(국외 포함)
+     특보 줄이 다 찬 뒤 빈칸에만 들어가고(노랑 먼저), 소리·알림은 없다 */
+  /* 지진 시각 — 1시간 안 'N분 전' · 오늘이면 'HH:MM' · 그 전은 'MM/DD HH:MM'(2026-11-18) */
+  eqTime(tm){
+    const s=String(tm||''), d=new Date(s.replace(' ','T')), now=new Date();
+    if(isNaN(d)) return s.slice(5,16).replace('-','/');
+    const ago=Math.round((now-d)/6e4);
+    if(ago>=0 && ago<60) return ago+'분 전';
+    return d.toDateString()===now.toDateString() ? s.slice(11,16) : s.slice(5,16).replace('-','/');
+  }
+  quietQuakeRows(){
+    const now=Date.now(), tms=t=>{ const d=new Date(String(t||'').replace(' ','T')); return isNaN(d)?null:d.getTime(); };
+    const L=(EXT().quake||[]).filter(x=>{ const t=tms(x.tm_eqk); return t && now-t>=-6e5 && now-t<=864e5 && !this.quakeBig(x, now); });
+    const row=(G, color, why)=>{
+      const q=G[0], noFx=/국내\s*영향\s*없음/.test(q.rem||'');
+      return { type:(q.int_cb ? '' : '🌏 ')+'지진 '+(+q.mt).toFixed(1), color:color,   /* 배지가 있으면 배지가 맨 앞 아이콘 */
+        area: q.loc + (noFx ? ' · 국내영향없음' : '') + (G.length>1 ? ' · 외 '+(G.length-1)+'건' : ''),
+        badge: q.int_cb ? 'Ⅰ' : '', bd: q.int_cb ? 'flex' : 'none', badgeTip: q.int_cb ? '충북 진도 Ⅰ' : '',
+        time: this.eqTime(q.tm_eqk),
+        tip: '참고 — '+why+'\n'
+          + G.map(x=>x.tp_txt+' · '+x.tm_eqk+' · '+x.loc+' · 규모 '+x.mt+(x.int?' · '+x.int:'')+(x.rem?' · '+String(x.rem).replace(/\\n/g,' '):'')).join('\n') };
+    };
+    const Y=L.filter(x=>(x.int_cb||0)===1), G=L.filter(x=>!x.int_cb), out=[];
+    if(Y.length) out.push(row(Y, 'var(--cYellow,#F2D53C)', '충북 진도 Ⅰ — 충북에서 느꼈지만 재난문자 대상(진도 Ⅱ 이상)은 아닌 지진'));
+    if(G.length) out.push(row(G, 'var(--dim,#8e9bb0)', '충북 진도 없음 · 국내영향없음 — 충북에 영향 없는 지진(국외 포함)'));
+    return out;
+  }
   alertRows(s){
     const out=[], RED='var(--cRed,#ff5a5a)', ORANGE='var(--cOrange,#ff9a3c)', AMBER='var(--cAmber,#ffb020)';
     const R2=['','Ⅰ','Ⅱ','Ⅲ','Ⅳ','Ⅴ','Ⅵ','Ⅶ','Ⅷ','Ⅸ','Ⅹ'];
     const tms=t=>{ const d=new Date(String(t||'').replace(' ','T')); return isNaN(d)?null:d.getTime(); };
     const now=Date.now();
-    const q=(EXT().quake||[]).find(x=>{ const t=tms(x.tm_eqk); return t && now-t>=-6e5 && now-t<=864e5 && (x.int_cb || (x.dist_km!=null&&x.dist_km<=80) || x.mt>=4); });
+    const q=(EXT().quake||[]).find(x=>this.quakeBig(x, now));
     if(q){
-      const big=(q.int_cb||0)>=4 || q.mt>=4, ago=Math.round((now-tms(q.tm_eqk))/6e4);
+      const big=(q.int_cb||0)>=5 || q.tp==='11' || q.tp==='10';
       out.push({ type:'지진 규모 '+(+q.mt).toFixed(1), color:big?RED:ORANGE, bg:'var(--panel2,#1b2230)',   /* 단계와 무관 — 바탕 무채색 */
-        area: q.loc + (q.int_cb ? ' · 충북 진도 '+R2[q.int_cb] : (q.int ? ' · '+String(q.int).split(',')[0] : '')),
-        time: ago<60 ? ago+'분 전' : String(q.tm_eqk).slice(5,16).replace('-','/'),
+        area: q.loc, badge: R2[q.int_cb]||'', bd: q.int_cb ? 'flex' : 'none', badgeTip: q.int_cb ? '충북 진도 '+R2[q.int_cb] : '',   /* 충북 진도는 배지로 */
+        time: this.eqTime(q.tm_eqk),
         tip: q.tp_txt+' · '+q.tm_eqk+' · '+q.loc+' · 규모 '+q.mt+(q.int?' · '+q.int:'')+' · '+q.near+'까지 약 '+q.dist_km+'km'+(q.rem?' · '+q.rem:'') });
     }
     const L=EXT().lightning, lt=L&&tms(L.tm), o=L&&L.by&&L.by[s.name];
@@ -2130,6 +2189,7 @@ class Component extends DCLogic {
         time:'최근 '+(o.last||''),
         tip:'기상청 낙뢰 관측 · 최근 '+(L.minutes||60)+'분 동안 관서 반경 '+(L.radius_km||20)+'km 안에 떨어진 낙뢰 · '+L.tm+' 기준' });
     }
+    out.forEach(r=>{ if(!r.bd){ r.bd='none'; r.badge=''; r.badgeTip=''; } });   /* 배지 칸은 지진 줄만 */
     return out;
   }
 
@@ -2211,6 +2271,8 @@ class Component extends DCLogic {
             (drop!=null&&drop<=-10)?AMBER:null);   /* 10℃ 넘게 떨어짐 = 한파주의보 기준(전날보다 10℃ 이상 하강) — 노랑 */
           let nx=null, cr=false; for(let i=0;i<H.length;i++){ if(i>0 && H[i].hour<H[i-1].hour) cr=true;
             const o=H[i]; if(cr && o.hour>=3 && o.hour<=9 && o.t!=null && (nx===null || o.t<nx.t)) nx=o; }
+          /* 자정~오전에는 24시간 예보가 내일 아침까지 안 닿는다 → 서버가 단기예보(3일)에서 뽑은 내일 아침 최저로(2026-11-19) */
+          if(!nx && s.mornNext && s.mornNext.t!=null) nx={ t:+s.mornNext.t, hour:s.mornNext.hour };
           if(!nx) return tile('b','내일 아침 최저','—','',null,['예보 들어오면 표시',null],null);
           const d2=(t==null)?null:Math.round(nx.t - t);
           return tile('b','내일 아침 최저', r0(nx.t), '℃', null,
@@ -2705,7 +2767,8 @@ class Component extends DCLogic {
       const allW=this.warnsOf(s), pre=((EXT().prelim||{})[s.name]||[]), MAX=document.documentElement.classList.contains('wall-m') ? 999 : 2;   // 휴대폰 보기는 칸이 아래로 늘어나니 다 보여 준다
       const a=_alerts.slice(0,MAX), w=allW.slice(0,MAX-a.length), p=pre.slice(0,MAX-a.length-w.length);
       const more=(_alerts.length+allW.length+pre.length)-(a.length+w.length+p.length);
-      return { warns:w, warnCount:allW.length, prelimCount:allW.length?1:0, prelimRows:p, alertRows:a,
+      const qq=this.quietQuakeRows(), quiet=qq.slice(0, Math.max(0, MAX-(a.length+w.length+p.length)));   /* 참고 지진 — 빈칸만큼(노랑 먼저) */
+      return { warns:w, warnCount:allW.length, prelimCount:allW.length?1:0, prelimRows:p, alertRows:a, quietRows:quiet,
         noWarn: !allW.length && !pre.length && !_alerts.length,
         warnHead: '발효 '+allW.length+'건'+(pre.length?' · 예비 '+pre.length+'건':'')+(more>0?' · 외 '+more+'건':'') };
     }).call(this);
@@ -2758,10 +2821,17 @@ class Component extends DCLogic {
       gustColor: s.gust>=14 ? 'var(--cRed,#ff5a5a)' : (s.gust>=10 ? 'var(--cAmber,#ffb020)' : 'var(--dim,#8e9bb0)'),   /* 사다리차 전개 제한 10m/s 기준. 평소는 회색 — 흰 굵은 글씨라 혼자 튀었다(2026-11-16) */
       gustWeight: s.gust>=10 ? 700 : 540,
       hours: hourList, tMax, tMin, dayMax:(s.tmax!=null?Math.round(s.tmax):'—'), dayMin:(s.tmin!=null?Math.round(s.tmin):'—'), meteo: this.meteoEl(hours, tMin, tMax), pop: Math.max.apply(null, hours.map(function(h){return h.pop||0;})),
-      warns:_wb.warns, warnCount:_wb.warnCount, prelimCount:_wb.prelimCount, prelimRows:_wb.prelimRows, alertRows:_wb.alertRows, warnZ:1,
+      warns:_wb.warns, warnCount:_wb.warnCount, prelimCount:_wb.prelimCount, prelimRows:_wb.prelimRows, alertRows:_wb.alertRows, quietRows:_wb.quietRows, warnZ:1,
       noWarn:_wb.noWarn, warnHead:_wb.warnHead,
       rivers: rv, impacts: imp,
       msgs: (document.documentElement.classList.contains('wall-m') ? msgs : msgs.slice(0,5)), noMsg: msgs.length === 0, msgCount: msgs.length,
+      /* 휴대폰 보기만 — 위 '충북 현황 재난문자 N'은 충북 전체라, 관할 밖 문자도 회색으로 아래에 붙여 숫자와 목록을 맞춘다(2026-11-18).
+         PC·벽면은 칸이 좁아 그대로(관할 시군만) */
+      otherMsgs: (function(){
+        if(!document.documentElement.classList.contains('wall-m')) return [];
+        const mine={}; ((EXT().msgs||{})[s.name]||[]).forEach(m=>{ mine[m[2]+'|'+m[3]]=1; });
+        return (EXT().msgsAll||[]).filter(m=>!mine[m[2]+'|'+m[3]]).map(m=>({ sender:m[0], time:m[2], text:m[3] }));
+      })(),
       /* 칸에 다 안 들어가는 문자는 반쯤 잘려 보이지 않게 칸 밖으로 숨긴다(목록이 세로로 넘치면 오른쪽 열로 넘어감).
          몇 건이 보이는지는 직전 화면에서 센다(0.5초마다 다시 그림). */
       msgHeadColor: msgs.length ? 'var(--acc,#17AFAB)' : 'var(--dim,#8e9bb0)',   /* 0건이면 회색 — 기상특보 '발효 0건'처럼(2026-11-16) */
@@ -2821,7 +2891,7 @@ class Component extends DCLogic {
               /* 계절 시연 — 계절 감시 칸이 한파·결빙 / 폭염 / 건조·산불로 바뀌는 것(2026-11-10) */
               ['cold','❄ 한파·결빙','#7cc4ff',1],['heat','☀ 폭염','#ff8a5c'],['dry','🔥 건조·산불','#ffc247'],
               /* 지진 시연 — 기상특보 카드의 지진 줄 + 재난문자 */
-              ['quake','🌏 지진','#ff5a5a',1]];
+              ['quake','🌏 지진','#ff5a5a',1], ['quake2','🌏 지진 3건','#F2D53C']];
   function cur(){ try{ return new URLSearchParams(location.search).get('demo'); }catch(e){ return null; } }
   function set(v){ try{ var u=new URL(location.href); u.searchParams.delete('stage'); if(v) u.searchParams.set('demo',v); else u.searchParams.delete('demo'); history.replaceState(null,'',u); }catch(e){}
     if(window.wallReapply) window.wallReapply(); draw(); }
@@ -3279,6 +3349,7 @@ class Component extends DCLogic {
         snowHr:hsrc.slice(0,24).map(function(o){ return { snow:nv(o.snow_cm), weather:o.weather||'' }; }),   /* 대설·결빙 카드(24시간 적설 예보) */
         weather:(hsrc[0]&&hsrc[0].weather)||r.weather||'', wxIcon:(hsrc[0]&&hsrc[0].icon)||'',   /* 상단 하늘 상태 */
         morn:window.cbMorningLow?window.cbMorningLow(hsrc):null,   /* 계절 감시 카드의 다음 아침 최저 */
+        mornNext:det.morn_next||null,   /* 내일 아침 최저(서버가 3일 단기예보에서 뽑음) — 자정 넘어 24시간 예보가 내일 아침에 못 미칠 때 */
         /* 계절 감시 카드 — 앞으로 24시간 시간별 예보(결빙·체감·습도)와 실효습도 */
         h24:hsrc.slice(0,24).map(function(o){ return { hour:parseInt(o.hour,10), t:nv(o.temp), feels:nv(o.feels_like), rain:nv(o.rain_mm),
           snow:nv(o.snow_cm), wx:String(o.weather||''), humid:nv(o.humid) }; }),
@@ -3348,6 +3419,10 @@ class Component extends DCLogic {
     NAMES.forEach(function(nm){ var sg=sig(nm);
       msgs[nm]=(D.messages||[]).filter(function(m){ return (m.region===sg||m.region===nm||m.region==='충청북도') && msgFresh(m); })
         .map(function(m){ return [m.sender||sg,'',m.time||'',m.text||'']; }).slice(0,20); });   /* 화면엔 5건, 제목엔 전체 건수 */
+    /* 충북 전체 재난문자(시각+본문 같으면 한 번) — 휴대폰 보기에서 관할 밖 문자를 회색으로 붙일 때 쓴다(2026-11-18) */
+    var msgsAll=[], _mseen={}, _min={};   /* 순서는 수집 목록 그대로(최신 먼저) — 관서 순으로 모으면 시각이 뒤섞였다 */
+    NAMES.forEach(function(nm){ (msgs[nm]||[]).forEach(function(m){ _min[m[2]+'|'+m[3]]=m; }); });
+    (D.messages||[]).forEach(function(m){ var k=(m.time||'')+'|'+(m.text||''); if(_min[k] && !_mseen[k]){ _mseen[k]=1; msgsAll.push(_min[k]); } });
     /* 상단바 '항상 띄울 관측소' — 관서 순환과 무관한 전역 목록.
        region.js의 topRivers(한강홍수통제소 관측소 코드)로 고른다. 이름이 아니라 코드로
        고르는 이유: 표기명이 바뀌어도 안 깨진다. 목록에 없는 코드는 조용히 빠진다
@@ -3406,7 +3481,7 @@ class Component extends DCLogic {
     });
     try{ window.CB_DEMO_STAGE = new URLSearchParams(location.search).get('demo')==='severe' ? 4 : null; }catch(e){}   /* 시연 3단계 = 재대본 발령 가정(stage.js) */
     var stage = window.cbStage ? window.cbStage((D.warnings||[]).map(function(w){ return { type:w.type||w.title||w.name||'', area:w.area||w.region||w.regions||'', level:w.level||'' }; }), D.prelim_warnings||[], D.typhoon||[]) : null;
-    return { stations:stations, rivers:rivers, msgs:msgs, warns:warnsByStation(D.warnings), cctv:cctv, risks:risks, stage:stage, prelim:prelim,
+    return { stations:stations, rivers:rivers, msgs:msgs, msgsAll:msgsAll, warns:warnsByStation(D.warnings), cctv:cctv, risks:risks, stage:stage, prelim:prelim,
              keyRivers:keyRivers, ultra:ultra, updated:D.updated,
              /* 새 카드 3장(레이더·태풍·물때) 원시 데이터 통과 */
              kmaImages:(D.kma_images||{}), typhoon:(D.typhoon||[]), tide:(D.tide||null),
@@ -3473,12 +3548,23 @@ class Component extends DCLogic {
         int:'최대진도 Ⅴ(충북),Ⅳ(경북),Ⅲ(강원·충남)', int_max:5, int_cb:5, rem:'시연 — 실제 지진이 아닙니다', near:'괴산', dist_km:11}];
       msg('기상청', ago(4).hm, '[기상청] '+q.full.slice(5,16).replace('-','/')+' 충북 괴산군 북동쪽 11km 지역 규모4.1 지진발생 / 낙하물로부터 몸 보호, 진동 멈춘 후 야외 대피하며 여진 주의','충청북도');
       msg('괴산군', ago(2).hm, '[괴산군] 지진 발생. 건물 균열·낙석 피해가 있으면 119로 신고하고, 산사태 위험지역 주민은 대피해 주세요.','괴산');
+    } else if(key==='quake2'){
+      /* 지진 3건 — 2026-11-17~18 기상청 실제 통보(eqk_now) 그대로, 시각만 지금 기준(간격은 실제와 같게).
+         상주 3.7 = 충북 진도 Ⅲ → 주황 줄 / 북한 길주 2.5(최대진도 Ⅰ) · 일본 니가타 5.0(국내영향없음) = 충북 진도 Ⅱ 미만 → 노랑 참고 줄 */
+      var a1=ago(40), a2=ago(151), a3=ago(1318);   /* 20:28 · 18:37 · 전날 23:10 */
+      c.quake=[
+        {tp:'3', tp_txt:'국내지진통보', tm_eqk:a1.full, mt:2.5, lat:41.25, lon:129.32, loc:'북한 함경북도 길주 북쪽 33km 지역',
+         int:'최대진도 Ⅰ', int_max:1, int_cb:null, rem:'자연지진으로 분석됨', near:'제천', dist_km:465, abroad:false},
+        {tp:'2', tp_txt:'국외지진정보', tm_eqk:a2.full, mt:5.0, lat:38.8, lon:137.9, loc:'일본 니가타현 니가타시 북서쪽 140km 해역',
+         int:'', int_max:null, int_cb:null, rem:'국내영향없음.\\n발생시각, 규모, 발생위치, 발생깊이는 일본기상청(JMA) 분석결과임.', near:'충주', dist_km:900, abroad:true},
+        {tp:'14', tp_txt:'지진속보', tm_eqk:a3.full, mt:3.7, lat:36.52, lon:127.96, loc:'경북 상주시 북서쪽 22km 지역',
+         int:'최대진도 Ⅳ(경북),Ⅲ(충북),Ⅱ(강원,경기,경남,대구,대전,세종,전북,충남)', int_max:4, int_cb:3, rem:'위 정보는 이동속도가 빠른 지진파(P파)만을 이용하여 자동 추정한 정보임.\\n수동으로 분석한 정보는 지진정보로 추가 발표할 예정임', near:'보은', dist_km:21, abroad:false}];
     } else if(key==='cold' || key==='heat' || key==='dry'){
       season(c, key, msg);
     }
     /* 시나리오 시각(특보 발효 15:42 · 문자 15:44 …)을 '지금' 기준으로 옮긴다(2026-11-16) — 고정 시각이면 오후 3시 전에 켤 때
        '15:42 발효'처럼 미래 시각이 떴다. 간격은 그대로, 가장 늦은 시각이 지금 10분 전이 되게. 지진은 이미 지금 기준이라 건너뛴다 */
-    if(key!=='quake') cbDemoTimes((c.warnings||[]).concat(c.messages||[]));
+    if(key!=='quake' && key!=='quake2') cbDemoTimes((c.warnings||[]).concat(c.messages||[]));
     return c;
   }
   /* 시연 시각을 '지금' 기준으로(2026-11-16) — 시나리오의 고정 시각(특보 15:42 발효 · 문자 15:44 …)은 오후 3시 전에 켜면 미래로 떴다.
