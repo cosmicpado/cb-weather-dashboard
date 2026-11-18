@@ -251,6 +251,15 @@ def _aws_num(v):
     return None if f < 0 else f
 
 
+def _aws_temp(v):
+    """AWS 기온 → float. 영하가 정상 값이라 _aws_num(음수=결측)을 쓰면 안 된다 — 결측 표기(-99 등)만 버린다."""
+    try:
+        f = float(v)
+    except (TypeError, ValueError):
+        return None
+    return None if f <= -50 else f
+
+
 # ============================================================
 # 0. 전국 공통 자료 공유 캐시 (2026-09-19 전국 확장 — 공공데이터포털 한도 대책)
 #
@@ -457,7 +466,7 @@ def fetch_aws_rain():
         except ValueError:
             continue
         obs[stn] = {'wds': _aws_num(f[4]), 'wss': _aws_num(f[5]), 'wd10': _aws_num(f[6]),
-                    'ws10': _aws_num(f[7]), 'ta': _aws_num(f[8]),
+                    'ws10': _aws_num(f[7]), 'ta': _aws_temp(f[8]),
                     'rn15': _aws_num(f[10]), 'rn60': _aws_num(f[11]),
                     'rn12h': _aws_num(f[12]), 'rnday': _aws_num(f[13]),
                     'hm': _aws_num(f[14]) if len(f) > 14 else None, 'tm': f[0]}
@@ -901,6 +910,72 @@ def _wnuri_today_minmax(wn):
     return recs
 
 
+def _today_obs_min(data):
+    """관서별 오늘(자정 이후) 대표 관측소 실측 최저기온. 5분마다 들어오는 AWS 기온으로 쌓는다.
+    서버를 아침 이후에 켰으면 하루 한 번 자정~지금(최대 10시) 매시 정각 AWS 기록을 받아 채운다.
+    반환 {관서: {'min': 기온, 'from': 처음 기록한 시(0~23)}}"""
+    path = TMP / 'today_obs_min.json'
+    now = datetime.now()
+    today = now.strftime('%Y%m%d')
+    try:
+        store = json.loads(path.read_text(encoding='utf-8'))
+    except Exception:
+        store = {}
+    if store.get('date') != today:
+        store = {'date': today, 'regions': {}}
+    recs = store['regions']
+    stn_of = {}
+    for nm, a in (data.get('aws') or {}).items():
+        o = (a or {}).get('obs') or {}
+        if o.get('stn') is not None:
+            stn_of[nm] = str(o['stn'])
+        if o.get('ta') is None:
+            continue
+        rec = recs.setdefault(nm, {'min': o['ta'], 'from': now.hour})
+        rec['min'] = min(rec['min'], o['ta'])
+    if now.hour >= 1 and not store.get('seeded') and KMA_APIHUB_KEY and stn_of:
+        store['seeded'] = True
+        try:
+            for h in range(0, min(now.hour, 10) + 1):
+                tm = now.strftime('%Y%m%d') + f'{h:02d}00'
+                r = shared_get(f'aws_min_{tm}', 'https://apihub.kma.go.kr/api/typ01/cgi-bin/url/nph-aws2_min'
+                               f'?tm2={tm}&stn=0&disp=0&help=0&authKey={KMA_APIHUB_KEY}', timeout=15, max_age=86400)
+                r.raise_for_status()
+                r.encoding = 'euc-kr'
+                ta = {}
+                for line in r.text.split('\n'):
+                    f = line.split()
+                    if len(f) > 8 and not line.startswith('#'):
+                        ta[f[1]] = _aws_temp(f[8])
+                for nm, stn in stn_of.items():
+                    v = ta.get(stn)
+                    if v is None:
+                        continue
+                    rec = recs.setdefault(nm, {'min': v, 'from': h})
+                    rec['min'] = min(rec['min'], v)
+                    rec['from'] = min(rec['from'], h)
+        except Exception as e:
+            print(f'    오늘 실측 최저 채우기 실패(무시): {type(e).__name__}')
+    try:
+        _atomic_write_text(path, json.dumps(store, ensure_ascii=False))
+    except Exception as e:
+        print(f'    오늘 실측 최저 저장 실패(무시): {type(e).__name__}')
+    return recs
+
+
+def _pick_today_min(obs, fc):
+    """오늘 최저 = 아침 최저가 지난 뒤(9시~)이고 새벽부터 쌓은 실측이 있으면 실측 그대로.
+    그 전이면 실측과 오늘 예보(날씨누리·오늘 TMN) 중 낮은 값. 날씨누리는 낮에 '최저'를 비우고,
+    빈자리를 예보로 채우면 내일 아침 값이 섞여(2026-11-18) '오늘 최저보다'가 엉뚱하게 나왔다."""
+    early = bool(obs) and obs.get('from', 24) <= 6
+    if early and datetime.now().hour >= 9:
+        return obs['min']
+    if not early:
+        obs = None   # 아침을 놓친 실측만으로는 오늘 최저라 할 수 없다
+    vals = [v for v in ((obs or {}).get('min'), fc) if v is not None]
+    return min(vals) if vals else None
+
+
 def apply_wnuri_local(data):
     """시간대별 예보와 오늘 최고·최저를 날씨누리 메인 값으로 맞춘다. 현재값은 대표 관측소(AWS_REP) 실측 그대로.
     시를 나눠 맡는 관서(청주서부)는 regions 에 없어 현재값·예보를 data['local'] 로 따로 싣는다."""
@@ -908,15 +983,15 @@ def apply_wnuri_local(data):
     wn = fetch_wnuri_local()
     print(f'  ✓ 날씨누리 {len(wn)}/{len(P.get("wnuri_dong") or {})}개 관서')
     day = _wnuri_today_minmax(wn)
-    by = {r.get('name'): r for r in data.get('regions') or []}
+    om = _today_obs_min(data)
+    by ={r.get('name'): r for r in data.get('regions') or []}
     for r in data.get('regions') or []:
         w = wn.get(r.get('name'))
         rec = day.get(r.get('name')) or {}
         det = r.setdefault('detail', {})
-        for k in ('tmax', 'tmin'):
-            if rec.get(k) is not None:
-                r[k] = rec[k]
-                det[k] = rec[k]
+        if rec.get('tmax') is not None:
+            r['tmax'] = det['tmax'] = rec['tmax']
+        r['tmin'] = det['tmin'] = _pick_today_min(om.get(r.get('name')), rec.get('tmin'))   # 모르면 비운다(내일 값으로 채우지 않게)
         if w:
             _wnuri_merge_hourly(det.get('hourly') or [], w)
 
@@ -945,7 +1020,7 @@ def apply_wnuri_local(data):
                      'wind_dir': deg_to_dir(po['wd10']) if po.get('wd10') is not None else None, 'vec': po.get('wd10'),
                      'feels': po.get('feels'), 'time': tm[8:10] + ':' + tm[10:12] if len(tm) >= 12 else '',
                      'station': po.get('station', ''), 'src': 'aws',
-                     'tmax': (day.get(nm) or {}).get('tmax'), 'tmin': (day.get(nm) or {}).get('tmin'), 'hourly': hourly}
+                     'tmax': (day.get(nm) or {}).get('tmax'), 'tmin': _pick_today_min(om.get(nm), (day.get(nm) or {}).get('tmin')), 'hourly': hourly}
     data['local'] = local
 
 
@@ -1596,7 +1671,15 @@ def fetch_quake():
         except ValueError:
             continue
         rest = f[7].rstrip('=').rstrip(',').strip()
-        parts = [x.strip() for x in rest.split(',')]
+        # 괄호 안 쉼표는 자르지 않는다 — 'Ⅳ(경북,충북)' 를 잘라 충북 진도를 놓쳤다(2026-11-17 상주 지진)
+        parts, buf, depth = [], '', 0
+        for ch in rest:
+            depth += (ch == '(') - (ch == ')')
+            if ch == ',' and depth <= 0:
+                parts.append(buf.strip()); buf = ''
+            else:
+                buf += ch
+        parts.append(buf.strip())
         loc, i, ints = parts[0], 1, []
         while i < len(parts) and _re.match(r'^(최대진도\s*)?[' + _ROMAN + r']+\s*\(', parts[i]):
             ints.append(parts[i]); i += 1

@@ -203,9 +203,10 @@ server {
     location ~ /\\.          { return 404; }          # .env · .git · .tmp
     location ^~ /tools/     { return 404; }
     # 짧은 주소(2026-11-12) — 주소창에 한글 파일 이름 대신. 화면 short-url.js · tools/live_local.py 와 같은 표
-    location = /            { rewrite ^ /상황실.html last; }   # 첫 화면 = 119종합상황실(2026-11-13)
+    location = /            { rewrite ^ /지도.html last; }     # 첫 화면 = 종합 현황(2026-11-18)
     location = /map         { rewrite ^ /지도.html last; }
-    location = /room        { rewrite ^ /상황실.html last; }
+    location = /wall        { rewrite ^ /상황실.html last; }
+    location = /room        { rewrite ^ /상황실.html last; }   # 예전 주소
     location = /watch       { rewrite ^ /재해.html last; }
     location = /admin       { rewrite ^ /관리자.html last; }
     location = /help        { rewrite ^ /도움말.html last; }

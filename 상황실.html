@@ -31,6 +31,17 @@ html.wall-m [data-stage]{width:1080px!important;height:auto!important;padding:24
 html,body,body *{-webkit-text-size-adjust:100%!important;-moz-text-size-adjust:100%!important;text-size-adjust:100%!important;}
 #wall-msel{display:none;}
 html.wall-m #wall-msel{display:flex;flex-wrap:wrap;gap:8px;padding:50px 9px 0;background:var(--bg,#0d1118);}
+#wall-msel .nm{flex:1;min-width:0;height:46px;border-radius:12px;border:1px solid var(--line,#28313f);background:var(--panel,#151b26);color:var(--fg,#f2f5fa);font:800 19px 'Pretendard Variable',Pretendard,system-ui,sans-serif;padding:0 14px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;text-align:left;}
+#wall-msel .nm small{font-size:13.5px;font-weight:700;color:var(--dim,#8e9bb0);}
+#wall-mlist{display:none;flex:1 0 100%;max-height:62vh;overflow-y:auto;background:var(--panel,#151b26);border:1px solid var(--line,#28313f);border-radius:12px;padding:8px;box-sizing:border-box;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;}
+#wall-mlist.on{display:grid;}
+#wall-msel #wall-mlist button{all:unset;display:block;width:100%;min-width:0;box-sizing:border-box;cursor:pointer;border-radius:10px;padding:8px 10px;border:1px solid var(--line,#28313f);background:var(--bg,#0d1118);color:var(--fg,#f2f5fa);font:700 13.5px/1.35 'Pretendard Variable',Pretendard,system-ui,sans-serif;}
+#wall-msel #wall-mlist button b{display:flex;justify-content:space-between;gap:6px;font-size:16px;font-weight:800;}
+#wall-msel #wall-mlist button span{display:block;color:var(--dim,#8e9bb0);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#wall-msel #wall-mlist button b span{display:inline;color:inherit;overflow:visible;}
+#wall-msel #wall-mlist button.s1{background:rgba(255,176,32,.13);}#wall-msel #wall-mlist button.s2{background:rgba(255,122,47,.16);}#wall-msel #wall-mlist button.s3{background:rgba(255,77,77,.18);}
+#wall-msel #wall-mlist button.cur{border:2px solid var(--acc,#17AFAB);}
+#wall-mlist .wet{font-style:normal;color:var(--cBlue,#54aaff);}
 #wall-msel select{flex:1;min-width:0;height:46px;border-radius:12px;border:1px solid var(--line,#28313f);background:var(--panel,#151b26);color:var(--fg,#f2f5fa);font:700 18px 'Pretendard Variable',Pretendard,system-ui,sans-serif;padding:0 12px;}
 #wall-msel button{flex:none;width:46px;height:46px;border-radius:12px;border:1px solid var(--line,#28313f);background:var(--panel,#151b26);color:var(--fg,#f2f5fa);font-size:20px;cursor:pointer;}
 html.wall-m [data-clock]{display:none!important;}
@@ -53,11 +64,8 @@ html.wall-m [data-msglist]>div{min-height:150px;}
 html.wall-m #wall-tools [aria-label*="배치"]{display:none!important;}   /* 배치 편집은 벽면 화면 전용 */
 html.wall-m [data-card="obs"]{order:3;height:520px;}
 html.wall-m [data-card="obs"]>div:nth-child(2){flex:1!important;}   /* 습도·풍속·풍향 줄을 강수량 줄과 같은 높이로 */
-/* 특보·재난문자가 0건이면 제목 줄(… 0건)만 남기고 접는다 */
-html.wall-m [data-warnlist]:has([data-empty]),html.wall-m [data-msglist]:has([data-empty]){display:none!important;}
-html.wall-m [data-card="warn"]:has([data-empty]),html.wall-m [data-card="msg"]:has([data-empty]){padding-top:22px!important;padding-bottom:22px!important;}
-html.wall-m [data-card="idx"]{order:6;height:260px;}
-html.wall-m [data-card="season"]{order:7;height:300px;}
+html.wall-m [data-card="idx"]{order:6;height:280px;}
+html.wall-m [data-card="season"]{order:7;height:280px;}
 html.wall-m [data-card="typhoon"]{order:8;height:900px;}
 html.wall-m [data-card="hourly"]{order:4;height:1000px;--fz:.82!important;padding:26px 20px!important;}
 html.wall-m [data-card="radar"]{order:5;height:1000px;}
@@ -75,20 +83,17 @@ html.wall-m [data-stage]::-webkit-scrollbar{display:none;}
 html.wall-m [data-wall-grid]{display:contents!important;}
 html.wall-m [data-card="warn"],html.wall-m [data-card="msg"],html.wall-m [data-card="duty"],html.wall-m [data-card="brief"],html.wall-m [data-card="cctv"]{display:none!important;}
 /* 이 관서에 기상특보·재난문자가 있으면 맨 뒤에 '기상특보'·'재난문자' 목록 구역이 생긴다(없으면 구역도 없음) */
-html.wall-m.m-w [data-card="warn"]{display:flex!important;grid-column:3!important;grid-row:1!important;scroll-snap-align:start;}
-html.wall-m.m-m [data-card="msg"]{display:flex!important;grid-column:3!important;grid-row:1!important;scroll-snap-align:start;}
-html.wall-m.m-any [data-rail]{grid-column:4!important;}
-html.wall-m.m-any [data-card="river"]{grid-column:5!important;}
+html.wall-m [data-card="warn"]{display:flex!important;grid-column:3!important;grid-row:1!important;scroll-snap-align:start;}
+html.wall-m [data-card="msg"]{display:flex!important;grid-column:3!important;grid-row:1!important;}
 /* 둘 다 있으면 같은 구역에 특보 아래 재난문자(내려 쌓는 높이는 JS 가 특보 칸 높이로 맞춘다) */
 /* 한 구역 안의 칸들은 모두 같은 줄(1줄)에 두고 위 칸 높이만큼 내려 쌓는다 — 줄을 나누면 다른 구역의 큰 칸(레이더) 높이에 끌려 빈틈이 생긴다 */
 html.wall-m [data-card="obs"]{grid-column:1!important;grid-row:1!important;scroll-snap-align:start;}
 html.wall-m [data-wall-grid] [data-card="hourly"]{grid-column:1!important;grid-row:1!important;margin-top:544px!important;}
 html.wall-m [data-card="radar"]{grid-column:2!important;grid-row:1!important;scroll-snap-align:start;}
 html.wall-m [data-wall-grid] [data-card="season"]{grid-column:2!important;grid-row:1!important;margin-top:1024px!important;}
-html.wall-m [data-wall-grid] [data-card="idx"]{grid-column:2!important;grid-row:1!important;margin-top:1348px!important;}
+html.wall-m [data-wall-grid] [data-card="idx"]{grid-column:2!important;grid-row:1!important;margin-top:1328px!important;}
 html.wall-m [data-wall-grid] [data-card="typhoon"]{grid-column:2!important;grid-row:1!important;margin-top:1632px!important;}
-html.wall-m [data-rail]{grid-column:3!important;grid-row:1!important;scroll-snap-align:start;align-self:start;}
-html.wall-m [data-card="river"]{display:flex!important;grid-column:4!important;grid-row:1!important;scroll-snap-align:start;height:auto!important;min-height:600px;}
+html.wall-m [data-rail],html.wall-m [data-card="river"]{display:none!important;}
 /* 맨 위 고정 줄 — 내려도 붙어 있다 */
 html.wall-m body{overflow-x:clip!important;overflow-y:visible!important;padding-bottom:64px;}   /* 아래 구역 점이 마지막 칸을 가리지 않게    /* body 가 스크롤 상자가 되면 고정 줄(sticky)이 안 붙는다 */
 html.wall-m #wall-msel{position:sticky;top:0;z-index:60;box-shadow:0 6px 14px rgba(0,0,0,.18);}
@@ -1943,8 +1948,7 @@ class Component extends DCLogic {
     const num=(v,d)=>(v!=null&&!isNaN(v))?(+v).toFixed(d==null?0:d):'-';
     const NOWBG='rgba(255,122,47,.10)';           /* '지금' 칸 세로 밴드 */
     const cell=(child,i,extra)=>R('div',{style:Object.assign({display:'flex',flexDirection:'column',
-      alignItems:'center',justifyContent:'center',padding:'7px 2px',minWidth:0,
-      background:(i===0?NOWBG:'transparent')}, extra||{})}, child);
+      alignItems:'center',justifyContent:'center',padding:'7px 2px',minWidth:0}, extra||{})}, child);
     const lab=(txt)=>R('div',{style:{display:'flex',alignItems:'center',justifyContent:'flex-end',
       paddingRight:'14px',fontSize:'28px',fontWeight:570,color:DIM,whiteSpace:'nowrap'}}, txt);
 
@@ -1991,8 +1995,7 @@ class Component extends DCLogic {
       R('defs',{key:'d'},R('linearGradient',{id:'wtG',x1:'0',y1:'0',x2:'0',y2:'1'},
         R('stop',{offset:'0',style:{stopColor:'var(--cOrange,#ff9a3c)',stopOpacity:0.22}}),
         R('stop',{offset:'1',style:{stopColor:'var(--cOrange,#ff9a3c)',stopOpacity:0.02}}))),
-      R('rect',{key:'nb',x:0,y:0,width:VW/N,height:GH,style:{fill:NOWBG}}),
-      R('polygon',{key:'ar',points:'0,'+GH+' '+lineStr+' '+VW+','+GH,fill:'url(#wtG)',stroke:'none'}),
+      R('polygon',{key:'ar',points:xOf(0)+','+GH+' '+lineStr+' '+xOf(N-1)+','+GH,fill:'url(#wtG)',stroke:'none'}),
       R('polyline',{key:'ln',points:lineStr,style:{fill:'none',stroke:'var(--cOrange,#ff9a3c)',strokeWidth:4,
         strokeLinecap:'round',strokeLinejoin:'round',vectorEffect:'non-scaling-stroke'}})
     ];
@@ -2039,7 +2042,10 @@ class Component extends DCLogic {
       R('div',{style:{fontSize:'29px',fontWeight:600}}, num(h.wind,1))));   /* 방위 글자는 뺐다 — 화살표가 방향, 전광판에서 20px 글씨는 안 읽힌다 */
     /* 습도 줄은 뺐다(현재 실황 칸에 있다) — 전광판에서 줄이 적을수록 글자를 키울 수 있다 */
 
-    return R('div',{style:{display:'grid',gridTemplateColumns:'124px repeat('+N+',minmax(0,1fr))',
+    /* '지금' 칸 띠 — 줄 사이를 벌려 놓아서 칸마다 칠하면 끊긴다. 열 전체 높이에 한 장으로 깐다 */
+    kids.unshift(R('div',{key:'nowband',style:{position:'absolute',gridColumn:'2 / 3',top:0,bottom:0,left:0,right:0,
+      background:NOWBG,borderRadius:'12px',pointerEvents:'none',zIndex:-1}}));   /* 글자 아래로 */
+    return R('div',{style:{display:'grid',gridTemplateColumns:'124px repeat('+N+',minmax(0,1fr))',position:'relative',zIndex:0,
       alignItems:'center',height:'100%',alignContent:'space-evenly'}}, kids);
   }
 
@@ -2148,7 +2154,7 @@ class Component extends DCLogic {
     /* 계절 감시 — 산불위험·미세먼지·일출일몰 칸과 똑같은 타일 3개. 단계는 PM10 '좋음'처럼 숫자 옆 색 글자 */
     const R = window.React.createElement, DIM='var(--dim,#8e9bb0)';
     const BLUE='var(--cBlue,#54aaff)', AMBER='var(--cAmber,#ffb020)', ORANGE='var(--cOrange,#ff9a3c)', RED='var(--cRed,#ff5a5a)';
-    const H=(s.h24||[]).filter(o=>o && !isNaN(o.hour)), r0=v=>(v==null?'—':Math.round(v));
+    const H=(s.h24||[]).filter(o=>o && !isNaN(o.hour)), r0=v=>{ if(v==null) return '—'; const n=Math.round(v); return n<0?'−'+(-n):String(n); };   /* 영하는 글자 마이너스(−) — 하이픈(-)은 옆 칸 '−6' 보다 짧아 보였다 */
     /* 첫 번째로 이어지는 구간만 '몇 시~몇 시'로 — 오늘 낮과 내일 낮이 떨어져 있으면 이어 붙이면 안 된다(14시~13시가 됐었다) */
     const spanOf=list=>{ if(!list.length) return null;
       const idx=list.map(o=>H.indexOf(o)); let e=0; while(e+1<idx.length && idx[e+1]===idx[e]+1) e++;
@@ -2648,12 +2654,14 @@ class Component extends DCLogic {
                 : ['var(--panel,#151b26)','rgba(255,176,32,.10)','rgba(255,122,47,.13)','rgba(255,77,77,.16)'][sev],
         /* 테두리 색으로 단계를 나타내는 것은 맨 위 단계 카드뿐 — 칸마다 색 테두리가 있으면 정신없다. 단계는 칸 배경색으로 본다 */
         border: cur ? ['var(--fg,#f2f5fa)','var(--cAmber,#ffb020)','var(--cOrange,#ff9a3c)','var(--cRed,#ff5a5a)'][sev] : 'var(--line,#28313f)',
-        bw: '3px', glow: 'none',
+        bw: '3px', glow: 'none', sev: sev,
         fg: cur ? (sev ? '#12161d' : 'var(--bg,#0d1118)') : 'var(--fg,#f2f5fa)',
         sub: cur ? (sev ? 'rgba(18,22,29,.72)' : 'var(--bg,#0d1118)') : 'var(--dim,#8e9bb0)',
         go: ()=> this.setState({ idx:k, started:Date.now() }) };
     });
 
+    /* 휴대폰 맨 위 관서 드롭다운이 쓰는 관서 순위 자료 */
+    window.cbWallRail = rail.map(r=>({ name:r.name, temp:r.temp, tag:r.tag, rain:r.rainTxt, sev:r.sev }));
     const rotSec = Math.max(6, Math.min(15, Math.round(170 / Math.max(1, NAMES.length))));
     const prog = Math.min(100, (Date.now() - this.state.started) / (rotSec*1000) * 100);
 
@@ -2976,6 +2984,9 @@ class Component extends DCLogic {
     hd.appendChild(el('div','font-size:'+F(22,1.9,46)+';font-weight:800;letter-spacing:-.02em;','특보 통보문'));
     var all=el('button','margin-left:auto;height:'+F(34,2.3,56)+';padding:0 '+F(12,1,24)+';border-radius:12px;border:2px solid var(--dim,#8e9bb0);background:transparent;color:var(--fg,#f2f5fa);font-size:'+F(13,.95,24)+';font-weight:700;cursor:pointer;','충북 특보 전체');
     all.onclick=function(){ openList(); }; hd.appendChild(all);
+    /* 원문 단추 — 아래까지 내리지 않아도 보이게 제목 줄에(종합 현황 팝업과 같은 자리) */
+    if(x.url){ var og=el('a','display:inline-flex;align-items:center;height:'+F(34,2.3,56)+';padding:0 '+F(12,1,24)+';border-radius:12px;border:2px solid var(--acc,#17AFAB);color:var(--acc,#17AFAB);font-size:'+F(13,.95,24)+';font-weight:800;text-decoration:none;white-space:nowrap;','날씨누리 원문 ↗');
+      og.href=x.url; og.target='_blank'; og.rel='noopener'; hd.appendChild(og); }
     var xb=el('button','width:'+F(34,2.3,56)+';height:'+F(34,2.3,56)+';border-radius:12px;border:2px solid var(--dim,#8e9bb0);background:transparent;color:var(--fg,#f2f5fa);font-size:'+F(18,1.3,30)+';cursor:pointer;','✕');
     xb.setAttribute('aria-label','닫기'); xb.onclick=close; hd.appendChild(xb); card.appendChild(hd);
     if(list.length>1){   /* 최근 통보문 여러 건 — 눌러서 바꿔 본다 */
@@ -3001,7 +3012,6 @@ class Component extends DCLogic {
       d.appendChild(el('div','font-size:'+F(15,1.15,28)+';line-height:1.65;color:var(--fg,#f2f5fa);opacity:.9;white-space:pre-wrap;',sct[1]));
       card.appendChild(d); });
     var ft=el('div','display:flex;align-items:center;gap:14px;flex-wrap:wrap;');
-    var a=el('a','font-size:'+F(14,1,24)+';font-weight:700;color:var(--acc,#17AFAB);text-decoration:none;','날씨누리 원문 보기 ↗'); a.href=x.url; a.target='_blank'; a.rel='noopener'; ft.appendChild(a);
     ft.appendChild(el('span','margin-left:auto;font-size:'+F(12,.85,20)+';color:var(--dim,#8e9bb0);','바깥을 누르거나 Esc · 3분 지나면 저절로 닫힙니다'));
     card.appendChild(ft);
     document.body.appendChild(box);
@@ -3139,6 +3149,11 @@ class Component extends DCLogic {
     open();
   });
   window.cbStagePicker=function(){ if(!window.WALL_EDITING && !box && window.cbStageOv) open(); };   /* 왼쪽 위 '비상단계 지정' 단추 */
+  /* 종합 현황에서 'stage' 명령으로 넘어오면(?cmd=stage) 화면이 뜬 뒤 지정 창을 바로 연다 */
+  if(/[?&]cmd=stage\b/.test(location.search)){
+    try{ var u=new URL(location.href); u.searchParams.delete('cmd'); history.replaceState(null,'',u); }catch(e){}
+    (function wait(n){ if(window.cbStageOv && document.querySelector('[data-stagecard]')) window.cbStagePicker(); else if(n<40) setTimeout(function(){ wait(n+1); }, 300); })(0);
+  }
 })();
 </script>
 <!-- 하천 CCTV 카드: 장치번호표·부산 목록·등록표·KBS 토큰(서버가 운영 저장소에 올림) — data.js 보다 먼저(변환기가 판정에 쓴다) -->
@@ -3604,21 +3619,29 @@ window.cbWindyUrl = function(overlay, zoom){
 /* 휴대폰 보기 맨 위 관서 고르기(2026-11-16) — 시계 칸 대신. html.wall-m 일 때만 보인다(CSS).
    화면(React) 밖 body 맨 앞에 두어 다시 그려도 지워지지 않는다. 밝게/어둡게 단추도 시계 칸에서 옮겨 왔다. */
 (function(){
-  var box=null, sel=null;
+  var box=null, sel=null, drawName=null;
   window.cbWallSelInit=function(){
     var W=window.cbWallStation; if(!W || box) return;
     box=document.createElement('div'); box.id='wall-msel';
-    sel=document.createElement('select'); sel.setAttribute('aria-label','관서 고르기');
-    W.names.forEach(function(n,i){ var o=document.createElement('option'); o.value=String(i); o.textContent=n; sel.appendChild(o); });
-    sel.value=String(W.get());
-    sel.onchange=function(){ W.set(+sel.value); try{ window.scrollTo(0,0); }catch(e){} };
+    /* 관서명을 누르면 관서 순위(기온·특보·강수)가 아래로 펼쳐지고, 고르면 그 관서 자료로 바뀐다 */
+    sel=document.createElement('button'); sel.type='button'; sel.className='nm'; sel.setAttribute('aria-label','관서 고르기'); sel.setAttribute('aria-expanded','false');
+    var list=document.createElement('div'); list.id='wall-mlist';
+    var esc2=function(t){ return String(t==null?'':t).replace(/[&<>"]/g,function(x){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[x]; }); };
+    drawName=function(){ sel.innerHTML='<span>'+esc2(W.names[W.get()])+'</span><small>'+(list.classList.contains('on')?'접기 ▴':'관서 순위 ▾')+'</small>'; };
+    function drawList(){ var R=window.cbWallRail||W.names.map(function(n){ return {name:n}; }), cur=W.get();
+      list.innerHTML=R.map(function(r,i){ return '<button type="button" data-i="'+i+'" class="'+(r.sev?'s'+r.sev:'')+(i===cur?' cur':'')+'"><b><span>'+esc2(r.name)+'</span>'+(r.temp!=null?esc2(r.temp)+'°':'')+'</b><span>'+esc2(r.tag||'')+(r.rain&&r.rain!=='—'?' · <em class="wet">'+esc2(r.rain)+'</em>':'')+'</span></button>'; }).join(''); }
+    function openList(on){ list.classList.toggle('on', on); sel.setAttribute('aria-expanded', on?'true':'false'); if(on) drawList(); drawName(); }
+    sel.onclick=function(){ openList(!list.classList.contains('on')); };
+    list.onclick=function(e){ var b=e.target.closest && e.target.closest('[data-i]'); if(!b) return; W.set(+b.getAttribute('data-i')); openList(false); try{ window.scrollTo(0,0); }catch(e2){} };
+    document.addEventListener('click', function(e){ if(list.classList.contains('on') && !box.contains(e.target)) openList(false); });
+    drawName();
     var th=document.createElement('button'); th.type='button'; th.textContent='☀'; th.title='밝게/어둡게'; th.setAttribute('aria-label','밝게/어둡게');
     th.onclick=function(){ W.theme(); };
     box.appendChild(sel); box.appendChild(th);
     /* 자료 기준 시각 — 휴대폰은 맨 아래 '마지막 갱신'까지 내려가야 보여서. 15분 넘게 그대로면 빨간 경고 */
     var up=document.createElement('div'); up.id='wall-mupd';
     up.style.cssText='flex:1 0 100%;font:700 15px/1.3 \"Pretendard Variable\",Pretendard,system-ui,sans-serif;color:var(--dim,#8e9bb0);padding:0 4px;';
-    box.appendChild(up);
+    box.appendChild(up); box.appendChild(list);
     function tick(){ var u=String((window.WALL_RAW||{}).updated||''), m=u.match(/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})/);
       if(!m){ up.textContent=''; return; }
       var late=Math.round((Date.now()-new Date(+m[1],+m[2]-1,+m[3],+m[4],+m[5]))/60000);
@@ -3638,7 +3661,7 @@ window.cbWindyUrl = function(overlay, zoom){
     var urg=document.createElement('div'); urg.id='wall-urg'; box.appendChild(urg);
     document.body.insertBefore(box, document.body.firstChild);
     /* 넘기는 구역 표시 점 — 누르면 그 구역으로 */
-    function PAGESF(){ var c=document.documentElement.classList, p=['실황·예보','레이더·계절','관서 순위','하천']; if(c.contains('m-any')) p.splice(2,0,'특보·재난문자'); return p; }
+    function PAGESF(){ var c=document.documentElement.classList, p=['실황·예보','레이더·계절','특보·재난문자']; return p; }
     var dots=document.createElement('div'); dots.id='wall-dots'; document.body.appendChild(dots);
     function stageEl(){ return document.querySelector('[data-stage]'); }
     function page(){ var s=stageEl(); return s ? Math.round(s.scrollLeft/(s.clientWidth||1)) : 0; }
@@ -3663,7 +3686,7 @@ window.cbWindyUrl = function(overlay, zoom){
     var hc=document.documentElement.classList; hc.toggle('m-w', ws.length>0); hc.toggle('m-m', ms.length>0); hc.toggle('m-any', ws.length+ms.length>0); if(window.cbWallDots) window.cbWallDots();
     /* 특보 칸 아래로 재난문자 칸을 내려 쌓는다(특보 칸 높이 + 간격) */
     var wc=document.querySelector('[data-card="warn"]'), mc=document.querySelector('[data-card="msg"]');
-    if(mc){ if(hc.contains('wall-m') && ws.length && ms.length && wc && wc.offsetHeight) mc.style.setProperty('margin-top', (wc.offsetHeight+24)+'px', 'important'); else mc.style.removeProperty('margin-top'); }
+    if(mc){ if(hc.contains('wall-m') && wc && wc.offsetHeight) mc.style.setProperty('margin-top', (wc.offsetHeight+24)+'px', 'important'); else mc.style.removeProperty('margin-top'); }
     var chips='';
     if(ws.length) chips+=ws.map(function(w){ var col=/주의보/.test(w.type)?'#ea580c':'#dc2626'; return '<span class="u-t" style="--tc:'+col+'"><i></i>'+esc(w.type)+(w.time?' <small>'+esc(w.time)+'</small>':'')+'</span>'; }).join('');
     /* 재난문자는 건수·최근 시각만(본문은 목록 구역에서) */
@@ -3673,7 +3696,7 @@ window.cbWindyUrl = function(overlay, zoom){
     h+='</div>';
     el.innerHTML=h;
   };
-  window.cbWallSelSync=function(i){ if(sel && sel.value!==String(i)) sel.value=String(i); if(window.cbWallUrg) window.cbWallUrg(); };
+  window.cbWallSelSync=function(i){ if(drawName) drawName(); if(window.cbWallUrg) window.cbWallUrg(); };
   if(window.cbWallStation) window.cbWallSelInit();
 })();
 </script>

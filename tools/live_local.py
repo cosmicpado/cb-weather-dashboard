@@ -85,15 +85,15 @@ def loop(every, job=sync):
 
 
 # 짧은 주소(2026-11-12) — 주소창에 한글 파일 이름 대신. 화면의 short-url.js · Rocky nginx(setup-rocky.sh)와 같은 표
-# 첫 화면(/)은 119종합상황실(2026-11-13), 종합 현황은 /map
-SHORT = {'/': '/상황실.html', '/map': '/지도.html', '/room': '/상황실.html', '/watch': '/재해.html',
+# 첫 화면(/)은 종합 현황(2026-11-18), 119종합상황실은 /wall(예전 주소 /room 도 열린다). 대소문자는 가리지 않는다
+SHORT = {'/': '/지도.html', '/map': '/지도.html', '/wall': '/상황실.html', '/room': '/상황실.html', '/watch': '/재해.html',
          '/admin': '/관리자.html', '/help': '/도움말.html', '/easy': '/쉬운.html'}
 
 
 def short_to_file(raw):
     """짧은 주소면 실제 파일 주소(물음표 뒤는 그대로), 아니면 그대로."""
     base, q = (raw.split('?', 1) + [''])[:2]
-    f = SHORT.get(base)
+    f = SHORT.get(base) or SHORT.get(base.lower())
     return (quote(f) + ('?' + q if q else '')) if f else raw
 
 
@@ -187,7 +187,7 @@ class Quiet(http.server.SimpleHTTPRequestHandler):
         self.send_error(405)
 
     def send_head(self):                       # GET·HEAD 가 모두 여기를 지난다
-        self.path = short_to_file(self.path)  # /room → /상황실.html 등(주소창은 그대로)
+        self.path = short_to_file(self.path)  # /wall → /상황실.html 등(주소창은 그대로)
         if not allowed_path(self.path):
             self.send_error(404)
             return None
@@ -276,7 +276,7 @@ def main():
             ip = socket.gethostbyname(socket.gethostname())
         except OSError:
             ip = '<이 PC IP>'
-        print(f'다른 PC 에서: http://{ip}:{a.port}/   (첫 화면 = 상황실 · 종합 현황 /map · 집중 감시 /watch · 관리자 /admin)', flush=True)
+        print(f'다른 PC 에서: http://{ip}:{a.port}/   (첫 화면 = 종합 현황 · 상황실 /wall · 집중 감시 /watch · 관리자 /admin)', flush=True)
     try:
         srv.serve_forever()
     except KeyboardInterrupt:
