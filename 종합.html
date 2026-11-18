@@ -732,7 +732,7 @@ html.no-demo .demo>button:not(.on){display:none}   /* 'test' 명령으로 시연
     function qqClick(e){ var t = e.target.closest && e.target.closest('[data-qq]'); if (!t) return false;
       var g = QG[t.getAttribute('data-qq')], G = g.L;
       if (G.length === 1) quakeModal(G[0]);
-      else modal('참고 지진 '+G.length+'건', G.map(function(x){ return '<div class="al '+g.cls+' click" data-qi="'+qq.indexOf(x)+'" style="margin:8px 0"><b>🌏 '+esc(x.tp_txt||'지진')+' 규모 '+(+x.mt).toFixed(1)+'</b><span class="tm">'+esc(String(x.tm_eqk).slice(5,16))+'</span><p>'+esc(x.loc)+'</p></div>'; }).join('')
+      else modal('참고 지진 '+G.length+'건', G.map(function(x){ return '<div class="al '+g.cls+' click" data-qi="'+qq.indexOf(x)+'" style="margin:8px 0"><b>🌏 '+esc(x.tp_txt||'지진')+' 규모 '+(+x.mt).toFixed(1)+' '+esc(eqTime(x.tm_eqk))+'</b><p>'+esc(x.loc)+'</p></div>'; }).join('')
         + '<div class="meta">'+esc(g.why)+'. 눌러서 자세히.</div>');
       return true; }
     lastQQ = qq;
@@ -742,13 +742,13 @@ html.no-demo .demo>button:not(.on){display:none}   /* 'test' 명령으로 시연
       el.onclick = qqClick; return; }
     var h = '<div class="ch"><h3>특보 · 재난문자</h3></div>';   /* 어느 범위인지는 위 '충북 현황·관서 현황'과 관서 선택 칸으로 보인다 */
     if (q) { var ago = Math.round((Date.now()-tms(q.tm_eqk))/6e4), big = (q.int_cb||0)>=5 || q.tp==='11' || q.tp==='10';
-      h += '<div class="al eq click" data-q="1"><b style="color:'+(big?'var(--sev)':'var(--warn)')+'">'+(q.int_cb ? '<span class="eqb" title="충북 진도 '+R2[q.int_cb]+'">'+R2[q.int_cb]+'</span>' : '🌏 ')+'지진 규모 '+(+q.mt).toFixed(1)+'</b><span class="tm">'+esc(eqTime(q.tm_eqk))+'</span>'
+      h += '<div class="al eq click" data-q="1"><b style="color:'+(big?'var(--sev)':'var(--warn)')+'">'+(q.int_cb ? '<span class="eqb" title="충북 진도 '+R2[q.int_cb]+'">'+R2[q.int_cb]+'</span>' : '🌏 ')+'지진 규모 '+(+q.mt).toFixed(1)+' '+esc(eqTime(q.tm_eqk))+'</b>'
         + '<p>'+esc(q.loc)+(q.near ? ' · '+esc(q.near)+'에서 약 '+q.dist_km+'km' : '')+'</p></div>'; }
-    if (lg) h += '<div class="al eq"><b style="color:'+(lg.o.n10>0?'var(--amb)':'var(--ink2)')+'">⚡ 낙뢰 '+lg.o.n+'회</b><span class="tm">최근 '+esc(lg.o.last||'')+'</span>'
+    if (lg) h += '<div class="al eq"><b style="color:'+(lg.o.n10>0?'var(--amb)':'var(--ink2)')+'">⚡ 낙뢰 '+lg.o.n+'회 · 최근 '+esc(lg.o.last||'')+'</b>'
         + '<p>'+(lg.where ? esc(lg.where.join('·'))+' 관서 ' : '')+(lg.L.radius_km||20)+'km 안 · 가장 가까운 곳 '+lg.o.near_km+'km'+(lg.o.n10>0 ? ' · 10분 안 '+lg.o.n10+'회' : '')+'</p></div>';
-    ws.forEach(function(w,i){ h += '<div class="al click'+(isBo(w)?' sev':'')+'" data-w="'+i+'"><b style="color:'+wColor(w)+'">⚠ '+esc(w.type)+'</b><span class="tm">'+esc(w.time||'')+' 발효 · '+esc(w.area||'')+'</span></div>'; });
+    ws.forEach(function(w,i){ h += '<div class="al click'+(isBo(w)?' sev':'')+'" data-w="'+i+'"><b style="color:'+wColor(w)+'">⚠ '+esc(w.type)+' '+esc(w.time||'')+' 발효 · '+esc(w.area||'')+'</b></div>'; });
     pre.forEach(function(g){ var its=(g.items||[]).filter(function(it){ return it.north || it.north_match; });
-      h += '<div class="al pre"><b style="color:var(--pre)">예비 · '+esc(g.type)+'</b><span class="tm">'+esc((its[0]||{}).time||'')+'</span><p>'+esc(its.map(function(it){ return String(it.area||'').split('(')[0].trim(); }).join(', '))+'</p></div>'; });
+      h += '<div class="al pre"><b style="color:var(--pre)">예비 · '+esc(g.type)+' '+esc((its[0]||{}).time||'')+'</b><p>'+esc(its.map(function(it){ return String(it.area||'').split('(')[0].trim(); }).join(', '))+'</p></div>'; });
     ms.slice(0,4).forEach(function(m,i){ h += '<div class="al msg click" data-m="'+i+'"><b style="color:var(--blue)">📩 재난문자 '+esc(m.crt ? eqTime(m.crt) : (m.time||''))+' · '+esc(m.sender||m.region||'')+'</b><p>'+esc(m.text||'')+'</p></div>'; });
     el.innerHTML = h + qh;
     el.onclick = function(e){ if (qqClick(e)) return; var t = e.target.closest && e.target.closest('[data-w],[data-m],[data-q]'); if (!t) return;
