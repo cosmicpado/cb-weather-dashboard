@@ -64,12 +64,12 @@ a{color:inherit;text-decoration:none}
 .logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(140deg,#3b82f6,#1d4ed8);display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;flex:none}
 .tt{font-weight:800;font-size:17px;white-space:nowrap}.tt em{font-style:normal;font-size:13.5px;font-weight:800;color:#b54708;background:var(--card)4e6;border-radius:6px;padding:2px 7px;margin-left:6px;vertical-align:2px}
 .ts{font-size:14.5px;color:var(--ink3)}.ts.late{color:var(--sev);font-weight:800}
-.home{margin-left:20px;border:1.5px solid var(--line);background:var(--card);border-radius:10px;padding:9px 13px;font:800 14.5px inherit;color:var(--ink2);cursor:pointer;white-space:nowrap}
+.home{margin-left:20px;border:1.5px solid var(--line);background:var(--card);border-radius:10px;padding:9px 13px;font-weight:800;font-size:14.5px;font-family:inherit;color:var(--ink2);cursor:pointer;white-space:nowrap}
 .home.on{background:var(--brand);border-color:var(--brand);color:#fff}
 .room{display:none}   /* 휴대폰에서만 — 위 메뉴가 숨으므로 상황실로 가는 단추 */
 .sel{margin-left:8px;display:flex;align-items:center;gap:8px;border:1.5px solid var(--line);background:var(--card);border-radius:10px;padding:4px 6px 4px 12px}
 .sel small{color:var(--ink3);font-weight:700;white-space:nowrap}
-.sel select{border:0;background:transparent;font:800 15px inherit;color:var(--ink);padding:5px 4px;cursor:pointer}
+.sel select{border:0;background:transparent;font-weight:800;font-size:15px;font-family:inherit;color:var(--ink);padding:5px 4px;cursor:pointer}
 .clk{font-weight:800;font-size:20px;font-variant-numeric:tabular-nums;white-space:nowrap}
 .nav{margin-left:auto;display:flex;gap:4px;align-items:center}
 /* 윗줄 정돈 — 왼쪽(이름) · 관서 선택 묶음 · 오른쪽(화면 이동 · 도구 · 시계). 단추 높이는 모두 38px */
@@ -106,19 +106,19 @@ a{color:inherit;text-decoration:none}
 .pageAlarm{position:fixed;inset:0;z-index:8990;pointer-events:none;animation:pagePulse 1.5s ease-in-out infinite}.pageAlarm[hidden]{display:none}
 @keyframes pagePulse{0%,100%{box-shadow:inset 0 0 0 4px var(--severe)}50%{box-shadow:inset 0 0 0 10px var(--severe)}}
 @media (prefers-reduced-motion: reduce){.pageAlarm{animation:none;box-shadow:inset 0 0 0 6px var(--severe)}}
-.demo{position:relative}.demo>button{border:1px solid var(--line);background:var(--card);border-radius:9px;padding:8px 12px;font:800 14px inherit;color:var(--ink2);cursor:pointer;white-space:nowrap}
+.demo{position:relative}.demo>button{border:1px solid var(--line);background:var(--card);border-radius:9px;padding:8px 12px;font-weight:800;font-size:14px;font-family:inherit;color:var(--ink2);cursor:pointer;white-space:nowrap}
 .demo>button.on{background:#7c3aed;border-color:#7c3aed;color:#fff}
 html.no-demo .demo>button:not(.on){display:none}   /* 'test' 명령으로 시연 단추 숨김(시연 중이면 끌 수 있게 그대로) */
 /* '/' 명령 칸 */
 .cmd{position:fixed;inset:0;z-index:9800;display:flex;align-items:center;justify-content:center;background:rgba(16,24,40,.35)}
 .cmd>div{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 20px 60px rgba(16,24,40,.3);display:flex;flex-direction:column;gap:10px;align-items:center}
-.cmd input{width:min(360px,80vw);text-align:center;font:700 20px inherit;padding:10px 14px;border-radius:12px;border:2px solid var(--brand);background:var(--card);color:var(--ink);outline:none}
+.cmd input{width:min(360px,80vw);text-align:center;font-weight:700;font-size:20px;font-family:inherit;padding:10px 14px;border-radius:12px;border:2px solid var(--brand);background:var(--card);color:var(--ink);outline:none}
 .cmd small{font-size:13px;font-weight:600;color:var(--ink3);text-align:center}
-.cmdt{position:fixed;left:50%;bottom:8vh;transform:translateX(-50%);z-index:9900;background:rgba(15,27,45,.92);color:#fff;font:700 15px inherit;padding:12px 22px;border-radius:12px;pointer-events:none}
+.cmdt{position:fixed;left:50%;bottom:8vh;transform:translateX(-50%);z-index:9900;background:rgba(15,27,45,.92);color:#fff;font-weight:700;font-size:15px;font-family:inherit;padding:12px 22px;border-radius:12px;pointer-events:none}
 /* 시연 단계 단추 — 화면 아래 가운데 */
 .dbar{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:9400;display:flex;align-items:center;gap:6px;padding:7px 9px;border-radius:14px;background:var(--card);border:1px solid var(--border2);box-shadow:0 12px 32px rgba(16,24,40,.2)}
 .dbar[hidden]{display:none}.dbar>span{font-size:14px;font-weight:800;color:var(--ink3);padding:0 4px;white-space:nowrap}
-.dbar button{height:32px;min-width:54px;padding:0 12px;white-space:nowrap;border-radius:9px;border:1.5px solid;background:var(--card);font:800 14.5px inherit;color:var(--ink);cursor:pointer}
+.dbar button{height:32px;min-width:54px;padding:0 12px;white-space:nowrap;border-radius:9px;border:1.5px solid;background:var(--card);font-weight:800;font-size:14.5px;font-family:inherit;color:var(--ink);cursor:pointer}
 .dbar .x{border-color:var(--border2);background:#f3f7fc;color:var(--ink2)}
 .demoTag{flex:none;background:#7c3aed;color:#fff;font-weight:900;font-size:14px;border-radius:8px;padding:6px 10px;white-space:nowrap}
 /* 상태띠 */
@@ -158,7 +158,7 @@ html.no-demo .demo>button:not(.on){display:none}   /* 'test' 명령으로 시연
 .tbl .r:hover{background:#f5f7fb}.tbl .r.hd{color:var(--ink3);font-size:14px;font-weight:700;cursor:default}.tbl .r.hd:hover{background:none}
 .tbl .r.me{background:var(--me);font-weight:800}
 .tbl .wl{display:flex;gap:4px;flex-wrap:nowrap;align-items:center}.tbl .wl .more{font-style:normal;font-size:13px;font-weight:800;color:var(--ink3)}
-.tbl .tf{border:0;background:none;font:700 13.5px inherit;color:var(--brand);cursor:pointer;padding:0 0 0 6px}.tbl .tfl{display:block;padding:2px 6px 4px}.tbl.fold{width:auto!important;padding:6px 10px}.tbl .wl span{font-size:13.5px;font-weight:800;color:#fff;border-radius:6px;padding:1px 6px}
+.tbl .tf{border:0;background:none;font-weight:700;font-size:13.5px;font-family:inherit;color:var(--brand);cursor:pointer;padding:0 0 0 6px}.tbl .tfl{display:block;padding:2px 6px 4px}.tbl.fold{width:auto!important;padding:6px 10px}.tbl .wl span{font-size:13.5px;font-weight:800;color:#fff;border-radius:6px;padding:1px 6px}
 /* 지도 크게 — 기본 B: 지도 빈 자리에 관서 목록을 겹침 / A(주소 ?lay=a): 지도 아래 관서 칩 12개 */
 .map.lay-a{flex-direction:column;align-items:stretch}.map.lay-a svg,.map.lay-b svg{width:100%;max-height:740px;display:block}
 .chips{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
@@ -241,12 +241,12 @@ html.no-demo .demo>button:not(.on){display:none}   /* 'test' 명령으로 시연
 .big{padding:10px 16px 0}.big a{display:block;border-radius:10px;overflow:hidden;background:var(--soft)}
 .big img{display:block;width:100%;height:330px;object-fit:contain}
 .thumbs{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:10px 16px 14px}
-.thumbs button{border:1.5px solid var(--line);background:var(--card);border-radius:9px;padding:0;overflow:hidden;cursor:pointer;font:700 13.5px inherit;color:var(--ink2)}
+.thumbs button{border:1.5px solid var(--line);background:var(--card);border-radius:9px;padding:0;overflow:hidden;cursor:pointer;font-weight:700;font-size:13.5px;font-family:inherit;color:var(--ink2)}
 .thumbs button.on{border-color:var(--brand);color:var(--brand)}
 .thumbs img{display:block;width:100%;height:48px;object-fit:cover;background:var(--soft)}.thumbs span{display:block;padding:4px 2px}
 /* 참고 정보 */
 .tabs{display:flex;gap:2px;padding:8px 12px 0;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}
-.tabs button{border:0;background:none;padding:9px 14px;font:700 14px inherit;color:var(--ink3);border-bottom:2.5px solid transparent;cursor:pointer;white-space:nowrap}
+.tabs button{border:0;background:none;padding:9px 14px;font-weight:700;font-size:14px;font-family:inherit;color:var(--ink3);border-bottom:2.5px solid transparent;cursor:pointer;white-space:nowrap}
 .tabs button.on{color:var(--brand);border-color:var(--brand)}
 .pane{padding:14px}
 .refs{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
@@ -306,9 +306,11 @@ html.no-demo .demo>button:not(.on){display:none}   /* 'test' 명령으로 시연
   .top{flex-wrap:wrap;gap:10px}.tt{font-size:15px}.tt em{display:none}.clk,.nav{display:none}
   .top>div:nth-child(2){flex:1 1 calc(100% - 50px);min-width:0}
   .home,.sel{margin-left:0;flex:1 1 0;height:44px;box-sizing:border-box}.home{flex:0 0 auto;display:flex;align-items:center}.sel select{flex:1;min-width:0}.ub{display:none}
+  /* 휴대폰 글자 — 충북 전체·관서 선택 칸 16px(아이폰은 선택 칸 글자가 16px 보다 작으면 누를 때 화면이 확대된 채로 남는다) · 이름표 14px */
+  .home,.sel select{font-size:16px}.sel small{font-size:14px}
   .band{position:relative}.demoTag{position:absolute;top:-11px;right:14px;padding:3px 9px;font-size:13.5px;z-index:2}
   .dbar{left:8px;right:8px;transform:none;flex-wrap:wrap;justify-content:center;gap:6px;bottom:10px}.dbar>span{flex:1 0 100%;text-align:center}.dbar button{min-width:0;padding:0 10px;height:36px}
-  .room{display:flex;align-items:center;flex:0 0 auto;height:44px;box-sizing:border-box;border:1.5px solid var(--line);background:var(--card);border-radius:10px;padding:0 12px;font-weight:800;font-size:14.5px;color:var(--ink2);text-decoration:none;white-space:nowrap}
+  .room{display:flex;align-items:center;flex:0 0 auto;height:44px;box-sizing:border-box;border:1.5px solid var(--line);background:var(--card);border-radius:10px;padding:0 12px;font-weight:800;font-size:16px;color:var(--ink2);text-decoration:none;white-space:nowrap}
   .bsum .s.split .si{display:block}.bsum .s.split .dot{display:none}
   .band{flex-wrap:wrap;padding:12px}.bsum .l,.bsum .s{white-space:normal}.cnt{width:100%;justify-content:space-around}
   .main{grid-template-columns:1fr}.side{display:contents}

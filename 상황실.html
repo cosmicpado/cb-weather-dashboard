@@ -84,7 +84,7 @@ html.wall-m [data-foot]{height:auto!important;flex-wrap:wrap;gap:12px 28px!impor
 html.wall-m [data-foot]>div:nth-child(2){display:none;}
 html.wall-m [data-foot]>div:last-child{margin-left:0!important;white-space:normal!important;flex-wrap:wrap;}
 /* ── 휴대폰: 넘기는 구역 — 화면 틀([data-stage])을 가로로 넘기는 판으로. 칸 묶음(data-wall-grid)은 풀어서(display:contents)
-   칸마다 '몇 번째 구역'을 정한다: ① 실황·예보 ② 레이더·계절 감시 ③ 관서 순위 ④ 하천.
+   칸마다 '몇 번째 구역'을 정한다: ① 실황·예보 ② 레이더·계절 감시 ③ 특보·재난문자. 관서는 맨 위 '관서 선택'에서 고른다.
    기상특보·재난문자·충북 현황은 맨 위 고정 줄(#wall-msel)로 옮겨 여기서는 감춘다. PC·벽면은 그대로 */
 html.wall-m [data-topbar],html.wall-m [data-foot]{display:none!important;}
 html.wall-m [data-stage]{display:grid!important;grid-auto-flow:column;grid-auto-columns:100%;grid-template-rows:auto;align-content:start;align-items:start;
@@ -2667,7 +2667,7 @@ class Component extends DCLogic {
         go: ()=> this.setState({ idx:k, started:Date.now() }) };
     });
 
-    /* 휴대폰 맨 위 관서 드롭다운이 쓰는 관서 순위 자료 */
+    /* 휴대폰 맨 위 관서 선택 목록이 쓰는 자료 */
     window.cbWallRail = rail.map(r=>({ name:r.name, temp:r.temp, tag:r.tag, rain:r.rainTxt, sev:r.sev }));
     const rotSec = Math.max(6, Math.min(15, Math.round(170 / Math.max(1, NAMES.length))));
     const prog = Math.min(100, (Date.now() - this.state.started) / (rotSec*1000) * 100);
@@ -3627,11 +3627,11 @@ window.cbWindyUrl = function(overlay, zoom){
   window.cbWallSelInit=function(){
     var W=window.cbWallStation; if(!W || box) return;
     box=document.createElement('div'); box.id='wall-msel';
-    /* 관서명을 누르면 관서 순위(기온·특보·강수)가 아래로 펼쳐지고, 고르면 그 관서 자료로 바뀐다 */
+    /* 관서명을 누르면 관서 목록(기온·특보·강수)이 아래로 펼쳐지고, 고르면 그 관서 자료로 바뀐다 */
     sel=document.createElement('button'); sel.type='button'; sel.className='nm'; sel.setAttribute('aria-label','관서 고르기'); sel.setAttribute('aria-expanded','false');
     var list=document.createElement('div'); list.id='wall-mlist';
     var esc2=function(t){ return String(t==null?'':t).replace(/[&<>"]/g,function(x){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[x]; }); };
-    drawName=function(){ sel.innerHTML='<span>'+esc2(W.names[W.get()])+'</span><small>'+(list.classList.contains('on')?'접기 ▴':'관서 순위 ▾')+'</small>'; };
+    drawName=function(){ sel.innerHTML='<span>'+esc2(W.names[W.get()])+'</span><small>'+(list.classList.contains('on')?'접기 ▴':'관서 선택 ▾')+'</small>'; };
     function drawList(){ var R=window.cbWallRail||W.names.map(function(n){ return {name:n}; }), cur=W.get();
       list.innerHTML=R.map(function(r,i){ return '<button type="button" data-i="'+i+'" class="'+(r.sev?'s'+r.sev:'')+(i===cur?' cur':'')+'"><b><span>'+esc2(r.name)+'</span>'+(r.temp!=null?esc2(r.temp)+'°':'')+'</b><span>'+esc2(r.tag||'')+(r.rain&&r.rain!=='—'?' · <em class="wet">'+esc2(r.rain)+'</em>':'')+'</span></button>'; }).join(''); }
     function openList(on){ list.classList.toggle('on', on); sel.setAttribute('aria-expanded', on?'true':'false'); if(on) drawList(); drawName(); }
