@@ -176,7 +176,7 @@ html.no-demo .demo>button:not(.on){display:none}   /* 'test' 명령으로 시연
 .al{margin:10px 16px 0;background:var(--warnbg);border-radius:10px;padding:9px 12px}   /* 왼쪽 색 막대는 쓰지 않는다 — 바탕색과 제목 색으로만 구분 */
 .al:last-child{margin-bottom:14px}
 .al b{font-size:14px}.al .tm{font-size:14.5px;color:var(--ink3);margin-left:6px}.al p{font-size:13px;color:var(--ink2);margin-top:4px;line-height:1.5}
-.al.msg{background:var(--msg)}.al.eq{background:var(--soft)}.al.eqq{background:none;border:1px dashed var(--eqy);padding:6px 12px}.al.eqq b{font-size:13px;color:var(--eqy)}.al.eqq p{font-size:12.5px;color:var(--ink3);margin-top:2px}.al.eqq.gry{border-color:var(--line)}.al b .eqb{color:inherit;font-size:.9em}.eqb{display:inline-flex;align-items:center;justify-content:center;min-width:1.6em;height:1.45em;padding:0 .25em;margin-right:6px;border:1.5px solid currentColor;border-radius:5px;font-weight:800;font-size:12px;line-height:1;vertical-align:1px;cursor:help;color:var(--eqy)}.al.eqq.gry b{color:var(--ink3)}.al.sev{background:var(--sevbg)}.al.pre{background:var(--soft)}
+.al.msg{background:var(--msg)}.al.eq{background:var(--soft)}.al.eqq{background:none;border:1px dashed var(--eqy);padding:8px 11px}.al.eqq b{color:var(--eqy)}.al.eqq.gry{border-color:var(--line)}.al b .eqb{color:inherit;font-size:.9em}.eqb{display:inline-flex;align-items:center;justify-content:center;min-width:1.6em;height:1.45em;padding:0 .25em;margin-right:6px;border:1.5px solid currentColor;border-radius:5px;font-weight:800;font-size:12px;line-height:1;vertical-align:1px;cursor:help;color:var(--eqy)}.al.eqq.gry b{color:var(--ink3)}.al.sev{background:var(--sevbg)}.al.pre{background:var(--soft)}
 /* 현재 실황 · 시간대별 예보(상황실 틀) */
 .cur{display:flex;gap:12px;padding:10px 16px 0;align-items:stretch}
 .cur .big{padding:0;flex:none;min-width:150px;display:flex;flex-direction:column;justify-content:center}
@@ -727,7 +727,7 @@ html.no-demo .demo>button:not(.on){display:none}   /* 'test' 명령으로 시연
     var qh = '';
     ['y','g'].forEach(function(k){ var G = QG[k].L; if (!G.length) return;
       var q0 = G[0], ago0 = Math.round((Date.now()-tms(q0.tm_eqk))/6e4), noFx = /국내\s*영향\s*없음/.test(q0.rem||'');
-      qh += '<div class="al '+QG[k].cls+' click" data-qq="'+k+'" title="참고 — '+esc(QG[k].why)+'"><b>'+(q0.int_cb ? '<span class="eqb" title="충북 진도 Ⅰ">Ⅰ</span>' : '🌏 ')+'지진 '+(+q0.mt).toFixed(1)+'</b><span class="tm">'+esc(eqTime(q0.tm_eqk))+'</span>'
+      qh += '<div class="al '+QG[k].cls+' click" data-qq="'+k+'" title="참고 — '+esc(QG[k].why)+'"><b>'+(q0.int_cb ? '<span class="eqb" title="충북 진도 Ⅰ">Ⅰ</span>' : '🌏 ')+'지진 '+(+q0.mt).toFixed(1)+' '+esc(eqTime(q0.tm_eqk))+' · '+(q0.int_cb ? '충북 진도 Ⅰ' : '참고')+'</b>'   /* 재난문자 줄과 같은 모양 — '종류 시각 · 꼬리표'(2026-11-19 통일) */
         + '<p>'+esc(q0.loc)+(noFx ? ' · 국내영향없음' : '')+(G.length>1 ? ' · 외 '+(G.length-1)+'건' : '')+'</p></div>'; });
     function qqClick(e){ var t = e.target.closest && e.target.closest('[data-qq]'); if (!t) return false;
       var g = QG[t.getAttribute('data-qq')], G = g.L;
