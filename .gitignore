@@ -47,3 +47,6 @@ images/fire_popup.jpg
 tools/caddy/caddy.exe
 tools/caddy/cert/
 tools/caddy/logs/
+
+# 새 판 번호 — 서버(update-code.sh)가 만든다
+version.json

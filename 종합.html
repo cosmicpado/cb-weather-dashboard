@@ -34,6 +34,7 @@
 <script src="float-tools.js"></script>
 <script src="feedback.js"></script>
 <script src="notices.js"></script>
+<script src="version-check.js"></script>
 <script>window.cbNotices && cbNotices.toast();   /* 안 본 공지가 있으면 오른쪽 아래 알림 카드 */</script>
 <script src="alerts.js"></script>
 <script>/* 화면 색 — 저장값(ggTheme, 재해별 집중 감시와 같이 쓴다). 그리기 전에 정해 깜빡이지 않게 */ try{ if(localStorage.getItem('ggTheme')==='dark') document.documentElement.setAttribute('data-theme','dark'); }catch(e){}</script>
@@ -983,7 +984,7 @@ html.no-demo .demo>button:not(.on){display:none}   /* 'test' 명령으로 시연
 
   }
 
-  function render(){ if (!window.DASH) return; if (demo) demoD = makeDemo(demo); window.CB_DEMO_STAGE = demo==='severe' ? 4 : null;   /* 시연 3단계 = 재대본 발령 가정(stage.js) */ renderTop(); renderBand(); renderMap(); renderFocus(); renderAlerts(); renderNow(); renderImg(); renderTabs(); renderDemo(); alarmTick(); }
+  function render(){ if (!window.DASH) return; if (demo) demoD = makeDemo(demo); window.CB_DEMO_STAGE = demo==='severe' ? 4 : null; window.CB_DEMO_ON = !!demo;   /* 시연 중엔 새 판 자동 새로고침(version-check.js)을 미룬다 */   /* 시연 3단계 = 재대본 발령 가정(stage.js) */ renderTop(); renderBand(); renderMap(); renderFocus(); renderAlerts(); renderNow(); renderImg(); renderTabs(); renderDemo(); alarmTick(); }
 
   /* ── 공지·의견·알림 설정·화면 색 — 저장값 ggMuted·ggNoBlink·cbAlert*·ggTheme */
   function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }

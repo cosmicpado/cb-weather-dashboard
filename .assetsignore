@@ -51,3 +51,6 @@ wrangler.toml
 wrangler.json
 .assetsignore
 _worker.js
+
+# 새 판 번호 — 행정망 서버 전용(update-code.sh)
+version.json

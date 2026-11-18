@@ -31,6 +31,8 @@ BAK=$(mktemp -d)
 for f in $KEEP; do [ -e "$DIR/$f" ] && (cd "$DIR" && cp -a --parents "$f" "$BAK/"); done
 G reset -q --hard "$TARGET"
 cp -a "$BAK/." "$DIR/" && rm -rf "$BAK"
+# 새 판 번호 — 켜 둔 화면(version-check.js)이 5분 안에 이걸 보고 스스로 새로고침한다(2026-11-19)
+printf '{"v":"%s"}\n' "$(G rev-parse --short HEAD)" > "$DIR/version.json"
 chown -R "$SVC_USER:$SVC_USER" "$DIR"
 restorecon -R "$DIR"
 
@@ -38,4 +40,4 @@ systemctl start $UNIT.timer
 systemctl start cbweather-radar.timer 2>/dev/null || true
 systemctl try-restart cbweather-feedback 2>/dev/null || true     # 의견 받기 새 코드 반영(받은 의견 .data/ 는 그대로)
 echo "✓ 반영 완료 — $(G log --oneline -1)"
-echo "  화면은 브라우저 새로고침(F5)으로 바로 보인다. 되돌리려면: bash $0 <위 목록의 이전 커밋>"
+echo "  켜 둔 화면은 5분 안에 스스로 새로고침된다(version.json). 되돌리려면: bash $0 <위 목록의 이전 커밋>"

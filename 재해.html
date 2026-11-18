@@ -12,6 +12,7 @@
 <script src="clock-sync.js"></script>
 <script src="short-url.js"></script>
 <script src="./support.js"></script>
+<script src="./version-check.js"></script>
 </head>
 <body>
 <x-dc>
@@ -916,7 +917,7 @@ class Component extends DCLogic {
       demoBtnLabel: st.demo?'■':'▶',
       demoTitle: st.demo?'시연 종료':(isRain?'시연 모드 — 가상 호우 상황으로 화면 동작 보기':mode==='fire'?'시연 모드 — 가상 건조경보·산불 상황으로 화면 동작 보기':'시연 모드 — 가상 대설경보·한파 상황으로 화면 동작 보기'),
       demoBtnStyle: 'width:34px; height:34px; padding:0; border-radius:10px; border:1px solid '+(st.demo?'var(--severe)':'var(--border2)')+'; background:'+(st.demo?'var(--severe)':'var(--surface)')+'; color:'+(st.demo?'#fff':'var(--ink2)')+'; font-size:13px; line-height:1; display:inline-flex; align-items:center; justify-content:center; font-weight:800; font-family:inherit; cursor:pointer;',
-      toggleDemo:()=>this.setState({demo:!this.state.demo}),
+      toggleDemo:()=>{ window.CB_DEMO_ON=!this.state.demo; this.setState({demo:!this.state.demo}); },   /* 시연 중엔 새 판 자동 새로고침(version-check.js)을 미룬다 */
       // 레이아웃
       bannerCols: wide ? '1fr 1fr' : 'minmax(0,1fr)',
       // 넓은 화면은 3장(관할 강수 · 6시간 예측 · 강풍), 좁으면 세로 1열.
