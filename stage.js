@@ -1,13 +1,14 @@
 /* ===== 충청북도 재난안전대책본부 비상근무 단계 =====
-   '기상특보 단계별 비상근무체계'(충청북도 재대본) 표를 그대로 옮긴 것. 지도.html·상황실.html 이 같이 쓴다.
+   '기상특보 단계별 비상근무체계'(충청북도 재대본) 표를 그대로 옮긴 것. 종합 현황(종합.html)·상황실.html 이 같이 쓴다.
 
      구분       준비                 1단계 주의(Yellow)            2단계 경계(Orange)     3단계 심각(Red)
      대설·호우  예비특보 3개 시·군   주의보 3개 시·군 / 경보 1개   경보 3개 시·군 이상    광역적 경보
      태풍       태풍정보 발표        예비특보                      주의보 및 경보         광역적 경보
 
-   표에 없는 부분은 이렇게 정했다(2026-10-30):
-     · '광역적 경보' = 경보 6개 시·군 이상(도내 11개 시·군의 과반) 또는 '충청북도 전역'
-     · 대설·호우 주의보 1~2개 시·군 = 준비 (표 사이 빈칸 — 주의보가 났는데 평상으로 두지 않는다)
+   자동 계산은 표에 숫자로 정해진 준비 ~ 2단계까지만 한다(2026-11-18).
+     · 3단계(광역적 경보 발령)는 재대본이 판단해 발령하는 것이라 자동으로 올리지 않는다 — 상황실 'stage' 지정(재대본 발령)일 때만.
+       대신 경보 6개 시·군 이상(도내 11개의 과반) 또는 '충청북도 전역'이면 2단계에 '3단계 발령 검토' 안내(review)를 붙인다.
+     · 준비 = 표 그대로 예비특보 3개 시·군(주의보 1~2개 시·군은 단계에 넣지 않는다)
      · 태풍정보 발표 = 진행 중인 태풍이 한반도에 영향(상륙·직접·간접)으로 잡힐 때
      · 폭염·한파·강풍·건조 등 표에 없는 특보는 단계에 넣지 않는다(특보 카드에서 본다)
    시·군 수는 관서가 아니라 시·군으로 센다 — 청주동부·청주서부는 '청주' 하나. */
@@ -20,7 +21,7 @@
     { rank: 3, key: 's2',     name: '경계', step: '비상 2단계', color: 'warn' },
     { rank: 4, key: 's3',     name: '심각', step: '비상 3단계', color: 'severe' }
   ];
-  var WIDE_N = 6;   // 광역적 경보 — 이 수 이상의 시·군
+  var WIDE_N = 6;   // 광역적 경보로 보고 '3단계 발령 검토'를 알리는 경보 시·군 수
 
   function conf() { return window.REGION_CONF || {}; }
   /* 도내 시·군 이름(짧은 이름) — region.js admin 의 값에서 시/군을 뗀다: 청주·충주·…·단양 (11개) */
@@ -72,17 +73,17 @@
     // 대설·호우
     var nW = count(rsW), nA = count(rsA), nP = count(rsP), nAo = nA - nW;
     var rsShort = rsName + ' ' + [nW ? '경보 ' + nW + '개' : '', nAo > 0 ? '주의보 ' + nAo + '개' : ''].filter(Boolean).join(' · ');   // '시·군'은 뺀다 — 개수가 곧 시·군 수(2026-11-16)
-    if (rsWide || nW >= WIDE_N) up(4, '광역적 경보 · 경보 ' + nW + '개 시·군(' + names(rsW) + ')', rsShort);
-    else if (nW >= 3) up(3, '경보 ' + nW + '개 시·군(' + names(rsW) + ')', rsShort);
+    var review = '';   // 광역적 경보 — 3단계는 재대본 발령 때만이라 안내만
+    if (rsWide || nW >= WIDE_N) review = '광역적 경보(경보 ' + (rsWide ? '도 전역' : nW + '개 시·군') + ') — 3단계 발령 검토';
+    if (nW >= 3) up(3, '경보 ' + nW + '개 시·군(' + names(rsW) + ')', rsShort);
     else if (nW >= 1) up(2, '경보 ' + nW + '개 시·군(' + names(rsW) + ')', rsShort);
     if (nA >= 3) up(2, '주의보 이상 ' + nA + '개 시·군(' + names(rsA) + ')', rsShort);
-    else if (nA >= 1) up(1, '주의보 ' + nA + '개 시·군(' + names(rsA) + ')', rsShort);
     if (nP >= 3) up(1, '예비특보 ' + nP + '개 시·군(' + names(rsP) + ')', rsName + ' 예비특보 ' + nP + '개');
     // 태풍
     var tW = count(tyW), tA = count(tyA);
     var tyShort = '태풍 ' + [tW ? '경보 ' + tW + '개' : '', (tA - tW) > 0 ? '주의보 ' + (tA - tW) + '개' : ''].filter(Boolean).join(' · ');
-    if (tyWide || tW >= WIDE_N) up(4, '태풍 광역적 경보 · ' + tW + '개 시·군', tyShort);
-    else if (tA >= 1) up(3, '태풍 ' + (tW ? '경보' : '주의보') + ' ' + tA + '개 시·군(' + names(tyA) + ')', tyShort);
+    if (tyWide || tW >= WIDE_N) review = '태풍 광역적 경보(' + (tyWide ? '도 전역' : tW + '개 시·군') + ') — 3단계 발령 검토';
+    if (tA >= 1) up(3, '태풍 ' + (tW ? '경보' : '주의보') + ' ' + tA + '개 시·군(' + names(tyA) + ')', tyShort);
     if (count(tyP) >= 1) up(2, '태풍 예비특보 ' + count(tyP) + '개 시·군', '태풍 예비특보');
     if (tyInfo) up(1, '태풍정보 발표(한반도 영향)', '태풍정보 발표');
 
@@ -90,25 +91,29 @@
     var cW = union(rsW, tyW), cA = union(rsA, tyA), cP = union(rsP, tyP), nAo2 = 0;
     Object.keys(cA).forEach(function (k) { if (!cW[k]) nAo2++; });
     var cnt = { w: count(cW), a: nAo2, p: count(cP) };
+    /* 단계에 못 미칠 때 한 줄 — 주의보 1~2개 시·군이면 '특보 없음'이 아니라 그 특보를 그대로(단계 기준 미만) */
+    var none0 = nA ? rsShort : tA ? tyShort : ((warnings || []).length ? '호우·대설·태풍 특보 없음' : '발효 특보 없음');
     var s = STAGES[best.rank];
     var hazard = /태풍/.test(best.reason) ? '태풍' : (best.rank ? '대설·호우' : '');
     /* 재대본이 직접 발령한 단계(상황실 화면에서 지정, 24시간 유효) — 있으면 자동 계산 대신 그 단계(2026-11-16).
        자동 계산값은 autoRank·autoBig 로 남겨 화면이 '특보 기준 N단계'를 함께 보여 줄 수 있게 한다 */
     var ov = window.cbStageOv && window.cbStageOv.active();
+    if (typeof window.CB_DEMO_STAGE === 'number') ov = { rank: window.CB_DEMO_STAGE, at: '시연' };   // 시연 3단계 = 재대본 발령 가정
     if (ov) {
       var auto = s, autoBig = ['평상', '준비', '1단계', '2단계', '3단계'][s.rank];
       s = STAGES[ov.rank];
       return { rank: s.rank, key: s.key, name: s.name, step: s.step, color: s.color, hazard: hazard, cnt: cnt,
                big: ['평상', '준비', '1단계', '2단계', '3단계'][s.rank],
-               short: best.rank ? best.short : ((warnings || []).length ? '호우·대설·태풍 특보 없음' : '발효 특보 없음'),
+               short: best.rank ? best.short : none0,
                reason: '충북 재대본 발령(' + ov.at + ')',
-               manual: true, manualAt: ov.at, manualDuty: ov.duty || null, autoRank: auto.rank, autoBig: autoBig, blink: s.rank >= 4 };
+               manual: true, manualAt: ov.at, manualDuty: ov.duty || null, autoRank: auto.rank, autoBig: autoBig, review: '', blink: s.rank >= 4 };
     }
     return { rank: s.rank, key: s.key, name: s.name, step: s.step, color: s.color, hazard: hazard, cnt: cnt,
              big: ['평상', '준비', '1단계', '2단계', '3단계'][s.rank],          // 크게 쓰는 글자
              // 한파·폭염 등 단계에 안 넣는 특보만 있을 때 '발효 특보 없음'이라 쓰면 사실과 다르다
-             short: best.rank ? best.short : ((warnings || []).length ? '호우·대설·태풍 특보 없음' : '발효 특보 없음'),   // 단계 이름 옆 한 줄 기준
-             reason: best.rank ? (hazard === '태풍' ? best.reason : '대설·호우 ' + best.reason) : ((warnings || []).length ? '호우·대설·태풍 특보 없음' : '발효 특보 없음'), blink: s.rank >= 4 };
+             short: (best.rank ? best.short : none0) + (review ? ' · ⚠ 3단계 발령 검토' : ''),   // 단계 이름 옆 한 줄 기준
+             reason: (best.rank ? (hazard === '태풍' ? best.reason : '대설·호우 ' + best.reason) : none0) + (review ? ' · ' + review : ''),
+             review: review, blink: false };   // 자동 계산은 3단계가 없으니 점멸도 없다(재대본 발령 3단계일 때만)
   };
   window.cbStage.STAGES = STAGES;
 

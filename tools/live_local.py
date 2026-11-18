@@ -1,6 +1,6 @@
 """로컬에서 운영 데이터를 계속 받아 보기 — API 를 부르지 않고, 운영 서버가 5분마다 main 에 올리는 데이터를 가져온다.
 
-    python tools/live_local.py              # 데이터 받기 + 웹서버 http://localhost:8765/지도.html
+    python tools/live_local.py              # 데이터 받기 + 웹서버 http://localhost:8765/종합.html
     python tools/live_local.py --port 8000  # 웹서버 포트 바꾸기
     python tools/live_local.py --no-serve   # 데이터만 받기(화면은 이미 띄운 다른 서버로 볼 때)
     python tools/live_local.py --lan        # 다른 PC 에서도 접속(내부망 배포) — http://<이 PC IP>:8000/
@@ -10,7 +10,7 @@
   (지금 브랜치·커밋·스테이지는 건드리지 않는다. 바뀐 데이터 파일은 커밋하지 말 것).
 - --collect 면 대신 update_data.py --no-push 를 돌린다(.env 의 API 키 필요, GitHub 에는 올리지 않는다).
 - 같은 프로세스가 작업 폴더를 웹서버로 띄운다. 화면은 60초마다 data.js 를 다시 읽어 자동 갱신된다.
-- 내 코드(지도.html 등)는 그대로라, 고치는 중인 화면을 실시간 운영 데이터로 볼 수 있다.
+- 내 코드(종합.html 등)는 그대로라, 고치는 중인 화면을 실시간 운영 데이터로 볼 수 있다.
 """
 import argparse
 import functools
@@ -28,6 +28,7 @@ from urllib.parse import unquote, quote
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / 'tools'))
 import feedback  # noqa: E402  — 의견 받기(/api/feedback)
+import access_log  # noqa: E402  — 접속 기록(.data/access) · 관리자 화면 접속 통계(/api/access)
 FILES = ['data.js', 'data-cctv.js']
 SERVE_EXT = {'.html', '.js', '.css', '.json', '.svg', '.png', '.jpg', '.jpeg', '.gif', '.webp', '.ico', '.woff', '.woff2'}
 # Cloudflare _headers 와 같게 둔다. CSP 를 스크립트 출처까지 조이지 않는 이유는 _headers 주석 참고.
@@ -86,8 +87,8 @@ def loop(every, job=sync):
 
 # 짧은 주소(2026-11-12) — 주소창에 한글 파일 이름 대신. 화면의 short-url.js · Rocky nginx(setup-rocky.sh)와 같은 표
 # 첫 화면(/)은 종합 현황(2026-11-18), 119종합상황실은 /wall(예전 주소 /room 도 열린다). 대소문자는 가리지 않는다
-SHORT = {'/': '/지도.html', '/map': '/지도.html', '/wall': '/상황실.html', '/room': '/상황실.html', '/watch': '/재해.html',
-         '/admin': '/관리자.html', '/help': '/도움말.html', '/easy': '/쉬운.html'}
+SHORT = {'/': '/종합.html', '/map': '/종합.html', '/wall': '/상황실.html', '/room': '/상황실.html', '/watch': '/재해.html',
+         '/admin': '/관리자.html', '/help': '/도움말.html'}
 
 
 def short_to_file(raw):
@@ -119,6 +120,9 @@ class Quiet(http.server.SimpleHTTPRequestHandler):
     extensions_map = {**http.server.SimpleHTTPRequestHandler.extensions_map,
                       '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',
                       '.json': 'application/json', '.svg': 'image/svg+xml', '.webp': 'image/webp', '.woff': 'font/woff', '.woff2': 'font/woff2'}
+
+    server_version = 'cb-weather'              # 응답 머리글에 Python·서버 판 번호를 싣지 않는다(공격자에게 단서를 주지 않게)
+    sys_version = ''
 
     def log_message(self, *x):                 # 요청 로그는 끈다(가져오기 기록만 보이게)
         pass
@@ -175,9 +179,29 @@ class Quiet(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
         if self._to_https():
             return
-        if self.path.split('?', 1)[0] == '/api/feedback':
+        base = self.path.split('?', 1)[0]
+        if base == '/api/feedback':
             return self._feedback('GET')
+        if base == '/api/access':
+            return self._access_stats()
+        # 화면을 열 때만 한 줄 기록(자료 파일·그림은 세지 않는다). IP 는 저장하지 않는다(access_log.py)
+        page = unquote(short_to_file(base)).rsplit('/', 1)[-1]
+        if page in access_log.PAGES:
+            access_log.log(page, self._client_ip(), self.headers.get('User-Agent', ''))
         return super().do_GET()
+
+    def _access_stats(self):
+        """관리자 화면 '접속 통계' — 관리자(서버 PC 또는 관리자 키)만."""
+        if feedback._is_admin(self._client_ip(), self.headers):
+            code, out = 200, access_log.stats()
+        else:
+            code, out = 403, {'ok': False, 'err': '관리자만 볼 수 있습니다'}
+        b = json.dumps(out, ensure_ascii=False).encode('utf-8')
+        self.send_response(code)
+        self.send_header('Content-Type', 'application/json; charset=utf-8')
+        self.send_header('Content-Length', str(len(b)))
+        self.end_headers()
+        self.wfile.write(b)
 
     def do_POST(self):
         if self._to_https(308):

@@ -79,8 +79,11 @@ CSV_COLS = [('ts', '시각'), ('kind', '구분'), ('page', '화면'), ('station'
 MAX_BODY = 16 * 1024
 MAX_TEXT, MAX_SHORT = 2000, 40
 GAP_SEC, DAY_MAX = 20, 30
+ALL_DAY_MAX = 300                 # 모든 주소 합쳐 하루 — 여러 주소로 나눠 보내는 도배 대비(2026-11-18)
+STORE_MAX_BYTES = 20 * 1024 * 1024   # 의견 파일이 이보다 크면 접수를 멈춘다(디스크 가득 참 방지)
 _lock = threading.Lock()
 _seen = {}          # ip -> [마지막 시각, 오늘 날짜, 오늘 건수]
+_all = ['', 0]      # [오늘 날짜, 오늘 전체 건수]
 
 
 def _env_key():
@@ -456,6 +459,16 @@ def _post(ip, headers, body):
             return 429, {'ok': False, 'err': f'조금 전에 보내셨습니다. {int(GAP_SEC - (now - last)) + 1}초 뒤에 다시 보내 주세요'}
         if cnt >= DAY_MAX:
             return 429, {'ok': False, 'err': '오늘은 이 PC 에서 더 보낼 수 없습니다'}
+        if _all[0] != today:
+            _all[0], _all[1] = today, 0
+        if _all[1] >= ALL_DAY_MAX:
+            return 429, {'ok': False, 'err': '오늘 받을 수 있는 의견 수를 넘었습니다. 내일 다시 보내 주세요'}
+        try:
+            size = sum(p.stat().st_size for p in (STORE, STORE_CSV) if p.exists())
+        except OSError:
+            size = 0
+        if size > STORE_MAX_BYTES:
+            return 507, {'ok': False, 'err': '의견 저장 공간이 가득 찼습니다. 관리자에게 알려 주세요'}
         kind = _clean(j.get('kind'), 20)
         rec = {
             'ts': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
@@ -471,6 +484,7 @@ def _post(ip, headers, body):
             f.write(json.dumps(rec, ensure_ascii=False) + '\n')
         _append_csv(rec)
         _seen[ip] = [now, today, cnt + 1]
+        _all[1] += 1
     return 200, {'ok': True}
 
 

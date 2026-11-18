@@ -3536,7 +3536,8 @@ def _assemble_river(st, latest, hist, out_hist=None):
         row = latest['row']
         # 항목 뜻은 위 dam_info_latest 주석(홍수통제소 명세) 참고 — sfw=저수량, ecpc=공용량
         item['dam_info'] = {'inflow': _fnum(row.get('inf')), 'total_outflow': _fnum(row.get('tototf')),
-                            'storage': _fnum(row.get('sfw')), 'free_cap': _fnum(row.get('ecpc'))}
+                            'storage': _fnum(row.get('sfw')), 'free_cap': _fnum(row.get('ecpc')),
+                            'time': str(latest['time'])}   # 10분 자료 관측 시각(YYYYMMDDHHMM) — 상세 팝업에 '언제 값인지'
     if api == 'dam' and out_hist:
         # 총 방류량 24시간(시간 단위) + 1·3시간 변화 — 화면 dam-watch.js 가 '수문 방류 수준·급증'을 판단한다.
         # ⚠ 10분 값은 발전 방류가 켜졌다 꺼져 출렁인다(충주댐 10분 0.4 ↔ 1시간 124㎥/s) → 변화는 시간 단위 점끼리만
@@ -3546,6 +3547,7 @@ def _assemble_river(st, latest, hist, out_hist=None):
         di['out_d1'] = round(ov[-1] - ov[-2], 1) if len(ov) >= 2 else None
         di['out_d3'] = round(ov[-1] - ov[-4], 1) if len(ov) >= 4 else None
         di['out_h'] = ov[-1] if ov else None
+        di['out_time'] = str(out_hist[-1].get('time', ''))   # 시간 자료 마지막 시각(YYYYMMDDHH)
     return item
 
 

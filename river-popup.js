@@ -1,6 +1,6 @@
 /* 하천 관측소 상세 팝업 본문 — 지도(종합 현황)와 재해별 집중 감시가 같이 쓴다.
    self = 화면 컴포넌트. self.working() 이 { flood:[…] } 를 주고, self.state.riverCctvResume /
-   self.setState 로 CCTV 90초 멈춤·계속 보기를 다룬다. 지도.html 에서 2026-11-09 옮겨 옴. */
+   self.setState 로 CCTV 90초 멈춤·계속 보기를 다룬다. 종합.html 에서 2026-11-09 옮겨 옴. */
 (function(){
   /* 24시간 그래프 세로 폭의 최소값(m) — 2026-11-16.
      최저~최고로만 잡으면 1cm 잡음도 그래프 높이 전체로 늘어나(괴산댐 132.91↔132.92) 늘 출렁여 보였다.
@@ -198,7 +198,12 @@
 
       // 댐 운영 현황
       (isDam&&r.dam)? R('div',{style:{marginTop:'18px'}},
-        R('div',{style:{fontSize:'12px', fontWeight:800, color:'var(--ink2)', marginBottom:'7px'}}, '💧 댐 운영 현황'),
+        R('div',{style:{fontSize:'12px', fontWeight:800, color:'var(--ink2)', marginBottom:'7px'}}, '💧 댐 운영 현황',
+          /* 언제 값인지 — 유입·방류·저수량은 10분 자료, 방류 변화(하류 영향 판단)는 시간 자료 */
+          (function(){ const t=String(r.dam.time||''), h=String(r.dam.out_time||'');
+            const f=(s)=> s.length>=12 ? (+s.slice(4,6))+'.'+(+s.slice(6,8))+' '+s.slice(8,10)+':'+s.slice(10,12) : s.length>=10 ? (+s.slice(4,6))+'.'+(+s.slice(6,8))+' '+s.slice(8,10)+'시' : '';
+            const txt=[f(t)?f(t)+' 관측(10분 자료)':'', f(h)?'방류 변화는 '+f(h)+' 시간 자료':''].filter(Boolean).join(' · ');
+            return txt ? R('span',{style:{marginLeft:'8px', fontSize:'13px', fontWeight:600, color:'var(--ink3)'}}, txt) : null; })()),
         R('div',{style:{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px'}},
           /* 홍수통제소 명세대로(2026-11-16): sfw=저수량, ecpc=공용량. 예전 이름(outflow·storage_rate)으로 온 자료도 같은 뜻으로 읽는다 */
           dcell('유입량', num(r.dam.inflow,1)+' ㎥/s'),

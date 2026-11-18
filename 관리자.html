@@ -67,6 +67,17 @@
   .nt .acts{margin-left:auto;display:flex;gap:6px}
   .nt .acts button{padding:3px 10px;font-size:12.5px}
   .nt .acts .del{color:var(--s-no)}
+  .ac-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:6px}
+  .ac-c{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--card,#fff);display:flex;flex-direction:column;gap:2px}
+  .ac-c span{font-size:13px;color:var(--ink3);font-weight:700}.ac-c b{font-size:26px}.ac-c b small{font-size:14px;margin-left:2px}.ac-c em{font-style:normal;font-size:13px;color:var(--ink3)}
+  .ac-h{font-size:15px;margin:18px 0 8px}
+  .ac-t{width:100%;border-collapse:collapse;font-size:14px}.ac-t th,.ac-t td{border-bottom:1px solid var(--line);padding:7px 8px;text-align:left}.ac-t small{color:var(--ink3);font-size:13px}
+  .ac-bars{display:flex;align-items:flex-end;gap:3px;height:120px;border-bottom:1px solid var(--line)}
+  .ac-bars>div{flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;min-width:0}
+  .ac-bars i{display:block;width:100%;background:var(--brand);border-radius:3px 3px 0 0;min-height:1px}.ac-bars span{font-size:13px;color:var(--ink3);margin-top:2px}
+  .ac-dev{height:12px;border-radius:6px;background:#f59e0b;overflow:hidden}.ac-dev i{display:block;height:100%;background:var(--brand)}
+  .ac-devl{display:flex;justify-content:space-between;font-size:13px;color:var(--ink2);margin-top:4px}
+  .ac-note{font-size:13px;color:var(--ink3);margin-top:14px;line-height:1.6}
   .pill{border-radius:6px;padding:1px 8px;font-weight:800;color:#fff;font-size:12px}
   .p-새{background:#2563eb}.p-개선{background:#0a8058}.p-오류{background:#d97706}.p-안내{background:#6b7280}
   .src{border:1px solid var(--line);border-radius:6px;padding:0 6px;font-size:11.5px}
@@ -106,7 +117,7 @@
 </head><body>
 <div class="wrap">
   <header>
-    <a class="back" href="지도.html">← 종합 현황</a>
+    <a class="back" href="종합.html">← 종합 현황</a>
     <h1>관리자 페이지</h1>
     <button type="button" class="out" id="logout" hidden>키 지우기 · 나가기</button>
   </header>
@@ -123,6 +134,7 @@
     <button type="button" role="tab" id="tb-fb" aria-selected="true">받은 의견<span class="c" id="c-fb"></span></button>
     <button type="button" role="tab" id="tb-nt" aria-selected="false">공지사항<span class="c" id="c-nt"></span></button>
     <button type="button" role="tab" id="tb-dt" aria-selected="false">비상근무</button>
+    <button type="button" role="tab" id="tb-ac" aria-selected="false">접속 통계</button>
   </div>
   <section id="pane-fb">
   <div class="bar">
@@ -147,6 +159,11 @@
     <div id="ntList"><div class="msg">불러오는 중…</div></div>
   </section>
   <!-- 비상근무(2026-11-16) — 상황실 오른쪽 위 '비상근무' 칸에 나가는 기준표. 저장은 서버 .data/duty.json, 기본값은 duty.js -->
+  <!-- 접속 통계(2026-11-18) — 서버 .data/access/ 기록(tools/access_log.py). IP 는 저장하지 않고 방문자 수만 센다 -->
+  <section id="pane-ac" hidden>
+    <div class="bar"><button type="button" id="acReload">새로고침</button><span class="n" id="acAt"></span></div>
+    <div id="acBody"><div class="msg">불러오는 중…</div></div>
+  </section>
   <section id="pane-dt" hidden>
     <div class="bar">
       <button type="button" id="dtSave" style="background:var(--brand);border-color:var(--brand);color:#fff">저장</button>
@@ -314,11 +331,37 @@
 
   /* ── 탭 ── */
   function tab(t){
-    ['fb','nt','dt'].forEach(function(k){ $('pane-'+k).hidden = k!==t; $('tb-'+k).setAttribute('aria-selected', k===t?'true':'false'); });
+    ['fb','nt','dt','ac'].forEach(function(k){ $('pane-'+k).hidden = k!==t; $('tb-'+k).setAttribute('aria-selected', k===t?'true':'false'); });
     try{ sessionStorage.setItem('cbAdminTab', t); }catch(e){}
   }
   $('tb-fb').onclick=function(){ tab('fb'); }; $('tb-nt').onclick=function(){ tab('nt'); }; $('tb-dt').onclick=function(){ tab('dt'); };
-  try{ var _t=sessionStorage.getItem('cbAdminTab'); if(_t==='nt'||_t==='dt') tab(_t); }catch(e){}
+  $('tb-ac').onclick=function(){ tab('ac'); acLoad(); };
+  try{ var _t=sessionStorage.getItem('cbAdminTab'); if(_t==='nt'||_t==='dt') tab(_t); if(_t==='ac'){ tab('ac'); acLoad(); } }catch(e){}
+
+  /* ── 접속 통계 ── 화면을 연 횟수(조회)와 방문자 수(같은 PC·같은 브라우저는 한 명). 서버를 켜 둔 동안만 기록된다 */
+  function esc(t){ return String(t==null?'':t).replace(/[&<>"]/g,function(x){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[x]; }); }
+  function acLoad(){
+    $('acBody').innerHTML='<div class="msg">불러오는 중…</div>';
+    fetch('api/access',{cache:'no-store',headers:hdr()}).then(function(r){ return r.json().catch(function(){ return {ok:false,err:'서버가 아직 예전 버전입니다 — 서버.bat 을 껐다 켠 뒤 다시 보세요'}; }); })
+      .then(function(j){ if(!j||!j.ok){ $('acBody').innerHTML='<div class="msg">'+esc((j&&j.err)||'불러오지 못했습니다')+'</div>'; return; } acDraw(j); })
+      .catch(function(){ $('acBody').innerHTML='<div class="msg">서버에 연결하지 못했습니다</div>'; });
+  }
+  $('acReload').onclick=acLoad;
+  function acDraw(j){
+    $('acAt').textContent=j.at+' 기준';
+    function card(t,o){ return '<div class="ac-c"><span>'+t+'</span><b>'+o.visitors+'<small>명</small></b><em>화면 열기 '+o.views+'회</em></div>'; }
+    var mx=Math.max.apply(null, j.daily.map(function(d){ return d.visitors; }).concat([1]));
+    var hx=Math.max.apply(null, j.hours.concat([1]));
+    var dv=j.device, dt=(dv.PC+dv['휴대폰'])||1;
+    $('acBody').innerHTML=
+      '<div class="ac-cards">'+card('오늘',j.today)+card('최근 7일',j.d7)+card('최근 30일',j.d30)+'</div>'
+      +'<h3 class="ac-h">화면별 방문자</h3><table class="ac-t"><tr><th>화면</th><th>오늘</th><th>7일</th><th>30일</th></tr>'
+      +(j.pages.length? j.pages.map(function(p){ return '<tr><td>'+esc(p.page)+'</td><td>'+p.today.visitors+'명 <small>('+p.today.views+'회)</small></td><td>'+p.d7.visitors+'명 <small>('+p.d7.views+'회)</small></td><td>'+p.d30.visitors+'명 <small>('+p.d30.views+'회)</small></td></tr>'; }).join('') : '<tr><td colspan="4">아직 기록이 없습니다</td></tr>')+'</table>'
+      +'<h3 class="ac-h">날짜별 방문자 (최근 '+j.days+'일)</h3><div class="ac-bars">'+j.daily.map(function(d){ return '<div title="'+d.date+' · 방문자 '+d.visitors+'명 · 화면 열기 '+d.views+'회"><i style="height:'+Math.round(d.visitors/mx*100)+'%"></i><span>'+(+d.date.slice(8))+'</span></div>'; }).join('')+'</div>'
+      +'<h3 class="ac-h">시간대별 화면 열기 (최근 7일)</h3><div class="ac-bars">'+j.hours.map(function(n,h){ return '<div title="'+h+'시 · '+n+'회"><i style="height:'+Math.round(n/hx*100)+'%"></i><span>'+h+'</span></div>'; }).join('')+'</div>'
+      +'<h3 class="ac-h">기기 (최근 30일 화면 열기)</h3><div class="ac-dev"><i style="width:'+Math.round(dv.PC/dt*100)+'%"></i></div><div class="ac-devl"><span>PC '+dv.PC+'회 ('+Math.round(dv.PC/dt*100)+'%)</span><span>휴대폰 '+dv['휴대폰']+'회 ('+Math.round(dv['휴대폰']/dt*100)+'%)</span></div>'
+      +'<p class="ac-note">· 방문자 = 같은 PC·같은 브라우저를 한 명으로 셉니다(IP 주소는 저장하지 않습니다). · 서버를 켜 둔 동안만 기록됩니다. · 기록은 13개월 보관합니다.</p>';
+  }
 
   /* ── 공지사항 ── notices.js 의 기본 공지 + 서버에서 고친 것(over). 고치기·지우기·새로 쓰기는 서버에 id 로 저장 */
   var NK=['새 기능','개선','오류 수정','안내'], over=[], N=window.cbNotices||{base:[], merge:function(){ return []; }};

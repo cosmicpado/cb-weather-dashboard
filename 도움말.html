@@ -146,7 +146,7 @@ details[open] summary{margin-bottom:8px}
 </head>
 <body>
 <header class="top">
-  <a class="back" href="지도.html">← 종합 현황</a>
+  <a class="back" href="종합.html">← 종합 현황</a>
   <h1 id="docTitle">사용설명서</h1>
   <div class="sp">
     <button onclick="window.print()">🖨 인쇄</button>
@@ -178,7 +178,6 @@ details[open] summary{margin-bottom:8px}
     <a class="card" href="#map"><b>🗺 종합 현황 <small>/ · /map</small></b><span>평소 보는 기본 화면(첫 화면)</span></a>
     <a class="card" href="#dis"><b>🎯 재해별 집중 감시 <small>/watch</small></b><span>호우·대설·한파·산불 때 관서 비교</span></a>
     <a class="card" href="#wall"><b>🖥 119종합상황실 <small>/wall</small></b><span>벽면 화면, 관서 자동 순환</span></a>
-    <a class="card" href="#easy"><b>🔤 큰 글씨 보기 <small>/easy</small></b><span>내 관서만 큰 글씨로</span></a>
   </div>
 
   <!-- ============ 종합 현황 ============ -->
@@ -211,16 +210,13 @@ details[open] summary{margin-bottom:8px}
     <li>왼쪽 위 아이콘: ← 종합 현황 · ? 설명서 · ✎ 배치 편집 · ▶ 시연 · 💬 의견</li>
   </ul>
 
-  <!-- ============ 큰 글씨 ============ -->
-  <h2 id="easy">🔤 큰 글씨 보기</h2>
-  <p>내 관서의 상태·특보·비·하천·재난문자·기온·CCTV만 큰 글씨로. 칸을 누르면 자세한 화면으로 넘어갑니다.</p>
 
   <!-- ============ 단계와 색 ============ -->
   <h2 id="rule">단계와 색</h2>
   <div class="tw"><table>
-    <tr><th style="width:150px">관서 상황단계</th><td><span class="pill p-safe">평상</span> 특보 없음 · <span class="pill p-caution">주의</span> 폭염·한파·건조 특보 · <span class="pill p-warn">경계</span> 호우·강풍·대설 등 주의보 · <span class="pill p-severe">심각</span> 그 경보</td></tr>
+    <tr><th style="width:150px">관서 상황단계</th><td><span class="pill p-safe">평상</span> 특보 없음 · <span class="pill p-caution">주의</span> 폭염·한파·건조 특보(주의보·경보 모두) · <span class="pill p-warn">경계</span> 호우·강풍·대설 등 주의보 · <span class="pill p-severe">심각</span> 호우·강풍·대설 등 경보</td></tr>
     <tr><th>충북 재대본 비상단계</th><td>호우·대설·태풍 특보가 난 <b>시·군 수</b>로 정합니다(관서를 바꿔도 같음). 한파·폭염·건조 특보는 넣지 않아, 한파주의보 중에도 '평상'일 수 있습니다.</td></tr>
-    <tr><th>하천</th><td><span class="pill p-safe">안전</span> · 관심수위 이상 <span class="pill p-caution">관심</span> · 경계수위 이상 <span class="pill p-severe">경계</span></td></tr>
+    <tr><th>하천</th><td><span class="pill p-safe">정상</span> · 관심수위 이상 <span class="pill p-caution">관심</span> · 경계수위 이상 <span class="pill p-severe">경계</span></td></tr>
   </table></div>
 
   <!-- ============ 자세한 기준 (접어 둠) ============ -->
@@ -230,11 +226,15 @@ details[open] summary{margin-bottom:8px}
   <details id="stage"><summary>재대본 비상단계 기준</summary>
   <div class="tw"><table>
     <tr><th style="width:110px">단계</th><th>대설·호우</th><th>태풍</th></tr>
-    <tr><td class="n"><span class="pill p-blue">준비</span></td><td>예비특보 3개 시·군 (주의보 1~2개 시·군 포함)</td><td>태풍정보 발표(한반도 영향)</td></tr>
+    <tr><td class="n"><span class="pill p-blue">준비</span></td><td>예비특보 3개 시·군</td><td>태풍정보 발표</td></tr>
     <tr><td class="n"><span class="pill p-caution">1단계</span></td><td>주의보 3개 시·군 · 경보 1개 시·군</td><td>예비특보</td></tr>
     <tr><td class="n"><span class="pill p-warn">2단계</span></td><td>경보 3개 시·군 이상</td><td>주의보 및 경보</td></tr>
-    <tr><td class="n"><span class="pill p-severe">3단계</span></td><td colspan="2">경보 6개 시·군 이상 또는 도 전역 (청주동부·서부는 '청주' 하나로 셈)</td></tr>
+    <tr><td class="n"><span class="pill p-severe">3단계</span></td><td>광역적 경보 발령</td><td>광역적 경보 발령</td></tr>
   </table></div>
+  <p style="font-size:14px;color:var(--ink2);line-height:1.7">충청북도 재난안전대책본부 '기상특보 단계별 비상근무체계' 표 그대로입니다. 시·군 수는 관서가 아니라 시·군으로 셉니다(청주동부·서부는 '청주' 하나).<br>
+  · 화면은 <b>준비 ~ 2단계를 특보로 자동 계산</b>합니다.<br>
+  · <b>3단계는 재대본이 발령했을 때만</b> 표시합니다(상황실에서 비상단계 지정). 경보가 6개 시·군 이상이거나 도 전역이면 2단계 옆에 <b>'⚠ 3단계 발령 검토'</b>로 알립니다.<br>
+  · 표에 없는 주의보 1~2개 시·군은 단계에 넣지 않습니다(특보 칸에서 확인).</p>
   </details>
 
   <details id="risk"><summary>위험구역 (자동 등록)</summary>

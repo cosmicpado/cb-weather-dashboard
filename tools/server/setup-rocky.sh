@@ -203,14 +203,13 @@ server {
     location ~ /\\.          { return 404; }          # .env · .git · .tmp
     location ^~ /tools/     { return 404; }
     # 짧은 주소(2026-11-12) — 주소창에 한글 파일 이름 대신. 화면 short-url.js · tools/live_local.py 와 같은 표
-    location = /            { rewrite ^ /지도.html last; }     # 첫 화면 = 종합 현황(2026-11-18)
-    location = /map         { rewrite ^ /지도.html last; }
+    location = /            { rewrite ^ /종합.html last; }     # 첫 화면 = 종합 현황(2026-11-18)
+    location = /map         { rewrite ^ /종합.html last; }
     location = /wall        { rewrite ^ /상황실.html last; }
     location = /room        { rewrite ^ /상황실.html last; }   # 예전 주소
     location = /watch       { rewrite ^ /재해.html last; }
     location = /admin       { rewrite ^ /관리자.html last; }
     location = /help        { rewrite ^ /도움말.html last; }
-    location = /easy        { rewrite ^ /쉬운.html last; }
     location = /api/feedback {                        # 화면의 💬 의견 보내기 · 관리자.html (tools/server/feedback_server.py)
         proxy_pass http://127.0.0.1:8081;
         proxy_set_header X-Real-IP \$remote_addr;
@@ -241,7 +240,7 @@ else
 fi
 
 IP=$(hostname -I | awk '{print $1}')
-code=$(curl -s -o /dev/null -m 5 -w '%{http_code}' "http://127.0.0.1/%EC%A7%80%EB%8F%84.html" || true)
+code=$(curl -s -o /dev/null -m 5 -w '%{http_code}' "http://127.0.0.1/%EC%A2%85%ED%95%A9.html" || true)
 [ "$code" = 200 ] && ok "화면 응답 확인 (200)" || warn "화면 응답 $code — nginx 기록: journalctl -u nginx"
 
 say "완료"

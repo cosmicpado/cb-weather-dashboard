@@ -46,3 +46,4 @@ images/fire_popup.jpg
 # Caddy 실행 파일·인증서(키)는 올리지 않는다
 tools/caddy/caddy.exe
 tools/caddy/cert/
+tools/caddy/logs/

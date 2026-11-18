@@ -46,7 +46,7 @@ df -h /                                         # 디스크(10GB)
 # 행정망 운영 서버 (Rocky Linux)
 
 행정망 안에서 데이터를 모으고 화면도 직접 띄우는 서버. GitHub 에 올리지 않고(`--no-push`) Cloudflare 도 쓰지 않는다.
-행정망 PC 는 `http://<서버IP>/지도.html` 로 본다.
+행정망 PC 는 `http://<서버IP>/종합.html` 로 본다.
 
 | 항목 | 값 |
 |---|---|

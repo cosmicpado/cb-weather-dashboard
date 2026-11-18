@@ -1,15 +1,15 @@
 /* 짧은 주소(2026-11-12) — 주소창에 한글 파일 이름 대신 짧은 주소를 보여 준다.
-     /지도.html → /map  ·  /상황실.html → /wall  ·  /재해.html → /watch   (예전 주소 /room 도 서버가 상황실로 연다)
+     /종합.html → /map  ·  /상황실.html → /wall  ·  /재해.html → /watch   (예전 주소 /room 도 서버가 상황실로 연다)
      첫 화면(/)은 종합 현황(2026-11-18). 주소창은 화면마다 짧은 주소(/map · /wall)로 둔다 — 서버의
      첫 화면 설정이 무엇이든 새로고침하면 같은 화면이 나오게.
-     /관리자.html → /admin  ·  /도움말.html → /help  ·  /쉬운.html → /easy
+     /관리자.html → /admin  ·  /도움말.html → /help
    서버(서버.bat 의 tools/live_local.py · Rocky nginx)가 짧은 주소를 같은 화면으로 내준다.
    화면끼리의 링크는 파일 이름 그대로 두고, 화면이 열린 뒤 주소창만 바꾼다(새로 불러오지 않음).
    ⚠ 바꾸기 전에 서버에 그 짧은 주소가 실제로 열리는지 물어본다 — 아직 짧은 주소를 모르는 서버면
      그대로 둬서, 새로고침했을 때 '찾을 수 없음'이 나지 않게. 파일로 연 화면(file://)도 그대로 둔다. */
 (function () {
-  var MAP = { '지도.html': '/map', '상황실.html': '/wall', '재해.html': '/watch',
-              '관리자.html': '/admin', '도움말.html': '/help', '쉬운.html': '/easy' };
+  var MAP = { '종합.html': '/map', '상황실.html': '/wall', '재해.html': '/watch',
+              '관리자.html': '/admin', '도움말.html': '/help' };
   window.CB_SHORT_URL = MAP;
   if (!/^https?:$/.test(location.protocol) || !window.fetch || !history.replaceState) return;
   var name = location.pathname.split('/').pop();

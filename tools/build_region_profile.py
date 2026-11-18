@@ -512,7 +512,7 @@ def has_cctv(code, sess=None):
 def build_river_meta(codes, inventory, dam_inv=None, with_cctv=True):
     """하천 상세용 정보 — 홍수 4단계·계획홍수위·영점표고·관할기관·주소·CCTV.
 
-    화면(지도.html)의 하천 상세는 이 값으로 '관심→주의→경계→심각' 4단계 눈금을 그린다.
+    화면(종합.html)의 하천 상세는 이 값으로 '관심→주의→경계→심각' 4단계 눈금을 그린다.
     지금까지 경기북부 18개소만 손으로 박아 두어서 경기남부는 상세가 빈약했다.
     한강홍수통제소 원장에 이미 다 있는 값이라 기계로 뽑는다.
       att=관심(attwl) wrn=주의(wrnwl) alm=경계(almwl) srs=심각(srswl)
@@ -626,7 +626,7 @@ def verify_north():
         ok &= same
         print(f'  {"O" if same else "X"} {code} {c.get("obsnm","")} {got} (운영 {(w, d)})')
 
-    print('=== [4] 하천 상세정보(RIVER_META) 재현 — 지도.html 운영값 대조 ===')
+    print('=== [4] 하천 상세정보(RIVER_META) 재현 — 종합.html 운영값 대조 ===')
     meta_path = ROOT / '.tmp' / '_north_rivermeta.json'
     if not meta_path.exists():
         print('  · 비교본(.tmp/_north_rivermeta.json)이 없어 건너뜀')

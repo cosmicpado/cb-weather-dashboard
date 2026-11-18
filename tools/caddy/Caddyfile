@@ -20,7 +20,25 @@
 
 # 서버(8000)는 응답마다 연결을 닫는다 → Caddy 가 닫힌 연결을 다시 쓰다 502 가 나지 않게 매번 새로 연결
 # 글자 파일(자료·지도·화면)은 압축해 보낸다 — 휴대폰처럼 느린 회선에서 빨라진다(그림 파일은 원래 압축돼 있어 그대로)
+# 보안 머리글 — HSTS(한 번 https 로 온 브라우저는 다음부터 http 를 쓰지 않는다. ⚠ IP 주소 접속에는 브라우저가 적용하지 않고
+#   도메인을 쓰면 효력이 생긴다) · Server 머리글 지우기(서버 종류를 알리지 않는다)
+# 접근 로그 — logs\access.log (20MB 넘으면 새 파일, 10개·30일까지). '/.env'·'/wp-admin' 같은 수상한 요청을 나중에 찾아볼 수 있게
 (to_server) {
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		-Server
+	}
+	log {
+		output file logs/access.log {
+			roll_size 20MiB
+			roll_keep 10
+			roll_keep_for 720h
+		}
+		format console {
+			time_local
+			time_format "2006-01-02 15:04:05"
+		}
+	}
 	encode zstd gzip
 	reverse_proxy 127.0.0.1:8000 {
 		transport http {

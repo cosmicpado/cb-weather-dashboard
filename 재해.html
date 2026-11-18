@@ -91,7 +91,7 @@ window.cbDemoTimes = function(list){
   <div style="position:sticky; top:0; z-index:50; background:var(--headerBg); backdrop-filter:blur(12px); border-bottom:1px solid var(--border); padding:10px 16px;">
     <div style="max-width:1280px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
       <div style="display:flex; align-items:center; gap:8px 12px; flex-wrap:wrap; min-width:0;">
-        <a href="지도.html" style="display:flex; align-items:center; gap:5px; height:36px; padding:0 12px; border-radius:10px; border:1px solid var(--border2); background:var(--surface); color:var(--ink2); font-size:14.5px; font-weight:800; text-decoration:none;">← 종합 현황</a>
+        <a href="종합.html" style="display:flex; align-items:center; gap:5px; height:36px; padding:0 12px; border-radius:10px; border:1px solid var(--border2); background:var(--surface); color:var(--ink2); font-size:14.5px; font-weight:800; text-decoration:none;">← 종합 현황</a>
         <!-- 재해 종류 탭 — 호우 / 대설·한파. 처음 열 때는 발효 특보 → 마지막으로 고른 탭 → 계절 순으로 자동 선택 -->
         <div style="display:flex; gap:3px; padding:3px; border-radius:12px; background:var(--surface3); border:1px solid var(--border);">
           <sc-for list="{{modeTabs}}" as="t">
@@ -336,7 +336,7 @@ window.cbDemoTimes = function(list){
       데이터 출처 · 행정안전부 / 기상청 / 한강홍수통제소 / 국립산림과학원 / 에어코리아(한국환경공단) / 윈디
     </div>
   </div>
-  <!-- ============ 하천 상세 팝업 (지도.html 과 같은 틀·같은 본문 river-popup.js) ============ -->
+  <!-- ============ 하천 상세 팝업 (종합.html 과 같은 틀·같은 본문 river-popup.js) ============ -->
   <sc-if value="{{modalOpen}}" hint-placeholder-val="{{false}}">
     <div onClick="{{closeModal}}" style="position:fixed; inset:0; z-index:100; background:rgba(8,13,24,.55); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; padding:24px;">
       <div onClick="{{stopEv}}" style="width:100%; max-width:{{modalMax}}; max-height:88vh; overflow:auto; background:var(--surface); border:1px solid var(--border); border-radius:20px; box-shadow:0 20px 50px rgba(0,0,0,.28); animation:dashPop .18s ease;">
@@ -371,7 +371,7 @@ class Component extends DCLogic {
       myStation: (function(){ var RC=(window.REGION_CONF||{}); var h=RC.home||'청주동부'; try{ var sv=(typeof localStorage!=='undefined' && localStorage.getItem('ggMyStation')) || h;
         var W=(RC.warnOrder||[])[0]||'충청북도'; if(sv!==W && RC.order && RC.order.length && RC.order.indexOf(sv)<0) sv=h; return sv; }catch(e){ return h; } })(),
       stationPickerOpen: (function(){ try{ if(sessionStorage.getItem('ggPickerOpen')==='1'){ sessionStorage.removeItem('ggPickerOpen'); return true; } }catch(e){} return false; })(),
-      /* 권역(충청북도/남부/전체) — 지도.html 과 같은 저장값(ggScope). 없으면 접속 주소의 권역(hostScope), 그것도 없으면 전체.
+      /* 권역(충청북도/남부/전체) — 종합.html 과 같은 저장값(ggScope). 없으면 접속 주소의 권역(hostScope), 그것도 없으면 전체.
          (권역을 모르면 다른 권역 관서까지 다 나온다) */
       scope: (function(){ var RC=(window.REGION_CONF||{}), g=RC.scopes||null; if(!g) return '전체';
         try{ var v=(typeof localStorage!=='undefined') && localStorage.getItem('ggScope');
@@ -384,7 +384,7 @@ class Component extends DCLogic {
       if(sc && sc!=='전체' && g[sc] && g[sc].indexOf(self.state.myStation)<0) self.state.myStation=g[sc][0]; })(this);
   }
 
-  // ── 관서 선택 (지도.html과 localStorage 키를 공유 → 선택이 그대로 따라온다) ──
+  // ── 관서 선택 (종합.html과 localStorage 키를 공유 → 선택이 그대로 따라온다) ──
   setMyStation(name){ try{ if(typeof localStorage!=='undefined') localStorage.setItem('ggMyStation', name); }catch(e){} this.setState({myStation:name, stationPickerOpen:false}); }
   toggleStationPicker(){ this.setState({stationPickerOpen:!this.state.stationPickerOpen}); }
 
@@ -437,7 +437,7 @@ class Component extends DCLogic {
   curMode(b){ return this.state.mode || this.autoMode(b || this.getData()); }
   setMode(m){ try{ localStorage.setItem('cbBoardMode', m); }catch(e){} this.setState({mode:m}); }
   applyDemo(base){ const m=this.curMode(base); return m==='snow' ? this.snowDemo(base) : m==='fire' ? this.fireDemo(base) : this.rainDemo(base); }
-  /* 권역 필터 — 지도.html scoped() 와 같은 규칙. 관서·하천·특보·재난문자를 권역 것만 남긴다.
+  /* 권역 필터 — 종합.html scoped() 와 같은 규칙. 관서·하천·특보·재난문자를 권역 것만 남긴다.
      region.js 에 scopes 가 없는 시도(강원·서울…)는 그대로 통과. */
   scoped(d){
     const RC=(window.REGION_CONF||{}), sc=this.state.scope, g=RC.scopes;
@@ -466,7 +466,7 @@ class Component extends DCLogic {
 
   /* ── 시연 모드 — 호우경보 상황 ──────────────────────────────
      비가 안 올 때도 화면을 검증하고, 실제 상황 전에 눈에 익혀두기 위한 것.
-     시나리오는 지도.html의 시연(청주동부·청주서부 호우경보)과 일부러 똑같이 맞췄다 —
+     시나리오는 종합.html의 시연(청주동부·청주서부 호우경보)과 일부러 똑같이 맞췄다 —
      두 화면을 나란히 켜도 앞뒤가 맞아야 하기 때문.
      숫자는 공식 호우기준에 맞춰 각 단계가 하나씩 보이도록 구성했다:
        청주서부 1시간 74mm → 극한호우(72mm↑) / 청주동부 12시간 186mm → 경보급(180↑)
@@ -658,7 +658,7 @@ class Component extends DCLogic {
     return {t:'', c:'var(--ink3)', bg:'transparent', k:0};
   }
 
-  /* 하천 상세 팝업 — 지도.html 과 같은 본문(river-popup.js). 탭(호우·대설·산불)과 상관없이 덧붙인다 */
+  /* 하천 상세 팝업 — 종합.html 과 같은 본문(river-popup.js). 탭(호우·대설·산불)과 상관없이 덧붙인다 */
   renderVals(){
     const v = this.tabVals(), m = this.state.modal;
     let mv = {modalOpen:false, modalTitle:'', modalAccent:'var(--brand)', modalMax:'620px', modalBody:''};
@@ -799,7 +799,7 @@ class Component extends DCLogic {
     const radarMin = (this.ageMinTm((ki.radar||{}).tm) !== null)
       ? this.ageMinTm((ki.radar||{}).tm) : this.ageMin((ki.radar||{}).ts);
     const warnImgMin = this.ageMin((ki.wrn||{}).ts);
-    // 날씨누리 충북 최신 특보 통보문 — 지도.html bulletinInfo 와 같은 주소 규칙(날짜가 빠지면 해당 통보문이 안 열린다)
+    // 날씨누리 충북 최신 특보 통보문 — 종합.html bulletinInfo 와 같은 주소 규칙(날짜가 빠지면 해당 통보문이 안 열린다)
     const _bl=d.bulletins||{}, _stn=_bl.stn||131, _b0=(_bl.warnings_full||[])[0], _t=String((_b0||{}).tmFc||'');
     const wrnUrl='https://www.weather.go.kr/w/special-report/list.do?stn='+_stn+'&kind=met'+((_b0 && _t.length>=12 && _b0.seq!=null) ? ('&date='+_t.slice(0,4)+'-'+_t.slice(4,6)+'-'+_t.slice(6,8)+'&reportId=met:'+_t.slice(0,12)+':'+_b0.seq) : '');
 
@@ -1375,7 +1375,7 @@ class Component extends DCLogic {
 
   // ── 하천 수위 ───────────────────────────────────────────
   /* 하천 수위 — 고른 관서의 관할 하천을 먼저, 다른 지역은 '참고'로 아래에 접어 둔다.
-     관할 판정은 지도.html riversOf 와 같다: region.js riverCodes 로 지정된 관서는 코드로, 아니면 시군(sigun)으로.
+     관할 판정은 종합.html riversOf 와 같다: region.js riverCodes 로 지정된 관서는 코드로, 아니면 시군(sigun)으로.
      다른 지역도 주의 이상이 있으면 접힌 줄에 몇 곳인지 보여 준다(접어 놔도 놓치지 않게). */
   riverBody(d){
     const R=React.createElement;

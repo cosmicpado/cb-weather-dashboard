@@ -134,20 +134,17 @@ html.wall-m #wall-dots{display:flex;position:fixed;left:50%;bottom:14px;transfor
     stop:SF+'<rect x="6" y="6" width="12" height="12" rx="2"/></svg>',
     notice:SV+'<path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>',
     chat:SV+'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
-    /* 비상단계 지정 = 경광등 — 깃발은 의견 보내기 말풍선과 비슷해 헷갈렸다 */
-    flag:SV+'<path d="M7 18v-6a5 5 0 1 1 10 0v6"/><path d="M5 21a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-1a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2z"/><path d="M12 2v1"/><path d="M2 12h1"/><path d="M21 12h1"/><path d="M4.9 4.9l.7.7"/><path d="M19.1 4.9l-.7.7"/></svg>' };
+  };
   window.wallIcon = function(el, ic, txt, order){ el.className='wall-ic'; el.innerHTML=IC[ic]+'<span class="tx"></span>';
     el.lastChild.textContent=txt; if(!el.title) el.title=txt; el.setAttribute('aria-label', txt); if(order!=null) el.style.order=order; return el; };
   window.wallTools = function(){
     var t=document.getElementById('wall-tools');
     if(!t){ t=document.createElement('div'); t.id='wall-tools';
-      var a=document.createElement('a'); a.href='지도.html'; a.title='종합 현황(지도 화면)으로 돌아가기'; t.appendChild(wallIcon(a,'back','종합 현황',1));
+      var a=document.createElement('a'); a.href='종합.html'; a.title='종합 현황으로 돌아가기'; t.appendChild(wallIcon(a,'back','종합 현황',1));
       var h=document.createElement('a'); h.href='도움말.html#notice'; h.title='공지사항 · 사용설명서'; t.appendChild(wallIcon(h,'notice','공지사항·설명서',2));
       var f=document.createElement('a'); f.tabIndex=0; f.title='의견 보내기 — 불편한 점·바라는 점을 개발 담당자에게 보냅니다';
       f.onclick=function(){ if(window.cbFeedback) cbFeedback.open({page:'119종합상황실'}); }; t.appendChild(wallIcon(f,'chat','의견 보내기',5));
-      /* 재대본 비상단계 직접 지정(2026-11-16) — 평상이면 비상단계 칸이 숨어 누를 곳이 없어 여기에도 둔다 */
-      var sg=document.createElement('a'); sg.tabIndex=0; sg.title='재대본 비상단계 지정 — 재대본이 특보 기준과 다르게 발령했을 때(지정 번호 필요)';
-      sg.onclick=function(){ if(window.cbStagePicker) cbStagePicker(); }; t.appendChild(wallIcon(sg,'flag','비상단계 지정',6)); }
+      /* 재대본 비상단계 지정은 단추를 두지 않는다 — '/' 명령 칸에서 stage 로만(2026-11-18) */ }
     if(!t.isConnected) document.body.appendChild(t);
     return t; };
   wallTools();
@@ -1477,7 +1474,7 @@ https://scripts.sil.org/OFL
       <!-- 관서 상황단계 칸은 뺐다(2026-11-16) — 관서 단계는 관서 이름 왼쪽 막대·아래 진행 막대 색과 맨 아래 관서 줄로 -->
       <!-- 재대본 비상단계 + 비상근무 한 칸(2026-11-16) — 왼쪽 단계, 오른쪽 그 단계의 소방본부·119종합상황실 근무. 칸 색 = 단계 색 -->
       <!-- 평상(직접 지정 아님)이면 칸을 통째로 숨겨 관서·날씨 칸이 넓어진다 — 준비 이상이 되면 나타나는 것 자체가 신호(2026-11-16) -->
-      <div data-stagecard="1" title="{{ dobTip }}" style="display:{{ dobDisp }};border-radius:24px;padding:20px 32px;align-items:stretch;gap:32px;background:{{ dobCardBg }};border:{{ dobCardBd }};min-width:0;cursor:pointer;">
+      <div data-stagecard="1" title="{{ dobTip }}" style="display:{{ dobDisp }};border-radius:24px;padding:20px 32px;align-items:stretch;gap:32px;background:{{ dobCardBg }};border:{{ dobCardBd }};min-width:0;">
         <div style="display:flex;flex-direction:column;justify-content:center;gap:8px;flex:none;">
           <!-- 제목·부서 이름은 회색 — 단계 색은 '2단계'와 근무 내용에만 남겨 눈에 들어오게(2026-11-16) -->
           <div style="font-size:calc(44px*var(--fz,1));font-weight:600;letter-spacing:.04em;color:var(--dim,#8e9bb0);white-space:nowrap;">{{ dobTitleText }}</div>
@@ -1727,7 +1724,7 @@ https://scripts.sil.org/OFL
               <div style="font-size:calc(42px*var(--fz,1));font-weight:560;color:var(--dim,#8e9bb0);white-space:nowrap; cursor:help;" title="국립산림과학원 산불위험예보(시군별)입니다. 공식 판정처럼 이 관서 시군의 평균 지수로 단계를 정합니다 — 낮음 50 이하 · 다소높음 51~65 · 높음 66~85 · 매우높음 86 이상.">산불위험</div>
               <div style="font-size:calc(82px*var(--fz,1));font-weight:700;line-height:1;white-space:nowrap;color:{{ fireColor }};">{{ fireLevel }}</div>
             </div>
-            <!-- 소방드론 비행 가능·제한(2026-11-16) — 미세먼지 PM10 자리. 미세먼지는 종합 현황·큰 글씨 보기에 그대로 있다 -->
+            <!-- 소방드론 비행 가능·제한(2026-11-16) — 미세먼지 PM10 자리. 미세먼지는 종합 현황에 그대로 있다 -->
             {{ droneEl }}
             <div style="background:var(--panel,#151b26);border:2px solid var(--line,#28313f);border-radius:22px;padding:20px 26px;display:flex;flex-direction:column;justify-content:center;gap:8px;min-width:0;overflow:hidden;">
               <div style="font-size:calc(42px*var(--fz,1));font-weight:560;color:var(--dim,#8e9bb0);white-space:nowrap; cursor:help;" title="관서 좌표로 계산한 시각입니다. 낮에는 일몰, 밤에는 다음 일출을 크게 보여 줍니다.">{{ sunLabel }}</div>
@@ -1823,7 +1820,7 @@ class Component extends DCLogic {
   componentDidMount(){
     this.setState({ theme: this.props.startTheme || 'dark' });
     /* 휴대폰 보기 맨 위 관서 고르기(#wall-msel)가 쓰는 연결 — 관서 목록·현재 관서·관서 바꾸기 */
-    window.cbWallStation = { names: NAMES.slice(), get: ()=>this.state.idx, set: (i)=>this.setState({ idx:i, started:Date.now() }),
+    window.cbWallStation = { names: NAMES.slice(), get: ()=>this.state.idx, set: (i)=>this.setState({ idx:i, started:Date.now() }), dark: ()=>this.state.theme!=='light',
       theme: ()=>this.setState(st=>({ theme: st.theme==='light' ? 'dark' : 'light' })) };
     if(window.cbWallSelInit) window.cbWallSelInit();
     this.fit(); window.addEventListener('resize', this._fit = ()=>this.fit());
@@ -2567,12 +2564,12 @@ class Component extends DCLogic {
       level:s.fireText,
       note:'국립산림과학원 · 습도 '+s.humid+'% · 풍속 '+s.wind+'m/s · 풍향 '+(s.windDeg==null ? '—' : ['북','북동','동','남동','남','남서','서','북서'][Math.floor(((s.windDeg+22.5)%360)/45)]),
       color:s.fireColor, bg:s.fireBg });
-    /* 체감온도 카드 — 구급 전용 어휘 대신 모든 직원이 읽는 말로. 지도.html tempCard 와 같은 기준.
+    /* 체감온도 카드 — 구급 전용 어휘 대신 모든 직원이 읽는 말로. 종합.html tempCard 와 같은 기준.
        체감 30° 이상 온열질환 주의(기상청 폭염 영향예보 31·33·35·38) · 10° 미만 한파 주의(체감온도 0·-10·-25) · 그 사이 일교차 */
     const _C=['var(--cSafe,#aeb8c8)','var(--cAmber,#ffb020)','var(--cRed,#ff5a5a)'], _B=['rgba(142,155,176,.07)','rgba(255,176,32,.1)','rgba(255,77,77,.12)'];
     const _f=s.feels, _rg=(s.tmax!=null&&s.tmin!=null)?(s.tmax-s.tmin):null;
     let tc;
-    /* 이 관서에 한파·폭염 특보가 있으면 체감과 상관없이 그 카드 — 관서 상황단계·특보 칸과 어긋나지 않게(지도.html tempCard 와 같은 기준) */
+    /* 이 관서에 한파·폭염 특보가 있으면 체감과 상관없이 그 카드 — 관서 상황단계·특보 칸과 어긋나지 않게(종합.html tempCard 와 같은 기준) */
     const _wt=this.warnsOf(s).map(x=>String(x.type||'')), _cw=_wt.find(t=>/한파/.test(t)), _hw=_wt.find(t=>/폭염/.test(t));
     if(_cw) tc={ icon:'🥶', title:'한파 주의', level:_cw, note:_cw+' 발효'+(s.morn&&s.morn.t!=null?(' · '+(s.morn.tomorrow?'내일':'오늘')+' 아침 '+Math.round(s.morn.t)+'℃'):'')+' · 보온·빙판길·저체온 유의', k:/경보/.test(_cw)?2:1 };
     else if(_hw) tc={ icon:'🌡️', title:'온열질환 주의', level:_hw, note:_hw+' 발효 · 체감 '+_f+'° · 야외활동·고령자 건강 유의, 물 자주 마시기', k:/경보/.test(_hw)?2:1 };
@@ -2733,7 +2730,7 @@ class Component extends DCLogic {
       dobTitleText: this.dob().manual ? '충북 재대본 비상단계 · 발령' : '충북 재대본 비상단계',
       dobTip: (this.dob().manual
         ? '충북 재대본 발령 '+this.dob().big+' ('+this.dob().manualAt+' 지정 · 24시간 뒤 자동으로)'
-        : '호우·대설·태풍 특보로 자동 산정한 단계입니다') + '\n누르면 단계를 직접 지정합니다(재대본 발령 시).\n\n' + _du.tip,
+        : '호우·대설·태풍 특보로 자동 산정한 단계입니다') + '\n\n' + _du.tip,
       dobCardBg: (this.dob().rank ? this.dob().cbg : 'var(--panel,#151b26)'), dobCardBd: (this.dob().rank ? '3px solid '+this.dob().bd : '2px solid var(--line,#28313f)'),   /* 평상 = 관서명 칸과 같은 테두리·바탕 */ dobSub: (this.dob().rank ? 'var(--fg,#f2f5fa)' : 'var(--lv0Sub)'), dobTitle: this.dob().sub,
       tallyCells: this.tally(),   /* 평상이면 오른쪽 관서 카드와 같은 테두리·글자색 */
       dutyRows:_du.rows, dutyZ:(n=>n<=2?1:n===3?0.74:n===4?0.58:0.48)(_du.rows.length), /* 부서 줄이 많으면 글자를 줄여 칸 안에 */ dutyOff:_du.off, dutyOn:!_du.off, dutyVis:(_du.off?'hidden':'visible'), dutyColor:_du.color, dutyHead:_du.head, dutyTip:_du.tip, dobLine: this.dob().line, dobColor: this.dob().fg, dobBg: this.dob().cbg,
@@ -2826,7 +2823,7 @@ class Component extends DCLogic {
   function shown(){ try{ return localStorage.getItem(KEY)==='1'; }catch(e){ return false; } }
   function toggleDemoBtn(){ var on=!shown(); try{ localStorage.setItem(KEY, on?'1':'0'); }catch(err){} open=false; draw(); return on; }
 
-  /* 입력 명령(2026-11-16) — 입력 칸이 아닌 곳에서 단어를 치면: admin 관리자 화면 · test 시연 단추 꺼내기/숨기기 ·
+  /* 입력 명령(2026-11-16) — 입력 칸이 아닌 곳에서 단어를 치면: main 종합 현황 · wall 상황실 · admin 관리자 화면 · test 시연 단추 꺼내기/숨기기 ·
      stage 비상단계 지정 창 · help 설명서. 4초 안에 이어 친 글자만 본다. 관리자 화면은 원래대로 서버 PC·관리자 키가 있어야 열린다 */
   var typed='', typedAt=0;
   function toast(t){ var d=document.createElement('div'); d.textContent=t;
@@ -2836,7 +2833,9 @@ class Component extends DCLogic {
     admin:function(){ toast('관리자 화면으로 이동합니다'); setTimeout(function(){ location.href='관리자.html'; }, 400); },
     test:function(){ toast(toggleDemoBtn() ? '시연 단추를 꺼냈습니다(왼쪽 위 ▶) — test 를 다시 치면 숨깁니다' : '시연 단추를 숨겼습니다'); },
     stage:function(){ if(window.cbStagePicker) cbStagePicker(); },
-    help:function(){ toast('설명서로 이동합니다'); setTimeout(function(){ location.href='도움말.html'; }, 400); }
+    help:function(){ toast('설명서로 이동합니다'); setTimeout(function(){ location.href='도움말.html'; }, 400); },
+    main:function(){ toast('종합 현황으로 이동합니다'); setTimeout(function(){ location.href='종합.html'; }, 400); },
+    wall:function(){ toast('지금 119종합상황실 화면입니다'); }
   };
   /* '/' 키 — 화면 가운데 반투명 명령 칸(2026-11-16). 명령을 치고 Enter · Esc·바깥을 누르면 닫힘 */
   var cmdBox=null;
@@ -2850,7 +2849,7 @@ class Component extends DCLogic {
     var inp=document.createElement('input');
     inp.style.cssText='width:clamp(240px,22vw,460px);text-align:center;font:700 clamp(18px,1.6vw,34px) system-ui,sans-serif;padding:10px 14px;border-radius:12px;border:2px solid var(--acc,#17AFAB);background:rgba(13,17,24,.9);color:#f2f5fa;outline:none;';
     inp.placeholder='명령 입력 후 Enter'; inp.autocomplete='off'; inp.spellcheck=false;
-    var hint=document.createElement('div'); hint.textContent='admin 관리자 화면 · test 시연 단추 · stage 비상단계 지정 · help 설명서';   /* 관리자 화면은 키가 있어야 열리니 보여도 된다 */
+    var hint=document.createElement('div'); hint.textContent='main 종합 현황 · wall 상황실 · admin 관리자 화면 · test 시연 단추 · stage 비상단계 지정 · help 설명서';   /* 관리자 화면은 키가 있어야 열리니 보여도 된다 */
     hint.style.cssText='font:600 clamp(12px,.9vw,20px) system-ui,sans-serif;color:#8e9bb0;';
     card.appendChild(inp); card.appendChild(hint); cmdBox.appendChild(card); document.body.appendChild(cmdBox);
     cmdBox.addEventListener('mousedown', function(ev){ if(ev.target===cmdBox) closeCmd(); });
@@ -2859,7 +2858,7 @@ class Component extends DCLogic {
       if(ev.key==='Escape'){ closeCmd(); return; }
       if(ev.key!=='Enter') return;
       var k=inp.value.trim().toLowerCase().replace(/^\//,''); closeCmd();
-      if(CMDS[k]) CMDS[k](); else if(k) toast('알 수 없는 명령 — admin · test · stage · help');
+      if(CMDS[k]) CMDS[k](); else if(k) toast('알 수 없는 명령 — main · wall · admin · test · stage · help');
     });
     setTimeout(function(){ inp.focus(); }, 0);
   }
@@ -2899,7 +2898,7 @@ class Component extends DCLogic {
   function el(t,css,txt){ var e=document.createElement(t); if(css) e.style.cssText=css; if(txt!=null) e.textContent=txt; return e; }
   function close(){ if(box){ box.remove(); box=null; } clearTimeout(timer); document.removeEventListener('keydown', onKey, true); }
   function onKey(e){ if(e.key==='Escape'){ e.stopPropagation(); close(); } }
-  function group(raw){   /* 같은 종류는 한 줄로, 지역은 중복 없이 합친다(지도.html groupWarns 와 같은 방식) */
+  function group(raw){   /* 같은 종류는 한 줄로, 지역은 중복 없이 합친다(종합.html groupWarns 와 같은 방식) */
     var g={}, order=[];
     (raw||[]).forEach(function(w){ var t=String(w.type||'').trim(); if(!t) return;
       var x=g[t]; if(!x){ x=g[t]={type:t, sev:(w.level==='severe'||t.indexOf('경보')>=0), time:w.time||'', seen:{}, areas:[]}; order.push(t); }
@@ -2960,7 +2959,7 @@ class Component extends DCLogic {
     document.addEventListener('keydown', onKey, true);
     timer=setTimeout(close, 180000);
   }
-  /* 특보 통보문 창 — 종합 현황(지도.html) bulletinInfo·bulletinBody 와 같은 내용(기상청 통보문 전문 + 발표구역·발효현황 그림 + 원문 링크) */
+  /* 특보 통보문 창 — 종합 현황(종합.html) bulletinInfo·bulletinBody 와 같은 내용(기상청 통보문 전문 + 발표구역·발효현황 그림 + 원문 링크) */
   function info(b, stn){
     stn=stn||131; var t=String(b.tmFc||''), seq=b.seq, ok=t.length>=12 && seq!=null && seq!=='';
     var clean=function(s){ return String(s||'').replace(/\r/g,'').replace(/\n{2,}/g,'\n').trim(); };
@@ -3142,13 +3141,7 @@ class Component extends DCLogic {
     document.addEventListener('keydown', onKey, true);
     setTimeout(function(){ try{ pin.focus(); }catch(e){} }, 50);
   }
-  document.addEventListener('click', function(e){
-    if(window.WALL_EDITING || box) return;
-    var c=e.target.closest && e.target.closest('[data-stagecard]'); if(!c) return;
-    if(!window.cbStageOv) return;
-    open();
-  });
-  window.cbStagePicker=function(){ if(!window.WALL_EDITING && !box && window.cbStageOv) open(); };   /* 왼쪽 위 '비상단계 지정' 단추 */
+  window.cbStagePicker=function(){ if(!window.WALL_EDITING && !box && window.cbStageOv) open(); };   /* '/' 명령 stage 로만 연다(단추·칸 누르기 없음) */
   /* 종합 현황에서 'stage' 명령으로 넘어오면(?cmd=stage) 화면이 뜬 뒤 지정 창을 바로 연다 */
   if(/[?&]cmd=stage\b/.test(location.search)){
     try{ var u=new URL(location.href); u.searchParams.delete('cmd'); history.replaceState(null,'',u); }catch(e){}
@@ -3203,7 +3196,7 @@ class Component extends DCLogic {
     if(/구름/.test(w)) return night?'cloudmoon':'cloudsun';
     if(/맑/.test(w)) return night?'moon':'sun';
     return 'cloud'; }
-  /* 지도.html _canonRegion 동일 — 특보구역명 → 관서 정규화 */
+  /* 종합.html _canonRegion 동일 — 특보구역명 → 관서 정규화 */
   function canon(name){ var n=String(name||'').trim(); if(!n) return null; var UNITS=RC.order||[];
     /* 시도 전역 표기(충청북도·강원도·서울…)는 '충청북도' 표식으로 — 아래 warnsByStation 이 전 관서 발효로 푼다 */
     var ZONE={'울릉도.독도':'울릉', '흑산도.홍도':'신안', '서해5도':'옹진', '백령도.대청도':'옹진', '연평도.우도':'옹진'}; if(ZONE[n]) return ZONE[n];   /* 섬 특보구역 → 관서 */
@@ -3225,7 +3218,7 @@ class Component extends DCLogic {
     /* 색 바탕은 재대본 비상단계를 정하는 호우·대설·태풍만(2026-11-16). 그 밖의 경보·주의보는 글자색만, 바탕은 무채색 */
     if(!/호우|대설|태풍/.test(type)) bg='var(--panel2,#1b2230)';
     return {sev:sev,color:color,bg:bg}; }
-  /* 실제 발효특보 → 관서별. 지도.html mapRegions 매칭과 동일(충청북도=전역). */
+  /* 실제 발효특보 → 관서별. 종합.html mapRegions 매칭과 동일(충청북도=전역). */
   function warnsByStation(warnings){
     var out={}; NAMES.forEach(function(nm){ out[nm]=[]; });
     (warnings||[]).forEach(function(w){
@@ -3254,7 +3247,7 @@ class Component extends DCLogic {
       var hrs=hsrc.slice(0,12).map(function(o,k){   /* 실제 시간대별 예보 → 시간대별 표 */
         return { label:(k===0?'지금':(o.hour||'')), t:nv(o.temp), feels:nv(o.feels_like),
           rain:nv(o.rain_mm), pop:nv(o.rain_pop), icon:(o.icon||wicon(o.weather)), wx:wxType(o.weather,o.hour),
-          /* 대시보드(지도.html)의 시간대별 표와 같은 항목을 쓰려고 바람·습도를 추가.
+          /* 대시보드(종합.html)의 시간대별 표와 같은 항목을 쓰려고 바람·습도를 추가.
              셋 다 예보에 원래 들어 있던 값인데 벽면에선 안 쓰고 있었다. */
           wind:nv(o.wind_ms), deg:nv(o.wind_deg), dir:(o.wind_dir||''), humid:nv(o.humid) };
       });
@@ -3315,7 +3308,7 @@ class Component extends DCLogic {
       NAMES.forEach(function(nm){ if(sig(nm)===sg && !ALIAS[nm]) put(nm); });  /* 시군 관서에만(별칭 관서 중복 방지) */
     });
     /* 자동 위험구역 — 하천 경계·주의수위 이상 · 1시간 0.3m 급상승, 집중호우(1시간 30mm·12시간 110mm 이상).
-       구글시트로 손으로 적던 방식은 2026-10-30 폐지. 지도.html autoRisks 와 같은 기준. 행 = [이름, 설명, 유형] */
+       구글시트로 손으로 적던 방식은 2026-10-30 폐지. 종합.html autoRisks 와 같은 기준. 행 = [이름, 설명, 유형] */
     var risks={};
     NAMES.forEach(function(nm,i){ var out=[];
       rivers[nm].forEach(function(e){ if(e[3]==='dam') return;
@@ -3401,6 +3394,7 @@ class Component extends DCLogic {
         if(hit) prelim[nm].push({ type:String(g.type||'예비특보'), areas:names.join('·'), time:String((its[0]||{}).time||'') });
       });
     });
+    try{ window.CB_DEMO_STAGE = new URLSearchParams(location.search).get('demo')==='severe' ? 4 : null; }catch(e){}   /* 시연 3단계 = 재대본 발령 가정(stage.js) */
     var stage = window.cbStage ? window.cbStage((D.warnings||[]).map(function(w){ return { type:w.type||w.title||w.name||'', area:w.area||w.region||w.regions||'', level:w.level||'' }; }), D.prelim_warnings||[], D.typhoon||[]) : null;
     return { stations:stations, rivers:rivers, msgs:msgs, warns:warnsByStation(D.warnings), cctv:cctv, risks:risks, stage:stage, prelim:prelim,
              keyRivers:keyRivers, ultra:ultra, updated:D.updated,
@@ -3411,7 +3405,7 @@ class Component extends DCLogic {
              fireStats:((D.fire_stats||{}).summary||null) };   /* 지진·낙뢰(기상특보 카드) · 영향예보(계절 감시 카드) */
   }
   /* ▶ 시연 — 주소 ?demo=normal|ready|caution|warn|severe. 실제 자료 위에 그 단계의 가상 특보·예비특보·재난문자·
-     강수·하천 수위를 얹는다(지도.html 시연과 같은 시나리오). 관서 상황단계·재대본 단계·특보/문자 카드·알림이 함께 바뀐다. */
+     강수·하천 수위를 얹는다(종합.html 시연과 같은 시나리오). 관서 상황단계·재대본 단계·특보/문자 카드·알림이 함께 바뀐다. */
   function demoKey(){ try{ return new URLSearchParams(location.search).get('demo'); }catch(e){ return null; } }
   function demoize(D, key){
     var c=JSON.parse(JSON.stringify(D)); c.prelim_warnings=[]; c.flood_forecast=[]; c.typhoon=[]; c.warnings=[]; c.messages=[];
@@ -3619,7 +3613,7 @@ window.cbWindyUrl = function(overlay, zoom){
 /* 휴대폰 보기 맨 위 관서 고르기(2026-11-16) — 시계 칸 대신. html.wall-m 일 때만 보인다(CSS).
    화면(React) 밖 body 맨 앞에 두어 다시 그려도 지워지지 않는다. 밝게/어둡게 단추도 시계 칸에서 옮겨 왔다. */
 (function(){
-  var box=null, sel=null, drawName=null;
+  var box=null, sel=null, drawName=null, drawTheme=null;
   window.cbWallSelInit=function(){
     var W=window.cbWallStation; if(!W || box) return;
     box=document.createElement('div'); box.id='wall-msel';
@@ -3635,8 +3629,10 @@ window.cbWindyUrl = function(overlay, zoom){
     list.onclick=function(e){ var b=e.target.closest && e.target.closest('[data-i]'); if(!b) return; W.set(+b.getAttribute('data-i')); openList(false); try{ window.scrollTo(0,0); }catch(e2){} };
     document.addEventListener('click', function(e){ if(list.classList.contains('on') && !box.contains(e.target)) openList(false); });
     drawName();
-    var th=document.createElement('button'); th.type='button'; th.textContent='☀'; th.title='밝게/어둡게'; th.setAttribute('aria-label','밝게/어둡게');
-    th.onclick=function(){ W.theme(); };
+    var th=document.createElement('button'); th.type='button'; th.title='밝게/어둡게'; th.setAttribute('aria-label','밝게/어둡게');
+    /* 단추 그림 = 누르면 바뀔 화면(어두운 화면이면 ☀ 밝게 · 밝은 화면이면 ☾ 어둡게) — 화면 색이 바뀔 때마다 다시 그린다 */
+    drawTheme=function(){ var dk=W.dark ? W.dark() : true; th.textContent=dk?'☀':'☾'; th.title=dk?'밝은 화면으로':'어두운 화면으로'; };
+    th.onclick=function(){ W.theme(); setTimeout(drawTheme, 50); }; drawTheme();
     box.appendChild(sel); box.appendChild(th);
     /* 자료 기준 시각 — 휴대폰은 맨 아래 '마지막 갱신'까지 내려가야 보여서. 15분 넘게 그대로면 빨간 경고 */
     var up=document.createElement('div'); up.id='wall-mupd';
@@ -3696,7 +3692,7 @@ window.cbWindyUrl = function(overlay, zoom){
     h+='</div>';
     el.innerHTML=h;
   };
-  window.cbWallSelSync=function(i){ if(drawName) drawName(); if(window.cbWallUrg) window.cbWallUrg(); };
+  window.cbWallSelSync=function(i){ if(drawName) drawName(); if(drawTheme) drawTheme(); if(window.cbWallUrg) window.cbWallUrg(); };
   if(window.cbWallStation) window.cbWallSelInit();
 })();
 </script>

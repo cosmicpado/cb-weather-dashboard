@@ -34,7 +34,7 @@ def load_map(map_file):
 
 def build_pos(cent, order):
     """시군 중심좌표 → 벌집 격자. 북→남으로 행을 나누고 행 안에서 서→동.
-    지도.html 의 배치:  x = 8 + (열 + (행%2)*0.5) * 88,  y = 16 + 행 * 76"""
+    종합.html 의 배치:  x = 8 + (열 + (행%2)*0.5) * 88,  y = 16 + 행 * 76"""
     n = len(order)
     cols = 5 if n <= 15 else (6 if n <= 24 else 7)
     rows = max(1, math.ceil(n / cols))
