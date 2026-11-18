@@ -41,7 +41,7 @@ html.wall-m [data-stagecard]{padding:24px 32px!important;}
 html.wall-m [data-tally]{min-height:250px!important;}
 html.wall-m [data-prog]{display:none!important;}
 html.wall-m [data-wall-grid]{display:flex!important;flex-direction:column;margin:0!important;gap:24px!important;}
-html.wall-m #wall-tools{position:absolute!important;right:10px;flex-wrap:wrap;}
+html.wall-m #wall-tools{position:absolute!important;right:10px;flex-wrap:wrap;z-index:70!important;}
 html.wall-m #wall-tools>div{flex-wrap:wrap;min-width:0;max-width:100%;}   /* 시연 단추 묶음이 한 줄로 834px 까지 늘어 페이지 폭을 넓혔다 */   /* 휴대폰: 도구 막대가 화면에 떠서 내용을 가리지 않게 맨 위에만 */
 html.wall-m [data-wall-grid] [data-card]{margin:0!important;flex:none;}
 html.wall-m [data-card="warn"]{order:1;height:auto!important;}
@@ -65,6 +65,54 @@ html.wall-m [data-rail]{height:auto!important;grid-template-columns:repeat(3,min
 html.wall-m [data-foot]{height:auto!important;flex-wrap:wrap;gap:12px 28px!important;font-size:30px!important;}
 html.wall-m [data-foot]>div:nth-child(2){display:none;}
 html.wall-m [data-foot]>div:last-child{margin-left:0!important;white-space:normal!important;flex-wrap:wrap;}
+/* ── 휴대폰: 넘기는 구역 — 화면 틀([data-stage])을 가로로 넘기는 판으로. 칸 묶음(data-wall-grid)은 풀어서(display:contents)
+   칸마다 '몇 번째 구역'을 정한다: ① 실황·예보 ② 레이더·계절 감시 ③ 관서 순위 ④ 하천.
+   기상특보·재난문자·충북 현황은 맨 위 고정 줄(#wall-msel)로 옮겨 여기서는 감춘다. PC·벽면은 그대로 */
+html.wall-m [data-topbar],html.wall-m [data-foot]{display:none!important;}
+html.wall-m [data-stage]{display:grid!important;grid-auto-flow:column;grid-auto-columns:100%;grid-template-rows:auto;align-content:start;align-items:start;
+  overflow-x:auto!important;overflow-y:hidden!important;scroll-snap-type:x mandatory;scroll-padding-inline:24px;column-gap:48px!important;row-gap:24px!important;scrollbar-width:none;}
+html.wall-m [data-stage]::-webkit-scrollbar{display:none;}
+html.wall-m [data-wall-grid]{display:contents!important;}
+html.wall-m [data-card="warn"],html.wall-m [data-card="msg"],html.wall-m [data-card="duty"],html.wall-m [data-card="brief"],html.wall-m [data-card="cctv"]{display:none!important;}
+/* 이 관서에 기상특보·재난문자가 있으면 맨 뒤에 '기상특보'·'재난문자' 목록 구역이 생긴다(없으면 구역도 없음) */
+html.wall-m.m-w [data-card="warn"]{display:flex!important;grid-column:3!important;grid-row:1!important;scroll-snap-align:start;}
+html.wall-m.m-m [data-card="msg"]{display:flex!important;grid-column:3!important;grid-row:1!important;scroll-snap-align:start;}
+html.wall-m.m-any [data-rail]{grid-column:4!important;}
+html.wall-m.m-any [data-card="river"]{grid-column:5!important;}
+/* 둘 다 있으면 같은 구역에 특보 아래 재난문자(내려 쌓는 높이는 JS 가 특보 칸 높이로 맞춘다) */
+/* 한 구역 안의 칸들은 모두 같은 줄(1줄)에 두고 위 칸 높이만큼 내려 쌓는다 — 줄을 나누면 다른 구역의 큰 칸(레이더) 높이에 끌려 빈틈이 생긴다 */
+html.wall-m [data-card="obs"]{grid-column:1!important;grid-row:1!important;scroll-snap-align:start;}
+html.wall-m [data-wall-grid] [data-card="hourly"]{grid-column:1!important;grid-row:1!important;margin-top:544px!important;}
+html.wall-m [data-card="radar"]{grid-column:2!important;grid-row:1!important;scroll-snap-align:start;}
+html.wall-m [data-wall-grid] [data-card="season"]{grid-column:2!important;grid-row:1!important;margin-top:1024px!important;}
+html.wall-m [data-wall-grid] [data-card="idx"]{grid-column:2!important;grid-row:1!important;margin-top:1348px!important;}
+html.wall-m [data-wall-grid] [data-card="typhoon"]{grid-column:2!important;grid-row:1!important;margin-top:1632px!important;}
+html.wall-m [data-rail]{grid-column:3!important;grid-row:1!important;scroll-snap-align:start;align-self:start;}
+html.wall-m [data-card="river"]{display:flex!important;grid-column:4!important;grid-row:1!important;scroll-snap-align:start;height:auto!important;min-height:600px;}
+/* 맨 위 고정 줄 — 내려도 붙어 있다 */
+html.wall-m body{overflow-x:clip!important;overflow-y:visible!important;padding-bottom:64px;}   /* 아래 구역 점이 마지막 칸을 가리지 않게    /* body 가 스크롤 상자가 되면 고정 줄(sticky)이 안 붙는다 */
+html.wall-m #wall-msel{position:sticky;top:0;z-index:60;box-shadow:0 6px 14px rgba(0,0,0,.18);}
+#wall-urg{flex:1 0 100%;display:flex;flex-direction:column;gap:6px;font:600 14.5px/1.4 'Pretendard Variable',Pretendard,system-ui,sans-serif;color:var(--fg,#f2f5fa);padding:0 2px 8px;}
+#wall-urg .u-box{background:var(--panel,#151b26);border:1px solid var(--line,#28313f);border-radius:12px;overflow:hidden;}
+#wall-urg .u-c{display:grid;grid-template-columns:auto repeat(4,1fr);align-items:center;padding:6px 2px;}
+#wall-urg .u-l{display:flex;flex-wrap:wrap;gap:6px;padding:8px 10px;border-top:1px solid var(--line,#28313f);}
+#wall-urg .u-l .u-t{margin:0;color:var(--tc);background:color-mix(in srgb,var(--tc) 12%,transparent);border-radius:8px;padding:4px 9px;font-size:14px;font-weight:800;gap:6px;}
+#wall-urg .u-l .u-n{align-self:center;font-size:13.5px;font-weight:800;color:var(--dim,#8e9bb0);padding-right:4px;margin-right:2px;border-right:1px solid var(--line,#28313f);}
+#wall-urg .u-l .u-t i{width:8px;height:8px;border-radius:50%;background:var(--tc);flex:none;}
+#wall-urg .u-l .u-t small{font-size:13px;font-weight:700;opacity:.85;}
+#wall-urg .u-c .h{font-size:13.5px;font-weight:800;color:var(--dim,#8e9bb0);line-height:1.2;text-align:center;padding:0 10px;border-right:1px solid var(--line,#28313f);}
+#wall-urg .u-c .k{text-align:center;}#wall-urg .u-c .k.m{border-left:1px solid var(--line,#28313f);}
+#wall-urg .u-c .k b{display:block;font-size:21px;line-height:1.15;font-weight:800;}
+#wall-urg .u-c .k span{font-size:13px;color:var(--dim,#8e9bb0);font-weight:700;}
+#wall-urg .u-t{display:inline-flex;align-items:center;font-size:13.5px;font-weight:800;color:#fff;border-radius:6px;padding:2px 8px;margin:0 4px 4px 0;}
+#wall-urg [data-go]{cursor:pointer;}
+#wall-msel .wk{width:auto!important;padding:0 12px;font:800 15px 'Pretendard Variable',Pretendard,system-ui,sans-serif!important;white-space:nowrap;}
+html.wall-m [data-card="season"]{--fz:.8!important;}
+#wall-dots{display:none;}
+html.wall-m #wall-dots{display:flex;position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:60;align-items:center;gap:8px;padding:7px 12px;border-radius:999px;
+  background:var(--panel,#151b26);border:1px solid var(--line,#28313f);box-shadow:0 6px 16px rgba(0,0,0,.3);font:800 13.5px 'Pretendard Variable',Pretendard,system-ui,sans-serif;color:var(--fg,#f2f5fa);}
+#wall-dots i{width:8px;height:8px;border-radius:50%;background:var(--dim,#8e9bb0);opacity:.5;cursor:pointer;}
+#wall-dots i.on{opacity:1;background:var(--acc,#17AFAB);width:20px;border-radius:5px;}
 </style>
 </head>
 <body>
@@ -1508,7 +1556,7 @@ https://scripts.sil.org/OFL
             </div>
             <div style="background:var(--panel2,#1b2230);border-radius:16px;padding:8px 24px;display:flex;flex-direction:column;justify-content:center;gap:4px;min-width:0;min-height:0;overflow:hidden;">
               <div style="font-size:calc(38px*var(--fz,1));font-weight:520;color:var(--dim,#8e9bb0);white-space:nowrap;">풍향</div>
-              <div style="display:flex;align-items:baseline;gap:8px;white-space:nowrap;"><div style="font-size:calc(78px*var(--fz,1));font-weight:680;line-height:1;">{{ windDir }}</div><div style="font-size:calc(58px*var(--fz,1));line-height:1;color:var(--acc,#ff7a2f);transform:rotate({{ windDeg }}deg);margin-left:6px;">{{ windArrow }}</div></div>
+              <div style="display:flex;align-items:baseline;gap:8px;white-space:nowrap;"><div style="font-size:calc(78px*var(--fz,1));font-weight:680;line-height:1;">{{ windDir }}</div><div style="font-size:calc(58px*var(--fz,1));line-height:1;color:var(--acc,#ff7a2f);transform:rotate(calc({{ windDeg }}deg + 180deg));margin-left:6px;">{{ windArrow }}</div></div>
             </div>
           </div>
           <div style="flex:1;min-height:0;background:var(--panel2,#1b2230);border-radius:16px;padding:14px 0;display:grid;grid-template-columns:auto repeat(3,minmax(0,1fr));align-items:stretch;">
@@ -1729,7 +1777,7 @@ https://scripts.sil.org/OFL
     </div>
 
     <div data-foot style="height:38px;flex:none;display:flex;align-items:center;gap:28px;font-size:calc(34px*var(--fz,1));font-weight:500;color:var(--dim,#8e9bb0);">
-      <div>데이터 출처 · 행정안전부 / 기상청 / 한강홍수통제소 / 국립산림과학원 / 에어코리아(한국환경공단) / 윈디(Windy.com)</div>
+      <div>데이터 출처 · 행정안전부 / 기상청 / 한강홍수통제소 / 국립산림과학원 / 에어코리아(한국환경공단) / 윈디</div>
       <div style="width:2px;height:22px;background:var(--line,#28313f);"></div>
       <div style="margin-left:auto;font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:12px;white-space:nowrap;"><span>관서 자동 순환 {{ rotSec }}초 · 데이터 자동 갱신 5분 · 마지막 갱신 {{ updatedLabel }}</span>
         <span style="width:14px;height:14px;border-radius:50%;background:#ff3b3b;animation:livePulse 1.6s ease-in-out infinite;flex:none;margin-left:6px;"></span><span style="font-weight:700;letter-spacing:.14em;color:var(--fg,#f2f5fa);">LIVE</span></div>
@@ -1814,7 +1862,7 @@ class Component extends DCLogic {
       el.style.transform = 'scale('+s+')';
       if(wrap){ const h = Math.ceil(el.offsetHeight*s)+'px'; if(wrap.style.height!==h) wrap.style.height=h; }
       const tl=document.getElementById('wall-tools'), ms=document.getElementById('wall-msel');
-      if(tl && ms){ const p=(tl.offsetHeight+18)+'px'; if(ms.style.paddingTop!==p) ms.style.paddingTop=p; }   // 도구 막대가 두 줄이 돼도 관서 고르기를 가리지 않게
+      if(tl && ms){ const p=(tl.offsetHeight+18)+'px'; if(ms.style.marginTop!==p){ ms.style.marginTop=p; ms.style.paddingTop='10px'; } }   // 도구 막대가 두 줄이 돼도 관서 고르기를 가리지 않게
       if(!was && this.state.playing) this.setState({ playing:false });
       if(!this._mobTheme){ this._mobTheme=true; this.setState({ theme:'light' }); }   // 휴대폰은 처음에 밝은 화면(☀ 단추로 바꿀 수 있음)
     } else {
@@ -1987,7 +2035,7 @@ class Component extends DCLogic {
       R('div',{style:{width:'46px',height:'46px',borderRadius:'50%',background:'rgba(255,255,255,.07)',
         display:'flex',alignItems:'center',justifyContent:'center'}},
         R('div',{style:{fontSize:'26px',lineHeight:1,fontWeight:660,color:ACC,
-          transform:'rotate('+(h.deg!=null?h.deg:0)+'deg)'}}, h.deg!=null?'↑':'')),
+          transform:'rotate('+(h.deg!=null?(+h.deg+180)%360:0)+'deg)'}}, h.deg!=null?'↑':'')),   /* 기상청 표시처럼 바람이 불어 가는 쪽 */
       R('div',{style:{fontSize:'29px',fontWeight:600}}, num(h.wind,1))));   /* 방위 글자는 뺐다 — 화살표가 방향, 전광판에서 20px 글씨는 안 읽힌다 */
     /* 습도 줄은 뺐다(현재 실황 칸에 있다) — 전광판에서 줄이 적을수록 글자를 키울 수 있다 */
 
@@ -2119,7 +2167,8 @@ class Component extends DCLogic {
       /* 아랫줄을 뺀 자리만큼 키움(2026-11-16) — 제목 42→46 · 값 82→104(작은 값 66→84) · 꼬리말 40→44 */
       R('div',{style:{fontSize:'calc(46px*var(--fz,1))',fontWeight:560,color:DIM,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}, label),
       R('div',{style:{display:'flex',alignItems:'baseline',gap:'10px',whiteSpace:'nowrap',minWidth:0,overflow:'hidden'}},
-        R('div',{style:{fontSize:small?'calc(76px*var(--fz,1))':'calc(104px*var(--fz,1))',fontWeight:700,lineHeight:1,fontVariantNumeric:'tabular-nums',color:vcol||(lv&&lv[1])||'var(--fg,#f2f5fa)'}}, val),
+        /* 값이 길면('내일 1~3시') 칸 폭을 넘어 잘리므로 글자 수에 맞춰 줄인다 */
+        R('div',{style:{fontSize:'calc('+((L=>small?(L>=8?54:L>=6?62:76):(L>=7?72:L>=5?88:104))(String(val==null?'':val).length))+'px*var(--fz,1))',fontWeight:700,lineHeight:1,fontVariantNumeric:'tabular-nums',color:vcol||(lv&&lv[1])||'var(--fg,#f2f5fa)'}}, val),
         unit ? R('div',{style:{fontSize:'calc(44px*var(--fz,1))',fontWeight:540,color:DIM}}, unit) : null));
     const F=kids=>R('div',{style:{flex:1,minWidth:0,display:'grid',gridTemplateColumns:'repeat(3,minmax(0,1fr))',gap:'20px'}},kids);   /* 산불·PM·일출 칸과 같은 3칸 격자 */
     if(info.mode==='cold'){
@@ -2638,7 +2687,7 @@ class Component extends DCLogic {
     const _ssn = this.seasonMode(s), _alerts = this.alertRows(s), _du = this.duty();
     /* 기상특보 칸은 최대 2줄(2026-11-16) — 지진·낙뢰 → 발효 특보 → 예비특보 순. 넘치면 제목 줄에 '외 N건'(칸을 누르면 전체) */
     const _wb = (function(){
-      const allW=this.warnsOf(s), pre=((EXT().prelim||{})[s.name]||[]), MAX=document.documentElement.classList.contains('wall-m') ? 8 : 2;   // 휴대폰 보기는 칸이 아래로 늘어나니 다 보여 준다
+      const allW=this.warnsOf(s), pre=((EXT().prelim||{})[s.name]||[]), MAX=document.documentElement.classList.contains('wall-m') ? 999 : 2;   // 휴대폰 보기는 칸이 아래로 늘어나니 다 보여 준다
       const a=_alerts.slice(0,MAX), w=allW.slice(0,MAX-a.length), p=pre.slice(0,MAX-a.length-w.length);
       const more=(_alerts.length+allW.length+pre.length)-(a.length+w.length+p.length);
       return { warns:w, warnCount:allW.length, prelimCount:allW.length?1:0, prelimRows:p, alertRows:a,
@@ -2697,7 +2746,7 @@ class Component extends DCLogic {
       warns:_wb.warns, warnCount:_wb.warnCount, prelimCount:_wb.prelimCount, prelimRows:_wb.prelimRows, alertRows:_wb.alertRows, warnZ:1,
       noWarn:_wb.noWarn, warnHead:_wb.warnHead,
       rivers: rv, impacts: imp,
-      msgs: msgs.slice(0,5), noMsg: msgs.length === 0, msgCount: msgs.length,
+      msgs: (document.documentElement.classList.contains('wall-m') ? msgs : msgs.slice(0,5)), noMsg: msgs.length === 0, msgCount: msgs.length,
       /* 칸에 다 안 들어가는 문자는 반쯤 잘려 보이지 않게 칸 밖으로 숨긴다(목록이 세로로 넘치면 오른쪽 열로 넘어감).
          몇 건이 보이는지는 직전 화면에서 센다(0.5초마다 다시 그림). */
       msgHeadColor: msgs.length ? 'var(--acc,#17AFAB)' : 'var(--dim,#8e9bb0)',   /* 0건이면 회색 — 기상특보 '발효 0건'처럼(2026-11-16) */
@@ -3576,9 +3625,55 @@ window.cbWindyUrl = function(overlay, zoom){
       up.textContent='자료 '+m[4]+':'+m[5]+' 기준'+(late>15?' · ⚠ '+late+'분째 갱신 안 됨':'');
       up.style.color=late>15?'#ef4444':'var(--dim,#8e9bb0)'; }
     tick(); setInterval(tick, 20000);
+    /* 화면 켜 두기(Wake Lock) — https 주소에서만 된다. 다른 앱에 갔다 오면 풀리므로 돌아오면 다시 잡는다 */
+    var wk=document.createElement('button'); wk.type='button'; wk.className='wk'; wk.textContent='화면 켜두기'; wk.title='휴대폰 화면이 꺼지지 않게'; wk.setAttribute('aria-label','화면 켜 두기');
+    var lock=null, want=false;
+    function grab(){ if(!('wakeLock' in navigator)) return; navigator.wakeLock.request('screen').then(function(l){ lock=l; wk.style.background='var(--acc,#17AFAB)'; wk.style.color='#fff'; wk.textContent='켜두는 중 ✓';
+      l.addEventListener('release', function(){ lock=null; if(!want){ wk.style.background=''; wk.style.color=''; wk.textContent='화면 켜두기'; } }); }).catch(function(){ want=false; alert('이 브라우저(또는 http 주소)에서는 화면 켜 두기를 쓸 수 없습니다. https 주소로 열어 주세요.'); }); }
+    wk.onclick=function(){ want=!want; if(want) grab(); else { if(lock) lock.release(); wk.style.background=''; wk.style.color=''; wk.textContent='화면 켜두기'; } };
+    document.addEventListener('visibilitychange', function(){ if(want && document.visibilityState==='visible' && !lock) grab(); });
+    if(!('wakeLock' in navigator)) wk.style.opacity='.45';
+    box.insertBefore(wk, up);
+    /* 위급 정보 — 충북 현황(예비·주의보·경보) · 이 관서 기상특보 · 최근 재난문자 */
+    var urg=document.createElement('div'); urg.id='wall-urg'; box.appendChild(urg);
     document.body.insertBefore(box, document.body.firstChild);
+    /* 넘기는 구역 표시 점 — 누르면 그 구역으로 */
+    function PAGESF(){ var c=document.documentElement.classList, p=['실황·예보','레이더·계절','관서 순위','하천']; if(c.contains('m-any')) p.splice(2,0,'특보·재난문자'); return p; }
+    var dots=document.createElement('div'); dots.id='wall-dots'; document.body.appendChild(dots);
+    function stageEl(){ return document.querySelector('[data-stage]'); }
+    function page(){ var s=stageEl(); return s ? Math.round(s.scrollLeft/(s.clientWidth||1)) : 0; }
+    function drawDots(){ var PAGES=PAGESF(), p=Math.min(page(), PAGES.length-1); dots.innerHTML=PAGES.map(function(n,i){ return '<i data-p="'+i+'" class="'+(i===p?'on':'')+'" title="'+n+'"></i>'; }).join('')+'<span>'+PAGES[p]+'</span>'; }
+    function go(i){ var s=stageEl(); if(s) s.scrollTo({left:i*s.clientWidth, behavior:'smooth'}); }
+    dots.onclick=function(e){ var i=e.target.getAttribute && e.target.getAttribute('data-p'); if(i!=null) go(+i); };
+    /* 고정 줄의 특보 표시·재난문자를 누르면 그 목록 구역으로 */
+    urg.onclick=function(e){ var t=e.target.closest && e.target.closest('[data-go]'); if(!t) return; var i=PAGESF().indexOf(t.getAttribute('data-go')); if(i>=0) go(i); };
+    window.cbWallDots=drawDots;
+    var hooked=null; setInterval(function(){ var s=stageEl(); if(s && s!==hooked){ hooked=s; s.addEventListener('scroll', function(){ clearTimeout(drawDots._t); drawDots._t=setTimeout(drawDots, 80); }, {passive:true}); drawDots(); } }, 1000);
+    drawDots();
+    window.cbWallUrg(); setInterval(window.cbWallUrg, 5000);
   };
-  window.cbWallSelSync=function(i){ if(sel && sel.value!==String(i)) sel.value=String(i); };
+  window.cbWallUrg=function(){
+    var el=document.getElementById('wall-urg'), W=window.cbWallStation, D=window.WALL_DATA; if(!el || !W || !D) return;
+    var name=W.names[W.get()], c=(D.stage||{}).cnt||{p:0,a:0,w:0}, ws=(D.warns||{})[name]||[], ms=(D.msgs||{})[name]||[];
+    var esc=function(t){ return String(t==null?'':t).replace(/[&<>"]/g,function(x){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[x]; }); };
+    /* 충북 재난문자 수 = 모든 관서 목록을 합쳐 같은 문자(시각+본문)는 한 번만 */
+    var seen={}, nAll=0; Object.keys(D.msgs||{}).forEach(function(k){ (D.msgs[k]||[]).forEach(function(m){ var key=(m[2]||'')+'|'+(m[3]||''); if(!seen[key]){ seen[key]=1; nAll++; } }); });
+    var k=function(v,lab,col,cls){ return '<div class="k'+(cls?' '+cls:'')+'"><b style="color:'+(v?col:'inherit')+'">'+v+'</b><span>'+lab+'</span></div>'; };
+    var h='<div class="u-box" data-go="특보·재난문자" title="누르면 특보·재난문자 목록"><div class="u-c"><div class="h">충북<br>현황</div>'+k(c.p,'예비','#94a3b8')+k(c.a,'주의보','#fb923c')+k(c.w,'경보','#f87171')+k(nAll,'재난문자','#60a5fa','m')+'</div>';
+    var hc=document.documentElement.classList; hc.toggle('m-w', ws.length>0); hc.toggle('m-m', ms.length>0); hc.toggle('m-any', ws.length+ms.length>0); if(window.cbWallDots) window.cbWallDots();
+    /* 특보 칸 아래로 재난문자 칸을 내려 쌓는다(특보 칸 높이 + 간격) */
+    var wc=document.querySelector('[data-card="warn"]'), mc=document.querySelector('[data-card="msg"]');
+    if(mc){ if(hc.contains('wall-m') && ws.length && ms.length && wc && wc.offsetHeight) mc.style.setProperty('margin-top', (wc.offsetHeight+24)+'px', 'important'); else mc.style.removeProperty('margin-top'); }
+    var chips='';
+    if(ws.length) chips+=ws.map(function(w){ var col=/주의보/.test(w.type)?'#ea580c':'#dc2626'; return '<span class="u-t" style="--tc:'+col+'"><i></i>'+esc(w.type)+(w.time?' <small>'+esc(w.time)+'</small>':'')+'</span>'; }).join('');
+    /* 재난문자는 건수·최근 시각만(본문은 목록 구역에서) */
+    if(ms.length) chips+='<span class="u-t" style="--tc:#2563eb"><i></i>재난문자 '+ms.length+'건 <small>'+esc(ms[0][2]||'')+'</small></span>';
+    /* 아래 줄 = 고른 관서의 특보·재난문자만(없으면 줄 자체를 뺀다 — 없는 것은 위 숫자로 보인다) */
+    if(chips) h+='<div class="u-l"><span class="u-n">'+esc(name)+'</span>'+chips+'</div>';
+    h+='</div>';
+    el.innerHTML=h;
+  };
+  window.cbWallSelSync=function(i){ if(sel && sel.value!==String(i)) sel.value=String(i); if(window.cbWallUrg) window.cbWallUrg(); };
   if(window.cbWallStation) window.cbWallSelInit();
 })();
 </script>

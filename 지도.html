@@ -874,7 +874,7 @@ class Component extends DCLogic {
       wallStn: 0,
       wallPaused: false,
       demo: !!props.demo || !!_demoQ,
-      demoStage: (['normal','ready','caution','warn','severe'].indexOf(_demoQ)>=0 ? _demoQ : 'severe'),
+      demoStage: (['normal','ready','caution','warn','severe'].indexOf(_demoQ)>=0 ? _demoQ : 'ready'),   // 시연은 준비 단계부터
       // 경보음 음소거 — localStorage에 저장해 새로고침·자동갱신·재시작 후에도 유지.
       //   (예전엔 false 고정이라, 껐다가도 화면이 새로 그려지면 경보가 되살아났다.)
       muted: (function(){ try{ return (typeof localStorage!=='undefined' && localStorage.getItem('ggMuted')==='1'); }catch(e){ return false; } })(),
@@ -1151,7 +1151,7 @@ class Component extends DCLogic {
     // 바람 — 방향 원형 칩(회전 화살표) + 방향명 + 풍속
     var rWind=mkRow('바람', null, function(f,i){ return R('div',{style:{display:'flex', flexDirection:'column', alignItems:'center', gap:'2px'}},
       R('span',{style:{width:'21px', height:'21px', borderRadius:'50%', background:'var(--surface3)', display:'flex', alignItems:'center', justifyContent:'center'}},
-        R('span',{style:{fontSize:'14px', color:'var(--brand)', fontWeight:800, lineHeight:1, display:'inline-block', transform:'rotate('+(f.deg!=null?f.deg:0)+'deg)'}}, '↑')),
+        R('span',{style:{fontSize:'14px', color:'var(--brand)', fontWeight:800, lineHeight:1, display:'inline-block', transform:'rotate('+(f.deg!=null?(+f.deg+180)%360:0)+'deg)'}}, '↑')),   /* 바람이 불어 가는 쪽(기상청 표시) */
       R('span',{style:{fontSize:'10px', color:'var(--ink3)', whiteSpace:'nowrap'}}, f.dir||''),
       R('span',{style:{fontSize:'12px', fontWeight:700, color:'var(--ink2)'}}, num(f.wind,1))); });
     // 습도
@@ -2131,7 +2131,7 @@ class Component extends DCLogic {
         R('div',{style:{display:'flex', alignItems:'baseline', justifyContent:'center', gap:'5px', marginTop:'1px'}}, R('span',{style:{fontSize:'clamp(12px,1.1vw,16px)', fontWeight:700, color:'var(--ink2)'}}, (s2.temp!=null?Math.round(s2.temp)+'°':'')), R('span',{style:{fontSize:'13px', fontWeight:700, color:col2c}}, w2?String(w2.type).replace(/(주의보|경보|특보)$/,''):'평상'))); }));
 
     const footer=R('div',{style:{display:'flex', alignItems:'center', gap:'14px', padding:'2px 26px 10px', fontSize:'13.5px', color:'var(--ink3)', whiteSpace:'nowrap'}},
-      R('span',{style:{overflow:'hidden', textOverflow:'ellipsis'}}, '데이터 출처 · 기상청 / 행정안전부 / 한강홍수통제소 / 에어코리아 / 국립산림과학원 / 윈디(Windy.com)'),
+      R('span',{style:{overflow:'hidden', textOverflow:'ellipsis'}}, '데이터 출처 · 행정안전부 / 기상청 / 한강홍수통제소 / 국립산림과학원 / 에어코리아(한국환경공단) / 윈디'),
       R('span',{style:{marginLeft:'auto', flexShrink:0}}, '관서 자동 순환 14초 · 데이터 자동 갱신 5분 · 마지막 갱신 '+String(d.updated||'').replace(/^\d{4}-/,'').replace(/:\d\d$/,'')));
 
     return R('div',{style:{width:'100%', height:'100%', display:'flex', flexDirection:'column', position:'relative'}},

@@ -79,7 +79,7 @@ window.CB_NOTICES = [
       var n = window.cbNotices.unseen(), top = L[0];
       var c = document.createElement('div'); c.id = 'cb-ntoast'; c.setAttribute('role', 'status');
       c.style.cssText = 'position:fixed;right:calc(18px + var(--cb-fab-w,0px));bottom:18px;z-index:9000;width:min(360px,calc(100vw - 36px - var(--cb-fab-w,0px)));box-sizing:border-box;' +
-        'background:var(--surface,#fff);color:var(--ink,#0f1b2d);border:1px solid var(--border2,#d3dbe9);border-left:4px solid var(--brand,#1d4ed8);' +
+        'background:var(--surface,#fff);color:var(--ink,#0f1b2d);border:1.5px solid var(--brand,#1d4ed8);' +
         'border-radius:12px;box-shadow:0 12px 32px rgba(15,27,45,.22);padding:13px 14px 12px;font-family:inherit;';
       var h = document.createElement('div'); h.style.cssText = 'font-size:12px;font-weight:800;color:var(--brand,#1d4ed8);margin-bottom:3px;';
       h.textContent = '📢 새 공지' + (n > 1 ? ' ' + n + '건' : '');

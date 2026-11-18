@@ -50,8 +50,8 @@
     }
     const curCol = isDam ? (curStage>=4?'var(--severe)':curStage>=2?'var(--caution)':'var(--safe)')
                          : ['var(--safe)','var(--brand)','var(--caution)','var(--warn)','var(--severe)'][curStage];
-    const curName = isDam ? (curStage>=4?'위험':curStage>=2?'주의':'안전')
-                          : ['안전','관심','주의','경계','심각'][curStage];
+    const curName = isDam ? (curStage>=4?'위험':curStage>=2?'주의':'정상')
+                          : ['정상','관심','주의','경계','심각'][curStage];
 
     // ---- 변화량 (1/3/6시간) ----
     const d1=r.delta1, d3=r.delta3;

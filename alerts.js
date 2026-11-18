@@ -79,7 +79,7 @@
   function card(c, demo) {
     if (off('cbAlertCardsOff') || phone()) return;          // 화면 알림 카드 끔
     var t = TONE[c.tone] || TONE.msg, el = document.createElement('div');
-    el.style.cssText = 'pointer-events:auto;background:#fff;color:#0f1b2d;border:1px solid ' + t[0] + ';border-left:5px solid ' + t[0] + ';border-radius:12px;box-shadow:0 10px 30px -8px rgba(15,27,45,.35);padding:11px 13px 11px 12px;font:500 13px/1.5 Pretendard,system-ui,sans-serif;animation:cbAlertIn .25s ease-out;';
+    el.style.cssText = 'pointer-events:auto;background:#fff;color:#0f1b2d;border:1.5px solid ' + t[0] + ';border-radius:12px;box-shadow:0 10px 30px -8px rgba(15,27,45,.35);padding:11px 13px 11px 12px;font:500 13px/1.5 Pretendard,system-ui,sans-serif;animation:cbAlertIn .25s ease-out;';
     el.innerHTML = '<div style="display:flex;align-items:flex-start;gap:9px">'
       + '<div style="font-size:18px;line-height:1.2">' + c.icon + '</div>'
       + '<div style="flex:1;min-width:0"><div style="display:flex;gap:6px;align-items:baseline;flex-wrap:wrap"><b style="font-size:13.5px;color:' + t[0] + '">' + (demo ? '[시연] ' : '') + esc(c.title) + '</b>'
@@ -119,10 +119,10 @@
       if (phone() || !('Notification' in window) || Notification.permission !== 'default' || localStorage.getItem(ASK)) return;
     } catch (e) { return; }
     var el = document.createElement('div');
-    el.style.cssText = 'position:fixed;left:16px;bottom:60px;z-index:9600;max-width:min(420px,calc(100vw - 32px));background:#0f1b2d;color:#fff;border-radius:12px;padding:10px 12px;font:600 12.5px/1.5 Pretendard,system-ui,sans-serif;box-shadow:0 10px 30px -8px rgba(0,0,0,.4);display:flex;gap:10px;align-items:center;flex-wrap:wrap;';
+    el.style.cssText = 'position:fixed;left:16px;bottom:60px;z-index:9600;max-width:min(420px,calc(100vw - 32px));background:#0f1b2d;color:#fff;border-radius:12px;padding:10px 12px;font:600 14px/1.5 Pretendard,system-ui,sans-serif;box-shadow:0 10px 30px -8px rgba(0,0,0,.4);display:flex;gap:10px;align-items:center;flex-wrap:wrap;';
     el.innerHTML = '<span>🔔 새 특보·재난문자를 <b>Windows 알림</b>으로도 받을까요? (화면 팝업은 이미 켜져 있습니다)</span>'
-      + '<span style="display:flex;gap:6px;margin-left:auto"><button data-y style="border:0;border-radius:8px;padding:5px 11px;background:#2563eb;color:#fff;font:700 12px inherit;cursor:pointer">켜기</button>'
-      + '<button data-n style="border:1px solid #4b5b78;border-radius:8px;padding:5px 11px;background:transparent;color:#cfd7e6;font:700 12px inherit;cursor:pointer">괜찮아요</button></span>';
+      + '<span style="display:flex;gap:6px;margin-left:auto"><button data-y style="border:0;border-radius:8px;padding:5px 11px;background:#2563eb;color:#fff;font:700 13.5px inherit;cursor:pointer">켜기</button>'
+      + '<button data-n style="border:1px solid #4b5b78;border-radius:8px;padding:5px 11px;background:transparent;color:#cfd7e6;font:700 13.5px inherit;cursor:pointer">괜찮아요</button></span>';
     el.querySelector('[data-y]').onclick = function () { try { Notification.requestPermission(); localStorage.setItem(ASK, '1'); } catch (e) {} el.remove(); };
     el.querySelector('[data-n]').onclick = function () { try { localStorage.setItem(ASK, '1'); } catch (e) {} el.remove(); };
     document.body.appendChild(el);

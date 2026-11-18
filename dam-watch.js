@@ -47,7 +47,7 @@
     var hist = (di.out_hist||[]).map(function(p){ return num(p && p.value); }).filter(function(v){ return v!=null; });
     return { code:String(r.code), name:w.name, river:w.river, gate:w.gate, down:w.down, path:w.path, gauges:w.gauges, past:w.past,
              out:out, d1:d1, d3:d3, inflow:num(di.inflow), hist:hist, state:state,
-             label: state==='surge' ? '방류량 급증' : state==='gate' ? '수문 방류 수준' : '평상' };
+             label: state==='surge' ? '방류량 급증' : state==='gate' ? '수문 방류 수준' : '정상' };
   }
   /* 저수율(%) — 표에 있는 댐이고 저수량이 있을 때만, 아니면 null */
   function rate(r){

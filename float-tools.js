@@ -16,7 +16,8 @@
   function mkBtn(txt, tip, onClick) {
     var b = el('button', BTN, txt); b.type = 'button'; b.title = tip; b.setAttribute('aria-label', tip);
     b.onmouseenter = function () { b.style.borderColor = 'var(--brand,#2563eb)'; b.style.transform = 'translateY(-1px)'; };
-    b.onmouseleave = function () { b.style.borderColor = ''; b.style.transform = ''; };
+    /* 원래 테두리 색으로 되돌린다 — '' 로 비우면 테두리 색이 글자색(검정·파랑)으로 남았다 */
+    b.onmouseleave = function () { b.style.borderColor = 'var(--border2,var(--line,#d3dbe9))'; b.style.transform = ''; };
     b.onclick = onClick; return b;
   }
 

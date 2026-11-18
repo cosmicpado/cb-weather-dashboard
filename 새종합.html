@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>종합 현황(새 화면 시험) · 충북소방 기상재난통합플랫폼</title>
+<title>종합 현황 · 충북소방 기상재난통합플랫폼</title>
 <link rel="icon" href="icon.svg">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous">
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
@@ -21,6 +21,11 @@
 <script src="map-geo.js"></script>
 <script src="stage.js"></script>
 <script src="float-tools.js"></script>
+<script src="feedback.js"></script>
+<script src="notices.js"></script>
+<script>window.cbNotices && cbNotices.toast();   /* 안 본 공지가 있으면 오른쪽 아래 알림 카드 */</script>
+<script src="alerts.js"></script>
+<script>/* 화면 색 — 지도.html 과 같은 저장값(ggTheme). 그리기 전에 정해 깜빡이지 않게 */ try{ if(localStorage.getItem('ggTheme')==='dark') document.documentElement.setAttribute('data-theme','dark'); }catch(e){}</script>
 <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
 <script src="cctv-hrfco.js"></script>
@@ -28,9 +33,16 @@
 <script src="river-popup.js"></script>
 <style>
 :root{--bg:#f3f5f9;--card:#fff;--line:#e4e8ef;--ink:#101828;--ink2:#4b5a74;--ink3:#5f6d85;--brand:#1d4ed8;
-  --ok:#12805c;--okbg:#ecf8f2;--warn:#e8590c;--warnbg:#fff4e6;--sev:#d92d20;--sevbg:#fef0ef;--blue:#2563eb;--pre:#64748b;
+  --ok:#12805c;--okbg:#ecf8f2;--warn:#e8590c;--warnbg:#fff4e6;--sev:#d92d20;--sevbg:#fef0ef;--blue:#2563eb;--amb:#e0930a;--pre:#64748b;
   /* 하천 상세 팝업(river-popup.js)이 쓰는 지도.html 색 이름 */
-  --surface:#fff;--surface2:#f3f7fc;--surface3:#eaf0f8;--border:#e4e9f2;--border2:#d3dbe9;--safe:#0a8058;--caution:#e0930a;--severe:#d42a2f;--severeSoft:#fbe3e3;--brandSoft:#eef3ff}
+  --surface:#fff;--surface2:#f3f7fc;--surface3:#eaf0f8;--border:#e4e9f2;--border2:#d3dbe9;--safe:#0a8058;--caution:#e0930a;--severe:#d42a2f;--severeSoft:#fbe3e3;--brandSoft:#eef3ff;
+  /* 지도·팝업 바탕 */
+  --mapFill:#eef1f6;--mapSel:#dbe7ff;--lbl:#101828;--lbl2:#344054;--soft:#f3f5f9;--msg:#eef4ff;--me:#eef3ff;--over:rgba(255,255,255,.95)}
+/* 어두운 화면(☾) — 지도.html 어두운 색과 같은 계열 */
+:root[data-theme="dark"]{--bg:#080d18;--card:#111a2c;--line:#26314c;--ink:#e9eef9;--ink2:#9fb0cf;--ink3:#8a9ab8;--brand:#4b8bf5;
+  --ok:#34d399;--okbg:rgba(52,211,153,.12);--warn:#fb923c;--warnbg:rgba(251,146,60,.13);--sev:#f87171;--sevbg:rgba(248,113,113,.14);--blue:#60a5fa;--amb:#fbbf24;--pre:#94a3b8;
+  --surface:#111a2c;--surface2:#18233b;--surface3:#1e2a45;--border:#26314c;--border2:#354364;--safe:#34d399;--caution:#fbbf24;--severe:#ef4444;--severeSoft:rgba(239,68,68,.16);--brandSoft:rgba(75,139,245,.16);
+  --mapFill:#1a2540;--mapSel:#1e3a6b;--lbl:#e9eef9;--lbl2:#b6c3dc;--soft:#0f1729;--msg:rgba(96,165,250,.12);--me:rgba(75,139,245,.16);--over:rgba(17,26,44,.95)}
 *{box-sizing:border-box;margin:0}
 body{background:var(--bg);font-family:'Pretendard Variable',Pretendard,'Malgun Gothic',system-ui,sans-serif;color:var(--ink);font-size:15px}
 a{color:inherit;text-decoration:none}
@@ -38,35 +50,78 @@ a{color:inherit;text-decoration:none}
 /* 상단 */
 .top{display:flex;align-items:center;gap:14px}
 .logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(140deg,#3b82f6,#1d4ed8);display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;flex:none}
-.tt{font-weight:800;font-size:17px;white-space:nowrap}.tt em{font-style:normal;font-size:13.5px;font-weight:800;color:#b54708;background:#fff4e6;border-radius:6px;padding:2px 7px;margin-left:6px;vertical-align:2px}
+.tt{font-weight:800;font-size:17px;white-space:nowrap}.tt em{font-style:normal;font-size:13.5px;font-weight:800;color:#b54708;background:var(--card)4e6;border-radius:6px;padding:2px 7px;margin-left:6px;vertical-align:2px}
 .ts{font-size:14.5px;color:var(--ink3)}.ts.late{color:var(--sev);font-weight:800}
-.sel{margin-left:20px;display:flex;align-items:center;gap:8px;border:1.5px solid var(--line);background:#fff;border-radius:10px;padding:4px 6px 4px 12px}
-.sel small{color:var(--ink3);font-weight:700}
+.home{margin-left:20px;border:1.5px solid var(--line);background:var(--card);border-radius:10px;padding:9px 13px;font:800 14.5px inherit;color:var(--ink2);cursor:pointer;white-space:nowrap}
+.home.on{background:var(--brand);border-color:var(--brand);color:#fff}
+.room{display:none}   /* 휴대폰에서만 — 위 메뉴가 숨으므로 상황실로 가는 단추 */
+.sel{margin-left:8px;display:flex;align-items:center;gap:8px;border:1.5px solid var(--line);background:var(--card);border-radius:10px;padding:4px 6px 4px 12px}
+.sel small{color:var(--ink3);font-weight:700;white-space:nowrap}
 .sel select{border:0;background:transparent;font:800 15px inherit;color:var(--ink);padding:5px 4px;cursor:pointer}
 .clk{font-weight:800;font-size:20px;font-variant-numeric:tabular-nums;white-space:nowrap}
 .nav{margin-left:auto;display:flex;gap:4px;align-items:center}
+/* 윗줄 정돈 — 왼쪽(이름) · 관서 고르기 묶음 · 오른쪽(화면 이동 · 도구 · 시계). 단추 높이는 모두 38px */
+.home,.sel{height:38px;box-sizing:border-box}.home{display:inline-flex;align-items:center;padding:0 13px;margin-left:24px}.sel{margin-left:6px;padding:0 6px 0 12px}
+.nav>a{height:38px;box-sizing:border-box;display:inline-flex;align-items:center}
+.demo>button{height:38px;box-sizing:border-box}
+.clk{margin-left:14px;padding-left:16px;border-left:1px solid var(--line);line-height:1.1;text-align:right}.clk .ts{display:block;font-size:13.5px;font-weight:700}
+/* 중간 폭(노트북·창 줄임) — 윗줄이 넘치면 메뉴·아이콘 묶음이 둘째 줄 오른쪽으로 내려간다(잘리지 않게) */
+@media (min-width:821px) and (max-width:1500px){
+  .top{flex-wrap:wrap;row-gap:8px}.home{margin-left:12px}.clk .ts{display:none}
+  .nav a{padding:8px 9px}
+}
+/* 날씨 칸이 좁으면(가운데·오른쪽 칸 폭이 줄 때) 휴대폰처럼 세로로 쌓고 예보 표는 칸 안에서 옆으로 밀어 본다 */
+.c-now{container-type:inline-size}
+@container (max-width:560px){
+  .cur{flex-direction:column}.cur .cg{gap:6px}.mc{padding:8px 10px}.mc b{font-size:20px}
+  .fc{overflow-x:auto;-webkit-overflow-scrolling:touch}.fl2{min-width:620px}
+  .rain{grid-template-columns:64px repeat(3,1fr);gap:6px}.rain b{font-size:18px}
+  .ch{flex-wrap:wrap}.ch span{text-align:left}
+}
 .nav a{padding:8px 12px;border-radius:9px;font-weight:700;color:var(--ink2);font-size:14px;white-space:nowrap}
-.nav a:hover{background:#fff}.nav a.on{background:#fff;border:1px solid var(--line);color:var(--brand)}
-.demo{position:relative}.demo>button{border:1px solid var(--line);background:#fff;border-radius:9px;padding:8px 12px;font:800 14px inherit;color:var(--ink2);cursor:pointer;white-space:nowrap}
+.nav a:hover{background:var(--card)}.nav a.on{background:var(--card);border:1px solid var(--line);color:var(--brand)}
+.live{display:inline-flex;align-items:center;font-size:12.5px;font-weight:800;color:var(--sev);background:var(--sevbg);border-radius:999px;padding:2px 9px;margin-left:8px;vertical-align:2px;animation:liveBlink 2s ease-in-out infinite}
+@keyframes liveBlink{0%,100%{opacity:1}50%{opacity:.55}}
+.ub{display:inline-flex;align-items:center;gap:5px;margin-left:6px;padding-left:10px;border-left:1px solid var(--line)}
+.ib{position:relative;width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--card);display:inline-flex;align-items:center;justify-content:center;font-size:17px;cursor:pointer;color:var(--ink2);padding:0}
+.ib:hover{border-color:var(--border2)}.ib i{position:absolute;top:5px;right:5px;width:8px;height:8px;border-radius:50%;background:var(--sev)}
+.apw{position:relative}.ap{position:absolute;top:46px;right:0;z-index:70;width:min(370px,calc(100vw - 32px));background:var(--card);border:1px solid var(--border2);border-radius:14px;box-shadow:0 18px 40px rgba(16,24,40,.22);padding:8px}
+.ap h4{font-size:15.5px;padding:8px 10px 6px}.ap h4 small{font-size:13px;color:var(--ink3);font-weight:600;margin-left:6px}
+.ap .sw{display:flex;align-items:center;gap:12px;padding:10px;border-radius:10px;cursor:pointer}.ap .sw:hover{background:var(--soft)}
+.ap .sw b{display:block;font-size:14.5px}.ap .sw span{display:block;font-size:13px;color:var(--ink3);margin-top:2px;line-height:1.45}
+.ap .tg{flex:none;width:44px;height:24px;border-radius:12px;position:relative;background:var(--border2)}.ap .tg::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:left .15s}
+.ap .sw.on .tg{background:var(--brand)}.ap .sw.on .tg::after{left:23px}
+.pageAlarm{position:fixed;inset:0;z-index:8990;pointer-events:none;animation:pagePulse 1.5s ease-in-out infinite}.pageAlarm[hidden]{display:none}
+@keyframes pagePulse{0%,100%{box-shadow:inset 0 0 0 4px var(--severe)}50%{box-shadow:inset 0 0 0 10px var(--severe)}}
+@media (prefers-reduced-motion: reduce){.pageAlarm{animation:none;box-shadow:inset 0 0 0 6px var(--severe)}}
+.demo{position:relative}.demo>button{border:1px solid var(--line);background:var(--card);border-radius:9px;padding:8px 12px;font:800 14px inherit;color:var(--ink2);cursor:pointer;white-space:nowrap}
 .demo>button.on{background:#7c3aed;border-color:#7c3aed;color:#fff}
 /* 시연 단계 단추 — 지도.html 과 같은 모양·자리(화면 아래 가운데) */
-.dbar{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:9400;display:flex;align-items:center;gap:6px;padding:7px 9px;border-radius:14px;background:#fff;border:1px solid var(--border2);box-shadow:0 12px 32px rgba(16,24,40,.2)}
-.dbar[hidden]{display:none}.dbar>span{font-size:14px;font-weight:800;color:var(--ink3);padding:0 4px}
-.dbar button{height:32px;min-width:54px;padding:0 12px;border-radius:9px;border:1.5px solid;background:#fff;font:800 14.5px inherit;color:var(--ink);cursor:pointer}
+.dbar{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:9400;display:flex;align-items:center;gap:6px;padding:7px 9px;border-radius:14px;background:var(--card);border:1px solid var(--border2);box-shadow:0 12px 32px rgba(16,24,40,.2)}
+.dbar[hidden]{display:none}.dbar>span{font-size:14px;font-weight:800;color:var(--ink3);padding:0 4px;white-space:nowrap}
+.dbar button{height:32px;min-width:54px;padding:0 12px;white-space:nowrap;border-radius:9px;border:1.5px solid;background:var(--card);font:800 14.5px inherit;color:var(--ink);cursor:pointer}
 .dbar .x{border-color:var(--border2);background:#f3f7fc;color:var(--ink2)}
 .demoTag{flex:none;background:#7c3aed;color:#fff;font-weight:900;font-size:14px;border-radius:8px;padding:6px 10px;white-space:nowrap}
 /* 상태띠 */
 .band{display:flex;align-items:center;gap:16px;border-radius:14px;padding:12px 18px;border:1px solid;background:var(--okbg);border-color:#cdeedd}
-.band.l1{background:#eff4ff;border-color:#c7d7fe}.band.l2{background:var(--warnbg);border-color:#ffd8a8}.band.l3{background:var(--sevbg);border-color:#f7c1c1}
+/* 상태띠 색 = 단계 색(준비 파랑 · 1단계 노랑 · 2단계 주황 · 3단계 빨강). 바탕·테두리는 그 색을 옅게 섞어 밝은·어두운 화면 모두 맞게 */
+.band.l1{--bc:var(--blue)}.band.la{--bc:var(--amb)}.band.l2{--bc:var(--warn)}.band.l3{--bc:var(--sev)}
+.band.l1,.band.la,.band.l2,.band.l3{background:color-mix(in srgb,var(--bc) 9%,var(--card));border-color:color-mix(in srgb,var(--bc) 35%,var(--card))}
 .st{display:flex;align-items:center;gap:14px;flex:none;--c:var(--ok)}
-.band.l1 .st{--c:var(--blue)}.band.l2 .st{--c:var(--warn)}.band.l3 .st{--c:var(--sev)}
+.band.l1 .st,.band.la .st,.band.l2 .st,.band.l3 .st{--c:var(--bc)}
 .st i{width:44px;height:44px;border-radius:50%;background:var(--c);box-shadow:0 0 0 9px color-mix(in srgb,var(--c) 16%,transparent);flex:none}
+/* 준비 단계 이상 — 상태 원에서 고리가 퍼져 나가며 알린다(높을수록 빠르게). 움직임 줄이기 설정이면 멈춘다 */
+@keyframes stPulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--c) 55%,transparent),0 0 0 9px color-mix(in srgb,var(--c) 16%,transparent)}
+  100%{box-shadow:0 0 0 22px color-mix(in srgb,var(--c) 0%,transparent),0 0 0 9px color-mix(in srgb,var(--c) 16%,transparent)}}
+.band.pu .st i{animation:stPulse 2.4s ease-out infinite}.band.pu.p2 .st i{animation-duration:1.8s}.band.pu.p3 .st i{animation-duration:1.3s}.band.pu.p4 .st i{animation-duration:1s}
+@media (prefers-reduced-motion: reduce){.band .st i{animation:none!important}}
 .st b{font-size:28px;font-weight:900;color:var(--ink);white-space:nowrap;letter-spacing:-.5px}
 .bsum .l .wt{font-size:14px;padding:3px 9px}
+.cnt{cursor:pointer}.band .cnt:hover{background:var(--soft)}
 .bsum{flex:1;min-width:0}.bsum .l{font-size:16px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bsum .l small{font-size:13px;color:var(--ink3);font-weight:600;margin-left:6px}
 .bsum .s{font-size:13px;color:var(--ink3);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.cnt{display:flex;align-items:center;gap:4px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:6px 8px;flex:none}
+.cnt{display:flex;align-items:center;gap:4px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:6px 8px;flex:none}
 .cnt .h{font-size:14.5px;font-weight:800;color:var(--ink3);padding:0 10px;border-right:1px solid var(--line);line-height:1.25;text-align:center}
 .cnt .k{text-align:center;min-width:62px}.cnt .k b{display:block;font-size:22px;line-height:1.1}.cnt .k span{font-size:14px;color:var(--ink3);font-weight:700}
 .wt{flex:none;font-size:14px;font-weight:800;color:#fff;border-radius:6px;padding:2px 8px;margin-right:6px;vertical-align:1px}
@@ -78,22 +133,23 @@ a{color:inherit;text-decoration:none}
 .map{padding:4px 10px 12px;display:flex;gap:10px;align-items:center}
 .map svg{width:60%;height:auto;flex:none}
 .map path{stroke:#fff;stroke-width:2.2;cursor:pointer;transition:filter .15s}.map path:hover{filter:brightness(.95)}
-.map text{pointer-events:none;text-anchor:middle}.lbl{font-weight:800;font-size:28px;fill:#101828}.lbl2{font-weight:700;font-size:22px;fill:#344054}
+.map text{pointer-events:none;text-anchor:middle}.lbl,.lbl2{paint-order:stroke;stroke:var(--card);stroke-width:7px;stroke-linejoin:round}.lbl{font-weight:800;font-size:28px;fill:var(--lbl)}.lbl2{font-weight:700;font-size:22px;fill:var(--lbl2)}
 .tbl{flex:1;font-size:13.5px;min-width:0}
 .tbl .r{display:grid;grid-template-columns:74px 58px 56px 1fr;gap:6px;align-items:center;padding:5px 6px;border-radius:8px;cursor:pointer}
 .tbl .r:hover{background:#f5f7fb}.tbl .r.hd{color:var(--ink3);font-size:14px;font-weight:700;cursor:default}.tbl .r.hd:hover{background:none}
-.tbl .r.me{background:#eef3ff;font-weight:800}
-.tbl .wl{display:flex;gap:4px;flex-wrap:wrap}.tbl .wl span{font-size:13.5px;font-weight:800;color:#fff;border-radius:6px;padding:1px 6px}
+.tbl .r.me{background:var(--me);font-weight:800}
+.tbl .wl{display:flex;gap:4px;flex-wrap:nowrap;align-items:center}.tbl .wl .more{font-style:normal;font-size:13px;font-weight:800;color:var(--ink3)}
+.tbl .tf{border:0;background:none;font:700 13.5px inherit;color:var(--brand);cursor:pointer;padding:0 0 0 6px}.tbl .tfl{display:block;padding:2px 6px 4px}.tbl.fold{width:auto!important;padding:6px 10px}.tbl .wl span{font-size:13.5px;font-weight:800;color:#fff;border-radius:6px;padding:1px 6px}
 /* 지도 크게 — 기본 B: 지도 빈 자리에 관서 목록을 겹침 / A(주소 ?lay=a): 지도 아래 관서 칩 12개 */
 .map.lay-a{flex-direction:column;align-items:stretch}.map.lay-a svg,.map.lay-b svg{width:100%;max-height:740px;display:block}
 .chips{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
-.chip{border:1px solid var(--line);border-radius:10px;padding:8px 10px;cursor:pointer;min-width:0}.chip:hover{background:#f7f9fc}
+.chip{border:1px solid var(--line);border-radius:10px;padding:8px 10px;cursor:pointer;min-width:0}.chip:hover{background:var(--soft)}
 .chip.me{border-color:#9db7f5;background:#eef3ff}
 .chip .n{font-size:13px;font-weight:800;color:var(--ink2)}.chip .v{display:flex;align-items:baseline;gap:8px;margin-top:2px}
 .chip .v b{font-size:19px}.chip .v span{font-size:14.5px;color:var(--ink3);font-weight:700}.chip .v span.wet{color:var(--blue)}
 .chip .wl{display:flex;gap:3px;flex-wrap:wrap;margin-top:4px}.chip .wl span{font-size:13px;font-weight:800;color:#fff;border-radius:5px;padding:1px 5px}
 .map.lay-b{position:relative;display:block}
-.map.lay-b .tbl{position:absolute;right:14px;bottom:14px;width:350px;background:rgba(255,255,255,.95);border:1px solid var(--line);border-radius:12px;padding:8px;box-shadow:0 6px 20px rgba(16,24,40,.08);font-size:14.5px}
+.map.lay-b .tbl{position:absolute;right:14px;bottom:14px;width:350px;background:var(--over);border:1px solid var(--line);border-radius:12px;padding:8px;box-shadow:0 6px 20px rgba(16,24,40,.08);font-size:14.5px}
 .map.lay-b .tbl .r{grid-template-columns:82px 62px 62px 1fr;padding:5px 8px}.map.lay-b .tbl .r.hd{font-size:14.5px}
 .side{display:flex;flex-direction:column;gap:14px;min-width:0}
 .okline{display:flex;gap:10px;padding:12px 16px}
@@ -101,11 +157,34 @@ a{color:inherit;text-decoration:none}
 .al{margin:10px 16px 0;background:var(--warnbg);border-radius:10px;padding:9px 12px}   /* 왼쪽 색 막대는 쓰지 않는다 — 바탕색과 제목 색으로만 구분 */
 .al:last-child{margin-bottom:14px}
 .al b{font-size:14px}.al .tm{font-size:14.5px;color:var(--ink3);margin-left:6px}.al p{font-size:13px;color:var(--ink2);margin-top:4px;line-height:1.5}
-.al.msg{background:#eef4ff}.al.sev{background:var(--sevbg)}.al.pre{background:#f3f5f8}
-.now{display:flex;align-items:center;gap:18px;padding:8px 16px 2px}
+.al.msg{background:var(--msg)}.al.sev{background:var(--sevbg)}.al.pre{background:var(--soft)}
+/* 현재 실황 · 시간대별 예보(상황실 틀) */
+.cur{display:flex;gap:12px;padding:10px 16px 0;align-items:stretch}
+.cur .big{padding:0;flex:none;min-width:150px;display:flex;flex-direction:column;justify-content:center}
+.cur .t{font-size:44px;font-weight:800;letter-spacing:-1px;line-height:1}.cur .t small{font-size:17px;color:var(--ink3);margin-left:2px}
+.cur .wx{font-size:15px;font-weight:700;color:var(--ink2);margin-top:6px}
+.cur .cg{flex:1;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.mc{background:var(--soft);border-radius:10px;padding:9px 12px;display:flex;flex-direction:column;justify-content:center}
+.mc span{font-size:13.5px;color:var(--ink3);font-weight:700;display:flex;justify-content:space-between;gap:6px}.mc span i{font-style:normal;font-weight:600}
+.mc b{font-size:22px;font-weight:800;margin-top:2px}.mc b small{font-size:13.5px;color:var(--ink3);margin-left:2px;font-weight:700}
+.ar{display:inline-block;width:16px;height:16px;vertical-align:-2px;color:var(--brand);flex:none}.mc b .ar{width:18px;height:18px;margin-left:4px;vertical-align:-3px}
+.rain{display:grid;grid-template-columns:80px repeat(3,1fr);gap:8px;align-items:center;margin:8px 16px 0;background:var(--soft);border-radius:10px;padding:9px 12px}
+.rain .rl{font-weight:800;font-size:15px}.rain small{display:block;font-size:13px;color:var(--ink3);font-weight:700}.rain b{font-size:20px;font-weight:800}.rain b i{font-style:normal;font-size:13px;color:var(--ink3);margin-left:2px}
+.fc{padding:8px 12px 14px}
+.fl2{display:grid;grid-template-columns:66px repeat(12,1fr);align-items:center;text-align:center;font-size:14px;font-weight:700;min-height:28px}
+.fl2 .lb{text-align:left;font-size:13.5px;color:var(--ink3);font-weight:700;padding-left:4px}
+.fl2.hd span{color:var(--ink2);font-weight:800}.fl2 .nw{background:var(--me);border-radius:6px}
+.fl2 .ic{font-size:18px}.fl2 .rn{font-style:normal;color:var(--blue);font-weight:800}.fl2.pp span{color:var(--ink2)}.fl2.wd span{font-size:13px;line-height:1.25}
+.fl2.gr{min-height:80px}.gbox{grid-column:2 / span 12;position:relative;height:80px}.gbox svg{width:100%;height:80px;display:block;overflow:visible}
+.now{display:flex;align-items:stretch;gap:16px;padding:10px 16px 4px}
+.now .nt{flex:none;display:flex;flex-direction:column;justify-content:center;min-width:150px}
+.now .wx{font-size:16px;font-weight:700;color:var(--ink2);margin-top:2px}.now .hl{font-size:14px;font-weight:800;margin-top:4px}
+.now .mg{flex:1;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.now .mc{background:var(--soft);border-radius:10px;padding:8px 11px;display:flex;flex-direction:column;justify-content:center}
+.now .mc span{font-size:13px;color:var(--ink3);font-weight:700}.now .mc b{font-size:17px;font-weight:800;margin-top:1px}.now .mc b small{font-size:13px;color:var(--ink3);margin-left:2px;font-weight:700}
 .now .t{font-size:40px;font-weight:800;letter-spacing:-1px;white-space:nowrap}.now .t small{font-size:16px;color:var(--ink3);letter-spacing:0}
 .now .m{display:grid;grid-template-columns:repeat(4,auto);gap:4px 16px;font-size:13px;color:var(--ink3)}.now .m b{display:block;color:var(--ink);font-size:15px}
-.graph{padding:0 12px}.graph svg{width:100%;height:92px;display:block;overflow:visible}
+.graph{padding:22px 12px 0}.graph svg{width:100%;height:96px;display:block;overflow:visible}
 .hr{display:grid;grid-template-columns:repeat(12,1fr);gap:2px;padding:2px 12px 14px;text-align:center;font-size:14px;color:var(--ink3)}
 .hr b{display:block;font-size:15px;margin:2px 0}.hr .rn{color:var(--blue);font-weight:800}.hr .nw{background:#eef3ff;border-radius:8px}
 .riv{padding:4px 16px 12px}
@@ -114,9 +193,15 @@ a{color:inherit;text-decoration:none}
 .mini{height:6px;background:#eef1f5;border-radius:4px;overflow:hidden}.mini i{display:block;height:100%;border-radius:4px}
 .tag{font-size:13.5px;font-weight:800;color:#fff;border-radius:6px;padding:2px 0;text-align:center}
 .empty{padding:14px 16px;color:var(--ink3);font-size:13.5px}
+.fwrap{padding:8px 12px 12px}.fwrap[hidden]{display:none}
+.fbar{display:flex;align-items:center;gap:10px;margin-bottom:8px}.fbar b{font-size:17px}.fbm{margin-left:auto;display:flex;gap:6px}
+#fmapIn{height:680px;border-radius:12px;overflow:hidden;background:#e8f0fa}
+.fleg{font-size:13.5px;color:var(--ink3);margin-top:6px}
 /* 오른쪽 칸의 참고 정보 탭 — 폭이 좁아 한 줄씩, 길면 칸 안에서 넘겨 본다 */
 .c-inf .pane{max-height:600px;overflow:auto}
 .c-inf .refs{grid-template-columns:repeat(2,1fr)}
+.dm2 .r{display:grid;grid-template-columns:100px 1fr 44px 120px 76px;gap:10px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:10px;margin-bottom:6px;cursor:pointer;font-size:14px}
+.dm2 .r:hover{background:var(--soft)}.dm2 .io{text-align:right;color:var(--ink3);font-weight:700;white-space:nowrap}.dm2 .io b{color:var(--ink)}
 .c-inf .rv2,.c-inf .pm2,.c-inf .wl2,.c-inf .fr{grid-template-columns:1fr}
 .c-inf .fl{grid-template-columns:repeat(3,1fr);gap:6px}.c-inf .fl .r{padding:7px 9px}.c-inf .fl .t{flex-direction:column;align-items:flex-start;gap:1px}
 .c-inf .fl .t span{font-size:13px}
@@ -125,18 +210,18 @@ a{color:inherit;text-decoration:none}
 .c-inf .tabs button{padding:9px 11px}
 /* 맨 아래 기상 영상 — 레이더·위성·특보·윈디 한 줄 */
 .gal{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:12px 16px 16px}
-.gal figure{margin:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;cursor:zoom-in;background:#f3f5f9;display:flex;flex-direction:column}
-.gal figure img,.gal figure iframe{display:block;width:100%;height:300px;object-fit:contain;border:0;background:#f3f5f9}
-.gal figcaption{display:flex;justify-content:space-between;gap:8px;padding:8px 12px;background:#fff;font-weight:800;font-size:14px}.gal figcaption span{color:var(--ink3);font-weight:600;font-size:13px}
+.gal figure{margin:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;cursor:zoom-in;background:var(--soft);display:flex;flex-direction:column}
+.gal figure img,.gal figure iframe{display:block;width:100%;height:300px;object-fit:contain;border:0;background:var(--soft)}
+.gal figcaption{display:flex;justify-content:space-between;gap:8px;padding:8px 12px;background:var(--card);font-weight:800;font-size:14px}.gal figcaption span{color:var(--ink3);font-weight:600;font-size:13px}
 .gal .wd{position:relative}.gal .wd i{position:absolute;inset:0;cursor:zoom-in}
-.big{padding:10px 16px 0}.big a{display:block;border-radius:10px;overflow:hidden;background:#f3f5f9}
+.big{padding:10px 16px 0}.big a{display:block;border-radius:10px;overflow:hidden;background:var(--soft)}
 .big img{display:block;width:100%;height:330px;object-fit:contain}
 .thumbs{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:10px 16px 14px}
-.thumbs button{border:1.5px solid var(--line);background:#fff;border-radius:9px;padding:0;overflow:hidden;cursor:pointer;font:700 13.5px inherit;color:var(--ink2)}
+.thumbs button{border:1.5px solid var(--line);background:var(--card);border-radius:9px;padding:0;overflow:hidden;cursor:pointer;font:700 13.5px inherit;color:var(--ink2)}
 .thumbs button.on{border-color:var(--brand);color:var(--brand)}
-.thumbs img{display:block;width:100%;height:48px;object-fit:cover;background:#f3f5f9}.thumbs span{display:block;padding:4px 2px}
+.thumbs img{display:block;width:100%;height:48px;object-fit:cover;background:var(--soft)}.thumbs span{display:block;padding:4px 2px}
 /* 참고 정보 */
-.tabs{display:flex;gap:2px;padding:8px 12px 0;border-bottom:1px solid var(--line);overflow-x:auto}
+.tabs{display:flex;gap:2px;padding:8px 12px 0;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}
 .tabs button{border:0;background:none;padding:9px 14px;font:700 14px inherit;color:var(--ink3);border-bottom:2.5px solid transparent;cursor:pointer;white-space:nowrap}
 .tabs button.on{color:var(--brand);border-color:var(--brand)}
 .pane{padding:14px}
@@ -151,19 +236,19 @@ a{color:inherit;text-decoration:none}
 .foot{font-size:14px;color:var(--ink3);display:flex;justify-content:space-between;gap:10px}
 /* 팝업 */
 .mbg{position:fixed;inset:0;background:rgba(16,24,40,.55);z-index:9500;display:flex;align-items:flex-start;justify-content:center;padding:4vh 16px;overflow:auto}
-.mdl{background:#fff;border-radius:16px;max-width:860px;width:100%;box-shadow:0 30px 80px rgba(16,24,40,.35)}
+.mdl{background:var(--card);border-radius:16px;max-width:860px;width:100%;box-shadow:0 30px 80px rgba(16,24,40,.35)}
 .mh{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line)}
-.mh h3{font-size:17px;font-weight:800}.mh button{border:0;background:#f2f4f7;width:34px;height:34px;border-radius:9px;font-size:18px;cursor:pointer;flex:none}
+.mh h3{font-size:17px;font-weight:800}.mh button{border:0;background:var(--soft);color:var(--ink);width:34px;height:34px;border-radius:9px;font-size:18px;cursor:pointer;flex:none}
 .mb{padding:16px 18px}.mb img{display:block;max-width:100%;margin:0 auto 12px;border-radius:10px}
 .mb .meta{font-size:13px;color:var(--ink3);margin-bottom:10px}
 .btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
-.btn{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--line);border-radius:9px;padding:8px 13px;font-weight:800;font-size:13.5px;color:var(--ink2);background:#fff;cursor:pointer}
+.btn{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--line);border-radius:9px;padding:8px 13px;font-weight:800;font-size:13.5px;color:var(--ink2);background:var(--card);cursor:pointer}
 .btn.pri{background:var(--brand);color:#fff;border-color:var(--brand)}
 .click{cursor:pointer}.click:hover{filter:brightness(.98)}
 /* 하천 탭 */
 .rv2{display:grid;grid-template-columns:repeat(2,1fr);gap:8px 18px}
-.rv2 .r{display:grid;grid-template-columns:1fr 92px 70px 58px 46px;gap:10px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:10px;cursor:pointer;font-size:13.5px}
-.rv2 .r:hover{background:#f7f9fc}.rv2 .nm{min-width:0}.rv2 .nm b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rv2 .nm small{color:var(--ink3);font-size:14px}
+.rv2 .r{display:grid;grid-template-columns:1fr 92px 70px 58px 52px;gap:10px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:10px;cursor:pointer;font-size:13.5px}
+.rv2 .r:hover{background:var(--soft)}.rv2 .nm{min-width:0}.rv2 .nm b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rv2 .nm small{color:var(--ink3);font-size:14px}
 .rv2 svg{width:92px;height:30px;display:block}.rv2 .dv{font-size:14.5px;font-weight:800;text-align:right}
 /* 미세먼지 탭 */
 .pm2{display:grid;grid-template-columns:repeat(2,1fr);gap:6px 24px}
@@ -174,15 +259,15 @@ a{color:inherit;text-decoration:none}
 /* 산불 탭 */
 .fr{display:grid;grid-template-columns:300px 1fr;gap:16px;align-items:start}
 .fr .imgs{display:flex;flex-direction:column;gap:10px}.fr .imgs figure{margin:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;cursor:zoom-in}
-.fr .imgs img{display:block;width:100%;max-height:260px;object-fit:contain;background:#f3f5f9}.fr figcaption{font-size:14.5px;color:var(--ink3);padding:6px 10px}
+.fr .imgs img{display:block;width:100%;max-height:260px;object-fit:contain;background:var(--soft)}.fr figcaption{font-size:14.5px;color:var(--ink3);padding:6px 10px}
 .fl{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
 .fl .r{border:1px solid var(--line);border-radius:10px;padding:9px 12px}.fl .r.me{border-color:#9db7f5;background:#f5f8ff}
 .fl .t{display:flex;justify-content:space-between;align-items:baseline;font-weight:800}.fl .t span{font-size:14.5px;color:var(--ink3)}
 .stk{display:flex;height:7px;border-radius:4px;overflow:hidden;margin-top:7px;background:#eef1f5}
 /* 날씨 해설 탭 */
 .wl2{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-.wi{display:flex;gap:14px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:10px 12px;cursor:pointer}.wi:hover{background:#f7f9fc}
-.pane .wi img{width:132px;height:80px;object-fit:cover;object-position:top;border-radius:8px;flex:none;background:#f3f5f9;margin:0;max-height:none}.wi>div{flex:1;min-width:0}
+.wi{display:flex;gap:14px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:10px 12px;cursor:pointer}.wi:hover{background:var(--soft)}
+.pane .wi img{width:132px;height:80px;object-fit:cover;object-position:top;border-radius:8px;flex:none;background:var(--soft);margin:0;max-height:none}.wi>div{flex:1;min-width:0}
 .wi .k{font-size:13.5px;font-weight:800;color:#fff;background:var(--brand);border-radius:6px;padding:2px 7px;margin-right:6px}
 .wi .k.inf{background:#667085}.wi .k.mid{background:#0e7490}
 .wi b{font-size:14.5px}.wi p{font-size:14.5px;color:var(--ink3);margin-top:3px}
@@ -194,7 +279,12 @@ a{color:inherit;text-decoration:none}
 @media (max-width:820px){
   .wrap{padding:10px 12px 80px;gap:10px}
   .top{flex-wrap:wrap;gap:10px}.tt{font-size:15px}.tt em{display:none}.clk,.nav{display:none}
-  .sel{margin-left:auto}
+  .top>div:nth-child(2){flex:1 1 calc(100% - 50px);min-width:0}
+  .home,.sel{margin-left:0;flex:1 1 0;height:44px;box-sizing:border-box}.home{flex:0 0 auto;display:flex;align-items:center}.sel select{flex:1;min-width:0}.ub{display:none}
+  .band{position:relative}.demoTag{position:absolute;top:-11px;right:14px;padding:3px 9px;font-size:13.5px;z-index:2}
+  .dbar{left:8px;right:8px;transform:none;flex-wrap:wrap;justify-content:center;gap:6px;bottom:10px}.dbar>span{flex:1 0 100%;text-align:center}.dbar button{min-width:0;padding:0 10px;height:36px}
+  .room{display:flex;align-items:center;flex:0 0 auto;height:44px;box-sizing:border-box;border:1.5px solid var(--line);background:var(--card);border-radius:10px;padding:0 12px;font-weight:800;font-size:14.5px;color:var(--ink2);text-decoration:none;white-space:nowrap}
+  .bsum .s.split .si{display:block}.bsum .s.split .dot{display:none}
   .band{flex-wrap:wrap;padding:12px}.bsum .l,.bsum .s{white-space:normal}.cnt{width:100%;justify-content:space-around}
   .main{grid-template-columns:1fr}.side{display:contents}
   .gal{grid-template-columns:1fr 1fr}.gal figure img,.gal figure iframe{height:180px}.c-inf .pane{max-height:none}
@@ -202,6 +292,17 @@ a{color:inherit;text-decoration:none}
   .map{flex-direction:column}.map svg{width:100%}.tbl{width:100%}
   .chips{grid-template-columns:repeat(3,1fr)}.map.lay-b .tbl{position:static;width:100%;box-shadow:none;margin-top:8px}
   .hr{grid-template-columns:repeat(6,1fr)}.hr div:nth-child(n+7){display:none}
+  /* 휴대폰 — 칸이 내용(넓은 예보 표)에 밀려 화면 밖으로 나가지 않게, 넓은 표는 칸 안에서만 옆으로 넘긴다 */
+  .main>*,.card{min-width:0;max-width:100%}
+  .cur{flex-direction:column}.cur .cg{gap:6px}.mc{padding:8px 10px}.mc b{font-size:19px}
+  .fc{overflow-x:auto;-webkit-overflow-scrolling:touch}.fl2{min-width:600px}
+  .rain{grid-template-columns:56px repeat(3,1fr);gap:6px;padding:8px 10px}.rain b{font-size:17px}
+  .c-inf .refs{grid-template-columns:1fr}
+  .gal figcaption{flex-direction:column;gap:1px}.gal figcaption span{font-size:12.5px}
+  .okline{gap:6px}.okline div{padding:8px 10px;font-size:14px}
+  .ch{flex-wrap:wrap}.ch span{text-align:left}
+  .band .st b{font-size:24px}.bsum .s{font-size:13.5px}
+  .fbar{flex-wrap:wrap}.fbm{margin-left:0}#fmapIn{height:420px}
   .now .m{grid-template-columns:repeat(2,auto)}
   .riv .r{grid-template-columns:1fr 64px 60px 42px}
   .refs,.grid3{grid-template-columns:1fr 1fr}.foot{flex-direction:column}
@@ -212,18 +313,28 @@ a{color:inherit;text-decoration:none}
 <div class="wrap">
   <div class="top">
     <div class="logo">⛅</div>
-    <div><div class="tt">충북소방 기상재난통합플랫폼<em>새 화면 시험</em></div><div class="ts" id="upd">자료 --:-- 기준</div></div>
+    <div><div class="tt">충북소방 기상재난통합플랫폼<span class="live">● LIVE</span></div><div class="ts" id="upd">자료 --:-- 기준</div></div>
+    <button class="home" id="homeBtn" type="button" title="충청북도 전체 보기">🏠 충북 전체</button>
     <label class="sel"><small>관서</small><select id="pick" aria-label="관서 고르기"></select></label>
+    <a class="room" href="상황실.html" title="119종합상황실 화면">🖥 상황실</a>
+    <nav class="nav"><a href="재해.html">재해별 집중 감시</a><a href="상황실.html">119종합상황실</a>
+      <span class="ub"><a href="도움말.html#notice" class="ib" title="공지사항 · 사용설명서" aria-label="공지사항">📢<i id="ntDot" hidden></i></a>
+        <button class="ib" id="fbBtn" type="button" title="의견 보내기 — 불편한 점·틀린 값·바라는 점을 개발 담당자에게 보냅니다" aria-label="의견 보내기">💬</button>
+        <span class="demo"><button id="demoBtn" type="button" title="가상 호우 상황으로 화면 동작 보기">▶ 시연</button></span>
+        <span class="apw"><button class="ib" id="alBtn" type="button" title="알림 설정 — 경보음·테두리 점멸·화면 알림" aria-label="알림 설정">🔔</button><div class="ap" id="alPanel" hidden></div></span>
+        <button class="ib" id="thBtn" type="button" title="화면 색 바꾸기" aria-label="화면 색">☾</button></span></nav>
     <div class="clk" id="clk"></div>
-    <nav class="nav"><a href="지도.html">지금 종합 현황</a><a href="재해.html">재해별 집중 감시</a><a href="상황실.html">119종합상황실</a>
-      <span class="demo"><button id="demoBtn" type="button" title="가상 호우 상황으로 화면 동작 보기">▶ 시연</button></span></nav>
+  <div class="pageAlarm" id="pageAlarm" hidden></div>
   <div class="dbar" id="demoBar" hidden></div>
   </div>
   <div class="band" id="band"></div>
   <div class="main">
     <section class="card c-map">
-      <div class="ch"><h3>충청북도 관서 상황도</h3><span>색 = 특보 · 숫자 = 현재 기온 · 지도를 누르면 관서 확대 지도</span></div>
+      <div class="ch"><h3>충청북도 관서 상황도</h3><span>지도를 누르면 관서 확대 지도</span></div>
       <div class="map"><svg id="svg" aria-label="충청북도 관서 지도"></svg><div class="tbl" id="tbl"></div></div>
+      <div class="fwrap" id="fwrap" hidden><div class="fbar"><button class="btn" id="fBack" type="button">← 충북 전체 지도</button><b id="fTitle"></b>
+        <span class="fbm"><button class="btn" data-bm="Base" type="button">일반</button><button class="btn" data-bm="Hybrid" type="button">위성</button><button class="btn" id="fBig" type="button" title="크게 보기">⛶ 크게</button></span></div>
+        <div id="fmapIn"></div><div class="fleg">● 하천·댐 수위(누르면 상세) · <span style="color:#1d4ed8">■</span> 기상 관측소(진한 색 = 대표)</div></div>
     </section>
     <div class="side">
       <section class="card c-al" id="alc"></section>
@@ -232,7 +343,7 @@ a{color:inherit;text-decoration:none}
     </div>
   </div>
   <section class="card c-img" id="img"></section>
-  <div class="foot"><span>자료: 행정안전부 · 기상청 · 한강홍수통제소 · 국립산림과학원 · 에어코리아</span><span>충청북도 소방본부</span></div>
+  <div class="foot"><span>데이터 출처 · 행정안전부 / 기상청 / 한강홍수통제소 / 국립산림과학원 / 에어코리아(한국환경공단) / 윈디</span><span>충청북도 소방본부</span></div>
 </div>
 
 <script>
@@ -325,38 +436,60 @@ a{color:inherit;text-decoration:none}
   }
   /* 관서 확대 지도 — 지도.html 관서 상황도(확대)와 같은 층: 브이월드 바탕(일반·위성) + 하천·댐 수위 점(누르면 하천 상세) + 기상 관측소 점 */
   function svgToLatLng(x, y){ var g = window.MAPGEO, p = g && g.proj; if (!p) return [36.75, 127.75]; var py = p.padY!=null ? p.padY : p.pad; return [p.maxLat-(y-py)/p.scale, p.minLon+(x-p.pad)/(p.scale*p.kx)]; }
-  function focusMap(n){
-    var L = window.L, K = window.VWORLD_KEY;
-    if (!L || !K) return;
-    var reg = ((window.MAPGEO||{}).regions||[]).filter(function(x){ return x.name===n; })[0]; if (!reg) return;
-    var map = null;
-    var body = modal(n + ' 관서 지도', '<div style="display:flex;gap:6px;margin-bottom:8px;align-items:center"><button class="btn" data-bm="Base">일반</button><button class="btn" data-bm="Hybrid">위성</button>'
-      + '<span style="margin-left:auto;font-size:13.5px;color:var(--ink3)">● 하천 수위(누르면 상세) · <span style="color:#1d4ed8">■</span> 기상 관측소</span></div><div id="fmap" style="height:560px;border-radius:12px;overflow:hidden;background:#e8f0fa"></div>',
-      function(){ if (map) map.remove(); });
-    map = L.map(body.querySelector('#fmap'), { attributionControl:false });
-    var layers = [], mk = function(u){ return L.tileLayer(u, { maxZoom:19, minZoom:6 }); };
+  /* 지도 한 장 만들기 — 바탕(일반·위성) · 관서 경계 · 하천·댐 수위 점 · 기상 관측소 점. 자료가 바뀌면 redraw() 로 점만 다시 */
+  function makeFocus(el, n){
+    var L = window.L, K = window.VWORLD_KEY; if (!L || !K) return null;
+    var reg = ((window.MAPGEO||{}).regions||[]).filter(function(x){ return x.name===n; })[0]; if (!reg) return null;
+    var map = L.map(el, { attributionControl:false }), layers = [], grp = L.layerGroup().addTo(map);
+    var mk = function(u){ return L.tileLayer(u, { maxZoom:19, minZoom:6 }); };
     function base(bm){ layers.forEach(function(l){ map.removeLayer(l); }); layers = bm==='Hybrid'
       ? [mk('https://api.vworld.kr/req/wmts/1.0.0/'+K+'/Satellite/{z}/{y}/{x}.jpeg'), mk('https://api.vworld.kr/req/wmts/1.0.0/'+K+'/Hybrid/{z}/{y}/{x}.png')]
-      : [mk('https://api.vworld.kr/req/wmts/1.0.0/'+K+'/Base/{z}/{y}/{x}.png')]; layers.forEach(function(l){ l.addTo(map); }); }
+      : [mk('https://api.vworld.kr/req/wmts/1.0.0/'+K+'/Base/{z}/{y}/{x}.png')]; layers.forEach(function(l){ l.addTo(map); l.bringToBack(); }); }
     base('Base');
-    body.querySelectorAll('[data-bm]').forEach(function(b){ b.onclick = function(){ base(b.getAttribute('data-bm')); }; });
     var ring = (String(reg.d).match(/(-?\d+\.?\d*),(-?\d+\.?\d*)/g)||[]).map(function(pr){ var a = pr.split(','); return svgToLatLng(+a[0], +a[1]); });
     if (ring.length) { var poly = L.polygon(ring, { color:'#1d4ed8', weight:3, fill:true, fillOpacity:.06 }).addTo(map); map.fitBounds(poly.getBounds(), { padding:[20,20] }); }
     var META = RC.riverMeta || {}, COL = { safe:'#16a34a', warning:'#e0930a', danger:'#d42a2f' };
     var chip = function(col, txt){ return L.divIcon({ className:'', iconSize:null, html:'<div style="transform:translate(-50%,-50%);display:inline-flex;align-items:center;gap:4px;white-space:nowrap;padding:2px 8px 2px 5px;border-radius:999px;background:#fff;border:2px solid '+col+';box-shadow:0 1px 4px rgba(0,0,0,.3);font:800 13px Pretendard,sans-serif;color:#0f1b2d;cursor:pointer"><span style="width:9px;height:9px;border-radius:50%;background:'+col+'"></span>'+txt+'</div>' }); };
-    riversOf(n).concat((D().rivers||[]).filter(function(x){ return x.dam && (x.sigun===sig(n)); })).forEach(function(rv){
-      var m = META[rv.code] || {}; if (m.lat==null || m.lon==null) return;
-      var lv = rLevel(rv), col = COL[lv], up = rv.delta1, ar = (up!=null && up>=0.05) ? ' ▲' : (up!=null && up<=-0.05) ? ' ▼' : '';
-      L.marker([m.lat, m.lon], { icon: chip(col, (m.kind==='dam'?'댐 ':'')+num(rv.value,2)+'m'+ar), zIndexOffset: lv==='danger'?900:lv==='warning'?600:100 }).addTo(map)
-        .bindTooltip('<b>'+esc(rv.name)+'</b><br>현재 '+num(rv.value,2)+'m'+(rv.warning!=null?' · 관심 '+rv.warning+'m':'')+(rv.danger!=null?' · 경계 '+rv.danger+'m':'')+'<br>눌러서 상세 보기', { direction:'top', offset:[0,-12] })
-        .on('click', function(){ riverModal(rv); });
-    });
-    var s = station(n), aw = s.aws || {}, rep = ((RC.awsRep||{})[n]||{}).stn;
-    ((RC.awsStations||{})[n]||[]).forEach(function(m){ var o = (aw.stations||{})[m.stn] || {}, isRep = rep===m.stn;
-      L.marker([m.lat, m.lon], { zIndexOffset: 50, icon: L.divIcon({ className:'', iconSize:null, html:'<div style="transform:translate(-50%,-50%);padding:2px 7px;border-radius:6px;background:'+(isRep?'#1d4ed8':'#93c5fd')+';color:'+(isRep?'#fff':'#0f1b2d')+';font:800 12.5px Pretendard,sans-serif;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.3)">'+esc(m.name)+'</div>' }) }).addTo(map)
-        .bindTooltip('<b>기상 관측소 '+esc(m.name)+'</b><br>'+esc(m.addr||'')+'<br>기온 '+(o.ta==null?'—':num(o.ta)+'°')+' · 강수 1시간 '+(o.rn60==null?'—':num(o.rn60)+'mm')+(isRep?'<br><b>이 관서 대표 관측소</b>':''), { direction:'top', offset:[0,-12] });
-    });
+    function redraw(){
+      grp.clearLayers();
+      riversOf(n).concat((D().rivers||[]).filter(function(x){ return x.dam && (x.sigun===sig(n)); })).forEach(function(rv){
+        var m = META[rv.code] || {}; if (m.lat==null || m.lon==null) return;
+        var lv = rLevel(rv), col = COL[lv], up = rv.delta1, ar = (up!=null && up>=0.05) ? ' ▲' : (up!=null && up<=-0.05) ? ' ▼' : '';
+        L.marker([m.lat, m.lon], { icon: chip(col, (m.kind==='dam'?'댐 ':'')+num(rv.value,2)+'m'+ar), zIndexOffset: lv==='danger'?900:lv==='warning'?600:100 }).addTo(grp)
+          .bindTooltip('<b>'+esc(rv.name)+'</b><br>현재 '+num(rv.value,2)+'m'+(rv.warning!=null?' · 관심 '+rv.warning+'m':'')+(rv.danger!=null?' · 경계 '+rv.danger+'m':'')+'<br>눌러서 상세 보기', { direction:'top', offset:[0,-12] })
+          .on('click', function(){ riverModal(rv); });
+      });
+      var s = station(n), aw = s.aws || {}, rep = ((RC.awsRep||{})[n]||{}).stn;
+      ((RC.awsStations||{})[n]||[]).forEach(function(m){ var o = (aw.stations||{})[m.stn] || {}, isRep = rep===m.stn;
+        L.marker([m.lat, m.lon], { zIndexOffset: 50, icon: L.divIcon({ className:'', iconSize:null, html:'<div style="transform:translate(-50%,-50%);padding:2px 7px;border-radius:6px;background:'+(isRep?'#1d4ed8':'#93c5fd')+';color:'+(isRep?'#fff':'#0f1b2d')+';font:800 12.5px Pretendard,sans-serif;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.3)">'+esc(m.name)+'</div>' }) }).addTo(grp)
+          .bindTooltip('<b>기상 관측소 '+esc(m.name)+'</b><br>'+esc(m.addr||'')+'<br>기온 '+(o.ta==null?'—':num(o.ta)+'°')+' · 강수 1시간 '+(o.rn60==null?'—':num(o.rn60)+'mm')+(isRep?'<br><b>이 관서 대표 관측소</b>':''), { direction:'top', offset:[0,-12] });
+      });
+    }
+    redraw();
     setTimeout(function(){ map.invalidateSize(); }, 50);
+    return { name:n, map:map, base:base, redraw:redraw, remove:function(){ map.remove(); } };
+  }
+  /* 지도 칸 안의 관서 확대 지도 — focus = 보고 있는 관서(없으면 도 전체 지도) */
+  var focus = null, fIn = null;
+  function renderFocus(){
+    var on = !!focus && !!window.L;
+    $('fwrap').hidden = !on; $('svg').parentNode.style.display = on ? 'none' : '';
+    if (!on) { if (fIn) { fIn.remove(); fIn = null; $('fmapIn').innerHTML = ''; } return; }
+    $('fTitle').textContent = focus + ' 관서 지도';
+    if (!fIn || fIn.name !== focus) { if (fIn) fIn.remove(); $('fmapIn').innerHTML = ''; fIn = makeFocus($('fmapIn'), focus); }
+    else fIn.redraw();
+    $('fBack').onclick = function(){ focus = null; renderFocus(); };
+    $('fwrap').querySelectorAll('[data-bm]').forEach(function(bt){ bt.onclick = function(){ if (fIn) fIn.base(bt.getAttribute('data-bm')); }; });
+    $('fBig').onclick = function(){ focusMap(focus); };
+  }
+  /* ⛶ 크게 — 같은 지도를 팝업으로 */
+  function focusMap(n){
+    var fm = null;
+    var body = modal(n + ' 관서 지도', '<div style="display:flex;gap:6px;margin-bottom:8px;align-items:center"><button class="btn" data-bm="Base">일반</button><button class="btn" data-bm="Hybrid">위성</button>'
+      + '<span style="margin-left:auto;font-size:13.5px;color:var(--ink3)">● 하천 수위(누르면 상세) · <span style="color:#1d4ed8">■</span> 기상 관측소</span></div><div id="fmap" style="height:70vh;border-radius:12px;overflow:hidden;background:#e8f0fa"></div>',
+      function(){ if (fm) fm.remove(); });
+    fm = makeFocus(body.querySelector('#fmap'), n);
+    body.querySelectorAll('[data-bm]').forEach(function(bt){ bt.onclick = function(){ if (fm) fm.base(bt.getAttribute('data-bm')); }; });
   }
   function riverByName(n){ return (D().rivers||[]).filter(function(x){ return x.name === n; })[0]; }
   function fmtTm(t){ var m = String(t||'').match(/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})/); return m ? (+m[2])+'.'+(+m[3])+' '+m[4]+':'+m[5] : ''; }
@@ -379,7 +512,7 @@ a{color:inherit;text-decoration:none}
   function isBo(w){ return String(w.type||'').indexOf('경보')>=0 || w.level==='severe'; }
   function wColor(w){ return isBo(w) ? 'var(--sev)' : 'var(--warn)'; }
   function rLevel(r){ return (r.danger!=null && r.value>=r.danger) ? 'danger' : (r.warning!=null && r.value>=r.warning) ? 'warning' : 'safe'; }
-  var LVC = { safe:'var(--ok)', warning:'var(--warn)', danger:'var(--sev)' }, LVT = { safe:'안전', warning:'관심', danger:'경계' };
+  var LVC = { safe:'var(--ok)', warning:'var(--warn)', danger:'var(--sev)' }, LVT = { safe:'정상', warning:'관심', danger:'경계' };
   function shortRiver(nm){ return String(nm||'').replace(/^\([^)]*\)\s*/, ''); }
   function station(n){ var st=D().stations||[]; return st.filter(function(s){ return s.name===n; })[0] || st.filter(function(s){ return s.name===RC.home; })[0] || st[0] || {}; }
 
@@ -387,16 +520,18 @@ a{color:inherit;text-decoration:none}
   function renderTop(){
     var pick = $('pick');
     if (!pick.options.length) {
-      [WIDE].concat(ORDER).forEach(function(n){ var o=document.createElement('option'); o.value=n; o.textContent=n; pick.appendChild(o); });
-      pick.onchange = function(){ choose(pick.value); };
+      var o0 = document.createElement('option'); o0.value = ''; o0.textContent = '고르기'; o0.disabled = true; pick.appendChild(o0);
+      ORDER.forEach(function(n){ var o=document.createElement('option'); o.value=n; o.textContent=n; pick.appendChild(o); });
+      pick.onchange = function(){ if (pick.value) choose(pick.value); };
+      $('homeBtn').onclick = function(){ focus = null; choose(WIDE); };
     }
-    pick.value = me;
+    pick.value = me===WIDE ? '' : me; $('homeBtn').className = 'home' + (me===WIDE ? ' on' : '');
     var u = String(D().updated||''), m = u.match(/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})/), late = 0;
     if (m) late = Math.round((Date.now() - new Date(+m[1],+m[2]-1,+m[3],+m[4],+m[5]))/60000);
     var up = $('upd'); up.className = 'ts' + (late>15 ? ' late' : '');
     up.textContent = m ? ('자료 ' + m[4] + ':' + m[5] + ' 기준' + (late>15 ? ' · ⚠ ' + late + '분째 갱신 안 됨' : ' · 1분마다 자동 갱신')) : '자료 시각 모름';
   }
-  function choose(n){ me = n; try{ localStorage.setItem(KEY, n); }catch(e){} render(); }
+  function choose(n){ me = n; if (focus) focus = (n===WIDE ? null : n); try{ localStorage.setItem(KEY, n); }catch(e){} render(); }
   function tick(){ var d=new Date(), p=function(x){ return String(x).padStart(2,'0'); }, dd='일월화수목금토'.charAt(d.getDay());
     $('clk').innerHTML = p(d.getHours())+':'+p(d.getMinutes())+':'+p(d.getSeconds())+' <span class="ts">'+p(d.getMonth()+1)+'.'+p(d.getDate())+'('+dd+')</span>'; }
 
@@ -410,16 +545,23 @@ a{color:inherit;text-decoration:none}
   }
   function renderBand(){
     var d = D(), sg = window.cbStage ? window.cbStage(d.warnings, d.prelim, d.typhoon) : { rank:0, big:'평상', cnt:{p:0,a:0,w:0} };
-    var c = sg.cnt || {p:0,a:0,w:0}, b = $('band'), lv = 0, pill, line, sub = [], nMsg = (d.messages||[]).length;
+    var b = $('band'), lv = 0, cls = '', pill, line, sub = [], nMsg = (d.messages||[]).length;
+    /* 충북 현황 = 관서 수(지도·관서 표와 같은 기준 — 모든 특보). 한 관서에 여러 특보가 있으면 가장 높은 것 하나로 센다.
+       (상황실 '충북 현황'은 재대본 기준 — 호우·대설·태풍 시·군 수. 이 화면은 보이는 지도와 숫자가 맞는 쪽을 쓴다) */
+    var c = { p:0, a:0, w:0 };
+    ORDER.forEach(function(n){ var ws = warnsOf(n);
+      if (ws.some(isBo)) c.w++; else if (ws.length) c.a++;
+      else if ((d.prelim||[]).some(function(g){ return (g.items||[]).some(function(it){ return (it.north||it.north_match) && areaHits(String(it.area||'').split('(')[0], n); }); })) c.p++; });
     if (me === WIDE) {
-      lv = Math.min(3, sg.rank); pill = WIDE;
+      lv = Math.min(4, sg.rank||0); pill = WIDE; cls = ['','l1','la','l2','l3'][lv];   /* 충북 전체 = 재대본 단계 색 */
       var ws = d.warnings||[];
       line = ws.length ? ws.slice().sort(function(a,b){ return isBo(b)-isBo(a); }).slice(0,2).map(function(w){ return '<span class="wt" style="background:'+wColor(w)+'">'+esc(w.type)+'</span>'+esc(w.area); }).join('&nbsp;&nbsp;') : (sg.rank ? esc(sg.step||sg.name) : '');
       if (sg.rank && sg.reason) sub.push(esc(sg.reason));
       var ms = d.messages||[]; if (ms.length) sub.push('재난문자 '+ms.length+'건');
     } else {
       var s = station(me), ws2 = warnsOf(me), bo = ws2.some(isBo);
-      lv = bo ? 3 : ws2.length ? 2 : 0; pill = me;
+      var pre = (d.prelim||[]).some(function(g){ return (g.items||[]).some(function(it){ return (it.north||it.north_match) && areaHits(String(it.area||'').split('(')[0], me); }); });
+      lv = bo ? 3 : ws2.length ? 2 : pre ? 1 : 0; pill = me; cls = lv ? 'l'+lv : '';   /* 예비특보만 걸린 관서는 파랑(준비) */
       line = ws2.slice(0,2).map(function(w){ return '<span class="wt" style="background:'+wColor(w)+'">'+esc(w.type)+'</span>'; }).join('') + num(s.temp) + '° ' + esc(s.weather||'');
       var rv = riversOf(me).filter(function(r){ return rLevel(r)!=='safe'; }); if (rv.length) sub.push('하천 '+rv.map(function(r){ return shortRiver(r.name)+' '+LVT[rLevel(r)]; }).join(', '));
       var mm = msgsOf(me); if (mm.length) sub.push('재난문자 '+mm.length+'건 ('+esc(mm[0].time||'')+')');
@@ -427,13 +569,19 @@ a{color:inherit;text-decoration:none}
       var nr = nextRain(s); if (nr && !((+s.rain||0)>0)) sub.push(nr);
       var ml = window.cbMorningLow ? window.cbMorningLow(s.forecast) : null; if (ml && ml.t!=null) sub.push((ml.tomorrow?'내일':'오늘')+' 아침 '+Math.round(ml.t)+'°C');
     }
-    b.className = 'band' + (lv ? ' l'+lv : '');
-    b.innerHTML = '<span class="st"><i></i><b>'+esc(pill)+'</b></span><div class="bsum"><div class="l">'+line+'</div><div class="s">'+(sub.join(' · ')||'&nbsp;')+'</div></div>'
-      + '<div class="cnt" title="예비·주의보·경보 = 호우·대설·태풍 특보가 걸린 시·군 수(상황실 \'충북 현황\'과 같은 기준) · 재난문자 = 충북 최근 24시간"><div class="h">충북<br>현황</div>'
+    /* 충북이 준비 단계 이상이면 상태 원이 퍼지는 고리로 알린다 — 빠르기는 충북 단계(준비·1·2·3단계)를 따른다 */
+    var pr = Math.max(sg.rank||0, lv);
+    b.className = 'band' + (cls ? ' '+cls : '') + (pr ? ' pu p'+Math.min(4,pr) : '');
+    b.innerHTML = '<span class="st"><i></i><b>'+esc(pill)+'</b></span><div class="bsum"><div class="l">'+line+'</div><div class="s">'+(sub.map(function(t){ return '<span class="si">'+t+'</span>'; }).join('<i class="dot"> · </i>')||'&nbsp;')+'</div></div>'
+      + '<div class="cnt" title="예비·주의보·경보 = 그 특보가 걸린 관서 수(지도·관서 표와 같은 기준, 관서마다 가장 높은 특보 하나) · 재난문자 = 충북 최근 24시간"><div class="h">충북<br>현황</div>'
       + '<div class="k"><b style="color:'+(c.p?'var(--pre)':'inherit')+'">'+c.p+'</b><span>예비</span></div>'
       + '<div class="k"><b style="color:'+(c.a?'var(--warn)':'inherit')+'">'+c.a+'</b><span>주의보</span></div>'
       + '<div class="k"><b style="color:'+(c.w?'var(--sev)':'inherit')+'">'+c.w+'</b><span>경보</span></div>'
       + '<div class="k" style="border-left:1px solid var(--line)"><b style="color:'+(nMsg?'var(--blue)':'inherit')+'">'+nMsg+'</b><span>재난문자</span></div></div>';
+    /* 충북 현황 숫자를 누르면 충청북도 전체 화면으로 */
+    splitSub();
+    var cn = b.querySelector('.cnt'); cn.title += ' · 누르면 충청북도 전체';
+    cn.onclick = function(){ if (me!==WIDE) { focus = null; choose(WIDE); } };
   }
 
   /* ── 지도 + 관서 표 ─────────────────────────────── */
@@ -444,13 +592,13 @@ a{color:inherit;text-decoration:none}
     var h = '';
     regs.forEach(function(r){
       var ws = warnsOf(r.name), bo = ws.some(isBo), sel = r.name===me;
-      var fill = bo ? '#fca5a5' : ws.length ? '#fdba74' : (sel ? '#dbe7ff' : '#eef1f6');
-      h += '<path data-n="'+esc(r.name)+'" d="'+r.d+'" fill="'+fill+'"'+(sel?' style="stroke:#1d4ed8;stroke-width:5;stroke-linejoin:round"':'')+'><title>'+esc(r.name)+'</title></path>';
+      var fill = bo ? '#f87171' : ws.length ? '#fed7aa' : (sel ? 'var(--mapSel)' : 'var(--mapFill)');   /* 경보는 진한 빨강 · 주의보는 옅은 주황(진할수록 심각해 보인다) */
+      h += '<path data-n="'+esc(r.name)+'" d="'+r.d+'" fill="'+fill+'"'+(sel?' style="stroke:#1d4ed8;stroke-width:3.5;stroke-linejoin:round"':'')+'><title>'+esc(r.name)+'</title></path>';
     });
     (G.regions||[]).forEach(function(r){ var s=station(r.name), wet=(+s.rain||0)>0 && s.name===r.name;
       h += '<text class="lbl2" x="'+r.cx+'" y="'+(r.cy-14)+'">'+esc(r.name)+'</text><text class="lbl" x="'+r.cx+'" y="'+(r.cy+14)+'">'+(s.name===r.name?num(s.temp)+'°':'')+(wet?' ☔':'')+'</text>'; });
     svg.innerHTML = h;
-    svg.onclick = function(e){ var n=e.target && e.target.getAttribute && e.target.getAttribute('data-n'); if(n){ choose(n); focusMap(n); } };
+    svg.onclick = function(e){ var n=e.target && e.target.getAttribute && e.target.getAttribute('data-n'); if(n){ focus = n; choose(n); } };
     var tb = $('tbl'); $('svg').parentNode.className = 'map lay-' + LAY;
     if (LAY === 'a') {
       tb.className = 'chips';
@@ -460,14 +608,18 @@ a{color:inherit;text-decoration:none}
       tb.onclick = function(e){ var el=e.target.closest && e.target.closest('[data-n]'); if(el) choose(el.getAttribute('data-n')); };
       return;
     }
-    tb.className = 'tbl';
-    var t = '<div class="r hd"><span>관서</span><span>기온</span><span>강수</span><span>특보</span></div>';
+    var fold = lsGet('cbNewTblFold')==='1';
+    tb.className = 'tbl' + (fold ? ' fold' : '');
+    if (fold) { tb.innerHTML = '<button class="tf" type="button">관서 목록 펼치기 ▸</button>'; tb.onclick = function(){ lsSet('cbNewTblFold','0'); renderMap(); }; return; }
+    var t = '<button class="tf tfl" type="button" title="목록 접기">◂ 접기</button><div class="r hd"><span>관서</span><span>기온</span><span>강수</span><span>특보</span></div>';
     ORDER.forEach(function(n){ var s=station(n), ws=warnsOf(n), r=+s.rain||0;
       t += '<div class="r'+(n===me?' me':'')+'" data-n="'+esc(n)+'"><span>'+esc(n)+'</span><span>'+(s.name===n?num(s.temp)+'°':'-')+'</span>'
         + '<span'+(r>0?' style="color:var(--blue);font-weight:800"':'')+'>'+(s.name===n?r:'-')+'mm</span>'
-        + '<span class="wl">'+(ws.length ? ws.map(function(w){ return '<span style="background:'+wColor(w)+'">'+esc(w.type)+'</span>'; }).join('') : '<span style="background:none;color:#98a2b3">—</span>')+'</span></div>'; });
+        + '<span class="wl">'+(ws.length ? (function(){ var top = ws.slice().sort(function(a,b){ return isBo(b)-isBo(a); })[0];
+            return '<span style="background:'+wColor(top)+'" title="'+esc(ws.map(function(w){ return w.type; }).join(', '))+'">'+esc(top.type)+'</span>'+(ws.length>1?'<em class="more">+'+(ws.length-1)+'</em>':''); })() : '<span style="background:none;color:#98a2b3">—</span>')+'</span></div>'; });
     tb.innerHTML = t;
-    tb.onclick = function(e){ var el=e.target.closest && e.target.closest('[data-n]'); if(el) choose(el.getAttribute('data-n')); };
+    tb.onclick = function(e){ if (e.target.closest && e.target.closest('.tf')) { lsSet('cbNewTblFold','1'); renderMap(); return; }
+      var el=e.target.closest && e.target.closest('[data-n]'); if(el) choose(el.getAttribute('data-n')); };
   }
 
   /* ── 특보·재난문자 ─────────────────────────────── */
@@ -476,7 +628,7 @@ a{color:inherit;text-decoration:none}
     var el = $('alc');
     if (!ws.length && !ms.length && !pre.length) { el.innerHTML = '<div class="okline"><div>✓ 기상특보 없음</div><div>✓ 재난문자 없음</div></div>'; return; }
     var h = '<div class="ch"><h3>특보 · 재난문자</h3><span>'+esc(me===WIDE?'충청북도 전체':me+' 관련')+' '+(ws.length+ms.length)+'건</span></div>';
-    ws.forEach(function(w,i){ h += '<div class="al click'+(isBo(w)?' sev':'')+'" data-w="'+i+'"><b style="color:'+wColor(w)+'">⚠ '+esc(w.type)+'</b><span class="tm">'+esc(w.time||'')+' 발효 · '+esc(w.area||'')+' · 누르면 통보문</span></div>'; });
+    ws.forEach(function(w,i){ h += '<div class="al click'+(isBo(w)?' sev':'')+'" data-w="'+i+'"><b style="color:'+wColor(w)+'">⚠ '+esc(w.type)+'</b><span class="tm">'+esc(w.time||'')+' 발효 · '+esc(w.area||'')+'</span></div>'; });
     pre.forEach(function(g){ var its=(g.items||[]).filter(function(it){ return it.north || it.north_match; });
       h += '<div class="al pre"><b style="color:var(--pre)">예비 · '+esc(g.type)+'</b><span class="tm">'+esc((its[0]||{}).time||'')+'</span><p>'+esc(its.map(function(it){ return String(it.area||'').split('(')[0].trim(); }).join(', '))+'</p></div>'; });
     ms.slice(0,4).forEach(function(m,i){ h += '<div class="al msg click" data-m="'+i+'"><b style="color:var(--blue)">📩 재난문자 '+esc(m.time||'')+' · '+esc(m.sender||m.region||'')+'</b><p>'+esc(m.text||'')+'</p></div>'; });
@@ -499,34 +651,59 @@ a{color:inherit;text-decoration:none}
   }
 
   /* ── 내 관서 날씨 + 기온 그래프 ───────────────────── */
+  /* 날씨 칸 — 119종합상황실의 '현재 실황'·'시간대별 예보'와 같은 틀(같은 순서·같은 줄 이름)이라 두 화면에서 같은 자리에 같은 정보 */
+  var DIRS = ['북','북동','동','남동','남','남서','서','북서'];
+  function dirName(deg){ return deg==null||isNaN(deg) ? '' : DIRS[Math.round(((+deg%360)+360)%360/45)%8]; }
+  /* 바람이 불어 가는 쪽 화살표 — 그림(svg)이라 어느 방향으로 돌려도 가운데가 제자리(글자 ↑ 를 돌리면 위치가 어긋나 옆 글자를 덮었다) */
+  function arrow(deg){ return deg==null||isNaN(deg) ? '' : '<svg class="ar" viewBox="0 0 16 16" aria-hidden="true" style="transform:rotate('+((+deg+180)%360)+'deg)"><path d="M8 1.5 13.5 9H9.6v5.5H6.4V9H2.5Z" fill="currentColor"/></svg>'; }
+  /* 상태띠 아래 줄 — 한 줄에 다 들어가지 않으면(휴대폰) ' · ' 로 이어 쓰지 않고 항목마다 한 줄씩 내린다 */
+  function splitSub(){
+    var se = document.querySelector('#band .s'); if (!se) return;
+    se.classList.remove('split');
+    if (se.querySelectorAll('.si').length > 1 && se.offsetHeight > parseFloat(getComputedStyle(se).fontSize)*2) se.classList.add('split');
+  }
+  window.addEventListener('resize', splitSub);
   function renderNow(){
-    var n = me===WIDE ? (RC.home||ORDER[0]) : me, s = station(n), f = (s.forecast||[]).slice(0,12), o = s.obs || {};
-    var h = '<div class="ch"><h3>'+esc(n)+' 날씨'+(me===WIDE?' <span style="font-weight:600;color:var(--ink3);font-size:14.5px">(대표 관서)</span>':'')+'</h3><span>'+esc(o.station?o.station+' 관측소':'')+(o.time?' · '+esc(o.time):'')+'</span></div>'
-      + '<div class="now"><div class="t">'+num(s.temp)+'°<small> '+esc(s.weather||'')+'</small></div><div class="m">'
-      + '<span>체감<b>'+num(s.feels,0)+'°</b></span><span>습도<b>'+(s.humid!=null?s.humid+'%':'-')+'</b></span>'
-      + '<span>바람<b>'+esc(s.windDir||'')+' '+num(s.wind)+'m/s</b></span><span>12시간 강수<b>'+num(s.cum12h)+'mm</b></span></div></div>';
-    if (f.length) {
-      var ts = f.map(function(x){ return +x.temp; }), mx = Math.max.apply(null, ts), mn = Math.min.apply(null, ts), W = f.length*100;
-      var pts = f.map(function(x,i){ return [i*100+50, 24+(mx-(+x.temp))/((mx-mn)||1)*52]; });
-      var line = pts.map(function(p){ return p.join(','); }).join(' ');
-      var g = '<polygon points="50,92 '+line+' '+((f.length-1)*100+50)+',92" fill="#fb923c" opacity=".14"/><polyline points="'+line+'" fill="none" stroke="#f97316" stroke-width="3" vector-effect="non-scaling-stroke"/>';
-      h += '<div class="graph"><svg viewBox="0 0 '+W+' 92" preserveAspectRatio="none" id="gsv">'+g+'</svg></div>';
-      h += '<div class="hr">'+f.map(function(x,i){ var r=+x.rain||0;
-        return '<div class="'+(i?'':'nw')+'">'+(i?esc(x.hour):'지금')+'<b>'+esc(x.icon||'')+'</b><span style="font-weight:800;color:var(--ink)">'+Math.round(x.temp)+'°</span><br><span class="'+(r?'rn':'')+'">'+(r?r+'mm':'·')+'</span></div>'; }).join('')+'</div>';
-      $('now').innerHTML = h;
-      /* 점은 늘어난 그래프 위에 HTML 로 얹는다(svg 를 가로로 늘리면 원이 찌그러져서) */
-      var sv = $('gsv'), box = sv.parentNode; box.style.position = 'relative';
-      pts.forEach(function(p,i){ var dot=document.createElement('span'); dot.style.cssText='position:absolute;width:9px;height:9px;border-radius:50%;background:'+(i?'#f97316':'#1d4ed8')+';left:calc(12px + (100% - 24px) * '+(p[0]/W)+' - 4.5px);top:'+(p[1]-4.5)+'px';
-        box.appendChild(dot); });
-    } else { $('now').innerHTML = h + '<div class="empty">시간대별 예보 자료 없음</div>'; }
+    var n = me===WIDE ? (RC.home||ORDER[0]) : me, s = station(n), f = (s.forecast||[]).slice(0,12), o = s.obs || {}, aw = s.aws || {}, gw = aw.wind || {};
+    var day = aw.rnday!=null ? aw.rnday : s.cum12h, deg = s.vec!=null ? s.vec : (o.vec!=null ? o.vec : null);
+    var pmx = f.reduce(function(m,x){ return Math.max(m, +x.pop||0); }, 0);
+    var h = '<div class="ch"><h3>'+esc(n)+' 현재 실황'+(me===WIDE?' <span style="font-weight:600;color:var(--ink3);font-size:14.5px">(대표 관서)</span>':'')+'</h3><span>'+esc(o.base_time||'')+' 관측'+(o.station?' · '+esc(o.station)+' 관측소':'')+'</span></div>'
+      + '<div class="cur"><div class="big"><div class="t">'+num(s.temp)+'<small>°C</small></div><div class="wx">'+esc(s.icon||'')+' '+esc(s.weather||'')+' · 체감 '+num(s.feels,0)+'°</div></div>'
+      + '<div class="cg"><div class="mc"><span>습도</span><b>'+(s.humid!=null?Math.round(s.humid):'-')+'<small>%</small></b></div>'
+      + '<div class="mc"><span>풍속'+(gw.wss!=null?' <i>순간 '+num(gw.wss)+'</i>':'')+'</span><b>'+num(s.wind)+'<small>m/s</small></b></div>'
+      + '<div class="mc"><span>풍향</span><b>'+esc(s.windDir||dirName(deg)||'-')+' '+arrow(deg)+'</b></div></div></div>'
+      + '<div class="rain"><span class="rl">강수량</span><div><small>1시간</small><b>'+num(s.rain)+'<i>mm</i></b></div><div><small>12시간</small><b>'+num(s.cum12h)+'<i>mm</i></b></div><div><small>오늘 누적</small><b>'+num(day)+'<i>mm</i></b></div></div>'
+      + '<div class="ch" style="padding-top:14px"><h3>시간대별 예보 · 12시간</h3><span>오늘 최고 '+num(s.tmax,0)+'° · 최저 '+num(s.tmin,0)+'° · 강수확률 '+pmx+'%</span></div>';
+    if (!f.length) { $('now').innerHTML = h + '<div class="empty">시간대별 예보 자료 없음</div>'; return; }
+    var ts = f.map(function(x){ return +x.temp; }), mx = Math.max.apply(null, ts), mn = Math.min.apply(null, ts), W = f.length*100;
+    var pts = f.map(function(x,i){ return [i*100+50, 26+(mx-(+x.temp))/((mx-mn)||1)*44]; });
+    var line = pts.map(function(p){ return p.join(','); }).join(' ');
+    function row(label, cells, cls){ return '<div class="fl2 '+(cls||'')+'"><span class="lb">'+label+'</span>'+cells.map(function(c,i){ return '<span class="'+(i?'':'nw')+'">'+c+'</span>'; }).join('')+'</div>'; }
+    h += '<div class="fc">'
+      + row('', f.map(function(x,i){ return i ? esc(x.hour) : '지금'; }), 'hd')
+      + row('날씨', f.map(function(x){ return '<b class="ic">'+esc(x.icon||'')+'</b>'; }))
+      + '<div class="fl2 gr"><span class="lb">기온</span><div class="gbox"><svg viewBox="0 0 '+W+' 80" preserveAspectRatio="none" id="gsv"><polygon points="50,80 '+line+' '+((f.length-1)*100+50)+',80" fill="#fb923c" opacity=".14"/><polyline points="'+line+'" fill="none" stroke="#f97316" stroke-width="3" vector-effect="non-scaling-stroke"/></svg></div></div>'
+      + row('체감', f.map(function(x){ return num(x.feels,0)+'°'; }))
+      + row('강수', f.map(function(x){ var r=+x.rain||0; return r ? '<em class="rn">'+r+'</em>' : '·'; }))
+      + row('강수확률', f.map(function(x){ return (x.pop!=null?x.pop:'-')+'%'; }), 'pp')
+      + row('바람', f.map(function(x){ return arrow(x.deg)+'<br>'+num(x.wind); }), 'wd')
+      + '</div>';
+    $('now').innerHTML = h;
+    /* 점·기온 숫자는 늘어난 그래프 위에 HTML 로(원·글자가 찌그러지지 않게). 가장 높은 시각 빨강 · 낮은 시각 파랑 */
+    var box = $('gsv').parentNode;
+    pts.forEach(function(p,i){ var x = 'calc(100% * '+(p[0]/W)+')';
+      var dot = document.createElement('span'); dot.style.cssText = 'position:absolute;width:9px;height:9px;border-radius:50%;background:'+(i?'#f97316':'#1d4ed8')+';left:calc('+x+' - 4.5px);top:'+(p[1]-4.5)+'px';
+      var lb = document.createElement('span'); lb.textContent = Math.round(ts[i])+'°';
+      lb.style.cssText = 'position:absolute;left:'+x+';top:'+(p[1]-24)+'px;transform:translateX(-50%);font-size:14px;font-weight:800;white-space:nowrap;color:'+(ts[i]===mx?'var(--sev)':ts[i]===mn?'var(--blue)':'var(--ink)');
+      box.appendChild(dot); box.appendChild(lb); });
   }
 
   /* ── 기상 영상 — 레이더·위성·특보 현황·윈디를 한 줄로(누르면 크게) ─────── */
   var WINDY = 'https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=%C2%B0C&metricWind=m%2Fs&zoom=7&overlay=wind&product=ecmwf&level=surface&lat=36.75&lon=127.75&message=true';
   function renderImg(){
     var d = D(), ki = d.kmaImages || {}, v = function(i){ return i && i.file ? i.file + (i.ts ? '?v='+encodeURIComponent(i.ts) : '') : ''; };
-    var L = [['레이더', v(ki.radar), (ki.radar||{}).ts, 'https://www.weather.go.kr/w/image/radar.do'],
-             ['위성', v(ki.satellite), (ki.satellite||{}).ts, 'https://www.weather.go.kr/w/image/sat/ir.do'],
+    var L = [['레이더', v(ki.radar), (ki.radar||{}).ts, 'https://www.weather.go.kr/w/weather/radar/radar.do'],
+             ['위성', v(ki.satellite), (ki.satellite||{}).ts, 'https://www.weather.go.kr/w/weather/satellite/gk2a.do'],
              ['충북 특보 현황', v(ki.warn), (ki.warn||{}).ts, wrnLink('met')]];
     var el = $('img');
     if (!el.querySelector('iframe')) {      // 윈디는 처음 한 번만 만든다(1분마다 다시 그리면 지도가 처음으로 돌아간다)
@@ -536,6 +713,30 @@ a{color:inherit;text-decoration:none}
     }
     $('galImgs').innerHTML = L.map(function(x,i){ return x[1] ? '<figure data-g="'+i+'"><img src="'+esc(x[1])+'" alt="'+esc(x[0])+'"><figcaption>'+esc(x[0])+'<span>'+esc(x[2]||'')+'</span></figcaption></figure>' : '<figure><div class="empty">'+esc(x[0])+' 그림 없음</div></figure>'; }).join('');
     $('galImgs').onclick = function(e){ var fg = e.target.closest && e.target.closest('[data-g]'); if (fg) { var x = L[+fg.getAttribute('data-g')]; zoom(x[1], x[0]+(x[2]?' · '+x[2]:''), x[3]); } };
+  }
+
+  /* 소방드론 비행 — 상황실과 같은 기준(소방드론 재난유형별 표준운용절차): 호우·대설 특보 발효 또는 풍속 10m/s 이상이면 제한 */
+  function drone(n){ var ws = warnsOf(n).map(function(x){ return String(x.type||''); }).filter(function(t){ return /호우|대설/.test(t) && !/예비/.test(t); }), s = station(n), why = [];
+    if (ws.length) why.push(ws.filter(function(t,i){ return ws.indexOf(t)===i; }).join('·')+' 발효');
+    if (s.wind!=null && s.wind>=10) why.push('풍속 '+num(s.wind)+'m/s');
+    return { no: why.length>0, why: why }; }
+  function droneRef(){
+    if (me !== WIDE) { var dr = drone(me);
+      return '<div class="ref" title="소방드론 재난유형별 표준운용절차 — 호우·대설 특보 발효 또는 풍속 10m/s 이상이면 비행 제한"><h4>🚁 소방드론 · '+esc(me)+'</h4><b style="color:'+(dr.no?'var(--sev)':'var(--ok)')+'">'+(dr.no?'비행 제한':'비행 가능')+'</b><p>'+(dr.no?esc(dr.why.join(' · ')):'호우·대설 특보 없음 · 풍속 '+num(station(me).wind)+'m/s')+'</p></div>'; }
+    var bad = ORDER.filter(function(n){ return drone(n).no; });
+    return '<div class="ref" title="소방드론 재난유형별 표준운용절차 — 호우·대설 특보 발효 또는 풍속 10m/s 이상이면 비행 제한"><h4>🚁 소방드론 · 충북</h4><b style="color:'+(bad.length?'var(--sev)':'var(--ok)')+'">'+(bad.length? '비행 제한 '+bad.length+'개 관서' : '전 관서 비행 가능')+'</b><p>'+(bad.length? esc(bad.join('·')) : '호우·대설 특보 없음 · 풍속 10m/s 미만')+'</p></div>';
+  }
+  /* 충북 영향 댐 — 하천 수위 탭 맨 위(저수율·유입·방류, 누르면 댐 상세) */
+  function damHtml(){
+    var d = D(), L = window.cbDamWatch ? window.cbDamWatch.list(d.rivers) : []; if (!L.length) return '';
+    /* 하천 줄과 같은 틀 — 이름(아래 유입→방류) | 저수율 막대 | 저수율 | 방류량 | 상태. 상태 칸은 하천과 같은 크기 */
+    return '<div class="ch" style="padding:0 0 10px"><h3>💧 충북 영향 댐</h3><span>막대 = 저수율 · 누르면 상세</span></div><div class="rv2">'
+      + L.map(function(x){ var rv = (d.rivers||[]).filter(function(v){ return String(v.code)===x.code; })[0] || {}, rt = rv.damRate, st = x.state!=='normal';
+        var tg = x.state==='surge' ? '급증' : x.state==='gate' ? '방류' : '정상';
+        return '<div class="r" data-dam="'+esc(rv.name||'')+'"><span class="nm"><b>'+esc(x.name)+'</b><small>유입 '+(x.inflow!=null?num(x.inflow,0):'-')+' → 방류 '+(x.out!=null?num(x.out,0):'-')+'㎥/s</small></span>'
+          + '<span class="mini"><i style="width:'+(rt!=null?Math.round(rt):0)+'%;background:var(--blue)"></i></span>'
+          + '<span style="text-align:right;font-weight:800;font-size:15px">'+(rt!=null?Math.round(rt)+'%':'-')+'</span><span class="dv" style="color:var(--ink3)">저수율</span>'
+          + '<span class="tag" title="'+esc(x.label)+'" style="background:'+(st?'var(--warn)':'var(--ok)')+'">'+tg+'</span></div>'; }).join('') + '</div>';
   }
 
   /* ── 하천 목록(참고 정보 탭) ─────────────────────── */
@@ -567,23 +768,27 @@ a{color:inherit;text-decoration:none}
       var rv = riverRows(me), top = rv[0], bad = rv.filter(function(x){ return x.lv!=='safe'; });
       p.innerHTML = '<div class="refs">'
         + '<div class="ref" data-go="river"><h4>🌊 '+(me===WIDE?'충북':'관할')+' 하천</h4><b style="color:'+(bad.length?LVC[bad[0].lv]:'var(--ok)')+'">'+(bad.length? LVT[bad[0].lv]+' '+bad.length+'곳' : '모두 안전')+'</b><p>'+(top? '가장 높은 곳 '+esc(shortRiver(top.r.name))+' '+Math.round(top.pct*100)+'%(경계수위 대비)' : '관측소 없음')+'</p></div>'
-        + '<div class="ref" data-go="fire"><h4>🔥 산불 위험</h4><b style="color:'+(hiF.length?'#b54708':'var(--ok)')+'">'+(hiF.length? esc(hiF[0].levelText)+' 이상 '+hiF.length+'곳':'전역 낮음')+'</b><p>'+esc(hiF.map(function(f){ return f.region; }).join('·') || '국립산림과학원 산불위험예보')+'</p></div>'
-        + '<div class="ref" data-go="pm"><h4>😷 미세먼지 PM10</h4><b style="color:'+(pmBad.length?'var(--warn)':'var(--ok)')+'">'+(pmBad.length? '나쁨 '+pmBad.length+'곳':'충북 전역 좋음·보통')+'</b><p>가장 높은 곳 '+esc(pmMax.region||'-')+' '+(pmMax.pm10!=null?pmMax.pm10+'㎍/㎥':'')+'</p></div>'
-        + '<div class="ref"><h4>💧 충북 영향 댐</h4><b style="color:'+(damHot.length?'var(--warn)':'var(--ink)')+'">'+(damHot.length? esc(damHot[0].name)+' '+esc(damHot[0].label):'방류 평상')+'</b><p>'+esc(dams.map(function(x){ var r=(d.rivers||[]).filter(function(v){ return String(v.code)===x.code; })[0]; return x.name.replace('댐','')+(r&&r.damRate!=null?' '+Math.round(r.damRate)+'%':''); }).join(' · '))+' (저수율)</p></div>'
+        + (function(){ var FCOL=['var(--ok)','#b54708','var(--warn)','var(--sev)'], mf = fire.filter(function(x){ return x.region===sig(me); })[0], hiTop = fire.slice().sort(function(a,b){ return (b.level||0)-(a.level||0) || (b.index||0)-(a.index||0); })[0] || {};
+            var head = (me!==WIDE && mf) ? '<b style="color:'+FCOL[Math.max(0,(mf.level||1)-1)]+'">'+esc(mf.region)+' '+esc(mf.levelText)+'</b>' : '<b style="color:'+(hiF.length?'#b54708':'var(--ok)')+'">'+(hiF.length? esc(hiF[0].levelText)+' 이상 '+hiF.length+'곳':'전역 낮음')+'</b>';
+            return '<div class="ref" data-go="fire"><h4>🔥 산불 위험</h4>'+head+'<p>'+(hiF.length ? '충북: '+esc(hiF.map(function(x){ return x.region+' '+x.levelText; }).join(' · ')) : '충북 최고 '+esc(hiTop.region||'-')+' '+esc(hiTop.levelText||''))+'</p></div>'; })()
+        + (function(){ var mp2 = pm.filter(function(x){ return x.region===me; })[0], GT={good:'좋음',normal:'보통',bad:'나쁨',very_bad:'매우나쁨'};
+            var head = (me!==WIDE && mp2) ? '<b style="color:'+(/bad/.test(mp2.grade||'')?'var(--warn)':'var(--ok)')+'">'+esc(me)+' '+(mp2.pm10!=null?mp2.pm10:'-')+'㎍/㎥ · '+esc(mp2.gradeText||'')+'</b>' : '<b style="color:'+(pmBad.length?'var(--warn)':'var(--ok)')+'">'+(pmBad.length? '나쁨 '+pmBad.length+'곳':'충북 전역 좋음·보통')+'</b>';
+            return '<div class="ref" data-go="pm"><h4>😷 미세먼지 PM10</h4>'+head+'<p>충북 최고 '+esc(pmMax.region||'-')+' '+(pmMax.pm10!=null?pmMax.pm10+'㎍/㎥':'')+'</p></div>'; })()
+        + droneRef()
         + '<div class="ref" data-go="info"><h4>📋 날씨 해설 · 청주기상지청</h4><b style="font-size:15.5px">'+esc(it || '자료 없음')+'</b><p>'+esc(fmtTm(cm.tmFc))+' 발표 · 누르면 전문</p></div></div>';
       p.onclick = function(e){ var el=e.target.closest && e.target.closest('[data-go]'); if(el){ tab=el.getAttribute('data-go'); renderTabs(); } };
     } else if (tab==='river') {
       var all = riverRows(me);
-      p.innerHTML = '<div class="ch" style="padding:0 0 10px"><h3>'+(me===WIDE?'충북 하천 수위':esc(me)+' 관할 하천 수위')+'</h3><span>막대 = 24시간 수위 · 누르면 상세(그래프·CCTV)</span></div>'
+      p.innerHTML = damHtml() + '<div class="ch" style="padding:14px 0 10px"><h3>'+(me===WIDE?'충북 하천 수위':esc(me)+' 관할 하천 수위')+'</h3><span>막대 = 24시간 수위 · 누르면 상세(그래프·CCTV)</span></div>'
         + (all.length ? '<div class="rv2">'+all.map(function(x){ var rv=x.r, c=LVC[x.lv], H=(rv.history||[]).filter(function(v){ return !isNaN(v); });
           var sp = '';
           if (H.length > 1) { var mn=Math.min.apply(null,H), mx=Math.max.apply(null,H), span=Math.max(mx-mn, window.cbRiverMinSpan?window.cbRiverMinSpan(rv):0.1), mid=(mx+mn)/2;
             var pts = H.map(function(v,i){ return (i/(H.length-1)*90+1).toFixed(1)+','+(15-(v-mid)/span*26).toFixed(1); }).join(' ');
-            sp = '<svg viewBox="0 0 92 30"><polyline points="'+pts+'" fill="none" stroke="'+c+'" stroke-width="2" stroke-linejoin="round"/></svg>'; }
+            sp = '<svg viewBox="0 0 92 30"><polygon points="1,30 '+pts+' 91,30" fill="'+c+'" opacity=".22"/><polyline points="'+pts+'" fill="none" stroke="'+c+'" stroke-width="2" stroke-linejoin="round"/></svg>'; }
           var d1 = rv.delta1, dv = (d1==null||Math.abs(d1)<0.005) ? '<span style="color:var(--ink3)">— 유지</span>' : (d1>0 ? '<span style="color:var(--sev)">▲ '+d1.toFixed(2)+'</span>' : '<span style="color:var(--blue)">▼ '+Math.abs(d1).toFixed(2)+'</span>');
           return '<div class="r" data-rv="'+esc(rv.name)+'"><span class="nm"><b>'+esc(shortRiver(rv.name))+'</b><small>관심 '+num(rv.warning,1)+'m · 경계 '+num(rv.danger,1)+'m'+(me===WIDE?' · '+esc((String(rv.name).match(/^\(([^)]*)\)/)||[])[1]||''):'')+'</small></span>'
             + sp + '<span style="text-align:right;font-weight:800;font-size:15px">'+num(rv.value,2)+'m</span><span class="dv">'+dv+'</span><span class="tag" style="background:'+c+'">'+LVT[x.lv]+'</span></div>'; }).join('')+'</div>' : '<div class="empty">관할 하천 관측소 없음</div>');
-      p.onclick = function(e){ var el = e.target.closest && e.target.closest('[data-rv]'); if (el) { var rv = riverByName(el.getAttribute('data-rv')); if (rv) riverModal(rv); } };
+      p.onclick = function(e){ var el = e.target.closest && e.target.closest('[data-rv],[data-dam]'); if (el) { var rv = riverByName(el.getAttribute('data-rv')||el.getAttribute('data-dam')); if (rv) riverModal(rv); } };
     }
     else if (tab==='fire') {
       var fi = d.fireImg || {}, mp = fi.map || {}, pp = fi.popup || {}, FC = ['#16a34a','#eab308','#f97316','#dc2626'];
@@ -629,11 +834,63 @@ a{color:inherit;text-decoration:none}
 
   }
 
-  function render(){ if (!window.DASH) return; if (demo) demoD = makeDemo(demo); renderTop(); renderBand(); renderMap(); renderAlerts(); renderNow(); renderImg(); renderTabs(); renderDemo(); }
+  function render(){ if (!window.DASH) return; if (demo) demoD = makeDemo(demo); renderTop(); renderBand(); renderMap(); renderFocus(); renderAlerts(); renderNow(); renderImg(); renderTabs(); renderDemo(); alarmTick(); }
+
+  /* ── 공지·의견·알림 설정·화면 색 — 지도.html 과 같은 저장값(ggMuted·ggNoBlink·cbAlert*·ggTheme)을 써서 두 화면 설정이 같이 간다 */
+  function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+  function lsSet(k, v){ try{ localStorage.setItem(k, v); }catch(e){} }
+  function off(k){ return lsGet(k)==='1'; }
+  function utils(){
+    var nd = $('ntDot'); if (nd) nd.hidden = !(window.cbNotices && window.cbNotices.unseen() > 0);
+    $('fbBtn').onclick = function(){ if (window.cbFeedback) window.cbFeedback.open({ page:'새 종합 현황' }); };
+    var dark = document.documentElement.getAttribute('data-theme')==='dark';
+    $('thBtn').textContent = dark ? '☀' : '☾';
+    $('thBtn').onclick = function(){ var d2 = document.documentElement.getAttribute('data-theme')!=='dark'; document.documentElement.setAttribute('data-theme', d2?'dark':'light'); lsSet('ggTheme', d2?'dark':'light'); utils(); };
+    $('alBtn').onclick = function(e){ e.stopPropagation(); var p = $('alPanel'); p.hidden = !p.hidden; if (!p.hidden) alertPanel(); };
+    if (!utils._doc) { utils._doc = 1; document.addEventListener('click', function(e){ if (!e.target.closest || !e.target.closest('.apw')) $('alPanel').hidden = true; }); }
+  }
+  function alertPanel(){
+    var perm = (typeof Notification!=='undefined') ? Notification.permission : 'unsupported';
+    var rows = [
+      { k:'ggMuted', label:'경보음', desc:'새 특보·재난문자가 들어오거나 3단계일 때 소리', on:!off('ggMuted') },
+      { k:'ggNoBlink', label:'테두리 점멸', desc:'재대본 3단계·관서 경보·하천 경계일 때 화면 가장자리가 붉게 깜빡임', on:!off('ggNoBlink') },
+      { k:'cbAlertCardsOff', label:'화면 알림 카드', desc:'새 특보·재난문자·해제가 있으면 오른쪽 위에 카드', on:!off('cbAlertCardsOff') },
+      { k:'cbOsNotifyOff', label:'Windows 알림', desc: perm==='denied' ? '브라우저에서 막혀 있습니다 — 주소창 왼쪽 자물쇠에서 알림을 허용하세요' : perm==='unsupported' ? '이 브라우저는 지원하지 않습니다' : '창을 내려 둬도 화면 오른쪽 아래 Windows 알림', on: perm==='granted' && !off('cbOsNotifyOff'), os:1 },
+      { k:'cbAlertDamOff', label:'댐 방류량 급증', desc:'괴산·충주·용담·대청댐 방류량이 수문 방류 수준을 넘어 3시간 사이 크게 늘면 카드·소리', on:!off('cbAlertDamOff') },
+      { k:'cbNoticeToastOff', label:'새 공지 알림', desc:'공지사항에 새 글이 올라오면 오른쪽 아래 카드', on:!off('cbNoticeToastOff') }];
+    var p = $('alPanel');
+    p.innerHTML = '<h4>알림 설정<small>이 PC에 기억 · 종합 현황과 같이 적용</small></h4>' + rows.map(function(x,i){ return '<div class="sw'+(x.on?' on':'')+'" data-i="'+i+'" role="switch" aria-checked="'+x.on+'"><div style="flex:1;min-width:0"><b>'+x.label+'</b><span>'+x.desc+'</span></div><i class="tg"></i></div>'; }).join('');
+    p.onclick = function(e){ e.stopPropagation(); var el = e.target.closest && e.target.closest('[data-i]'); if (!el) return; var x = rows[+el.getAttribute('data-i')];
+      if (x.os && perm==='default') { lsSet('cbOsNotifyOff','0'); try{ Notification.requestPermission().then(alertPanel); }catch(e2){} return; }
+      if (x.os && perm!=='granted') return;
+      lsSet(x.k, off(x.k) ? '0' : '1'); if (x.k==='ggMuted') { if (!off('ggMuted')) audio(); } alertPanel(); alarmTick(); };
+  }
+  /* 위험할 때(재대본 3단계 · 관서 경보 · 관할 하천 경계) — 테두리 점멸 + 7초마다 경보음(지도.html manageAlarm 과 같은 기준·소리) */
+  var actx = null, alarmT = null, alertKey = '';
+  function audio(){ try{ if (!actx) { var AC = window.AudioContext || window.webkitAudioContext; if (AC) actx = new AC(); } if (actx && actx.state==='suspended') actx.resume(); }catch(e){} return actx; }
+  function beep(fq, du, wh){ var ac = actx; if (!ac) return; var o = ac.createOscillator(), g = ac.createGain(); o.type='square'; o.frequency.value=fq; o.connect(g); g.connect(ac.destination);
+    var t = ac.currentTime+(wh||0); g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.28,t+0.01); g.gain.exponentialRampToValueAtTime(0.0001,t+du); o.start(t); o.stop(t+du+0.02); }
+  function siren(){ if (off('ggMuted')) return; audio(); for (var i=0;i<3;i++) beep(880, 0.16, i*0.22); }
+  function danger(){
+    var d = D(), sg = window.cbStage ? window.cbStage(d.warnings, d.prelim, d.typhoon) : { rank:0 };
+    if (sg.rank >= 4) return true;
+    if (me !== WIDE && warnsOf(me).some(isBo)) return true;
+    return riversOf(me).some(function(r){ return rLevel(r)==='danger'; });
+  }
+  function alarmTick(){
+    var dg = danger();
+    $('pageAlarm').hidden = !(dg && !off('ggNoBlink'));
+    if (dg && !off('ggMuted')) { if (!alarmT) { siren(); alarmT = setInterval(function(){ if (danger() && !off('ggMuted')) siren(); }, 7000); } }
+    else if (alarmT) { clearInterval(alarmT); alarmT = null; }
+    /* 새 특보·예비특보·재난문자 화면 알림(alerts.js) — 자료가 바뀔 때만. 재난문자는 특보·재난문자 칸과 같은 범위. 시연이면 이 창 안에서만 비교 */
+    var d = D(), key = (d.updated||'')+'|'+(demo||'')+'|'+me; if (key === alertKey || !window.cbAlerts) return; alertKey = key;
+    var dams = (window.cbDamWatch ? window.cbDamWatch.list(d.rivers) : []).filter(function(x){ return x.state==='surge'; });
+    try{ window.cbAlerts(d.warnings, d.prelim, msgsOf(me), { demo: !!demo, page:'new', dams: dams }); }catch(e){}
+  }
   function renderDemo(){
     var bt = $('demoBtn'), bar = $('demoBar');
     bt.className = demo ? 'on' : ''; bt.textContent = demo ? '■ 시연 중' : '▶ 시연';
-    bt.onclick = function(){ demo = demo ? null : 'severe'; demoD = null; render(); };
+    bt.onclick = function(){ demo = demo ? null : 'ready'; demoD = null; render(); };   /* 시연은 준비 단계부터 */
     bar.hidden = !demo;
     if (demo) {
       bar.innerHTML = '<span>시연 단계</span>' + STAGES.map(function(x){ var on = x[0]===demo;
@@ -654,7 +911,7 @@ a{color:inherit;text-decoration:none}
       window.DASHBOARD_DATA = o; if (window.adaptDashboard) window.adaptDashboard(); render();
     }).catch(function(){});
   }
-  tick(); setInterval(tick, 1000);
+  tick(); setInterval(tick, 1000); utils();
   render(); setInterval(reload, 60000);
   window.addEventListener('cbstage', render);   /* 재대본 단계 직접 지정이 바뀌면(stage.js) */
 })();
