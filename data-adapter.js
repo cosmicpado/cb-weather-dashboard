@@ -133,7 +133,7 @@
         if(v==null) return p;
         var g = v<=30 ? ['good','좋음'] : v<=80 ? ['normal','보통'] : v<=150 ? ['bad','나쁨'] : ['vbad','매우나쁨'];
         return Object.assign({}, p, { grade:g[0], gradeText:g[1], gradeAll:p.grade, gradeTextAll:p.gradeText }); }),
-      messages: (SRC.messages||[]).map(function(m){ return { sender:m.sender, time:m.time, text:m.text, region:m.region }; }),
+      messages: (SRC.messages||[]).map(function(m){ return { sender:m.sender, time:m.time, crt:m.crt, text:m.text, region:m.region }; }),   /* crt = 발송 시각 전체('어제 20:03' 표기용) */
       forecast: forecast, focusRegion: (RC.home || '청주동부'),
       dam: damR ? { name: damR.name, info: damR.dam_info } : null,
       flood: flood, kmaImages: kmaImages,

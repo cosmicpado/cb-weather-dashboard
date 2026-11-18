@@ -604,7 +604,7 @@ html.no-demo .demo>button:not(.on){display:none}   /* 'test' 명령으로 시연
       lv = bo ? 3 : ws2.length ? 2 : pre ? 1 : 0; pill = me; cls = lv ? 'l'+lv : '';   /* 예비특보만 걸린 관서는 파랑(준비) */
       line = ws2.slice(0,2).map(function(w){ return '<span class="wt" style="background:'+wColor(w)+'">'+esc(w.type)+'</span>'; }).join('') + num(s.temp) + '° ' + esc(s.weather||'');
       var rv = riversOf(me).filter(function(r){ return rLevel(r)!=='safe'; }); if (rv.length) sub.push('하천 '+rv.map(function(r){ return shortRiver(r.name)+' '+LVT[rLevel(r)]; }).join(', '));
-      var mm = msgsOf(me); if (mm.length) sub.push('재난문자 '+mm.length+'건 ('+esc(mm[0].time||'')+')');
+      var mm = msgsOf(me); if (mm.length) sub.push('재난문자 '+mm.length+'건 ('+esc(mm[0].crt ? eqTime(mm[0].crt) : (mm[0].time||''))+')');
       if ((+s.rain||0) > 0) sub.unshift('지금 시간당 '+s.rain+'mm');
       var nr = nextRain(s); if (nr && !((+s.rain||0)>0)) sub.push(nr);
       var ml = window.cbMorningLow ? window.cbMorningLow(s.forecast) : null; if (ml && ml.t!=null) sub.push((ml.tomorrow?'내일':'오늘')+' 아침 '+Math.round(ml.t)+'°C');
@@ -678,11 +678,15 @@ html.no-demo .demo>button:not(.on){display:none}   /* 'test' 명령으로 시연
   function quakeBig(x){ return (x.int_cb||0) >= 2 || x.tp === '11' || x.tp === '10';
   }
   /* 참고 지진(회색, 2026-11-18) — 위 기준에 들지 않는 24시간 안 지진(국외 포함). 소리·알림 없이 맨 아래 한 줄 */
-  /* 지진 시각 — 1시간 안 'N분 전' · 오늘이면 'HH:MM' · 그 전은 'MM/DD HH:MM'(상황실.html eqTime 과 같게) */
-  function eqTime(tm){ var t = String(tm||''), d = new Date(t.replace(' ','T')), now = new Date();
-    if (isNaN(d)) return t.slice(5,16).replace('-','/');
-    var ago = Math.round((now-d)/6e4); if (ago >= 0 && ago < 60) return ago+'분 전';
-    return d.toDateString() === now.toDateString() ? t.slice(11,16) : t.slice(5,16).replace('-','/'); }
+  /* 지진·재난문자 시각 — 상황실.html cbTimeLabel 과 같은 표기 */
+  var eqTime = function(tm){   /* 시각 표기(지진·재난문자 공통, 2026-11-19) — 오늘 'HH:MM' · 어제 '어제 HH:MM' · 그 전 'M/D HH:MM'('N분 전'은 쓰지 않는다) */
+    var s=String(tm||'').replace(/\//g,'-'), d=new Date(s.replace(' ','T')), now=new Date();
+    if(isNaN(d)) return String(tm||'').slice(11,16);
+    var hm=s.slice(11,16), y=new Date(now.getTime()-864e5);
+    if(d.toDateString()===now.toDateString()) return hm;
+    if(d.toDateString()===y.toDateString()) return '어제 '+hm;
+    return (d.getMonth()+1)+'/'+d.getDate()+' '+hm; }
+
   var lastQQ = [], qqBound = false;
   function quakeQuiet(){
     var src = (demo ? D() : window.DASHBOARD_DATA||{}).quake||[], now = Date.now();
@@ -745,7 +749,7 @@ html.no-demo .demo>button:not(.on){display:none}   /* 'test' 명령으로 시연
     ws.forEach(function(w,i){ h += '<div class="al click'+(isBo(w)?' sev':'')+'" data-w="'+i+'"><b style="color:'+wColor(w)+'">⚠ '+esc(w.type)+'</b><span class="tm">'+esc(w.time||'')+' 발효 · '+esc(w.area||'')+'</span></div>'; });
     pre.forEach(function(g){ var its=(g.items||[]).filter(function(it){ return it.north || it.north_match; });
       h += '<div class="al pre"><b style="color:var(--pre)">예비 · '+esc(g.type)+'</b><span class="tm">'+esc((its[0]||{}).time||'')+'</span><p>'+esc(its.map(function(it){ return String(it.area||'').split('(')[0].trim(); }).join(', '))+'</p></div>'; });
-    ms.slice(0,4).forEach(function(m,i){ h += '<div class="al msg click" data-m="'+i+'"><b style="color:var(--blue)">📩 재난문자 '+esc(m.time||'')+' · '+esc(m.sender||m.region||'')+'</b><p>'+esc(m.text||'')+'</p></div>'; });
+    ms.slice(0,4).forEach(function(m,i){ h += '<div class="al msg click" data-m="'+i+'"><b style="color:var(--blue)">📩 재난문자 '+esc(m.crt ? eqTime(m.crt) : (m.time||''))+' · '+esc(m.sender||m.region||'')+'</b><p>'+esc(m.text||'')+'</p></div>'; });
     el.innerHTML = h + qh;
     el.onclick = function(e){ if (qqClick(e)) return; var t = e.target.closest && e.target.closest('[data-w],[data-m],[data-q]'); if (!t) return;
       if (t.hasAttribute('data-q')) quakeModal(q);
