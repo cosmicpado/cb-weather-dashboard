@@ -1,28 +1,16 @@
-/* 📢 공지사항 — 사용설명서(도움말.html) '공지사항' 탭에 나온다.
-   ▶ 평소에는 관리자 페이지(관리자.html → 공지사항 탭)에서 쓰고·고치고·지운다(2026-11-12).
-     그 내용은 서버 .data/notices.json 에 저장되고, 이 파일은 그 위에 깔리는 '기본 공지'다.
-     같은 id 면 관리자 페이지에서 고친 것이 이긴다(지운 것도 가려진다). 코드 반영(git)으로 지워지지 않는다.
-   ▶ 코드로 넣을 때는 맨 위에 추가(id = 날짜-시분 '2026-11-12-1430', 겹치지 않게).
-     kind : '새 기능' | '개선' | '오류 수정' | '안내'
-     body : 그냥 글(줄바꿈 \n 그대로 보임). from 은 의견을 받아 고친 경우 '의견 반영' 처럼 적는다(선택).
+/* 📢 공지사항 — 사용설명서(도움말.html) '공지사항' 탭과 종합 현황의 새 공지 알림에 나온다.
+   ▶ 공지는 서버에만 둔다(2026-11-18) — 관리자 페이지(관리자.html → 공지사항 탭)에서 쓰고·고치고·지우고,
+     서버 .data/notices.json 에 저장된다. 이 파일에는 공지 내용을 두지 않는다(공지 때문에 코드를 배포하지 않게).
+     예전에 이 파일에 있던 기본 공지는 서버가 처음 한 번 .data/notices.json 으로 옮겼다(tools/feedback.py).
    안 본 공지가 있으면 각 화면의 설명서 버튼(❓·?)에 빨간 점이 붙고, 누르면 공지사항 탭으로 바로 열린다.
-   본 공지는 이 PC 브라우저에 기억한다(cbNoticeSeen). */
-window.CB_NOTICES = [
-  { id: '2026-11-17-3', date: '2026-11-17', kind: '개선', title: '화면 안정성 개선 · 휴대폰 화면 정리',
-    body: '접속 순간 자료를 다 받지 못하면 빈 화면 대신 "실시간 자료를 불러오는 중"이 뜨고, 받아지는 대로 자동으로 화면이 열립니다.\n' +
-          '종합현황 맨 위, 상황실 휴대폰 화면 맨 위에 "자료 ○○:○○ 기준"이 표시됩니다. 15분 넘게 갱신되지 않으면 빨간색으로 알려 드립니다.\n' +
-          '휴대폰에서는 새 특보·재난문자 알림 팝업과 알림음이 뜨지 않습니다(화면 칸에는 그대로 나옵니다).\n' +
-          '화면에 남아 있던 예전 예시 자료를 모두 지우고 충청북도 자료만 보이게 했습니다.' },
-  { id: '2026-11-10-2', date: '2026-11-10', kind: '새 기능', title: '💬 의견 보내기가 생겼습니다',
-    body: '종합 현황 맨 위 오른쪽, 119종합상황실 왼쪽 위의 💬 버튼으로 의견을 보낼 수 있습니다.\n' +
-          '보내 주신 의견은 개발 담당자가 확인하고, 반영되면 이 공지사항으로 알려 드립니다.' }
-];
+   본 공지는 이 PC 브라우저에 기억한다(cbNoticeSeen). 서버가 없는 화면(파일로 연 화면)에서는 공지가 없다. */
+window.CB_NOTICES = [];
 
 (function () {
   var BASE = (window.CB_NOTICES || []).slice(), L = window.CB_NOTICES = BASE.slice();
   function latest() { return L.length ? L[0].id : ''; }
   function seen() { try { return localStorage.getItem('cbNoticeSeen') || ''; } catch (e) { return ''; } }
-  /* 기본 공지 + 서버(관리자 페이지)에서 고친 것 — id 로 덮어쓰고, deleted 면 뺀다. 최신(날짜·id)부터 */
+  /* 서버(관리자 페이지)의 공지 — id 로 모으고, deleted 면 뺀다. 최신(날짜·id)부터 */
   function merge(over) {
     var by = {}, order = [];
     BASE.forEach(function (n) { by[n.id] = n; order.push(n.id); });
@@ -38,7 +26,7 @@ window.CB_NOTICES = [
     unseen: function () { var s = seen(); return L.filter(function (n) { return n.id > s; }).length; },
     markSeen: function () { try { if (latest()) localStorage.setItem('cbNoticeSeen', latest()); } catch (e) {} }
   };
-  /* 서버에서 고친 공지 받기 — 서버가 없거나(파일로 연 화면) 느리면 기본 공지만으로 2.5초 뒤 진행 */
+  /* 서버에서 공지 받기 — 서버가 없거나(파일로 연 화면) 느리면 공지 없이 2.5초 뒤 진행 */
   window.cbNotices.ready = new Promise(function (done) {
     var t = setTimeout(done, 2500);
     if (location.protocol === 'file:' || !window.fetch) { clearTimeout(t); return done(); }

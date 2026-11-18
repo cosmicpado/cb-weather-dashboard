@@ -207,12 +207,38 @@ def _write_atomic(path, text, enc):
     os.replace(tmp, path)
 
 
+# 예전에 notices.js(코드)에 있던 기본 공지 — 공지를 서버에만 두기로 하면서(2026-11-18) 처음 한 번 서버로 옮긴다.
+# 이미 같은 id 가 서버에 있으면(관리자 페이지에서 고쳤거나 지운 것) 건드리지 않는다. 옮긴 뒤엔 다시 넣지 않는다.
+_SEED_NOTICES = [
+    {'id': '2026-11-17-3', 'date': '2026-11-17', 'kind': '개선', 'title': '화면 안정성 개선 · 휴대폰 화면 정리',
+     'body': '접속 순간 자료를 다 받지 못하면 빈 화면 대신 "실시간 자료를 불러오는 중"이 뜨고, 받아지는 대로 자동으로 화면이 열립니다.\n'
+             '종합현황 맨 위, 상황실 휴대폰 화면 맨 위에 "자료 ○○:○○ 기준"이 표시됩니다. 15분 넘게 갱신되지 않으면 빨간색으로 알려 드립니다.\n'
+             '휴대폰에서는 새 특보·재난문자 알림 팝업과 알림음이 뜨지 않습니다(화면 칸에는 그대로 나옵니다).\n'
+             '화면에 남아 있던 예전 예시 자료를 모두 지우고 충청북도 자료만 보이게 했습니다.'},
+    {'id': '2026-11-10-2', 'date': '2026-11-10', 'kind': '새 기능', 'title': '💬 의견 보내기가 생겼습니다',
+     'body': '종합 현황 맨 위 오른쪽, 119종합상황실 왼쪽 위의 💬 버튼으로 의견을 보낼 수 있습니다.\n'
+             '보내 주신 의견은 개발 담당자가 확인하고, 반영되면 이 공지사항으로 알려 드립니다.'},
+]
+SEEDED_FLAG = ROOT / '.data' / 'notices_seeded'
+
+
 def _load_notices():
     try:
         d = json.loads(STORE_NOTICES.read_text(encoding='utf-8'))
-        return d if isinstance(d, dict) else {}
+        d = d if isinstance(d, dict) else {}
     except (OSError, ValueError):
-        return {}
+        d = {}
+    if not SEEDED_FLAG.exists():
+        add = [n for n in _SEED_NOTICES if n['id'] not in d]
+        try:
+            if add:
+                for n in add:
+                    d[n['id']] = dict(n, at=datetime.now().strftime('%Y-%m-%d %H:%M'))
+                _save_notices(d)
+            SEEDED_FLAG.write_text(datetime.now().strftime('%Y-%m-%d %H:%M'), encoding='utf-8')
+        except OSError:
+            pass
+    return d
 
 
 def _save_notices(d):

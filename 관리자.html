@@ -363,7 +363,7 @@
       +'<p class="ac-note">· 방문자 = 같은 PC·같은 브라우저를 한 명으로 셉니다(IP 주소는 저장하지 않습니다). · 서버를 켜 둔 동안만 기록됩니다. · 기록은 13개월 보관합니다.</p>';
   }
 
-  /* ── 공지사항 ── notices.js 의 기본 공지 + 서버에서 고친 것(over). 고치기·지우기·새로 쓰기는 서버에 id 로 저장 */
+  /* ── 공지사항 ── 공지는 서버(.data/notices.json)에만 있다. 쓰기·고치기·지우기 모두 여기서 하고 서버에 id 로 저장 */
   var NK=['새 기능','개선','오류 수정','안내'], over=[], N=window.cbNotices||{base:[], merge:function(){ return []; }};
   function pad(n){ return (n<10?'0':'')+n; }
   function today(){ var d=new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
@@ -377,12 +377,12 @@
     $('ntList').innerHTML=''; $('ntList').appendChild(el('div','msg','불러오는 중…'));
     fetch('api/feedback?notices=1',{cache:'no-store'}).then(function(r){ return r.json(); })
       .then(function(j){ over=(j && j.ok && j.items) || []; ntRender(); })
-      .catch(function(){ over=[]; ntRender('서버에 연결하지 못했습니다 — 기본 공지만 보입니다'); });
+      .catch(function(){ over=[]; ntRender('서버에 연결하지 못했습니다'); });
   }
   function ntRender(warn){
     var L=$('ntList'); L.innerHTML='';
     if(warn) L.appendChild(el('div','msg',warn));
-    var list=N.merge(over), byOver={}; over.forEach(function(o){ byOver[o.id]=o; });
+    var list=N.merge(over);
     $('c-nt').textContent=list.length; $('ntCount').textContent='보이는 공지 '+list.length+'건';
     if(!list.length) L.appendChild(el('div','msg','공지가 없습니다. ＋ 새 공지 쓰기로 올리세요.'));
     list.forEach(function(n){
@@ -390,8 +390,7 @@
       h.appendChild(el('span','pill p-'+String(n.kind||'안내').split(' ')[0], n.kind||'안내'));
       h.appendChild(el('span',null,n.date||''));
       if(n.from) h.appendChild(el('span',null,'· '+n.from));
-      var isBase=(N.base||[]).some(function(b){ return b.id===n.id; });
-      h.appendChild(el('span','src', byOver[n.id] ? (isBase?'기본 공지 · 여기서 고침':'여기서 씀')+(n.at?' '+n.at:'') : '기본 공지(코드)'));
+      if(n.at) h.appendChild(el('span','src','저장 '+n.at));
       var acts=el('span','acts'), e=el('button',null,'고치기'), d=el('button','del','지우기');
       e.type=d.type='button'; e.onclick=function(){ ntEdit(n); }; d.onclick=function(){ ntDel(n); };
       acts.appendChild(e); acts.appendChild(d); h.appendChild(acts);
