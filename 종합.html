@@ -72,7 +72,7 @@ a{color:inherit;text-decoration:none}
 .sel select{border:0;background:transparent;font:800 15px inherit;color:var(--ink);padding:5px 4px;cursor:pointer}
 .clk{font-weight:800;font-size:20px;font-variant-numeric:tabular-nums;white-space:nowrap}
 .nav{margin-left:auto;display:flex;gap:4px;align-items:center}
-/* 윗줄 정돈 — 왼쪽(이름) · 관서 고르기 묶음 · 오른쪽(화면 이동 · 도구 · 시계). 단추 높이는 모두 38px */
+/* 윗줄 정돈 — 왼쪽(이름) · 관서 선택 묶음 · 오른쪽(화면 이동 · 도구 · 시계). 단추 높이는 모두 38px */
 .home,.sel{height:38px;box-sizing:border-box}.home{display:inline-flex;align-items:center;padding:0 13px;margin-left:24px}.sel{margin-left:6px;padding:0 6px 0 12px}
 .nav>a{height:38px;box-sizing:border-box;display:inline-flex;align-items:center}
 .demo>button{height:38px;box-sizing:border-box}
@@ -340,7 +340,7 @@ html.no-demo .demo>button:not(.on){display:none}   /* 'test' 명령으로 시연
     <div class="logo">⛅</div>
     <div><div class="tt">충북소방 기상재난통합플랫폼<span class="live">● LIVE</span></div><div class="ts" id="upd">자료 --:-- 기준</div></div>
     <button class="home" id="homeBtn" type="button" title="충청북도 전체 보기">🏠 충북 전체</button>
-    <label class="sel"><small>관서</small><select id="pick" aria-label="관서 고르기"></select></label>
+    <label class="sel"><small>관서</small><select id="pick" aria-label="관서 선택"></select></label>
     <a class="room" href="상황실.html" title="119종합상황실 화면">🖥 상황실</a>
     <nav class="nav"><a href="재해.html">재해별 집중 감시</a><a href="상황실.html">119종합상황실</a>
       <span class="ub"><a href="도움말.html#notice" class="ib" title="공지사항 · 사용설명서" aria-label="공지사항">📢<i id="ntDot" hidden></i></a>
@@ -546,7 +546,7 @@ html.no-demo .demo>button:not(.on){display:none}   /* 'test' 명령으로 시연
   function renderTop(){
     var pick = $('pick');
     if (!pick.options.length) {
-      var o0 = document.createElement('option'); o0.value = ''; o0.textContent = '고르기'; o0.disabled = true; pick.appendChild(o0);
+      var o0 = document.createElement('option'); o0.value = ''; o0.textContent = '선택'; o0.disabled = true; pick.appendChild(o0);
       ORDER.forEach(function(n){ var o=document.createElement('option'); o.value=n; o.textContent=n; pick.appendChild(o); });
       pick.onchange = function(){ if (pick.value) choose(pick.value); };
       $('homeBtn').onclick = function(){ focus = null; choose(WIDE); };
