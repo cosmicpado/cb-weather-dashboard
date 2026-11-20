@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>충북소방 기상재난통합플랫폼</title>
 <!-- support.js = dc-runtime 본체. 없으면 페이지가 부팅되지 않는다(템플릿이 글자로 노출).
      반드시 진짜 head 안에 둘 것 — helmet에 넣으면 첫 렌더 뒤에 로드돼 부팅이 안 된다.
@@ -111,7 +111,7 @@ window.cbDemoTimes = function(list){
   /* 휴대폰 — 이름 줄 · 충북 전체/관서 선택/종합 줄 · 재해 탭 줄. 메뉴·시계는 숨긴다(종합 현황과 같게) */
   .dz-root{padding-bottom:40px}
   @media (max-width:820px){
-    .dz-top{padding:10px 12px !important}
+    .dz-top{padding:calc(10px + env(safe-area-inset-top,0px)) 12px 10px !important}
     .dz-row{gap:10px}
     .dz-modebar{display:flex;margin:-4px -20px 0;padding:0 20px;border-bottom:1px solid var(--border)}.dz-modebar h2{display:none}
     .dz-tabs{flex:1 1 100%;justify-content:space-between}.dz-tabs>a{flex:1;justify-content:center;height:42px;font-size:15px}   /* 재해 탭 — 테두리 없는 글자 탭(밑줄) */
@@ -127,7 +127,7 @@ window.cbDemoTimes = function(list){
 <div ref="{{rootRef}}" data-theme="{{theme}}" class="dz-root" style="min-height:100vh; width:100%; background:var(--bg);">
 
   <!-- ── 헤더 — 종합 현황과 같은 틀(2026-11-18): 왼쪽 이름·자료 시각 · 충북 전체·관서 선택 · 오른쪽 화면 이동·도구. 재해 탭은 본문 첫 줄 ── -->
-  <div class="dz-top" style="position:sticky; top:0; z-index:50; background:var(--bg); padding:14px 20px 8px;">
+  <div class="dz-top" style="position:sticky; top:0; z-index:50; background:var(--bg); padding:calc(14px + env(safe-area-inset-top,0px)) 20px 8px;">
     <div class="dz-row">
       <div class="dz-brand"><div class="hd-logo">⛅</div>
         <div><div class="hd-tt">충북소방 기상재난통합플랫폼<span class="hd-live">● LIVE</span></div><div class="hd-ts">자료 {{updatedHm}} 기준 · 약 5분마다 새 자료</div></div></div>
@@ -1057,7 +1057,7 @@ class Component extends DCLogic {
     const head=R('div',{key:'head', style:{display:'grid', gridTemplateColumns:cols, gap:'10px', alignItems:'end', padding:'0 10px 5px'}},
       R('div'),
       R('div',{style:{position:'relative', height:'15px', margin:'0 10px'}}, ticks.map(t=>
-        R('span',{key:t, style:{position:'absolute', left:x(t)+'%', transform:'translateX(-50%)', fontSize:'13px', color:'var(--ink3)', fontVariantNumeric:'tabular-nums', whiteSpace:'nowrap'}}, t+'℃'))),
+        R('span',{key:t, style:{position:'absolute', left:x(t)+'%', transform:'translateX(-50%)', fontSize:'13px', color:'var(--ink3)', fontVariantNumeric:'tabular-nums', whiteSpace:'nowrap'}}, t+'°'))),   // 눈금은 '°'만 — '℃'까지 쓰면 휴대폰 폭에서 서로 붙었다
       cap('오늘 최저'), cap(mornLabel));
     const body=rows.map(r=>{
       const isMine=r.s.name===myStation, lvA=this.coldLevel(r.low), lvB=this.coldLevel(r.morn);
