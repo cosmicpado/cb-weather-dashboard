@@ -578,7 +578,7 @@ html.no-demo .demo:not(:has(button.on)){display:none}   /* 'test' 명령으로 �
     /* 충북이 준비 단계 이상이면 상태 원이 퍼지는 고리로 알린다 — 빠르기는 충북 단계(준비·1·2·3단계)를 따른다 */
     var pr = Math.max(sg.rank||0, lv);
     b.className = 'band' + (cls ? ' '+cls : '') + (pr ? ' pu p'+Math.min(4,pr) : '');
-    b.innerHTML = '<span class="st"><i></i><b>'+esc(pill)+'</b></span><div class="bsum"><div class="l">'+line+'</div><div class="s">'+(sub.map(function(t){ return '<span class="si">'+t+'</span>'; }).join('<i class="dot"> · </i>')||'&nbsp;')+'</div></div>'
+    b.innerHTML = '<span class="st"><i></i><b>'+esc(pill)+'</b></span><div class="bsum"><div class="l">'+line+'</div>'+(sub.length ? '<div class="s">'+sub.map(function(t){ return '<span class="si">'+t+'</span>'; }).join('<i class="dot"> · </i>')+'</div>' : '')+'</div>'
       + '<div class="cnt" title="'+(me===WIDE ? '예비·주의보·경보 = 그 특보가 걸린 관서 수(관서마다 가장 높은 특보 하나) · 재난문자 = 충북 최근 24시간' : esc(me)+'에 걸린 예비특보·주의보·경보 개수 · 재난문자 = '+esc(me)+' 관련 최근 24시간')+'"><div class="h">'+(me===WIDE ? '충북' : '관서')+'<br>현황</div>'
       + '<div class="k"><b style="color:'+(c.p?'var(--pre)':'inherit')+'">'+c.p+'</b><span>예비</span></div>'
       + '<div class="k"><b style="color:'+(c.a?'var(--warn)':'inherit')+'">'+c.a+'</b><span>주의보</span></div>'
