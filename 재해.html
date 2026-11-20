@@ -58,6 +58,7 @@ window.cbDemoTimes = function(list){
 <script src="notices.js"></script>
 <script>window.CB_PAGE = 'watch';</script>
 <script src="cmd.js"></script>
+<script src="header.js"></script>
 <script src="alerts.js"></script>
 <script src="alert-settings.js"></script>   <!-- 🔔 새 특보·재난문자 알림 카드·소리 + 알림 설정 창(종합 현황과 같이 쓴다) -->   <!-- '/' 명령 칸 · 시연 단추 숨김(종합 현황과 같이 쓴다) -->
 <script src="data.js"></script>
@@ -117,7 +118,7 @@ window.cbDemoTimes = function(list){
     .dz-modebar{display:flex;margin:-4px -20px 0;padding:0 20px;border-bottom:1px solid var(--border)}.dz-modebar h2{display:none}
     .dz-tabs{flex:1 1 100%;justify-content:space-between}.dz-tabs>a{flex:1;justify-content:center;height:42px;font-size:15px}   /* 재해 탭 — 테두리 없는 글자 탭(밑줄) */
     .dz-navc>.pgsub{display:none}.dz-row{align-items:center}
-    .dz-brand{flex:1 1 0;min-width:0}
+    .dz-brand{flex:1 1 0;min-width:0}html.hd-slim .dz-brand{flex:none}   /* 접힌 윗줄에서는 로고만 */
     .dz-nav,.dz-navc{display:contents!important}   /* 메뉴 묶음을 풀어 탭바(.pgs)는 아래로, 도구(.hd-tools)는 이름 줄 오른쪽으로 */
     .dz-rsub{width:76px;max-width:none!important}   /* 휴대폰도 폭 고정 — 설명 길이에 따라 막대 바탕 길이가 달라져 값이 큰 관서 막대가 더 짧아 보였다 */
     .dz-rsub .rs-l{display:none}.dz-rsub .rs-s{display:inline}.dz-rsub.nos{display:none}   /* 휴대폰은 단계 이름만(다소 강함 · 5cm 이상 등) */
@@ -129,11 +130,11 @@ window.cbDemoTimes = function(list){
 <div ref="{{rootRef}}" data-theme="{{theme}}" class="dz-root" style="min-height:100vh; width:100%; background:var(--bg);">
 
   <!-- ── 헤더 — 종합 현황과 같은 틀(2026-11-18): 왼쪽 이름·자료 시각 · 충북 전체·관서 선택 · 오른쪽 화면 이동·도구. 재해 탭은 본문 첫 줄 ── -->
-  <div class="dz-top" style="position:sticky; top:0; z-index:50; background:var(--bg); padding:calc(14px + env(safe-area-inset-top,0px)) 20px 8px;">
+  <div class="dz-top hd-bar" style="position:sticky; top:0; z-index:50; background:var(--bg); padding:calc(14px + env(safe-area-inset-top,0px)) 20px 8px;">
     <div class="dz-row">
       <div class="dz-brand"><div class="hd-logo">⛅</div>
-        <div><div class="hd-tt">충북소방 기상재난통합플랫폼<span class="hd-live">● LIVE</span></div><div class="hd-ts">자료 {{updatedHm}} 기준 · 약 5분마다 새 자료</div></div></div>
-      <span class="seg scope" aria-label="볼 범위"><button class="home {{homeCls}}" onClick="{{pickWide}}" title="충청북도 전체 보기"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20h14V9.5"/></svg>충북 전체</button>
+        <div class="hd-name"><div class="hd-tt">충북소방 기상재난통합플랫폼<span class="hd-live">● LIVE</span></div><div class="hd-ts">자료 {{updatedHm}} 기준 · 약 5분마다 새 자료</div></div></div>
+      <span class="seg scope" aria-label="볼 범위"><button class="home {{homeCls}}" onClick="{{pickWide}}" title="충청북도 전체 보기"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20h14V9.5"/></svg><span class="hm-l">충북 </span>전체</button>
       <span class="selw">
         <button class="sel {{selCls}}" onClick="{{toggleStationPicker}}" aria-label="관서 선택"><small>관서</small><b>{{stationLabel}}</b><svg class="car" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
           <sc-if value="{{stationPickerOpen}}">
@@ -166,6 +167,7 @@ window.cbDemoTimes = function(list){
             </div>
           </sc-if>
       </span></span>
+      <span class="hd-slimts">{{updatedHm}} 기준</span>
       <nav class="dz-nav"><div class="dz-navc"><span class="pgs" aria-label="화면 전환"><a href="종합.html"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg><span class="lf">종합 현황</span><span class="ls">종합</span></a><a class="on" aria-current="page"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg><span class="lf">재해별 집중 감시</span><span class="ls">집중감시</span></a><a href="상황실.html"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg><span class="lf">실시간 상황판</span><span class="ls">상황판</span></a></span>
         <div class="pgsub" aria-label="재해 종류"><sc-for list="{{modeTabs}}" as="t"><a onClick="{{t.pick}}" title="{{t.title}}" class="{{t.cls}}" data-k="{{t.k}}"><svg class="ic mi-rain" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.5 14a4 4 0 0 0 0-8 6 6 0 0 0-11.6 1.5A3.5 3.5 0 0 0 6.5 14"/><path d="M8 17l-1 3"/><path d="M12 17l-1 3"/><path d="M16 17l-1 3"/></svg><svg class="ic mi-snow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v20"/><path d="M3.3 7 20.7 17"/><path d="M3.3 17 20.7 7"/><path d="m9 4 3 2 3-2"/><path d="m9 20 3-2 3 2"/></svg><svg class="ic mi-fire" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22a7 7 0 0 0 7-7c0-3-2-5.5-3.5-7-.3 2-1.5 3-2.5 3 .5-3-1-6-4-8 .2 3-2 5.2-3.3 7.1A7 7 0 0 0 12 22z"/></svg>{{t.name}}</a></sc-for></div></div>
         <span class="hd-tools">

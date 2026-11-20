@@ -48,6 +48,9 @@ html{scrollbar-gutter:stable}
 .ib i{position:absolute;top:5px;right:5px;width:8px;height:8px;border-radius:50%;background:var(--ui-sev)}   /* 안 본 공지 빨간 점 */
 .ib .i-sun{display:none}html[data-theme="dark"] .ib .i-sun{display:block}html[data-theme="dark"] .ib .i-moon{display:none}
 
+/* ── 휴대폰 접힌 윗줄의 자료 시각 ── 평소엔 숨김(header.js 가 html.hd-slim 을 붙이면 보임) */
+.hd-slimts{display:none}
+
 /* ── 키보드로 옮겨 다닐 때 지금 위치 표시(접근성) ── */
 .pgs a:focus-visible,.scope button:focus-visible,.pgsub a:focus-visible,.ib:focus-visible,.pkl button:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
 
@@ -66,5 +69,14 @@ html{scrollbar-gutter:stable}
   .pgs a.on{color:var(--brand);font-weight:800}
   .pgs .ic{width:22px;height:22px}
   .pgs .lf{display:none}.pgs .ls{display:inline}
+  /* 아래로 내리면 한 줄로 접힘(header.js) — 이름 줄·화면 색 단추를 숨기고 [로고 · 전체 | 관서 · 13:28 기준] 만 남긴다 */
+  html.hd-slim .hd-name,html.hd-slim .hd-tools{display:none!important}
+  html.hd-slim .hd-logo{width:30px;height:30px;font-size:16px;border-radius:8px}
+  html.hd-slim .scope{order:1;flex:1 1 0;min-width:0;height:40px;margin:0}
+  html.hd-slim .scope .home,html.hd-slim .scope .sel{height:32px;font-size:15px;padding:0 10px}
+  html.hd-slim .sel b{font-size:15px}html.hd-slim .sel small{font-size:13px}
+  html.hd-slim .hm-l{display:none}   /* '충북 전체' → '전체' */
+  html.hd-slim .hd-slimts{display:block;order:2;font-size:13px;color:var(--ink3);white-space:nowrap;font-feature-settings:normal}
+  html.hd-slim .hd-bar{box-shadow:0 6px 14px -10px rgba(16,24,40,.35)}
 }
 @media (prefers-reduced-motion:reduce){.hd-live{animation:none}}
