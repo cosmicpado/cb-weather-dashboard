@@ -50,6 +50,8 @@ html{scrollbar-gutter:stable}
 
 /* ── 휴대폰 접힌 윗줄의 자료 시각 ── 평소엔 숨김(header.js 가 html.hd-slim 을 붙이면 보임) */
 .hd-slimts{display:none}
+.hd-more{display:none}   /* PC 는 도구 단추가 다 보이니 ⋯ 은 숨김 */
+.hd-more.has-new::after{content:"";position:absolute;top:5px;right:5px;width:8px;height:8px;border-radius:50%;background:var(--ui-sev)}   /* 새 공지 */
 
 /* ── 키보드로 옮겨 다닐 때 지금 위치 표시(접근성) ── */
 .pgs a:focus-visible,.scope button:focus-visible,.pgsub a:focus-visible,.ib:focus-visible,.pkl button:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
@@ -64,7 +66,7 @@ html{scrollbar-gutter:stable}
   .selw{flex:1;min-width:0}.scope .sel{width:100%}
   .sel b{font-size:16px}.sel small{font-size:14px}.pkl{width:100%}
   .hd-tools{order:1;margin-left:0;min-width:0;padding-left:0;border-left:0}
-  .hd-tools>*:not([aria-label="화면 색"]){display:none!important}   /* 휴대폰 도구 = 화면 색만 */
+  .hd-tools>*:not(.hd-more){display:none!important}.hd-tools>.hd-more{display:inline-flex}   /* 휴대폰 도구 = ⋯ 하나(공지·의견·화면 색, more-menu.js) */
   .pgs{position:fixed;left:0;right:0;bottom:0;z-index:9200;height:var(--cb-navh);padding:0 0 var(--cb-navb);border-radius:0;border:0;border-top:1px solid var(--ui-line);background:var(--ui-card);gap:0;box-shadow:0 -4px 14px rgba(16,24,40,.06)}
   .pgs a{flex:1;flex-direction:column;justify-content:center;height:54px;border-radius:0;gap:3px;font-size:13px;font-weight:700;background:transparent!important;box-shadow:none!important;padding:0}
   .pgs a.on{color:var(--brand);font-weight:800}

@@ -56,6 +56,7 @@ html.wall-m #wall-tools{display:none!important;}
 #wall-msel .mlive{font-size:13px;font-weight:800;color:#ff5a5a;background:rgba(255,90,90,.12);border-radius:999px;padding:1px 8px;margin-left:6px;}
 #wall-msel .mbr #wall-mupd{flex:none!important;padding:0!important;font-weight:400!important;font-size:13.5px!important;margin-top:1px;}
 #wall-msel .mbr button{width:40px!important;height:40px!important;flex:none;}
+#wall-msel .mbr .hd-more{position:relative;font-size:22px;line-height:1;}#wall-msel .mbr .hd-more.has-new::after{content:'';position:absolute;top:6px;right:6px;width:8px;height:8px;border-radius:50%;background:#ef4444;}
 html.wall-m body{padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))!important;}
 html.wall-m{--cb-navb:max(0px, calc(env(safe-area-inset-bottom,0px) - 12px));--cb-navh:calc(54px + var(--cb-navb));}   /* 탭바 높이 — ui.css 와 같은 값 */
 #wall-msel .nm{flex:1;min-width:0;height:44px;border-radius:10px;border:1.5px solid var(--line,#28313f);background:var(--panel,#151b26);color:var(--fg,#f2f5fa);font:800 16px 'Pretendard Variable',Pretendard,system-ui,sans-serif;padding:0 12px;display:flex;align-items:center;gap:8px;cursor:pointer;text-align:left;}
@@ -182,6 +183,7 @@ html.wall-m #wall-dots{display:flex;position:fixed;left:50%;bottom:calc(var(--cb
 </script>
 <script src="./feedback.js"></script>
 <script src="./notices.js"></script>
+<script src="./more-menu.js"></script>
 <script src="./version-check.js"></script>
 <script>window.cbTimeLabel=function(tm){   /* 시각 표기(지진·재난문자 공통, 2026-11-19) — 오늘 'HH:MM' · 어제 '어제 HH:MM' · 그 전 'M/D HH:MM'('N분 전'은 쓰지 않는다) */
     var s=String(tm||'').replace(/\//g,'-'), d=new Date(s.replace(' ','T')), now=new Date();
@@ -3787,7 +3789,10 @@ window.cbWindyUrl = function(overlay, zoom){
     /* 첫 줄 — 로고·이름·LIVE·자료 시각 + 화면 색 단추(종합 현황·재해별 집중 감시와 같은 틀, 2026-11-20) */
     var mbr=document.createElement('div'); mbr.className='mbr';
     mbr.innerHTML='<div class="mlogo" aria-hidden="true">⛅</div><div class="mtt"><b>충북소방 기상재난통합플랫폼<span class="mlive">● LIVE</span></b></div>';
-    mbr.querySelector('.mtt').appendChild(up); mbr.appendChild(th); box.insertBefore(mbr, sel);
+    /* 오른쪽 위 ⋯ — 공지사항·의견 보내기·화면 색(more-menu.js). 화면 색 단추는 숨겨 두고 메뉴가 대신 누른다 */
+    var more=document.createElement('button'); more.type='button'; more.className='hd-more'; more.setAttribute('aria-label','더보기'); more.setAttribute('aria-haspopup','menu'); more.title='공지사항 · 의견 보내기 · 화면 색'; more.textContent='⋯';
+    th.style.display='none'; window.cbMoreCfg={ page:'실시간 상황판', themeBtn:function(){ return th; }, isDark:function(){ return W.dark ? W.dark() : true; } };
+    mbr.querySelector('.mtt').appendChild(up); mbr.appendChild(th); mbr.appendChild(more); box.insertBefore(mbr, sel);
     document.body.insertBefore(box, document.body.firstChild);
     /* 넘기는 구역 표시 점 — 누르면 그 구역으로 */
     function PAGESF(){ var c=document.documentElement.classList, p=['실황·예보','레이더·계절','특보·재난문자']; return p; }

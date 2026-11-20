@@ -59,6 +59,7 @@ window.cbDemoTimes = function(list){
 <script>window.CB_PAGE = 'watch';</script>
 <script src="cmd.js"></script>
 <script src="header.js"></script>
+<script src="more-menu.js"></script>
 <script src="alerts.js"></script>
 <script src="alert-settings.js"></script>   <!-- 🔔 새 특보·재난문자 알림 카드·소리 + 알림 설정 창(종합 현황과 같이 쓴다) -->   <!-- '/' 명령 칸 · 시연 단추 숨김(종합 현황과 같이 쓴다) -->
 <script src="data.js"></script>
@@ -177,6 +178,7 @@ window.cbDemoTimes = function(list){
           <button onClick="{{toggleDemo}}" title="{{demoTitle}}" aria-label="시연" class="dz-demo {{demoCls}}" style="{{demoBtnStyle}}">{{demoBtnLabel}}</button>
           <button onClick="{{openAlerts}}" class="ib" title="알림 설정 — 경보음·화면 알림 카드·Windows 알림" aria-label="알림 설정" aria-expanded="false"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg></button>
           <button onClick="{{toggleTheme}}" title="{{themeTitle}}" aria-label="화면 색" class="ib"><svg class="ic i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg><svg class="ic i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.9 4.9 1.4 1.4"/><path d="m17.7 17.7 1.4 1.4"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m4.9 19.1 1.4-1.4"/><path d="m17.7 6.3 1.4-1.4"/></svg></button>
+          <button class="ib hd-more" type="button" aria-label="더보기" aria-haspopup="menu" aria-expanded="false" title="공지사항 · 의견 보내기 · 화면 색"><svg class="ic" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>   <!-- 휴대폰 ⋯ 메뉴(more-menu.js) -->
         </span></nav>
     </div>
   </div>
