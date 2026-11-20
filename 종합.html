@@ -545,7 +545,7 @@ html.no-demo .demo:not(:has(button.on)){display:none}   /* 'test' 명령으로 �
     if (m) late = Math.round((Date.now() - new Date(+m[1],+m[2]-1,+m[3],+m[4],+m[5]))/60000);
     var up = $('upd'); up.className = 'hd-ts' + (late>15 ? ' late' : '');
     $('updS').textContent = m ? m[4] + ':' + m[5] + ' 기준' : '';
-    up.textContent = m ? ('자료 ' + m[4] + ':' + m[5] + ' 기준' + (late>15 ? ' · ⚠ ' + late + '분째 갱신 안 됨' : ' · 약 5분마다 새 자료')) : '자료 시각 모름';
+    up.textContent = m ? ('자료 ' + m[4] + ':' + m[5] + ' 기준' + (late>15 ? ' · ⚠ ' + late + '분째 갱신 안 됨' : ' | 약 5분 주기 갱신')) : '자료 시각 모름';
   }
   function choose(n){ me = n; if (focus) focus = (n===WIDE ? null : n); try{ localStorage.setItem(KEY, n); }catch(e){} render(); }
 
@@ -862,6 +862,15 @@ html.no-demo .demo:not(:has(button.on)){display:none}   /* 'test' 명령으로 �
 
   /* ── 참고 정보 탭 ─────────────────────────────── */
   var TABS = [['sum','한눈 요약'],['river','하천'],['dam','댐'],['fire','산불'],['pm','미세먼지'],['info','날씨 해설']];
+  /* 한눈 요약 칸을 눌러 탭이 바뀌면(휴대폰) 탭 줄이 윗줄 바로 아래 오게 올린다 — 바뀐 탭 내용의 처음부터 보이게.
+     윗줄이 접히며 높이가 바뀌므로(header.js) 한 번 옮긴 뒤 다음 화면에서 한 번 더 맞춘다 */
+  function tabsToTop(){
+    if (!window.matchMedia || !matchMedia('(max-width:820px)').matches) return;
+    function go(){ var bar = document.querySelector('.hd-bar'), t = $('tabs').closest('section') || $('tabs');
+      var y = t.getBoundingClientRect().top + window.scrollY - (bar ? bar.offsetHeight : 0) - 8;
+      window.scrollTo(0, Math.max(0, Math.round(y))); }
+    go(); requestAnimationFrame(function(){ requestAnimationFrame(go); });
+  }
   function renderTabs(){
     $('tabs').innerHTML = TABS.map(function(t){ return '<button data-t="'+t[0]+'" class="'+(t[0]===tab?'on':'')+'">'+t[1]+'</button>'; }).join('');
     $('tabs').onclick = function(e){ var t=e.target.getAttribute && e.target.getAttribute('data-t'); if(t){ tab=t; renderTabs(); } };
@@ -892,7 +901,7 @@ html.no-demo .demo:not(:has(button.on)){display:none}   /* 'test' 명령으로 �
             return '<div class="ref" data-go="pm"><h4>😷 미세먼지 PM10</h4>'+head+'<p>'+sub+'</p></div>'; })()
         + droneRef()
         + '<div class="ref" data-go="info"><h4>📋 날씨 해설 · 청주기상지청</h4><b style="font-size:15.5px">'+esc(it || '자료 없음')+'</b><p>'+esc(fmtTm(cm.tmFc))+' 발표 · 누르면 전문</p></div></div>';
-      p.onclick = function(e){ var el=e.target.closest && e.target.closest('[data-go]'); if(el){ tab=el.getAttribute('data-go'); renderTabs(); } };
+      p.onclick = function(e){ var el=e.target.closest && e.target.closest('[data-go]'); if(el){ tab=el.getAttribute('data-go'); renderTabs(); tabsToTop(); } };
     } else if (tab==='river') {
       var all = riverRows(me);
       p.innerHTML = '<div class="ch" style="padding:0 0 10px"><h3>'+(me===WIDE?'충북 하천 수위':esc(me)+' 관할 하천 수위')+'</h3><span>막대 = 24시간 수위 · 누르면 상세(그래프·CCTV)</span></div>'

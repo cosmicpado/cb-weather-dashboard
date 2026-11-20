@@ -74,12 +74,13 @@ html{scrollbar-gutter:stable}
   .pgs .lf{display:none}.pgs .ls{display:inline}
   /* 아래로 내리면 한 줄로 접힘(header.js) — 이름 줄·화면 색 단추를 숨기고 [로고 · 전체 | 관서 · 13:28 기준] 만 남긴다 */
   html.hd-slim .hd-name,html.hd-slim .hd-tools{display:none!important}
-  html.hd-slim .hd-logo{width:30px;height:30px;font-size:16px;border-radius:8px}
   html.hd-slim .scope{order:1;flex:1 1 0;min-width:0;height:40px;margin:0}
   html.hd-slim .scope .home,html.hd-slim .scope .sel{height:32px;font-size:15px;padding:0 10px}
   html.hd-slim .sel b{font-size:15px}html.hd-slim .sel small{font-size:13px}
   html.hd-slim .hm-l{display:none}   /* '충북 전체' → '전체' */
   html.hd-slim .hd-slimts{display:block;order:2;font-size:13px;color:var(--ink3);white-space:nowrap;font-feature-settings:normal}
   html.hd-slim .hd-bar{box-shadow:0 6px 14px -10px rgba(16,24,40,.35)}
+  html.hd-anim .hd-bar :is(.scope,.hd-slimts,.hd-name,.hd-tools){animation:hdFade .24s ease-out}   /* 접히고 펴질 때 글자만 살짝 페이드(로고는 그대로) */
 }
-@media (prefers-reduced-motion:reduce){.hd-live{animation:none}}
+@keyframes hdFade{from{opacity:.25}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){.hd-live{animation:none}html.hd-anim .hd-bar :is(.scope,.hd-slimts,.hd-name,.hd-tools){animation:none}}
