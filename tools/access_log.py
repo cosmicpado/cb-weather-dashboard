@@ -17,8 +17,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 DIR = ROOT / '.data' / 'access'
-PAGES = {'종합.html': '종합 현황', '상황실.html': '119종합상황실', '재해.html': '재해별 집중 감시',
+PAGES = {'종합.html': '종합 현황', '상황실.html': '실시간 상황판', '재해.html': '재해별 집중 감시',
          '도움말.html': '도움말', '관리자.html': '관리자'}
+OLD_NAMES = {'119종합상황실': '실시간 상황판'}   # 예전 기록의 화면 이름 → 지금 이름(통계에서 한 줄로 합친다)
 KEEP_MONTHS = 13
 _lock = threading.Lock()
 _salt_cache = None
@@ -79,7 +80,7 @@ def _prune(now):
 
 def _rows(since):
     """since(datetime) 이후 줄 [(시각, 화면, 기기, 방문자)]."""
-    out, key = [], since.strftime('%Y-%m-%d %H:%M:%S')
+    out, key, last = [], since.strftime('%Y-%m-%d %H:%M:%S'), None
     for p in sorted(DIR.glob('*.csv')):
         if p.stem < since.strftime('%Y-%m'):
             continue
@@ -87,7 +88,12 @@ def _rows(since):
             with open(p, encoding='utf-8', newline='') as f:
                 for r in csv.reader(f):
                     if len(r) >= 4 and r[0] >= key and r[0][:1].isdigit():
-                        out.append(r[:4])
+                        r = [r[0], OLD_NAMES.get(r[1], r[1]), r[2], r[3]]
+                        # 같은 방문자·같은 화면·같은 초에 두 줄 = 한 번 연 것(2026-11-20 이전 기록은 화면 틀의 자기 파일 받기까지 셌다)
+                        if r == last:
+                            continue
+                        last = r
+                        out.append(r)
         except OSError:
             pass
     return out

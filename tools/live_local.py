@@ -80,13 +80,20 @@ def radar():
 
 
 def loop(every, job=sync):
+    """every 초 간격으로 job — 시작 시각 기준으로 맞춘다(2026-11-20). '끝나고 every 초 쉬기'였을 땐
+    수집에 걸린 시간만큼 간격이 늘어 자료 시각이 조금씩 밀렸다. 수집이 every 보다 오래 걸리면 바로 다음 회차."""
+    nxt = time.monotonic()
     while True:
         print(f'[{datetime.now():%H:%M:%S}] {job()}', flush=True)
-        time.sleep(every)
+        nxt += every
+        now = time.monotonic()
+        if nxt < now:
+            nxt = now
+        time.sleep(nxt - now)
 
 
 # 짧은 주소(2026-11-12) — 주소창에 한글 파일 이름 대신. 화면의 short-url.js · Rocky nginx(setup-rocky.sh)와 같은 표
-# 첫 화면(/)은 종합 현황(2026-11-18), 119종합상황실은 /wall(예전 주소 /room 도 열린다). 대소문자는 가리지 않는다
+# 첫 화면(/)은 종합 현황(2026-11-18), 실시간 상황판은 /wall(예전 주소 /room 도 열린다). 대소문자는 가리지 않는다
 SHORT = {'/': '/종합.html', '/map': '/종합.html', '/wall': '/상황실.html', '/room': '/상황실.html', '/watch': '/재해.html',
          '/admin': '/관리자.html', '/help': '/도움말.html'}
 
@@ -185,8 +192,11 @@ class Quiet(http.server.SimpleHTTPRequestHandler):
         if base == '/api/access':
             return self._access_stats()
         # 화면을 열 때만 한 줄 기록(자료 파일·그림은 세지 않는다). IP 는 저장하지 않는다(access_log.py)
+        # 사람이 화면을 연 것만 — 화면 틀(support.js)이 자기 파일을 fetch 로 한 번 더 받는 것까지 세어 재해·상황판이 두 배로 잡혔다.
+        # 브라우저는 주소창·링크로 연 화면에 Sec-Fetch-Dest: document 를 붙인다(이 머리글이 없는 옛 브라우저는 그대로 센다)
         page = unquote(short_to_file(base)).rsplit('/', 1)[-1]
-        if page in access_log.PAGES:
+        dest = self.headers.get('Sec-Fetch-Dest', 'document')
+        if page in access_log.PAGES and dest in ('document', 'iframe') and not self.headers.get('Sec-Purpose'):
             access_log.log(page, self._client_ip(), self.headers.get('User-Agent', ''))
         return super().do_GET()
 

@@ -76,6 +76,17 @@
   function phone() {
     try { return window.matchMedia('(pointer:coarse)').matches && Math.min(screen.width, screen.height) <= 820; } catch (e) { return false; }
   }
+  /* 탭끼리 '이미 알렸음' 나누기 — 이 PC 브라우저 저장소에 알림 내용(제목+지역)과 시각을 20분 동안 둔다.
+     먼저 본 화면이 차지하고, 같은 내용이 다른 화면에서 들어오면 건너뛴다. 저장소를 못 쓰면 그냥 띄운다 */
+  function claim(c) {
+    var sig = (c.title || '') + '|' + (c.body || ''), now = Date.now(), m = {};
+    try { m = JSON.parse(localStorage.getItem('cbAlertRecent') || '{}') || {}; } catch (e) { return true; }
+    Object.keys(m).forEach(function (k) { if (now - m[k] > 20 * 60000) delete m[k]; });
+    if (m[sig]) return false;
+    m[sig] = now;
+    try { localStorage.setItem('cbAlertRecent', JSON.stringify(m)); } catch (e) {}
+    return true;
+  }
   function card(c, demo) {
     if (off('cbAlertCardsOff') || phone()) return;          // 화면 알림 카드 끔
     var t = TONE[c.tone] || TONE.msg, el = document.createElement('div');
@@ -83,7 +94,7 @@
     el.innerHTML = '<div style="display:flex;align-items:flex-start;gap:9px">'
       + '<div style="font-size:18px;line-height:1.2">' + c.icon + '</div>'
       + '<div style="flex:1;min-width:0"><div style="display:flex;gap:6px;align-items:baseline;flex-wrap:wrap"><b style="font-size:13.5px;color:' + t[0] + '">' + (demo ? '[시연] ' : '') + esc(c.title) + '</b>'
-      + (c.time ? '<span style="font-size:11px;color:#6b7891">' + esc(c.time) + '</span>' : '') + '</div>'
+      + (c.time ? '<span style="font-size:13px;color:#6b7891">' + esc(c.time) + '</span>' : '') + '</div>'
       + '<div style="margin-top:3px;color:#33415c;max-height:6em;overflow:auto;word-break:keep-all">' + esc(c.body) + '</div></div>'
       + '<button title="닫기" style="border:0;background:transparent;font-size:16px;line-height:1;color:#6b7891;cursor:pointer;padding:0 2px">×</button></div>';
     el.title = '누르면 닫힙니다'; el.style.cursor = 'pointer';
@@ -114,12 +125,20 @@
     } catch (e) {}
   }
   /* 처음 한 번: Windows 알림도 받을지 묻는 작은 띠(닫으면 다시 안 묻는다) */
+  /* Windows 알림 허용 묻기 — 화면을 열자마자 큰 상자가 지도를 가려서(2026-11-20) 사용자가 화면을 처음 누른 뒤에 띄운다 */
+  var asked = false;
   function askOnce() {
     try {
-      if (phone() || !('Notification' in window) || Notification.permission !== 'default' || localStorage.getItem(ASK)) return;
+      if (asked || phone() || !('Notification' in window) || Notification.permission !== 'default' || localStorage.getItem(ASK)) return;
     } catch (e) { return; }
+    asked = true;
+    var go = function () { document.removeEventListener('pointerdown', go, true); setTimeout(showAsk, 400); };
+    document.addEventListener('pointerdown', go, true);
+  }
+  function showAsk() {
+    try { if (Notification.permission !== 'default' || localStorage.getItem(ASK)) return; } catch (e) { return; }
     var el = document.createElement('div');
-    el.style.cssText = 'position:fixed;left:16px;bottom:60px;z-index:9600;max-width:min(420px,calc(100vw - 32px));background:#0f1b2d;color:#fff;border-radius:12px;padding:10px 12px;font:600 14px/1.5 Pretendard,system-ui,sans-serif;box-shadow:0 10px 30px -8px rgba(0,0,0,.4);display:flex;gap:10px;align-items:center;flex-wrap:wrap;';
+    el.style.cssText = 'position:fixed;left:16px;bottom:calc(60px + var(--cb-navh,0px));z-index:9600;max-width:min(420px,calc(100vw - 32px));background:#0f1b2d;color:#fff;border-radius:12px;padding:10px 12px;font:600 14px/1.5 Pretendard,system-ui,sans-serif;box-shadow:0 10px 30px -8px rgba(0,0,0,.4);display:flex;gap:10px;align-items:center;flex-wrap:wrap;';
     el.innerHTML = '<span>🔔 새 특보·재난문자를 <b>Windows 알림</b>으로도 받을까요? (화면 팝업은 이미 켜져 있습니다)</span>'
       + '<span style="display:flex;gap:6px;margin-left:auto"><button data-y style="border:0;border-radius:8px;padding:5px 11px;background:#2563eb;color:#fff;font-weight:700;font-size:13.5px;font-family:inherit;cursor:pointer">켜기</button>'
       + '<button data-n style="border:1px solid #4b5b78;border-radius:8px;padding:5px 11px;background:transparent;color:#cfd7e6;font-weight:700;font-size:13.5px;font-family:inherit;cursor:pointer">괜찮아요</button></span>';
@@ -153,8 +172,9 @@
     var newOnes = Object.keys(cur).filter(function (k) { return !known[k]; });
     var active = (seen.active || []);
     var released = active.filter(function (k) { return !cur[k] && k[0] === 'W'; }).map(function (k) { var p = k.split('|'); return { kind: 'W', type: p[1], area: p[2] }; });
-    var cards = group(newOnes.map(function (k) { return cur[k]; }), '발효');
-    group(released, '해제').forEach(function (c) { card(c, false); });
+    /* 같은 PC 의 다른 화면(종합·재해 탭)이 같은 알림을 이미 띄웠으면 건너뛴다 — 한 번만(2026-11-20) */
+    var cards = group(newOnes.map(function (k) { return cur[k]; }), '발효').filter(claim);
+    group(released, '해제').filter(claim).forEach(function (c) { card(c, false); });
     cards.slice().reverse().forEach(function (c) { card(c, false); osNotify(c); });
     if (cards.length) chime();
     // 본 것 기억(최근 400개) — 같은 특보가 풀렸다 다시 나면 다시 알리도록, 해제된 특보 키는 지운다

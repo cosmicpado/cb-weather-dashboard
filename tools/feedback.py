@@ -432,10 +432,50 @@ def handle(method, ip, headers, body=b'', path=''):
             return _get_notices()
         if 'duty=1' in q:
             return _get_duty()
+        if 'errors=1' in q:                          # 화면 오류 최근 50건 — 관리자만
+            if not _is_admin(ip, headers):
+                return 403, {'ok': False, 'err': '관리자만 볼 수 있습니다'}
+            try:
+                lines = STORE_ERRORS.read_text(encoding='utf-8').splitlines()[-50:]
+                items = [json.loads(l) for l in lines if l.strip()]
+            except (OSError, ValueError):
+                items = []
+            return 200, {'ok': True, 'items': items[::-1]}
         if 'stage=1' in q:
             return _get_stage()
         return _get(ip, headers)
     return 405, {'ok': False, 'err': '지원하지 않는 방식'}
+
+
+# 화면 오류 기록(2026-11-20) — 직원 PC·휴대폰에서 스크립트 오류가 나면 error-report.js 가 보낸다.
+# .data/client_errors.jsonl 에 한 줄씩. 주소당 하루 50건 · 파일 5MB 넘으면 더 받지 않는다(오류가 반복돼도 디스크가 차지 않게).
+STORE_ERRORS = ROOT / '.data' / 'client_errors.jsonl'
+ERR_DAY_MAX, ERR_MAX_BYTES = 50, 5 * 1024 * 1024
+_err_seen = {}   # ip -> [오늘 날짜, 오늘 건수]
+
+
+def _client_error(ip, headers, j):
+    today = datetime.now().strftime('%Y-%m-%d')
+    with _lock:
+        day, cnt = _err_seen.get(ip, [today, 0])
+        if day != today:
+            cnt = 0
+        if cnt >= ERR_DAY_MAX:
+            return 429, {'ok': False}
+        try:
+            if STORE_ERRORS.exists() and STORE_ERRORS.stat().st_size > ERR_MAX_BYTES:
+                return 507, {'ok': False}
+        except OSError:
+            pass
+        rec = {'ts': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+               'page': _clean(j.get('page'), 60), 'msg': _clean(j.get('msg'), 300),
+               'src': _clean(j.get('src'), 160), 'line': _clean(j.get('line'), 20),
+               'stack': _clean(j.get('stack'), 1200), 'ua': _clean(headers.get('User-Agent'), 160)}
+        STORE_ERRORS.parent.mkdir(parents=True, exist_ok=True)
+        with open(STORE_ERRORS, 'a', encoding='utf-8') as f:
+            f.write(json.dumps(rec, ensure_ascii=False) + '\n')
+        _err_seen[ip] = [today, cnt + 1]
+    return 200, {'ok': True}
 
 
 def _post(ip, headers, body):
@@ -449,6 +489,8 @@ def _post(ip, headers, body):
             raise ValueError
     except (ValueError, UnicodeDecodeError):
         return 400, {'ok': False, 'err': '형식 오류'}
+    if j.get('action') == 'client_error':            # 화면 스크립트 오류 기록(error-report.js)
+        return _client_error(ip, headers, j)
     if j.get('action') == 'status':
         return _set_status(ip, headers, j)
     if j.get('action') == 'delete':

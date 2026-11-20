@@ -1,7 +1,7 @@
 /* 오른쪽 아래 떠 있는 단추 묶음 — 종합 현황(종합)·재해별 집중 감시(재해)에서 쓴다.
    상황실 전광판은 따로(왼쪽 위 도구 막대)라 넣지 않는다.
      (빈 자리) — 다른 스크립트가 cbFab.slot('edit', 단추) 로 단추를 넣을 수 있다
-     W   윈디 정보 크게 보기 — 바람·레이더·위성 등 층 고르기
+     W   윈디 정보 크게 보기 — 지금은 숨김(SHOW_WINDY)
      ↑   맨 위로 — 조금 내려갔을 때만 보인다
    스크롤해도 화면 오른쪽 아래에 붙어 따라온다. 잠깐 뜨는 알림(새 공지 등)은 --cb-fab-w 만큼 왼쪽으로 비켜 뜬다. */
 (function () {
@@ -23,14 +23,18 @@
 
   function build() {
     if (box) return;
-    box = el('div', 'position:fixed;right:16px;bottom:16px;z-index:9300;display:flex;flex-direction:column;align-items:center;gap:8px;');
+    box = el('div', 'position:fixed;right:16px;bottom:calc(16px + var(--cb-navh,0px));z-index:9300;display:flex;flex-direction:column;align-items:center;gap:8px;');
     box.id = 'cb-fab';
-    /* 순서(위→아래): 배치 편집 자리 · W · ↑ */
+    /* 순서(위→아래): 배치 편집 자리 · (W) · ↑ */
     slots.edit = el('div', 'display:flex;flex-direction:column;align-items:center;gap:8px;');
     box.appendChild(slots.edit);
-    var w = mkBtn('W', '윈디 정보 — 바람 흐름·날씨 레이더·위성 크게 보기', function () { open(); });
-    w.style.color = 'var(--brand,#2563eb)';
-    box.appendChild(w);
+    /* W(윈디 크게 보기) 단추는 숨김(2026-11-20 — 오른쪽 카드 글자를 가렸다). 다시 쓰려면 SHOW_WINDY 를 true 로 */
+    var SHOW_WINDY = false;
+    if (SHOW_WINDY) {
+      var w = mkBtn('W', '윈디 정보 — 바람 흐름·날씨 레이더·위성 크게 보기', function () { open(); });
+      w.style.color = 'var(--brand,#2563eb)';
+      box.appendChild(w);
+    }
     topBtn = mkBtn('', '맨 위로', function () { try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) { window.scrollTo(0, 0); } });
     topBtn.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>';
     box.appendChild(topBtn);
@@ -72,7 +76,7 @@
     var x = el('button', 'margin-left:auto;width:36px;height:36px;border-radius:10px;border:1px solid var(--border2,var(--line,#d3dbe9));background:transparent;color:var(--ink,#0f1b2d);font-size:18px;cursor:pointer;', '✕');
     x.type = 'button'; x.setAttribute('aria-label', '닫기'); x.onclick = close; hd.appendChild(x);
     card.appendChild(hd); card.appendChild(frame);
-    card.appendChild(el('div', 'font-size:12px;color:var(--ink3,#8593aa);', '날씨 레이더·위성은 관측, 나머지는 ECMWF 모델 예보 · 아래 ▶ 로 흐름 재생 · 닫기: ✕ · 바깥 누르기 · Esc'));
+    card.appendChild(el('div', 'font-size:13px;color:var(--ink3,#8593aa);', '날씨 레이더·위성은 관측, 나머지는 ECMWF 모델 예보 · 아래 ▶ 로 흐름 재생 · 닫기: ✕ · 바깥 누르기 · Esc'));
     pick(layer);
     document.body.appendChild(ov);
     document.addEventListener('keydown', onKey, true);

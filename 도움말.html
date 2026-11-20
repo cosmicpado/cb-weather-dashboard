@@ -7,6 +7,7 @@
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <!-- 지역 설정 — 관할 이름·관서 수를 여기서 읽는다. -->
 <script src="clock-sync.js"></script>
+<script src="error-report.js"></script>   <!-- 화면 오류를 서버에 남긴다(관리자 화면 접속 통계 탭) -->
 <script src="short-url.js"></script>
 <script src="region.js"></script>
 <script src="notices.js"></script>
@@ -83,7 +84,7 @@ th{background:var(--surface2);font-weight:800;color:var(--ink2);white-space:nowr
 tr:last-child td{border-bottom:none}
 td.n{white-space:nowrap;font-weight:700}
 
-.pill{display:inline-block;padding:1px 9px;border-radius:999px;font-size:12.5px;font-weight:800;white-space:nowrap}
+.pill{display:inline-block;padding:1px 9px;border-radius:999px;font-size:13px;font-weight:800;white-space:nowrap}
 .p-safe{background:var(--safeSoft);color:var(--safe)}
 .p-caution{background:var(--cautionSoft);color:var(--caution)}
 .p-warn{background:var(--warnSoft);color:var(--warn)}
@@ -106,7 +107,7 @@ td.n{white-space:nowrap;font-weight:700}
 @media (max-width:620px){ .toc ol{columns:1} }
 
 .foot{margin-top:44px;padding-top:16px;border-top:1px solid var(--border);
-  color:var(--ink3);font-size:12.5px;line-height:1.7}
+  color:var(--ink3);font-size:13px;line-height:1.7}
 
 /* 탭 — 공지사항 / 도움말 */
 .tabs{display:flex;gap:6px;margin:0 0 16px;border-bottom:2px solid var(--border)}
@@ -115,13 +116,13 @@ td.n{white-space:nowrap;font-weight:700}
 .tabs button[aria-selected="true"]{color:var(--brand);border-bottom-color:var(--brand)}
 .tabs button:hover{color:var(--ink)}
 .tabs .nb{display:inline-block;min-width:18px;height:18px;padding:0 5px;margin-left:5px;border-radius:9px;background:var(--severe);
-  color:#fff;font-size:11.5px;line-height:18px;text-align:center;vertical-align:2px}
+  color:#fff;font-size:13px;line-height:18px;text-align:center;vertical-align:2px}
 .tabs .nb[hidden]{display:none}   /* 위 display 가 hidden 속성을 덮어써 빈 빨간 원이 남던 문제 */
 .nt{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:15px 18px;box-shadow:var(--sh);margin-bottom:12px}
 .nt .h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;font-size:13px;color:var(--ink3)}
 .nt .t{font-size:16.5px;font-weight:800;color:var(--ink);margin:0 0 6px}
 .nt .b{white-space:pre-line;font-size:14.5px;color:var(--ink2);line-height:1.7}
-.nt .new{background:var(--severe);color:#fff;border-radius:6px;padding:0 6px;font-size:11.5px;font-weight:800}
+.nt .new{background:var(--severe);color:#fff;border-radius:6px;padding:0 6px;font-size:13px;font-weight:800}
 .nt.is-new{border-color:var(--brand)}
 .nempty{padding:30px 0;text-align:center;color:var(--ink3)}
 
@@ -141,7 +142,7 @@ td.n{white-space:nowrap;font-weight:700}
 details{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 14px;margin:0 0 8px}
 details summary{cursor:pointer;font-weight:800;font-size:15px}
 details[open] summary{margin-bottom:8px}
-.card small{font-weight:600;color:var(--ink3);font-size:12.5px;margin-left:4px}
+.card small{font-weight:600;color:var(--ink3);font-size:13px;margin-left:4px}
 </style>
 </head>
 <body>
@@ -176,8 +177,8 @@ details[open] summary{margin-bottom:8px}
 
   <div class="cards">
     <a class="card" href="#map"><b>🗺 종합 현황 <small>/ · /map</small></b><span>평소 보는 기본 화면(첫 화면)</span></a>
-    <a class="card" href="#dis"><b>🎯 재해별 집중 감시 <small>/watch</small></b><span>호우·대설·한파·산불 때 관서 비교</span></a>
-    <a class="card" href="#wall"><b>🖥 119종합상황실 <small>/wall</small></b><span>벽면 화면, 관서 자동 순환</span></a>
+    <a class="card" href="#dis"><b>🎯 재해별 집중 감시 <small>/watch</small></b><span>호우·태풍·대설·한파·산불 때 관서 비교</span></a>
+    <a class="card" href="#wall"><b>🖥 실시간 상황판 <small>/wall</small></b><span>119종합상황실 벽면 화면, 관서 자동 순환 · 휴대폰에서는 '상황판'</span></a>
   </div>
 
   <!-- ============ 종합 현황 ============ -->
@@ -194,14 +195,15 @@ details[open] summary{margin-bottom:8px}
   <!-- ============ 재해별 집중 감시 ============ -->
   <h2 id="dis">🎯 재해별 집중 감시</h2>
   <ul>
-    <li>위쪽 탭(<b>호우 · 대설·한파 · 건조·산불</b>)을 고르면 그 재해로 <b>관서끼리 순위</b>를 봅니다.</li>
+    <li>제목 옆 탭(<b>호우·태풍 · 대설·한파 · 건조·산불</b>)을 고르면 그 재해로 <b>관서끼리 순위</b>를 봅니다. 진행 중인 태풍이 있으면 호우·태풍 탭 맨 위에 태풍 진로가 나옵니다.</li>
     <li>어느 탭이든 위에서부터 <b>특보 배너 → 관서별 순위 그래프 → 내 관서 지금 → 그림(특보·레이더, 산불은 산불위험 지도) → 시간대별 예보</b> 순서입니다.</li>
     <li>탭을 안 고르면 지금 특보·비·눈·계절에 맞는 탭이 저절로 열립니다.</li>
-    <li>순위 막대는 <b>색</b>으로 위험을 보세요. 막대 길이는 위험 정도가 아닙니다.</li>
+    <li>순위는 <b>심각한 관서부터</b> 나옵니다. 위험은 막대 <b>색</b>으로 보세요. 기온 막대는 가운데가 0℃ — 왼쪽이 영하, 오른쪽이 영상입니다.</li>
+    <li>순위의 관서를 누르면 <b>그 관서 화면</b>으로 바뀝니다.</li>
   </ul>
 
-  <!-- ============ 119종합상황실 ============ -->
-  <h2 id="wall">🖥 119종합상황실</h2>
+  <!-- ============ 실시간 상황판 ============ -->
+  <h2 id="wall">🖥 실시간 상황판</h2>
   <ul>
     <li>큰 화면에 띄우고 <b>F11</b>(전체화면). 관서가 <b>14초마다</b> 넘어갑니다. <b>❚❚</b>로 멈추고, 맨 아래 관서 칸을 누르면 그 관서로.</li>
     <li><b>기상특보 칸</b>을 누르면 통보문. 특보가 없으면 눌리지 않습니다.</li>
@@ -293,7 +295,7 @@ details[open] summary{margin-bottom:8px}
 
   <details id="demo"><summary>시연 모드</summary>
   <p>교육·점검용 <b>가짜 상황</b>을 화면에만 띄웁니다. 실제 자료는 그대로이고 끄면 바로 돌아옵니다. 종합 현황은 맨 위 ▶ 로 켭니다.</p>
-  <p><b>119종합상황실 시연</b> — 벽면 화면에서는 시연 단추를 숨겨 두었습니다. 아래를 누르면 그 시연으로 바로 열립니다(끄려면 왼쪽 위 <b>■ 시연 중</b>).
+  <p><b>실시간 상황판 시연</b> — 벽면 화면에서는 시연 단추를 숨겨 두었습니다. 아래를 누르면 그 시연으로 바로 열립니다(끄려면 왼쪽 위 <b>■ 시연 중</b>).
      단추를 꺼내 두려면 상황실 화면에서 <b>/</b> 키를 눌러 뜨는 칸에 <b>test</b> 를 입력하세요(다시 입력하면 숨김).<br>
      호우 <a href="상황실.html?demo=ready">준비</a> · <a href="상황실.html?demo=caution">1단계</a> · <a href="상황실.html?demo=warn">2단계</a> · <a href="상황실.html?demo=severe">3단계</a>
      &nbsp;|&nbsp; <a href="상황실.html?demo=cold">한파·결빙</a> · <a href="상황실.html?demo=heat">폭염</a> · <a href="상황실.html?demo=dry">건조·산불</a> · <a href="상황실.html?demo=quake">지진</a></p>

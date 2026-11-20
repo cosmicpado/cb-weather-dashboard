@@ -1,4 +1,4 @@
-/* 💬 의견 보내기 — 종합 현황(종합.html)·119종합상황실(상황실.html) 공용.
+/* 💬 의견 보내기 — 종합 현황(종합.html)·실시간 상황판(상황실.html) 공용.
    cbFeedback.open({page:'화면 이름'}) 으로 입력창을 띄우고 /api/feedback 에 보낸다(서버: tools/feedback.py).
    보던 화면·관서는 붙이지 않는다(2026-11-12 — 보던 관서가 의견 쓴 사람 관서처럼 읽혀 헷갈렸다).
    받은 의견은 관리자.html 에서 본다. */
@@ -38,7 +38,7 @@
       var b = el('button', 'min-height:46px;padding:5px 4px;border-radius:10px;border:1.5px solid #c9d1de;background:#fff;color:#1b2333;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;');
       b.type = 'button'; b.setAttribute('aria-pressed', 'false');
       b.appendChild(el('span', 'font-size:14px;font-weight:800;', k[0]));
-      if (k[1]) b.appendChild(el('span', 'font-size:10.5px;color:#7a8597;', k[1]));
+      if (k[1]) b.appendChild(el('span', 'font-size:13px;color:#7a8597;', k[1]));
       b.onclick = function () { kind = k[0]; kbtns.forEach(function (x) { var on = x === b; x.setAttribute('aria-pressed', on ? 'true' : 'false');
         x.style.borderColor = on ? '#2563eb' : '#c9d1de'; x.style.background = on ? '#eef3ff' : '#fff'; x.style.color = on ? '#1d4ed8' : '#1b2333'; });
         msg.textContent = ''; siteMode(kind === '새 사이트 제안'); };
@@ -49,7 +49,7 @@
 
     var ta = el('textarea', 'width:100%;box-sizing:border-box;min-height:140px;resize:vertical;border:1px solid #c9d1de;border-radius:10px;padding:10px 12px;font-size:15px;line-height:1.5;font-family:inherit;color:#1b2333;background:#fff;outline:none;');
     ta.maxLength = 2000; ta.placeholder = '예) 기온이 실제와 달라요 / 상황실 레이더를 더 크게 / 출동 차량 현황 사이트가 있으면 좋겠어요';
-    var cnt = el('div', 'font-size:11.5px;color:#8a94a6;text-align:right;margin-top:-6px;', '0 / 2000');
+    var cnt = el('div', 'font-size:13px;color:#8a94a6;text-align:right;margin-top:-6px;', '0 / 2000');
     ta.oninput = function () { cnt.textContent = ta.value.length + ' / 2000'; };
     card.appendChild(ta); card.appendChild(cnt);
 

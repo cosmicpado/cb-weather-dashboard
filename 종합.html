@@ -11,6 +11,10 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="기상재난 플랫폼">
+<!-- 글꼴 — 재해별 집중 감시와 같은 Pretendard 파일(없으면 PC 에 깔린 글꼴로 떨어져 두 화면 글씨가 달라 보였다, 2026-11-20) -->
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" integrity="sha256-0nQ4DLeBXpJHnTjkPdWy7vWFVnCROUAio6Le3gSEdMs=" crossorigin="anonymous">
+<link rel="stylesheet" href="ui.css">   <!-- 윗줄·단추 공용 모양(종합·재해 같이 씀) -->
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -20,8 +24,9 @@
 <script>window.VWORLD_KEY = "32219A4F-5ABE-4E0D-8E0D-911ED7E36B1B";</script>
 <!-- 종합 현황 — 지금 상황 → 지도·내 관서 → 참고 정보 순서로 정리한 화면(2026-11-18 부터 종합 현황 본 화면).
      자료(data.js → data-adapter.js 의 window.DASH)·관서 설정(region.js)·지도(map-geo.js)·특보 단계 계산(stage.js)은
-     119종합상황실·재해별 집중 감시와 같은 것을 쓴다. -->
+     실시간 상황판·재해별 집중 감시와 같은 것을 쓴다. -->
 <script src="clock-sync.js"></script>
+<script src="error-report.js"></script>   <!-- 화면 오류를 서버에 남긴다(관리자 화면 접속 통계 탭) -->
 <script src="short-url.js"></script>
 <script src="region.js"></script>
 <script src="dam-watch.js"></script>
@@ -37,6 +42,7 @@
 <script src="version-check.js"></script>
 <script>window.cbNotices && cbNotices.toast();   /* 안 본 공지가 있으면 오른쪽 아래 알림 카드 */</script>
 <script src="alerts.js"></script>
+<script src="alert-settings.js"></script>   <!-- 🔔 알림 설정 창(재해별 집중 감시와 같이 쓴다) -->
 <script>/* 화면 색 — 저장값(ggTheme, 재해별 집중 감시와 같이 쓴다). 그리기 전에 정해 깜빡이지 않게 */ try{ if(localStorage.getItem('ggTheme')==='dark') document.documentElement.setAttribute('data-theme','dark'); }catch(e){}</script>
 <!-- React — 무결성 검사(SRI): 배포처 파일이 바뀌면 브라우저가 실행하지 않는다(support.js 와 같은 값) -->
 <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" integrity="sha384-DGyLxAyjq0f9SPpVevD6IgztCFlnMF6oW/XQGmfe+IsZ8TqEiDrcHkMLKI6fiB/Z" crossorigin="anonymous"></script>
@@ -45,42 +51,32 @@
 <script src="cctv-links.js"></script>
 <script src="river-popup.js"></script>
 <style>
-:root{--bg:#f3f5f9;--card:#fff;--line:#e4e8ef;--ink:#101828;--ink2:#4b5a74;--ink3:#5f6d85;--brand:#1d4ed8;
+/* 공용 모양(ui.css)이 쓰는 색 이름 — 이 화면 색에 잇는다 */
+:root{--ui-line:var(--line);--ui-line2:var(--border2);--ui-card:var(--card);--ui-hover:var(--soft);--ui-sev:var(--sev);
+  --bg:#f3f5f9;--card:#fff;--line:#e4e8ef;--ink:#101828;--ink2:#4b5a74;--ink3:#5f6d85;--brand:#1d4ed8;
   --ok:#12805c;--okbg:#ecf8f2;--warn:#e8590c;--warnbg:#fff4e6;--sev:#d92d20;--sevbg:#fef0ef;--blue:#2563eb;--amb:#e0930a;--tl:#C75400;--nowc:#5E3790;--nowbg:rgba(255,122,47,.10);--wxs:#A86A00;--wxm:#4F63D6;--pre:#64748b;--eqy:#7A6400;
   /* 하천 상세 팝업(river-popup.js)이 쓰는 색 이름 */
   --surface:#fff;--surface2:#f3f7fc;--surface3:#eaf0f8;--border:#e4e9f2;--border2:#d3dbe9;--safe:#0a8058;--caution:#e0930a;--severe:#d42a2f;--severeSoft:#fbe3e3;--brandSoft:#eef3ff;
   /* 지도·팝업 바탕 */
-  --mapFill:#eef1f6;--mapSel:#dbe7ff;--lbl:#101828;--lbl2:#344054;--soft:#f3f5f9;--msg:#eef4ff;--me:#eef3ff;--over:rgba(255,255,255,.95)}
+  --mapFill:#eef1f6;--mapSel:#dbe7ff;--lbl:#101828;--lbl2:#344054;--soft:#f3f5f9;--track:#eceff4;--msg:#eef4ff;--me:#eef3ff;--over:rgba(255,255,255,.95)}
 /* 어두운 화면(☾) */
 :root[data-theme="dark"]{--bg:#080d18;--card:#111a2c;--line:#26314c;--ink:#e9eef9;--ink2:#9fb0cf;--ink3:#8a9ab8;--brand:#4b8bf5;
   --ok:#34d399;--okbg:rgba(52,211,153,.12);--warn:#fb923c;--warnbg:rgba(251,146,60,.13);--sev:#f87171;--sevbg:rgba(248,113,113,.14);--blue:#60a5fa;--amb:#fbbf24;--tl:#FF9A3C;--nowc:#17AFAB;--nowbg:rgba(255,122,47,.10);--wxs:#FFB020;--wxm:#B7C4FF;--pre:#94a3b8;--eqy:#F2D53C;
   --surface:#111a2c;--surface2:#18233b;--surface3:#1e2a45;--border:#26314c;--border2:#354364;--safe:#34d399;--caution:#fbbf24;--severe:#ef4444;--severeSoft:rgba(239,68,68,.16);--brandSoft:rgba(75,139,245,.16);
-  --mapFill:#1a2540;--mapSel:#1e3a6b;--lbl:#e9eef9;--lbl2:#b6c3dc;--soft:#0f1729;--msg:rgba(96,165,250,.12);--me:rgba(75,139,245,.16);--over:rgba(17,26,44,.95)}
+  --mapFill:#1a2540;--mapSel:#1e3a6b;--lbl:#e9eef9;--lbl2:#b6c3dc;--soft:#0f1729;--track:#172036;--msg:rgba(96,165,250,.12);--me:rgba(75,139,245,.16);--over:rgba(17,26,44,.95)}
 *{box-sizing:border-box;margin:0}
 body{background:var(--bg);font-family:'Pretendard Variable',Pretendard,'Malgun Gothic',system-ui,sans-serif;color:var(--ink);font-size:15px}
 a{color:inherit;text-decoration:none}
 .wrap{max-width:1600px;margin:0 auto;padding:14px 20px 20px;display:flex;flex-direction:column;gap:14px}
 /* 상단 */
 .top{display:flex;align-items:center;gap:14px}
-.logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(140deg,#3b82f6,#1d4ed8);display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;flex:none}
-.tt{font-weight:800;font-size:17px;white-space:nowrap}.tt em{font-style:normal;font-size:13.5px;font-weight:800;color:#b54708;background:var(--card)4e6;border-radius:6px;padding:2px 7px;margin-left:6px;vertical-align:2px}
-.ts{font-size:14.5px;color:var(--ink3)}.ts.late{color:var(--sev);font-weight:800}
-.home{margin-left:20px;border:1.5px solid var(--line);background:var(--card);border-radius:10px;padding:9px 13px;font-weight:800;font-size:14.5px;font-family:inherit;color:var(--ink2);cursor:pointer;white-space:nowrap}
-.home.on{background:var(--brand);border-color:var(--brand);color:#fff}
-.room{display:none}   /* 휴대폰에서만 — 위 메뉴가 숨으므로 상황실로 가는 단추 */
-.sel{margin-left:8px;display:flex;align-items:center;gap:8px;border:1.5px solid var(--line);background:var(--card);border-radius:10px;padding:4px 6px 4px 12px}
-.sel small{color:var(--ink3);font-weight:700;white-space:nowrap}
-.sel select{border:0;background:transparent;font-weight:800;font-size:15px;font-family:inherit;color:var(--ink);padding:5px 4px;cursor:pointer}
+.hd-tt em{font-style:normal;font-size:13.5px;font-weight:800;color:#b54708;background:var(--card)4e6;border-radius:6px;padding:2px 7px;margin-left:6px;vertical-align:2px}
 .nav{margin-left:auto;display:flex;gap:4px;align-items:center}
-/* 윗줄 정돈 — 왼쪽(이름) · 관서 선택 묶음 · 오른쪽(화면 이동 · 도구). 단추 높이는 모두 38px */
-.home,.sel{height:38px;box-sizing:border-box}.home{display:inline-flex;align-items:center;padding:0 13px;margin-left:24px}.sel{margin-left:6px;padding:0 6px 0 12px}
-.nav>a{height:38px;box-sizing:border-box;display:inline-flex;align-items:center}
 .demo>button{height:38px;box-sizing:border-box}
 
 /* 중간 폭(노트북·창 줄임) — 윗줄이 넘치면 메뉴·아이콘 묶음이 둘째 줄 오른쪽으로 내려간다(잘리지 않게) */
 @media (min-width:821px) and (max-width:1500px){
-  .top{flex-wrap:wrap;row-gap:8px}.home{margin-left:12px}
-  .nav a{padding:8px 9px}
+  .top{flex-wrap:wrap;row-gap:8px}.scope{margin-left:12px}
 }
 /* 날씨 칸이 좁으면(가운데·오른쪽 칸 폭이 줄 때) 휴대폰처럼 세로로 쌓고 예보 표는 칸 안에서 옆으로 밀어 본다 */
 .c-now{container-type:inline-size}
@@ -90,31 +86,12 @@ a{color:inherit;text-decoration:none}
   .rain{grid-template-columns:64px repeat(3,1fr);gap:6px}.rain b{font-size:18px}
   .ch{flex-wrap:wrap}.ch span{text-align:left}
 }
-.nav a{padding:8px 12px;border-radius:9px;font-weight:700;color:var(--ink2);font-size:14px;white-space:nowrap}
-.nav a:hover{background:var(--card)}.nav a.on{background:var(--card);border:1px solid var(--line);color:var(--brand)}
-.live{display:inline-flex;align-items:center;font-size:12.5px;font-weight:800;color:var(--sev);background:var(--sevbg);border-radius:999px;padding:2px 9px;margin-left:8px;vertical-align:2px;animation:liveBlink 2s ease-in-out infinite}
-@keyframes liveBlink{0%,100%{opacity:1}50%{opacity:.55}}
-.ub{display:inline-flex;align-items:center;gap:5px;margin-left:6px;padding-left:10px;border-left:1px solid var(--line)}
-.ib{position:relative;width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--card);display:inline-flex;align-items:center;justify-content:center;font-size:17px;cursor:pointer;color:var(--ink2);padding:0}
-.ib:hover{border-color:var(--border2)}.ib i{position:absolute;top:5px;right:5px;width:8px;height:8px;border-radius:50%;background:var(--sev)}
-.apw{position:relative}.ap{position:absolute;top:46px;right:0;z-index:70;width:min(370px,calc(100vw - 32px));background:var(--card);border:1px solid var(--border2);border-radius:14px;box-shadow:0 18px 40px rgba(16,24,40,.22);padding:8px}
-.ap h4{font-size:15.5px;padding:8px 10px 6px}.ap h4 small{font-size:13px;color:var(--ink3);font-weight:600;margin-left:6px}
-.ap .sw{display:flex;align-items:center;gap:12px;padding:10px;border-radius:10px;cursor:pointer}.ap .sw:hover{background:var(--soft)}
-.ap .sw b{display:block;font-size:14.5px}.ap .sw span{display:block;font-size:13px;color:var(--ink3);margin-top:2px;line-height:1.45}
-.ap .tg{flex:none;width:44px;height:24px;border-radius:12px;position:relative;background:var(--border2)}.ap .tg::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:left .15s}
-.ap .sw.on .tg{background:var(--brand)}.ap .sw.on .tg::after{left:23px}
 .pageAlarm{position:fixed;inset:0;z-index:8990;pointer-events:none;animation:pagePulse 1.5s ease-in-out infinite}.pageAlarm[hidden]{display:none}
 @keyframes pagePulse{0%,100%{box-shadow:inset 0 0 0 4px var(--severe)}50%{box-shadow:inset 0 0 0 10px var(--severe)}}
 @media (prefers-reduced-motion: reduce){.pageAlarm{animation:none;box-shadow:inset 0 0 0 6px var(--severe)}}
 .demo{position:relative}.demo>button{border:1px solid var(--line);background:var(--card);border-radius:9px;padding:8px 12px;font-weight:800;font-size:14px;font-family:inherit;color:var(--ink2);cursor:pointer;white-space:nowrap}
 .demo>button.on{background:#7c3aed;border-color:#7c3aed;color:#fff}
-html.no-demo .demo>button:not(.on){display:none}   /* 'test' 명령으로 시연 단추 숨김(시연 중이면 끌 수 있게 그대로) */
-/* '/' 명령 칸 */
-.cmd{position:fixed;inset:0;z-index:9800;display:flex;align-items:center;justify-content:center;background:rgba(16,24,40,.35)}
-.cmd>div{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 20px 60px rgba(16,24,40,.3);display:flex;flex-direction:column;gap:10px;align-items:center}
-.cmd input{width:min(360px,80vw);text-align:center;font-weight:700;font-size:20px;font-family:inherit;padding:10px 14px;border-radius:12px;border:2px solid var(--brand);background:var(--card);color:var(--ink);outline:none}
-.cmd small{font-size:13px;font-weight:600;color:var(--ink3);text-align:center}
-.cmdt{position:fixed;left:50%;bottom:8vh;transform:translateX(-50%);z-index:9900;background:rgba(15,27,45,.92);color:#fff;font-weight:700;font-size:15px;font-family:inherit;padding:12px 22px;border-radius:12px;pointer-events:none}
+html.no-demo .demo:not(:has(button.on)){display:none}   /* 'test' 명령으로 시연 단추 숨김(시연 중이면 끌 수 있게 그대로) */
 /* 시연 단계 단추 — 화면 아래 가운데 */
 .dbar{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:9400;display:flex;align-items:center;gap:6px;padding:7px 9px;border-radius:14px;background:var(--card);border:1px solid var(--border2);box-shadow:0 12px 32px rgba(16,24,40,.2)}
 .dbar[hidden]{display:none}.dbar>span{font-size:14px;font-weight:800;color:var(--ink3);padding:0 4px;white-space:nowrap}
@@ -176,7 +153,7 @@ html.no-demo .demo>button:not(.on){display:none}   /* 'test' 명령으로 시연
 .al{margin:10px 16px 0;background:var(--warnbg);border-radius:10px;padding:9px 12px}   /* 왼쪽 색 막대는 쓰지 않는다 — 바탕색과 제목 색으로만 구분 */
 .al:last-child{margin-bottom:14px}
 .al b{font-size:14px}.al .tm{font-size:14.5px;color:var(--ink3);margin-left:6px}.al p{font-size:13px;color:var(--ink2);margin-top:4px;line-height:1.5}
-.al.msg{background:var(--msg)}.al.eq{background:var(--soft)}.al.eqq{background:none;border:1px dashed var(--eqy);padding:8px 11px}.al.eqq b{color:var(--eqy)}.al.eqq.gry{border-color:var(--line)}.al b .eqb{color:inherit;font-size:.9em}.eqb{display:inline-flex;align-items:center;justify-content:center;min-width:1.6em;height:1.45em;padding:0 .25em;margin-right:6px;border:1.5px solid currentColor;border-radius:5px;font-weight:800;font-size:12px;line-height:1;vertical-align:1px;cursor:help;color:var(--eqy)}.al.eqq.gry b{color:var(--ink3)}.al.sev{background:var(--sevbg)}.al.pre{background:var(--soft)}
+.al.msg{background:var(--msg)}.al.eq{background:var(--soft)}.al.eqq{background:none;border:1px dashed var(--eqy);padding:8px 11px}.al.eqq b{color:var(--eqy)}.al.eqq.gry{border-color:var(--line)}.al b .eqb{color:inherit;font-size:.9em}.eqb{display:inline-flex;align-items:center;justify-content:center;min-width:1.6em;height:1.45em;padding:0 .25em;margin-right:6px;border:1.5px solid currentColor;border-radius:5px;font-weight:800;font-size:13px;line-height:1;vertical-align:1px;cursor:help;color:var(--eqy)}.al.eqq.gry b{color:var(--ink3)}.al.sev{background:var(--sevbg)}.al.pre{background:var(--soft)}
 /* 현재 실황 · 시간대별 예보(상황실 틀) */
 .cur{display:flex;gap:12px;padding:10px 16px 0;align-items:stretch}
 .cur .big{padding:0;flex:none;min-width:150px;display:flex;flex-direction:column;justify-content:center}
@@ -303,15 +280,12 @@ html.no-demo .demo>button:not(.on){display:none}   /* 'test' 명령으로 시연
 /* 휴대폰 — 급한 순서로 세로로 */
 @media (max-width:820px){
   .mh{flex-wrap:wrap}.mh .btns.top{order:3;flex:1 0 100%;flex-wrap:wrap}   /* 휴대폰: 단추 줄은 제목 아래 둘째 줄로 */
-  .wrap{padding:10px 12px 80px;gap:10px}
-  .top{flex-wrap:wrap;gap:10px}.tt{font-size:15px}.tt em{display:none}.nav{display:none}
-  .top>div:nth-child(2){flex:1 1 calc(100% - 50px);min-width:0}
-  .home,.sel{margin-left:0;flex:1 1 0;height:44px;box-sizing:border-box}.home{flex:0 0 auto;display:flex;align-items:center}.sel select{flex:1;min-width:0}.ub{display:none}
-  /* 휴대폰 글자 — 충북 전체·관서 선택 칸 16px(아이폰은 선택 칸 글자가 16px 보다 작으면 누를 때 화면이 확대된 채로 남는다) · 이름표 14px */
-  .home,.sel select{font-size:16px}.sel small{font-size:14px}
+  .wrap{padding:10px 12px calc(90px + env(safe-area-inset-bottom,0px));gap:10px}
+  .top{flex-wrap:wrap;gap:10px}.hd-tt em{display:none}
+  .top>div:nth-child(2){flex:1 1 0;min-width:0}
+  .nav{display:contents}   /* 메뉴 묶음을 풀어 탭바(.pgs)는 아래로, 도구(.hd-tools)는 이름 줄 오른쪽으로 */
   .band{position:relative}.demoTag{position:absolute;top:-11px;right:14px;padding:3px 9px;font-size:13.5px;z-index:2}
-  .dbar{left:8px;right:8px;transform:none;flex-wrap:wrap;justify-content:center;gap:6px;bottom:10px}.dbar>span{flex:1 0 100%;text-align:center}.dbar button{min-width:0;padding:0 10px;height:36px}
-  .room{display:flex;align-items:center;flex:0 0 auto;height:44px;box-sizing:border-box;border:1.5px solid var(--line);background:var(--card);border-radius:10px;padding:0 12px;font-weight:800;font-size:16px;color:var(--ink2);text-decoration:none;white-space:nowrap}
+  .dbar{left:8px;right:8px;transform:none;flex-wrap:wrap;justify-content:center;gap:6px;bottom:calc(var(--cb-navh,0px) + 10px)}.dbar>span{flex:1 0 100%;text-align:center}.dbar button{min-width:0;padding:0 10px;height:36px}
   .bsum .s.split .si{display:block}.bsum .s.split .dot{display:none}
   .band{flex-wrap:wrap;padding:12px}.bsum .l,.bsum .s{white-space:normal}.cnt{width:100%;justify-content:space-around}
   .main{grid-template-columns:1fr}.side{display:contents}
@@ -326,7 +300,7 @@ html.no-demo .demo>button:not(.on){display:none}   /* 'test' 명령으로 시연
   .fc{overflow-x:auto;-webkit-overflow-scrolling:touch}.fl2{min-width:600px}
   .rain{grid-template-columns:56px repeat(3,1fr);gap:6px;padding:8px 10px}.rain b{font-size:17px}
   .c-inf .refs{grid-template-columns:1fr}
-  .gal figcaption{flex-direction:column;gap:1px}.gal figcaption span{font-size:12.5px}
+  .gal figcaption{flex-direction:column;gap:1px}.gal figcaption span{font-size:13px}
   .okline{gap:6px}.okline div{padding:8px 10px;font-size:14px}
   .ch{flex-wrap:wrap}.ch span{text-align:left}
   .band .st b{font-size:24px}.bsum .s{font-size:13.5px}
@@ -340,17 +314,15 @@ html.no-demo .demo>button:not(.on){display:none}   /* 'test' 명령으로 시연
 <body>
 <div class="wrap">
   <div class="top">
-    <div class="logo">⛅</div>
-    <div><div class="tt">충북소방 기상재난통합플랫폼<span class="live">● LIVE</span></div><div class="ts" id="upd">자료 --:-- 기준</div></div>
-    <button class="home" id="homeBtn" type="button" title="충청북도 전체 보기">🏠 충북 전체</button>
-    <label class="sel"><small>관서</small><select id="pick" aria-label="관서 선택"></select></label>
-    <a class="room" href="상황실.html" title="119종합상황실 화면">🖥 상황실</a>
-    <nav class="nav"><a href="재해.html">재해별 집중 감시</a><a href="상황실.html">119종합상황실</a>
-      <span class="ub"><a href="도움말.html#notice" class="ib" title="공지사항 · 사용설명서" aria-label="공지사항">📢<i id="ntDot" hidden></i></a>
-        <button class="ib" id="fbBtn" type="button" title="의견 보내기 — 불편한 점·틀린 값·바라는 점을 개발 담당자에게 보냅니다" aria-label="의견 보내기">💬</button>
+    <div class="hd-logo">⛅</div>
+    <div><div class="hd-tt">충북소방 기상재난통합플랫폼<span class="hd-live">● LIVE</span></div><div class="hd-ts" id="upd">자료 --:-- 기준</div></div>
+    <span class="seg scope" aria-label="볼 범위"><button class="home" id="homeBtn" type="button" title="충청북도 전체 보기"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20h14V9.5"/></svg>충북 전체</button><span class="selw"><button class="sel" id="pickBtn" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="관서 선택"><small>관서</small><b id="pickName">선택</b><svg class="car" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="pkl" id="pickList" role="listbox" hidden></div></span></span>
+    <nav class="nav"><span class="pgs" aria-label="화면 전환"><a class="on" aria-current="page"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg><span class="lf">종합 현황</span><span class="ls">종합</span></a><a href="재해.html"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg><span class="lf">재해별 집중 감시</span><span class="ls">집중감시</span></a><a href="상황실.html"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg><span class="lf">실시간 상황판</span><span class="ls">상황판</span></a></span>
+      <span class="hd-tools"><a href="도움말.html#notice" class="ib" title="공지사항 · 사용설명서" aria-label="공지사항"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg><i id="ntDot" hidden></i></a>
+        <button class="ib" id="fbBtn" type="button" title="의견 보내기 — 불편한 점·틀린 값·바라는 점을 개발 담당자에게 보냅니다" aria-label="의견 보내기"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button>
         <span class="demo"><button id="demoBtn" type="button" title="가상 호우 상황으로 화면 동작 보기">▶ 시연</button></span>
-        <span class="apw"><button class="ib" id="alBtn" type="button" title="알림 설정 — 경보음·테두리 점멸·화면 알림" aria-label="알림 설정">🔔</button><div class="ap" id="alPanel" hidden></div></span>
-        <button class="ib" id="thBtn" type="button" title="화면 색 바꾸기" aria-label="화면 색">☾</button></span></nav>
+        <button class="ib" id="alBtn" type="button" title="알림 설정 — 경보음·테두리 점멸·화면 알림" aria-label="알림 설정" aria-expanded="false"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg></button>
+        <button class="ib" id="thBtn" type="button" title="화면 색 바꾸기" aria-label="화면 색"><svg class="ic i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg><svg class="ic i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.9 4.9 1.4 1.4"/><path d="m17.7 17.7 1.4 1.4"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m4.9 19.1 1.4-1.4"/><path d="m17.7 6.3 1.4-1.4"/></svg></button></span></nav>
   <div class="pageAlarm" id="pageAlarm" hidden></div>
   <div class="dbar" id="demoBar" hidden></div>
   </div>
@@ -383,7 +355,7 @@ html.no-demo .demo>button:not(.on){display:none}   /* 'test' 명령으로 시연
   var LAY = (function(){ try{ var v = new URLSearchParams(location.search).get('lay'); return v==='a' ? 'a' : 'b'; }catch(e){ return 'a'; } })();
   function $(id){ return document.getElementById(id); }
   function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
-  /* 시연 — 재대본 단계별 가상 호우 상황(119종합상황실 시연과 같은 시나리오). 실제 특보·문자는 지우고 단계에 맞는 것만 남긴다.
+  /* 시연 — 재대본 단계별 가상 호우 상황(실시간 상황판 시연과 같은 시나리오). 실제 특보·문자는 지우고 단계에 맞는 것만 남긴다.
      화면 아래 단계 단추로 바꾸고, 새로고침하거나 '시연 종료'를 누르면 실제 자료로 돌아간다 */
   var demo = null, demoD = null;
   var STAGES = [['normal','평상','특보 없음','var(--ok)'],['ready','준비','호우 예비특보 3개 시·군 — 재대본 준비 단계','#2563eb'],
@@ -498,7 +470,7 @@ html.no-demo .demo>button:not(.on){display:none}   /* 'test' 명령으로 시연
       });
       var s = station(n), aw = s.aws || {}, rep = ((RC.awsRep||{})[n]||{}).stn;
       ((RC.awsStations||{})[n]||[]).forEach(function(m){ var o = (aw.stations||{})[m.stn] || {}, isRep = rep===m.stn;
-        L.marker([m.lat, m.lon], { zIndexOffset: 50, icon: L.divIcon({ className:'', iconSize:null, html:'<div style="transform:translate(-50%,-50%);padding:2px 7px;border-radius:6px;background:'+(isRep?'#1d4ed8':'#93c5fd')+';color:'+(isRep?'#fff':'#0f1b2d')+';font:800 12.5px Pretendard,sans-serif;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.3)">'+esc(m.name)+'</div>' }) }).addTo(grp)
+        L.marker([m.lat, m.lon], { zIndexOffset: 50, icon: L.divIcon({ className:'', iconSize:null, html:'<div style="transform:translate(-50%,-50%);padding:2px 7px;border-radius:6px;background:'+(isRep?'#1d4ed8':'#93c5fd')+';color:'+(isRep?'#fff':'#0f1b2d')+';font:800 13px Pretendard,sans-serif;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.3)">'+esc(m.name)+'</div>' }) }).addTo(grp)
           .bindTooltip('<b>기상 관측소 '+esc(m.name)+'</b><br>'+esc(m.addr||'')+'<br>기온 '+(o.ta==null?'—':num(o.ta)+'°')+' · 강수 1시간 '+(o.rn60==null?'—':num(o.rn60)+'mm')+(isRep?'<br><b>이 관서 대표 관측소</b>':''), { direction:'top', offset:[0,-12] });
       });
     }
@@ -555,18 +527,22 @@ html.no-demo .demo>button:not(.on){display:none}   /* 'test' 명령으로 시연
 
   /* ── 상단 ───────────────────────────────────────── */
   function renderTop(){
-    var pick = $('pick');
-    if (!pick.options.length) {
-      var o0 = document.createElement('option'); o0.value = ''; o0.textContent = '선택'; o0.disabled = true; pick.appendChild(o0);
-      ORDER.forEach(function(n){ var o=document.createElement('option'); o.value=n; o.textContent=n; pick.appendChild(o); });
-      pick.onchange = function(){ if (pick.value) choose(pick.value); };
+    /* 관서 칸 — 누르면 목록(충청북도 + 관서). 바깥을 누르거나 Esc 로 닫힌다 */
+    var pickBtn = $('pickBtn'), pickList = $('pickList');
+    function pkOpen(on){ pickList.hidden = !on; pickBtn.setAttribute('aria-expanded', on ? 'true' : 'false');
+      if (on) pickList.innerHTML = [WIDE].concat(ORDER).map(function(n){ return '<button type="button" role="option" data-n="'+esc(n)+'" class="'+(n===me?'on':'')+'"'+(n===me?' aria-selected="true"':'')+'>'+esc(n)+'</button>'; }).join(''); }
+    if (!pickBtn.onclick) {
+      pickBtn.onclick = function(e){ e.stopPropagation(); pkOpen(pickList.hidden); };
+      pickList.onclick = function(e){ var b = e.target.closest && e.target.closest('[data-n]'); if (!b) return; pkOpen(false); choose(b.getAttribute('data-n')); };
+      document.addEventListener('click', function(e){ if (!pickList.hidden && !(e.target.closest && e.target.closest('.selw'))) pkOpen(false); });
+      document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && !pickList.hidden) pkOpen(false); });
       $('homeBtn').onclick = function(){ focus = null; choose(WIDE); };
     }
-    pick.value = me===WIDE ? '' : me; $('homeBtn').className = 'home' + (me===WIDE ? ' on' : '');
+    $('pickName').textContent = me===WIDE ? '선택' : me; $('homeBtn').className = 'home' + (me===WIDE ? ' on' : ''); $('pickBtn').classList.toggle('on', me!==WIDE);
     var u = String(D().updated||''), m = u.match(/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})/), late = 0;
     if (m) late = Math.round((Date.now() - new Date(+m[1],+m[2]-1,+m[3],+m[4],+m[5]))/60000);
-    var up = $('upd'); up.className = 'ts' + (late>15 ? ' late' : '');
-    up.textContent = m ? ('자료 ' + m[4] + ':' + m[5] + ' 기준' + (late>15 ? ' · ⚠ ' + late + '분째 갱신 안 됨' : ' · 1분마다 자동 갱신')) : '자료 시각 모름';
+    var up = $('upd'); up.className = 'hd-ts' + (late>15 ? ' late' : '');
+    up.textContent = m ? ('자료 ' + m[4] + ':' + m[5] + ' 기준' + (late>15 ? ' · ⚠ ' + late + '분째 갱신 안 됨' : ' · 약 5분마다 새 자료')) : '자료 시각 모름';
   }
   function choose(n){ me = n; if (focus) focus = (n===WIDE ? null : n); try{ localStorage.setItem(KEY, n); }catch(e){} render(); }
 
@@ -664,7 +640,7 @@ html.no-demo .demo>button:not(.on){display:none}   /* 'test' 명령으로 시연
   }
 
   /* ── 특보·재난문자 ─────────────────────────────── */
-  /* 지진·낙뢰 — 119종합상황실 '기상특보' 칸과 같은 기준.
+  /* 지진·낙뢰 — 실시간 상황판 '기상특보' 칸과 같은 기준.
      지진 = 24시간 안 지진 중 충북 진도 Ⅱ 이상 또는 지진조기경보(가장 최근 1건) — 기상청 지진재난문자 기준(진도 Ⅱ 이상 시군구에 발송, 2024-10-28~).
      낙뢰 = 이 관서 반경 20km 안 최근 1시간(수집이 30분 넘게 멈췄으면 지난 낙뢰라 안 띄운다) */
   var R2 = ['','Ⅰ','Ⅱ','Ⅲ','Ⅳ','Ⅴ','Ⅵ','Ⅶ','Ⅷ','Ⅸ','Ⅹ'];
@@ -770,7 +746,7 @@ html.no-demo .demo>button:not(.on){display:none}   /* 'test' 명령으로 시연
   }
 
   /* ── 내 관서 날씨 + 기온 그래프 ───────────────────── */
-  /* 날씨 칸 — 119종합상황실의 '현재 실황'·'시간대별 예보'와 같은 틀(같은 순서·같은 줄 이름)이라 두 화면에서 같은 자리에 같은 정보 */
+  /* 날씨 칸 — 실시간 상황판의 '현재 실황'·'시간대별 예보'와 같은 틀(같은 순서·같은 줄 이름)이라 두 화면에서 같은 자리에 같은 정보 */
   var DIRS = ['북','북동','동','남동','남','남서','서','북서'];
   function dirName(deg){ return deg==null||isNaN(deg) ? '' : DIRS[Math.round(((+deg%360)+360)%360/45)%8]; }
   /* 바람이 불어 가는 쪽 화살표 — 그림(svg)이라 어느 방향으로 돌려도 가운데가 제자리(글자 ↑ 를 돌리면 위치가 어긋나 옆 글자를 덮었다) */
@@ -908,7 +884,7 @@ html.no-demo .demo>button:not(.on){display:none}   /* 'test' 명령으로 시연
       var cm = (d.bulletins||{}).commentary || {}, it = String(cm.title || '').replace(/^\([^)]*\)\s*/, '');
       var rv = riverRows(me), top = rv[0], bad = rv.filter(function(x){ return x.lv!=='safe'; });
       p.innerHTML = '<div class="refs">'
-        + '<div class="ref" data-go="river"><h4>🌊 '+(me===WIDE?'충북':'관할')+' 하천</h4><b style="color:'+(bad.length?LVC[bad[0].lv]:'var(--ok)')+'">'+(bad.length? LVT[bad[0].lv]+' '+bad.length+'곳' : '모두 정상')+'</b><p>'+(top? '수위가 가장 높은 곳: '+esc(shortRiver(top.r.name))+' (경계수위의 '+Math.round(top.pct*100)+'%)' : '관측소 없음')+'</p></div>'
+        + '<div class="ref" data-go="river"><h4>🌊 '+(me===WIDE?'충북':'관할')+' 하천</h4><b style="color:'+(bad.length?LVC[bad[0].lv]:'var(--ok)')+'">'+(bad.length? LVT[bad[0].lv]+' '+bad.length+'곳' : '모두 정상')+'</b><p>'+(top? '수위가 가장 높은 곳<br>'+esc(shortRiver(top.r.name))+' · 경계수위의 '+Math.round(top.pct*100)+'%' : '관측소 없음')+'</p></div>'
         + (dams.length ? '<div class="ref" data-go="dam"><h4>💧 충북 영향 댐</h4><b style="color:'+(damHot.length?'var(--warn)':'var(--ok)')+'">'+(damHot.length? damHot.length+'곳 '+esc(damHot[0].label) : '모두 정상')+'</b><p>'+(damHot.length ? esc(damHot.map(function(x){ return x.name+' 방류 '+(x.out!=null?Math.round(x.out):'-')+'㎥/s'; }).join(' · ')) : dams.length+'곳 감시 · 수문 방류 없음')+'</p></div>' : '')
         + (function(){ var FCOL=['var(--ok)','#b54708','var(--warn)','var(--sev)'], mf = fire.filter(function(x){ return x.region===sig(me); })[0];
             var head = (me!==WIDE && mf) ? '<b style="color:'+FCOL[Math.max(0,(mf.level||1)-1)]+'">'+esc(mf.region)+' '+esc(mf.levelText)+'</b>' : '<b style="color:'+(hiF.length?'#b54708':'var(--ok)')+'">'+(hiF.length? esc(hiF[0].levelText)+' 이상 '+hiF.length+'곳':'전역 낮음')+'</b>';
@@ -918,11 +894,11 @@ html.no-demo .demo>button:not(.on){display:none}   /* 'test' 명령으로 시연
               : '충북 '+fire.length+'개 시군 모두 낮음';
             return '<div class="ref" data-go="fire"><h4>🔥 산불 위험</h4>'+head+'<p>'+sub+'</p></div>'; })()
         + (function(){ var mp2 = pm.filter(function(x){ return x.region===me; })[0], GT={good:'좋음',normal:'보통',bad:'나쁨',very_bad:'매우나쁨'};
-            var head = (me!==WIDE && mp2) ? (mp2.pm10==null ? '<b style="color:var(--ink3)">'+esc(me)+' 측정값 없음</b>' : '<b style="color:'+(/bad/.test(mp2.grade||'')?'var(--warn)':'var(--ok)')+'">'+esc(me)+' '+mp2.pm10+'㎍/㎥ · '+esc(GT[mp2.grade]||mp2.gradeText||'')+'</b>') : '<b style="color:'+(pmBad.length?'var(--warn)':'var(--ok)')+'">'+(pmBad.length? '나쁨 '+pmBad.length+'곳':'충북 전역 좋음·보통')+'</b>';
-            /* 아랫줄 — 충북 전체 상황. 나쁨인 곳이 있으면 그 시군을, 없으면 '모두 좋음·보통 · 가장 높은 곳 값' */
-            var sub = pmMax.pm10==null ? '충북 측정값 없음'
-              : pmBad.length ? '충북 나쁨 이상: '+esc(pmBad.map(function(x){ return x.region+' '+x.pm10; }).join(' · '))+'㎍/㎥'
-              : '충북 모두 좋음·보통 · 가장 높은 곳 '+esc(pmMax.region)+' '+pmMax.pm10+'㎍/㎥';
+            var head = (me!==WIDE && mp2) ? (mp2.pm10==null ? '<b style="color:var(--ink3)">'+esc(me)+' 측정 자료 없음</b>' : '<b style="color:'+(/bad/.test(mp2.grade||'')?'var(--warn)':'var(--ok)')+'">'+esc(me)+' '+mp2.pm10+'㎍/㎥ · '+esc(GT[mp2.grade]||mp2.gradeText||'')+'</b>') : '<b style="color:'+(pmBad.length?'var(--warn)':'var(--ok)')+'">'+(pmBad.length? '나쁨 '+pmBad.length+'곳':'충북 전역 좋음·보통')+'</b>';
+            /* 아랫줄 — 충북 전체 상황. 나쁨인 곳이 있으면 그 시군을, 없으면 '모두 괜찮음' + 가장 높은 시군 값 */
+            var sub = pmMax.pm10==null ? '충북 측정 자료 없음'
+              : pmBad.length ? '나쁨 이상인 시군<br>'+esc(pmBad.map(function(x){ return x.region+' '+x.pm10+'㎍/㎥'; }).join(' · '))
+              : '충북 시군 모두 좋음·보통<br>가장 높은 곳 '+esc(pmMax.region)+' '+pmMax.pm10+'㎍/㎥';
             return '<div class="ref" data-go="pm"><h4>😷 미세먼지 PM10</h4>'+head+'<p>'+sub+'</p></div>'; })()
         + droneRef()
         + '<div class="ref" data-go="info"><h4>📋 날씨 해설 · 청주기상지청</h4><b style="font-size:15.5px">'+esc(it || '자료 없음')+'</b><p>'+esc(fmtTm(cm.tmFc))+' 발표 · 누르면 전문</p></div></div>';
@@ -998,26 +974,9 @@ html.no-demo .demo>button:not(.on){display:none}   /* 'test' 명령으로 시연
     var nd = $('ntDot'); if (nd) nd.hidden = !(window.cbNotices && window.cbNotices.unseen() > 0);
     $('fbBtn').onclick = function(){ if (window.cbFeedback) window.cbFeedback.open({ page:'종합 현황' }); };
     var dark = document.documentElement.getAttribute('data-theme')==='dark';
-    $('thBtn').textContent = dark ? '☀' : '☾';
+    $('thBtn').title = dark ? '밝은 화면으로' : '어두운 화면으로';   /* 그림(달·해)은 CSS 가 화면 색에 맞춰 바꾼다 */
     $('thBtn').onclick = function(){ var d2 = document.documentElement.getAttribute('data-theme')!=='dark'; document.documentElement.setAttribute('data-theme', d2?'dark':'light'); lsSet('ggTheme', d2?'dark':'light'); utils(); };
-    $('alBtn').onclick = function(e){ e.stopPropagation(); var p = $('alPanel'); p.hidden = !p.hidden; if (!p.hidden) alertPanel(); };
-    if (!utils._doc) { utils._doc = 1; document.addEventListener('click', function(e){ if (!e.target.closest || !e.target.closest('.apw')) $('alPanel').hidden = true; }); }
-  }
-  function alertPanel(){
-    var perm = (typeof Notification!=='undefined') ? Notification.permission : 'unsupported';
-    var rows = [
-      { k:'ggMuted', label:'경보음', desc:'새 특보·재난문자가 들어오거나 3단계일 때 소리', on:!off('ggMuted') },
-      { k:'ggNoBlink', label:'테두리 점멸', desc:'재대본 3단계·관서 경보·하천 경계일 때 화면 가장자리가 붉게 깜빡임', on:!off('ggNoBlink') },
-      { k:'cbAlertCardsOff', label:'화면 알림 카드', desc:'새 특보·재난문자·해제가 있으면 오른쪽 위에 카드', on:!off('cbAlertCardsOff') },
-      { k:'cbOsNotifyOff', label:'Windows 알림', desc: perm==='denied' ? '브라우저에서 막혀 있습니다 — 주소창 왼쪽 자물쇠에서 알림을 허용하세요' : perm==='unsupported' ? '이 브라우저는 지원하지 않습니다' : '창을 내려 둬도 화면 오른쪽 아래 Windows 알림', on: perm==='granted' && !off('cbOsNotifyOff'), os:1 },
-      { k:'cbAlertDamOff', label:'댐 방류량 급증', desc:'괴산·충주·용담·대청댐 방류량이 수문 방류 수준을 넘어 3시간 사이 크게 늘면 카드·소리', on:!off('cbAlertDamOff') },
-      { k:'cbNoticeToastOff', label:'새 공지 알림', desc:'공지사항에 새 글이 올라오면 오른쪽 아래 카드', on:!off('cbNoticeToastOff') }];
-    var p = $('alPanel');
-    p.innerHTML = '<h4>알림 설정<small>이 PC에 기억 · 종합 현황과 같이 적용</small></h4>' + rows.map(function(x,i){ return '<div class="sw'+(x.on?' on':'')+'" data-i="'+i+'" role="switch" aria-checked="'+x.on+'"><div style="flex:1;min-width:0"><b>'+x.label+'</b><span>'+x.desc+'</span></div><i class="tg"></i></div>'; }).join('');
-    p.onclick = function(e){ e.stopPropagation(); var el = e.target.closest && e.target.closest('[data-i]'); if (!el) return; var x = rows[+el.getAttribute('data-i')];
-      if (x.os && perm==='default') { lsSet('cbOsNotifyOff','0'); try{ Notification.requestPermission().then(alertPanel); }catch(e2){} return; }
-      if (x.os && perm!=='granted') return;
-      lsSet(x.k, off(x.k) ? '0' : '1'); if (x.k==='ggMuted') { if (!off('ggMuted')) audio(); } alertPanel(); alarmTick(); };
+    $('alBtn').onclick = function(e){ e.stopPropagation(); if (window.cbAlertSettings) cbAlertSettings.toggle(this, function(k){ if (k==='ggMuted' && !off('ggMuted')) audio(); alarmTick(); }); };
   }
   /* 위험할 때(재대본 3단계 · 관서 경보 · 관할 하천 경계) — 테두리 점멸 + 7초마다 경보음 */
   var actx = null, alarmT = null, alertKey = '';
@@ -1058,7 +1017,7 @@ html.no-demo .demo>button:not(.on){display:none}   /* 'test' 명령으로 시연
 
   /* 1분마다 새 자료 — data.js 를 다시 받아 어댑터로 바꾼 뒤 다시 그린다 */
   function reload(){
-    fetch('data.js?_t='+Date.now(), {cache:'no-store'}).then(function(r){ return r.ok ? r.text() : ''; }).then(function(t){
+    fetch('data.js', {cache:'no-cache'})   /* 바뀌었을 때만 받는다 — 같으면 서버가 '변경 없음(304)'만 보낸다 */.then(function(r){ return r.ok ? r.text() : ''; }).then(function(t){
       var i=t.indexOf('{'), j=t.lastIndexOf('}'); if(i<0||j<0) return;
       var o = JSON.parse(t.slice(i, j+1)); if (!o || !o.updated) return;
       if (window.DASHBOARD_DATA && window.DASHBOARD_DATA.updated === o.updated) { renderTop(); return; }
@@ -1070,54 +1029,7 @@ html.no-demo .demo>button:not(.on){display:none}   /* 'test' 명령으로 시연
   window.addEventListener('cbstage', render);   /* 재대본 단계 직접 지정이 바뀌면(stage.js) */
 })();
 </script>
-<script>
-/* 입력 명령 — 119종합상황실과 같은 명령. '/' 를 누르면 가운데 명령 칸, 또는 입력 칸이 아닌 곳에서 단어를 바로 친다(4초 안).
-   main 종합 현황 · wall 119종합상황실 · admin 관리자 화면 · test 시연 단추 숨기기/꺼내기 · stage 비상단계 지정(상황실 지정 창으로) · help 설명서.
-   관리자 화면·단계 지정은 원래대로 관리자 키·지정 번호가 있어야 한다 */
-(function(){
-  var KEY = 'cbMapDemoHidden';
-  function lsGet(){ try{ return localStorage.getItem(KEY)==='1'; }catch(e){ return false; } }
-  function lsSet(v){ try{ localStorage.setItem(KEY, v?'1':'0'); }catch(e){} }
-  document.documentElement.classList.toggle('no-demo', lsGet());
-  function toast(t){ var d = document.createElement('div'); d.className = 'cmdt'; d.textContent = t; document.body.appendChild(d); setTimeout(function(){ d.remove(); }, 2200); }
-  function go(t, url){ toast(t); setTimeout(function(){ location.href = url; }, 400); }
-  var CMDS = {
-    admin: function(){ go('관리자 화면으로 이동합니다', '관리자.html'); },
-    test: function(){ var h = !lsGet(); lsSet(h); document.documentElement.classList.toggle('no-demo', h);
-      toast(h ? '시연 단추를 숨겼습니다 — test 를 다시 치면 꺼냅니다' : '시연 단추를 꺼냈습니다(위쪽 ▶ 시연)'); },
-    stage: function(){ go('비상단계 지정 창을 엽니다(119종합상황실)', '상황실.html?cmd=stage'); },
-    help: function(){ go('설명서로 이동합니다', '도움말.html'); },
-    main: function(){ toast('지금 종합 현황 화면입니다'); },
-    wall: function(){ go('119종합상황실로 이동합니다', '상황실.html'); }
-  };
-  var box = null, typed = '', typedAt = 0;
-  function close(){ if (box) { box.remove(); box = null; } }
-  function open(){
-    if (box) return;
-    box = document.createElement('div'); box.className = 'cmd';
-    box.innerHTML = '<div><input placeholder="명령 입력 후 Enter" autocomplete="off" spellcheck="false" aria-label="명령"><small>main 종합 현황 · wall 상황실 · admin 관리자 화면 · test 시연 단추 · stage 비상단계 지정 · help 설명서</small></div>';
-    document.body.appendChild(box);
-    var inp = box.querySelector('input');
-    box.addEventListener('mousedown', function(e){ if (e.target === box) close(); });
-    inp.addEventListener('keydown', function(e){
-      e.stopPropagation();
-      if (e.key === 'Escape') { close(); return; }
-      if (e.key !== 'Enter') return;
-      var k = inp.value.trim().toLowerCase().replace(/^\//, ''); close();
-      if (CMDS[k]) CMDS[k](); else if (k) toast('알 수 없는 명령 — main · wall · admin · test · stage · help');
-    });
-    setTimeout(function(){ inp.focus(); }, 0);
-  }
-  document.addEventListener('keydown', function(e){
-    var t = e.target, tag = (t && t.tagName) || '';
-    if (e.ctrlKey || e.altKey || e.metaKey || tag==='INPUT' || tag==='TEXTAREA' || tag==='SELECT' || (t && t.isContentEditable) || document.querySelector('.mbg')) return;
-    if (e.key === '/') { e.preventDefault(); open(); return; }
-    if (!/^[a-zA-Z]$/.test(e.key || '')) return;
-    var now = Date.now(); if (now - typedAt > 4000) typed = ''; typedAt = now;
-    typed = (typed + e.key.toLowerCase()).slice(-8);
-    Object.keys(CMDS).some(function(k){ if (typed.slice(-k.length) === k) { typed = ''; CMDS[k](); return true; } });
-  });
-})();
-</script>
+<script>window.CB_PAGE = 'main';</script>
+<script src="cmd.js"></script>   <!-- '/' 명령 칸 · 시연 단추 숨김(재해별 집중 감시와 같이 쓴다) -->
 </body>
 </html>

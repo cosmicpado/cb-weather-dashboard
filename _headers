@@ -35,9 +35,7 @@
 /images/*
   Cache-Control: public, max-age=120, must-revalidate
 
-# 아이콘·서비스워커 — 거의 안 바뀜, 길게 캐시
+# 아이콘 — 거의 안 바뀜, 길게 캐시
 /icon.svg
   Cache-Control: public, max-age=3600
 
-/service-worker.js
-  Cache-Control: no-cache, must-revalidate

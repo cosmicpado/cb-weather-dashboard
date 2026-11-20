@@ -25,19 +25,19 @@
   .sum button[aria-pressed=true]{border-color:var(--brand);background:var(--soft);color:var(--brand)}
   .item{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--s-wait);border-radius:12px;padding:12px 14px;margin-bottom:10px}
   .item.st-done{border-left-color:var(--s-done)} .item.st-hold{border-left-color:var(--s-hold)} .item.st-no{border-left-color:var(--s-no)}
-  .meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:12.5px;color:var(--ink3);margin-bottom:6px}
+  .meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:13px;color:var(--ink3);margin-bottom:6px}
   .tag{background:var(--soft);color:var(--brand);border-radius:6px;padding:1px 7px;font-weight:700}
   .k{border-radius:6px;padding:1px 8px;font-weight:800;color:#fff}
   .k-오류{background:#d64545}.k-기능{background:#2563eb}.k-새{background:#7c3aed}.k-기타{background:#6b7280}
   .who{color:var(--ink2);font-weight:700}
-  .badge{margin-left:auto;border-radius:6px;padding:1px 9px;font-weight:800;font-size:12.5px}
+  .badge{margin-left:auto;border-radius:6px;padding:1px 9px;font-weight:800;font-size:13px}
   .b-wait{color:var(--s-wait);background:var(--s-wait-bg)} .b-done{color:var(--s-done);background:var(--s-done-bg)}
   .b-hold{color:var(--s-hold);background:var(--s-hold-bg)} .b-no{color:var(--s-no);background:var(--s-no-bg)}
   .txt{white-space:pre-wrap;word-break:break-word;font-size:14.5px}
   /* 처리 — 상태 4개 + 처리 내용 */
   .proc{margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);display:flex;flex-direction:column;gap:7px}
   .seg{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
-  .seg .lb{font-size:12.5px;color:var(--ink3);font-weight:700;margin-right:3px}
+  .seg .lb{font-size:13px;color:var(--ink3);font-weight:700;margin-right:3px}
   .seg button{padding:4px 11px;font-size:13px;border-radius:8px;color:var(--ink2)}
   .seg button[aria-pressed=true].v-wait{border-color:var(--s-wait);background:var(--s-wait-bg);color:var(--s-wait)}
   .seg button[aria-pressed=true].v-done{border-color:var(--s-done);background:var(--s-done-bg);color:var(--s-done)}
@@ -47,7 +47,7 @@
   .note textarea{flex:1;min-height:38px;resize:vertical;font-size:13.5px;line-height:1.45}
   .note button.save{background:var(--brand);border-color:var(--brand);color:#fff;white-space:nowrap}
   .note button.save:disabled{opacity:.45;cursor:default}
-  .saved{font-size:12px;color:var(--ink3)}
+  .saved{font-size:13px;color:var(--ink3)}
   .saved.err{color:var(--s-no)}
   /* 의견 지우기(2026-11-16) — 원본 파일에서도 지운다 */
   .seg button.del{margin-left:auto;color:var(--ink3)}
@@ -57,15 +57,15 @@
   .tabs{display:flex;gap:6px;margin:0 0 14px;border-bottom:1px solid var(--line)}
   .tabs button{border:0;border-bottom:3px solid transparent;border-radius:0;background:none;padding:8px 14px;font-size:15px;color:var(--ink3)}
   .tabs button[aria-selected=true]{color:var(--brand);border-bottom-color:var(--brand)}
-  .tabs button .c{font-size:12px;margin-left:5px;color:var(--ink3);font-weight:700}
+  .tabs button .c{font-size:13px;margin-left:5px;color:var(--ink3);font-weight:700}
   /* 공지 */
   .nt{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px}
   .nt.off{opacity:.55}
-  .nt .h{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:12.5px;color:var(--ink3);margin-bottom:5px}
+  .nt .h{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:13px;color:var(--ink3);margin-bottom:5px}
   .nt h3{font-size:15.5px;margin:0 0 5px}
   .nt .b{white-space:pre-wrap;word-break:break-word;font-size:14px;color:var(--ink2)}
   .nt .acts{margin-left:auto;display:flex;gap:6px}
-  .nt .acts button{padding:3px 10px;font-size:12.5px}
+  .nt .acts button{padding:3px 10px;font-size:13px}
   .nt .acts .del{color:var(--s-no)}
   .ac-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:6px}
   .ac-c{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--card,#fff);display:flex;flex-direction:column;gap:2px}
@@ -78,28 +78,28 @@
   .ac-dev{height:12px;border-radius:6px;background:#f59e0b;overflow:hidden}.ac-dev i{display:block;height:100%;background:var(--brand)}
   .ac-devl{display:flex;justify-content:space-between;font-size:13px;color:var(--ink2);margin-top:4px}
   .ac-note{font-size:13px;color:var(--ink3);margin-top:14px;line-height:1.6}
-  .pill{border-radius:6px;padding:1px 8px;font-weight:800;color:#fff;font-size:12px}
+  .pill{border-radius:6px;padding:1px 8px;font-weight:800;color:#fff;font-size:13px}
   .p-새{background:#2563eb}.p-개선{background:#0a8058}.p-오류{background:#d97706}.p-안내{background:#6b7280}
-  .src{border:1px solid var(--line);border-radius:6px;padding:0 6px;font-size:11.5px}
+  .src{border:1px solid var(--line);border-radius:6px;padding:0 6px;font-size:13px}
   .ed{background:var(--card);border:2px solid var(--brand);border-radius:12px;padding:14px;margin-bottom:14px;display:flex;flex-direction:column;gap:8px}
   .ed .r{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-  .ed label{font-size:12.5px;color:var(--ink3);font-weight:700}
+  .ed label{font-size:13px;color:var(--ink3);font-weight:700}
   .ed textarea{min-height:130px;resize:vertical;line-height:1.5}
   .ed .go{background:var(--brand);border-color:var(--brand);color:#fff}
-  .ed .err{color:var(--s-no);font-size:12.5px}
+  .ed .err{color:var(--s-no);font-size:13px}
   /* 비상근무(2026-11-16) — 상황실 '비상근무' 칸 기준표 */
   .dt-wrap{overflow-x:auto;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:6px}
   .dt{border-collapse:collapse;width:100%;min-width:860px}
-  .dt th{font-size:12.5px;color:var(--ink3);font-weight:800;text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);white-space:nowrap}
-  .dt th small{display:block;font-weight:600;color:var(--ink3);font-size:11.5px}
+  .dt th{font-size:13px;color:var(--ink3);font-weight:800;text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);white-space:nowrap}
+  .dt th small{display:block;font-weight:600;color:var(--ink3);font-size:13px}
   .dt td{padding:5px 4px;vertical-align:middle}
   .dt input{width:100%;box-sizing:border-box;font-size:13.5px;padding:6px 8px}
   .dt td.who input{font-weight:800}
-  .dt .rm{padding:4px 9px;font-size:12.5px;color:var(--ink3)}
+  .dt .rm{padding:4px 9px;font-size:13px;color:var(--ink3)}
   .dt .rm:hover{color:var(--s-no);border-color:var(--s-no)}
   .dt th.s1{color:#2b6fd6}.dt th.s2{color:#b37b00}.dt th.s3{color:#d06a00}.dt th.s4{color:#d63a3a}
   .dt-note{font-size:13px;color:var(--ink2);line-height:1.6;margin:12px 2px 0}
-  .dt-note table{border-collapse:collapse;margin-top:6px;font-size:12.5px}
+  .dt-note table{border-collapse:collapse;margin-top:6px;font-size:13px}
   .dt-note td,.dt-note th{border:1px solid var(--line);padding:4px 8px;text-align:left}
   .dt-msg{font-size:13px;color:var(--ink3)} .dt-msg.err{color:var(--s-no)} .dt-msg.ok{color:var(--s-done)}
   /* hidden 속성이 display 지정(.gate 의 flex 등)에 지지 않게 */
@@ -112,7 +112,7 @@
   .gate .go{background:var(--brand);border-color:var(--brand);color:#fff;padding:10px}
   .gate .err{color:var(--s-no);font-size:13px;min-height:18px}
   .gate label{font-size:13px;color:var(--ink2);display:flex;gap:6px;align-items:center}
-  .out{margin-left:auto;font-size:12.5px;color:var(--ink3);background:none;border:1px solid var(--line)}
+  .out{margin-left:auto;font-size:13px;color:var(--ink3);background:none;border:1px solid var(--line)}
 </style>
 </head><body>
 <div class="wrap">
@@ -201,6 +201,7 @@
   </div>
 </div>
 <script src="clock-sync.js"></script>
+<script src="error-report.js"></script>   <!-- 화면 오류를 서버에 남긴다(관리자 화면 접속 통계 탭) -->
 <script src="short-url.js"></script>
 <script src="notices.js"></script>
 <script>window.CB_DUTY_NOAUTO = true;</script>
@@ -343,10 +344,19 @@
   function acLoad(){
     $('acBody').innerHTML='<div class="msg">불러오는 중…</div>';
     fetch('api/access',{cache:'no-store',headers:hdr()}).then(function(r){ return r.json().catch(function(){ return {ok:false,err:'서버가 아직 예전 버전입니다 — 서버.bat 을 껐다 켠 뒤 다시 보세요'}; }); })
-      .then(function(j){ if(!j||!j.ok){ $('acBody').innerHTML='<div class="msg">'+esc((j&&j.err)||'불러오지 못했습니다')+'</div>'; return; } acDraw(j); })
+      .then(function(j){ if(!j||!j.ok){ $('acBody').innerHTML='<div class="msg">'+esc((j&&j.err)||'불러오지 못했습니다')+'</div>'; return; } acDraw(j); acErrLoad(); })
       .catch(function(){ $('acBody').innerHTML='<div class="msg">서버에 연결하지 못했습니다</div>'; });
   }
   $('acReload').onclick=acLoad;
+  /* 화면 오류 — 직원 PC·휴대폰에서 난 스크립트 오류(error-report.js). 같은 오류가 여러 번이면 고칠 곳이다 */
+  function acErrLoad(){
+    fetch('api/feedback?errors=1',{cache:'no-store',headers:hdr()}).then(function(r){ return r.json(); }).then(function(j){
+      var el=$('acErr'); if(!el) return;
+      if(!j||!j.ok){ el.textContent=(j&&j.err)||'불러오지 못했습니다'; return; }
+      if(!j.items.length){ el.textContent='기록된 오류 없음'; return; }
+      el.innerHTML='<table class="ac-t"><tr><th>시각</th><th>화면</th><th>오류</th><th>위치</th></tr>'+j.items.map(function(x){ return '<tr><td>'+esc(x.ts)+'</td><td>'+esc(x.page)+'</td><td title="'+esc(x.stack||'')+'">'+esc(x.msg)+'</td><td>'+esc((x.src||'').split('/').pop()+(x.line?':'+x.line:''))+'</td></tr>'; }).join('')+'</table>';
+    }).catch(function(){ var el=$('acErr'); if(el) el.textContent='서버에 연결하지 못했습니다'; });
+  }
   function acDraw(j){
     $('acAt').textContent=j.at+' 기준';
     function card(t,o){ return '<div class="ac-c"><span>'+t+'</span><b>'+o.visitors+'<small>명</small></b><em>화면 열기 '+o.views+'회</em></div>'; }
@@ -360,6 +370,7 @@
       +'<h3 class="ac-h">날짜별 방문자 (최근 '+j.days+'일)</h3><div class="ac-bars">'+j.daily.map(function(d){ return '<div title="'+d.date+' · 방문자 '+d.visitors+'명 · 화면 열기 '+d.views+'회"><i style="height:'+Math.round(d.visitors/mx*100)+'%"></i><span>'+(+d.date.slice(8))+'</span></div>'; }).join('')+'</div>'
       +'<h3 class="ac-h">시간대별 화면 열기 (최근 7일)</h3><div class="ac-bars">'+j.hours.map(function(n,h){ return '<div title="'+h+'시 · '+n+'회"><i style="height:'+Math.round(n/hx*100)+'%"></i><span>'+h+'</span></div>'; }).join('')+'</div>'
       +'<h3 class="ac-h">기기 (최근 30일 화면 열기)</h3><div class="ac-dev"><i style="width:'+Math.round(dv.PC/dt*100)+'%"></i></div><div class="ac-devl"><span>PC '+dv.PC+'회 ('+Math.round(dv.PC/dt*100)+'%)</span><span>휴대폰 '+dv['휴대폰']+'회 ('+Math.round(dv['휴대폰']/dt*100)+'%)</span></div>'
+      +'<h3 class="ac-h">화면 오류 (최근 50건)</h3><div id="acErr" class="ac-note">불러오는 중…</div>'
       +'<p class="ac-note">· 방문자 = 같은 PC·같은 브라우저를 한 명으로 셉니다(IP 주소는 저장하지 않습니다). · 서버를 켜 둔 동안만 기록됩니다. · 기록은 13개월 보관합니다.</p>';
   }
 
