@@ -105,6 +105,7 @@ window.cbDemoTimes = function(list){
   html.no-demo .dz-demo:not(.on){display:none!important}   /* 시연 단추는 평소 숨김 — '/' test 로 꺼낸다(cmd.js) */
   .dz-modebar{display:none}
   .dz-rsub{flex:none;width:170px;max-width:none!important;text-align:right}   /* 설명 칸 폭 고정 — 막대 길이가 같아야 0℃ 가운데선이 줄마다 맞는다 */
+  .dz-rsub .rs-s{display:none}
   .dz-nav{display:flex;gap:4px}
   /* 중간 폭 — 넘치면 메뉴·도구가 둘째 줄 오른쪽으로 */
   @media (min-width:821px) and (max-width:1500px){ .scope{margin-left:12px} }   /* 종합과 같은 중간 폭 간격 */
@@ -118,7 +119,8 @@ window.cbDemoTimes = function(list){
     .dz-navc>.pgsub{display:none}.dz-row{align-items:center}
     .dz-brand{flex:1 1 0;min-width:0}
     .dz-nav,.dz-navc{display:contents!important}   /* 메뉴 묶음을 풀어 탭바(.pgs)는 아래로, 도구(.hd-tools)는 이름 줄 오른쪽으로 */
-    .dz-rsub{width:auto;max-width:110px!important}
+    .dz-rsub{width:76px;max-width:none!important}   /* 휴대폰도 폭 고정 — 설명 길이에 따라 막대 바탕 길이가 달라져 값이 큰 관서 막대가 더 짧아 보였다 */
+    .dz-rsub .rs-l{display:none}.dz-rsub .rs-s{display:inline}.dz-rsub.nos{display:none}   /* 휴대폰은 단계 이름만(다소 강함 · 5cm 이상 등) */
     .dz-root{padding-bottom:calc(90px + env(safe-area-inset-bottom,0px))}
   }
 </style>
@@ -238,7 +240,7 @@ window.cbDemoTimes = function(list){
               <div style="flex:1; height:9px; border-radius:5px; background:{{r.trackBg}}; overflow:hidden; min-width:0;">
                 <div style="height:100%; width:{{r.barW}}; margin-left:{{r.barL}}; background:{{r.barColor}}; border-radius:5px;"></div>
               </div>
-              <span class="dz-rsub" style="font-size:13px; color:var(--ink3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:160px;">{{r.sub}}</span>
+              <span class="dz-rsub {{r.rsCls}}" style="font-size:13px; color:var(--ink3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:160px;"><span class="rs-l">{{r.sub}}</span><span class="rs-s" style="color:{{r.subSColor}}; font-weight:700;">{{r.subS}}</span></span>
             </div>
             <div style="text-align:right;">
               <span style="font-size:15px; font-weight:900; color:{{r.valColor}}; font-variant-numeric:tabular-nums;">{{r.valTxt}}</span>
@@ -429,7 +431,8 @@ class Component extends DCLogic {
   setMyStation(name){ try{ if(typeof localStorage!=='undefined') localStorage.setItem('ggMyStation', name); }catch(e){} this.setState({myStation:name, stationPickerOpen:false}); }
   /* 순위 그래프에서 관서를 누르면 그 관서 화면으로 바꾸고 맨 위(그 관서 정보)로 올린다 */
   goStation(name){ if(!name) return; this.setMyStation(name); try{ window.scrollTo({top:0, behavior:'smooth'}); }catch(e){ window.scrollTo(0,0); } }
-  withGo(rows){ return (rows||[]).map(r=>Object.assign({}, r, { go:()=>this.goStation(r.name), barL:r.barL||'0%', trackBg:r.trackBg||'var(--surface3)' })); }
+  withGo(rows){ const nos=(rows||[]).some(r=>r.subS) ? '' : 'nos';   // 휴대폰: 단계 이름이 하나도 없는 그래프는 설명 칸을 빼고 막대를 길게
+    return (rows||[]).map(r=>Object.assign({}, r, { rsCls:nos, go:()=>this.goStation(r.name), barL:r.barL||'0%', trackBg:r.trackBg||'var(--surface3)', subS:r.subS||'', subSColor:r.subSColor||'var(--ink3)' })); }
   toggleStationPicker(){ this.setState({stationPickerOpen:!this.state.stationPickerOpen}); }
 
   /* 새 특보·예비특보·재난문자·댐 방류 급증 알림(alerts.js) — 자료가 바뀔 때만. 본 것 기억은 이 화면 따로(page:'watch').
@@ -837,6 +840,7 @@ class Component extends DCLogic {
         barW: pct + '%',
         barColor: (r.v===null ? 'var(--border2)' : lv.c),
         sub: sub,
+        subS: (r.a.ok ? '' : '자료없음'),
         rowBg: (isMine ? 'var(--brandSoft)' : (lv.k>=3 ? lv.bg : 'transparent')),
         rowBd: (isMine ? 'var(--brand)' : 'transparent'),
         nameW: (isMine ? 900 : 700),
@@ -1645,6 +1649,7 @@ class Component extends DCLogic {
         barColor: (v===null ? 'var(--border2)' : (key!=='snow' && v>=0) ? 'var(--ink3)' : (lv.k ? lv.c : 'var(--ink3)')),
         trackBg: key==='snow' ? '' : 'linear-gradient(to right, var(--surface3) calc(50% - 1px), var(--ink3) calc(50% - 1px), var(--ink3) calc(50% + 1px), var(--surface3) calc(50% + 1px))',
         sub,
+        subS: (key==='snow' ? (r.snow>0 ? lv.t||'' : '') : (lv.t||'')), subSColor: (lv.k ? lv.c : 'var(--ink3)'),
         rowBg: (isMine ? 'var(--brandSoft)' : (lv.k>=3 ? lv.bg : 'transparent')),
         rowBd: (isMine ? 'var(--brand)' : 'transparent'),
         nameW: (isMine ? 900 : 700),
@@ -1965,7 +1970,7 @@ class Component extends DCLogic {
                 : ((this.dirTxt(r.wds)?this.dirTxt(r.wds)+'풍 · ':'')+'실효 '+this.pct(r.eff));
       return { name:r.s.name, valTxt:(v===null?'—':(key==='wind'?this.ms(v):this.pct(v))),
         valColor:(v===null?'var(--ink3)':(lv.k?lv.c:'var(--ink2)')), barW:pct+'%', barColor:(v===null?'var(--border2)':(lv.k?lv.c:'var(--ink3)')),
-        sub:(lv.t?lv.t+' · ':'')+sub, rowBg:(isMine?'var(--brandSoft)':(lv.k>=3?lv.bg:'transparent')), rowBd:(isMine?'var(--brand)':'transparent'),
+        sub:(lv.t?lv.t+' · ':'')+sub, subS:String(lv.t||'').replace(/^(순간|평균) /,''), subSColor:(lv.k?lv.c:'var(--ink3)'), rowBg:(isMine?'var(--brandSoft)':(lv.k>=3?lv.bg:'transparent')), rowBd:(isMine?'var(--brand)':'transparent'),
         nameW:(isMine?900:700), nameColor:(isMine?'var(--brand)':'var(--ink)') };
     });
     const rankTabs=TABS.map(t=>({ label:t.label, bg:(key===t.k?'var(--brand)':'var(--surface)'), fg:(key===t.k?'#fff':'var(--ink2)'),
