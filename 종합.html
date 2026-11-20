@@ -549,14 +549,6 @@ html.no-demo .demo:not(:has(button.on)){display:none}   /* 'test' 명령으로 �
   }
   function choose(n){ me = n; if (focus) focus = (n===WIDE ? null : n); try{ localStorage.setItem(KEY, n); }catch(e){} render(); }
 
-  /* 다가오는 비 — 12시간 예보에서 처음 비가 오는 시각과 최대 시간당 */
-  function nextRain(s){
-    var f = (s.forecast||[]).slice(0,12), i = -1, mx = 0;
-    f.forEach(function(h,k){ var r=+h.rain||0; if (r>0 && i<0) i=k; if (r>mx) mx=r; });
-    if (i<0) return '';
-    var end = i; while (end+1<f.length && (+f[end+1].rain||0)>0) end++;
-    return (i===0 ? '지금 비' : '다음 비 '+f[i].hour+(end>i?'~'+f[end].hour:'')) + ' (최대 시간당 '+mx+'mm)';
-  }
   function renderBand(){
     var d = D(), sg = window.cbStage ? window.cbStage(d.warnings, d.prelim, d.typhoon) : { rank:0, big:'평상', cnt:{p:0,a:0,w:0} };
     var b = $('band'), lv = 0, cls = '', pill, line, sub = [], nMsg = (d.messages||[]).length;
@@ -576,17 +568,12 @@ html.no-demo .demo:not(:has(button.on)){display:none}   /* 'test' 명령으로 �
       var ws = d.warnings||[];
       line = ws.length ? ws.slice().sort(function(a,b){ return isBo(b)-isBo(a); }).slice(0,2).map(function(w){ return '<span class="wt" style="background:'+wColor(w)+'">'+esc(w.type)+'</span>'+esc(w.area); }).join('&nbsp;&nbsp;') : (sg.rank ? esc(sg.step||sg.name) : '');
       if (sg.rank && sg.reason) sub.push(esc(sg.reason));
-      var ms = d.messages||[]; if (ms.length) sub.push('재난문자 '+ms.length+'건');
     } else {
       var s = station(me), ws2 = warnsOf(me), bo = ws2.some(isBo);
       var pre = (d.prelim||[]).some(function(g){ return (g.items||[]).some(function(it){ return (it.north||it.north_match) && areaHits(String(it.area||'').split('(')[0], me); }); });
       lv = bo ? 3 : ws2.length ? 2 : pre ? 1 : 0; pill = me; cls = lv ? 'l'+lv : '';   /* 예비특보만 걸린 관서는 파랑(준비) */
       line = ws2.slice(0,2).map(function(w){ return '<span class="wt" style="background:'+wColor(w)+'">'+esc(w.type)+'</span>'; }).join('') + num(s.temp) + '° ' + esc(s.weather||'');
-      var rv = riversOf(me).filter(function(r){ return rLevel(r)!=='safe'; }); if (rv.length) sub.push('하천 '+rv.map(function(r){ return shortRiver(r.name)+' '+LVT[rLevel(r)]; }).join(', '));
-      var mm = msgsOf(me); if (mm.length) sub.push('재난문자 '+mm.length+'건 ('+esc(mm[0].crt ? eqTime(mm[0].crt) : (mm[0].time||''))+')');
-      if ((+s.rain||0) > 0) sub.unshift('지금 시간당 '+s.rain+'mm');
-      var nr = nextRain(s); if (nr && !((+s.rain||0)>0)) sub.push(nr);
-      var ml = window.cbMorningLow ? window.cbMorningLow(s.forecast) : null; if (ml && ml.t!=null) sub.push((ml.tomorrow?'내일':'오늘')+' 아침 '+Math.round(ml.t)+'°C');
+      /* 아랫줄은 재대본 단계 사유만(충북 전체) — 하천·강수·재난문자는 아래 칸들과 오른쪽 수에 이미 있다 */
     }
     /* 충북이 준비 단계 이상이면 상태 원이 퍼지는 고리로 알린다 — 빠르기는 충북 단계(준비·1·2·3단계)를 따른다 */
     var pr = Math.max(sg.rank||0, lv);
