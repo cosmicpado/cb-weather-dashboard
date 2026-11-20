@@ -230,7 +230,7 @@ html.no-demo .demo:not(:has(button.on)){display:none}   /* 'test' 명령으로 �
 .pane{padding:14px}
 .refs{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
 .ref{border:1px solid var(--line);border-radius:12px;padding:12px 14px;cursor:pointer}.ref:hover{border-color:#c7d2e3}
-.ref h4{font-size:13px;color:var(--ink3);font-weight:700}.ref b{display:block;font-size:19px;margin-top:4px}.ref p{font-size:14.5px;color:var(--ink3);margin-top:3px;line-height:1.45}
+.ref h4{font-size:13px;color:var(--ink3);font-weight:700}.ref h4 .dr{width:17px;height:14px;vertical-align:-2px;margin-right:2px;color:var(--ink2)}.ref b{display:block;font-size:19px;margin-top:4px}.ref p{font-size:14.5px;color:var(--ink3);margin-top:3px;line-height:1.45}
 .pane img{display:block;max-width:100%;max-height:640px;margin:0 auto;border-radius:10px}
 .pane .cap{text-align:right;font-size:14.5px;color:var(--ink3);margin-top:6px}
 .grid3{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
@@ -827,11 +827,19 @@ html.no-demo .demo:not(:has(button.on)){display:none}   /* 'test' 명령으로 �
     if (ws.length) why.push(ws.filter(function(t,i){ return ws.indexOf(t)===i; }).join('·')+' 발효');
     if (s.wind!=null && s.wind>=10) why.push('풍속 '+num(s.wind)+'m/s');
     return { no: why.length>0, why: why }; }
+  /* 드론 그림(앞에서 본 모양) — 상황실 소방드론 칸과 같은 모양을 작게. 드론 이모지가 없어 🚁(헬기)를 쓰던 것을 바꿈 */
+  var DRONE_SVG = '<svg class="dr" viewBox="0 0 48 40" fill="currentColor" stroke="currentColor" stroke-linecap="round" aria-hidden="true">'
+    + '<line x1="3.5" y1="6" x2="14.5" y2="6" stroke-width="3"/><line x1="33.5" y1="6" x2="44.5" y2="6" stroke-width="3"/>'
+    + '<line x1="9" y1="6" x2="9" y2="10" stroke-width="2.6"/><line x1="39" y1="6" x2="39" y2="10" stroke-width="2.6"/>'
+    + '<rect x="6" y="9.5" width="6" height="13" rx="3" stroke="none"/><rect x="36" y="9.5" width="6" height="13" rx="3" stroke="none"/>'
+    + '<rect x="11" y="14.5" width="26" height="4" stroke="none"/><rect x="14.5" y="13" width="19" height="13" rx="3.5" stroke="none"/>'
+    + '<path d="M18.5 25 H29.5 V27 A5.5 5.5 0 0 1 18.5 27 Z" stroke="none"/>'
+    + '<path d="M16.5 25 Q13 28.5 10.5 34" fill="none" stroke-width="2.6"/><path d="M31.5 25 Q35 28.5 37.5 34" fill="none" stroke-width="2.6"/></svg>';
   function droneRef(){
     if (me !== WIDE) { var dr = drone(me);
-      return '<div class="ref" title="소방드론 재난유형별 표준운용절차 — 호우·대설 특보 발효 또는 풍속 10m/s 이상이면 비행 제한"><h4>🚁 소방드론 · '+esc(me)+'</h4><b style="color:'+(dr.no?'var(--sev)':'var(--ok)')+'">'+(dr.no?'비행 제한':'비행 가능')+'</b><p>'+(dr.no?esc(dr.why.join(' · ')):'호우·대설 특보 없음 · 풍속 '+num(station(me).wind)+'m/s')+'</p></div>'; }
+      return '<div class="ref" title="소방드론 재난유형별 표준운용절차 — 호우·대설 특보 발효 또는 풍속 10m/s 이상이면 비행 제한"><h4>'+DRONE_SVG+' 소방드론 · '+esc(me)+'</h4><b style="color:'+(dr.no?'var(--sev)':'var(--ok)')+'">'+(dr.no?'비행 제한':'비행 가능')+'</b><p>'+(dr.no?esc(dr.why.join(' · ')):'호우·대설 특보 없음 · 풍속 '+num(station(me).wind)+'m/s')+'</p></div>'; }
     var bad = ORDER.filter(function(n){ return drone(n).no; });
-    return '<div class="ref" title="소방드론 재난유형별 표준운용절차 — 호우·대설 특보 발효 또는 풍속 10m/s 이상이면 비행 제한"><h4>🚁 소방드론 · 충북</h4><b style="color:'+(bad.length?'var(--sev)':'var(--ok)')+'">'+(bad.length? '비행 제한 '+bad.length+'개 관서' : '전 관서 비행 가능')+'</b><p>'+(bad.length? esc(bad.join('·')) : '호우·대설 특보 없음 · 풍속 10m/s 미만')+'</p></div>';
+    return '<div class="ref" title="소방드론 재난유형별 표준운용절차 — 호우·대설 특보 발효 또는 풍속 10m/s 이상이면 비행 제한"><h4>'+DRONE_SVG+' 소방드론 · 충북</h4><b style="color:'+(bad.length?'var(--sev)':'var(--ok)')+'">'+(bad.length? '비행 제한 '+bad.length+'개 관서' : '전 관서 비행 가능')+'</b><p>'+(bad.length? esc(bad.join('·')) : '호우·대설 특보 없음 · 풍속 10m/s 미만')+'</p></div>';
   }
   /* 충북 영향 댐 — 하천 수위 탭 맨 위(저수율·유입·방류, 누르면 댐 상세) */
   function damHtml(){

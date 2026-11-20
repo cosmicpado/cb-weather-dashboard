@@ -10,7 +10,8 @@
     return {
       page: c.page || PAGES[window.CB_PAGE] || document.title,
       themeBtn: c.themeBtn || function () { return document.querySelector('[aria-label="화면 색"]'); },
-      isDark: c.isDark || function () { return document.documentElement.getAttribute('data-theme') === 'dark'; }
+      isDark: c.isDark || function () { return document.documentElement.getAttribute('data-theme') === 'dark'; },
+      extra: c.extra || function () { return []; }   // 화면만의 메뉴(상황실: 화면 켜 두기) — [{icon, text, fn}]
     };
   }
   function unseen() { try { return window.cbNotices ? window.cbNotices.unseen() : 0; } catch (e) { return 0; } }
@@ -42,6 +43,7 @@
     menu.appendChild(item('📢', '공지사항 · 설명서', unseen() > 0, function () { location.href = '도움말.html#notice'; }));
     menu.appendChild(item('💬', '의견 보내기', false, function () { if (window.cbFeedback) window.cbFeedback.open({ page: c.page }); }));
     menu.appendChild(item(dark ? '☀' : '☾', dark ? '밝게 보기' : '어둡게 보기', false, function () { var t = c.themeBtn(); if (t) t.click(); }));
+    c.extra().forEach(function (x) { menu.appendChild(item(x.icon, x.text, false, x.fn)); });
     document.body.appendChild(menu);
     btn.setAttribute('aria-expanded', 'true');
     document.addEventListener('keydown', onKey, true);

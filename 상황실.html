@@ -142,7 +142,18 @@ html.wall-m #wall-msel{position:sticky;top:0;z-index:60;box-shadow:0 6px 14px rg
 #wall-urg .u-c .k span{font-size:13px;color:var(--dim,#8e9bb0);font-weight:700;}
 #wall-urg .u-t{display:inline-flex;align-items:center;font-size:13.5px;font-weight:800;color:#fff;border-radius:6px;padding:2px 8px;margin:0 4px 4px 0;}
 #wall-urg [data-go]{cursor:pointer;}
-#wall-msel .wk{width:auto!important;padding:0 12px;font:800 15px 'Pretendard Variable',Pretendard,system-ui,sans-serif!important;white-space:nowrap;}
+#wall-msel .wk{display:none!important;}   /* 화면 켜두기는 ⋯ 메뉴 안(more-menu.js) — 관서 칸을 넓게 */
+#wall-msel .msts{display:none;}
+/* 줄인 윗줄(html.hd-slim — 화면에 다 안 들어가는 폰, cbWallSelInit 의 fit) — [로고 · 관서 · 17:29 기준] 한 줄 + 충북 현황 얇은 띠 */
+html.hd-slim #wall-msel .mbr{display:contents;}html.hd-slim #wall-msel .mbr>:not(.mlogo):not(.hd-more){display:none!important;}   /* 이름 줄을 풀어 로고·⋯ 만 한 줄에 */
+html.hd-slim #wall-msel .mlogo{order:0;}html.hd-slim #wall-msel .nm{order:1;}html.hd-slim #wall-msel .msts{order:2;}html.hd-slim #wall-msel .hd-more{order:3;}
+html.hd-slim #wall-mlist,html.hd-slim #wall-urg{order:4;}
+html.hd-slim #wall-msel .nm{height:40px;}
+html.hd-slim #wall-msel .msts{display:block;align-self:center;font:400 13px 'Pretendard Variable',Pretendard,system-ui,sans-serif;color:var(--dim,#8e9bb0);white-space:nowrap;}
+html.hd-slim #wall-urg{padding-bottom:6px;}html.hd-slim #wall-urg .u-l{display:none;}
+html.hd-slim #wall-urg .u-c{display:flex;justify-content:center;gap:16px;padding:6px 12px;}html.hd-slim #wall-urg .u-c .h{display:none;}
+html.hd-slim #wall-urg .u-c .k{display:flex;flex-direction:row-reverse;align-items:baseline;gap:4px;border:0;}
+html.hd-slim #wall-urg .u-c .k b{display:inline;font-size:15px;}html.hd-slim #wall-urg .u-c .k span{font-size:13px;}
 html.wall-m [data-card="season"]{--fz:.8!important;}
 #wall-dots{display:none;}
 html.wall-m #wall-dots{display:flex;position:fixed;left:50%;bottom:calc(var(--cb-navh) + 14px);transform:translateX(-50%);z-index:60;align-items:center;gap:8px;padding:7px 12px;border-radius:999px;
@@ -3766,13 +3777,14 @@ window.cbWindyUrl = function(overlay, zoom){
     th.onclick=function(){ W.theme(); setTimeout(drawTheme, 50); }; drawTheme();
     box.appendChild(sel); box.appendChild(th);
     /* 자료 기준 시각 — 휴대폰은 맨 아래 '마지막 갱신'까지 내려가야 보여서. 15분 넘게 그대로면 빨간 경고 */
-    var up=document.createElement('div'); up.id='wall-mupd';
+    var up=document.createElement('div'), sts=null; up.id='wall-mupd';
     up.style.cssText='flex:1 0 100%;font:700 15px/1.3 \"Pretendard Variable\",Pretendard,system-ui,sans-serif;color:var(--dim,#8e9bb0);padding:0 4px;';
     box.appendChild(up); box.appendChild(list);
     function tick(){ var u=String((window.WALL_RAW||{}).updated||''), m=u.match(/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})/);
       if(!m){ up.textContent=''; return; }
       var late=Math.round((Date.now()-new Date(+m[1],+m[2]-1,+m[3],+m[4],+m[5]))/60000);
-      up.textContent='자료 '+m[4]+':'+m[5]+' 기준'+(late>15?' · ⚠ '+late+'분째 갱신 안 됨':'');
+      up.textContent='자료 '+m[4]+':'+m[5]+' 기준'+(late>15?' · ⚠ '+late+'분째 갱신 안 됨':' | 약 5분 주기 갱신');
+      if(sts){ sts.textContent=m[4]+':'+m[5]+' 기준'; sts.style.color=late>15?'#ef4444':''; }
       up.style.color=late>15?'#ef4444':'var(--dim,#8e9bb0)'; }
     tick(); setInterval(tick, 20000);
     /* 화면 켜 두기(Wake Lock) — https 주소에서만 된다. 다른 앱에 갔다 오면 풀리므로 돌아오면 다시 잡는다 */
@@ -3784,6 +3796,7 @@ window.cbWindyUrl = function(overlay, zoom){
     document.addEventListener('visibilitychange', function(){ if(want && document.visibilityState==='visible' && !lock) grab(); });
     if(!('wakeLock' in navigator)) wk.style.opacity='.45';
     box.insertBefore(wk, up);
+    sts=document.createElement('span'); sts.className='msts'; box.insertBefore(sts, wk); tick();   /* 내렸을 때 한 줄에 붙는 자료 시각 */
     /* 위급 정보 — 충북 현황(예비·주의보·경보) · 이 관서 기상특보 · 최근 재난문자 */
     var urg=document.createElement('div'); urg.id='wall-urg'; box.appendChild(urg);
     /* 첫 줄 — 로고·이름·LIVE·자료 시각 + 화면 색 단추(종합 현황·재해별 집중 감시와 같은 틀, 2026-11-20) */
@@ -3791,7 +3804,14 @@ window.cbWindyUrl = function(overlay, zoom){
     mbr.innerHTML='<div class="mlogo" aria-hidden="true">⛅</div><div class="mtt"><b>충북소방 기상재난통합플랫폼<span class="mlive">● LIVE</span></b></div>';
     /* 오른쪽 위 ⋯ — 공지사항·의견 보내기·화면 색(more-menu.js). 화면 색 단추는 숨겨 두고 메뉴가 대신 누른다 */
     var more=document.createElement('button'); more.type='button'; more.className='hd-more'; more.setAttribute('aria-label','더보기'); more.setAttribute('aria-haspopup','menu'); more.title='공지사항 · 의견 보내기 · 화면 색'; more.textContent='⋯';
-    th.style.display='none'; window.cbMoreCfg={ page:'실시간 상황판', themeBtn:function(){ return th; }, isDark:function(){ return W.dark ? W.dark() : true; } };
+    th.style.display='none'; window.cbMoreCfg={ page:'실시간 상황판', themeBtn:function(){ return th; }, isDark:function(){ return W.dark ? W.dark() : true; },
+      extra:function(){ var on=wk.textContent.indexOf('✓')>=0; return [{ icon:'🔆', text:on?'화면 켜두기 끄기':'화면 켜 두기', fn:function(){ wk.click(); } }]; } };   /* 화면 켜두기도 ⋯ 안으로 */
+    /* 화면에 다 안 들어가는 폰이면 처음부터 줄인 윗줄([로고 · 관서 · 17:29 기준] + 충북 현황 띠)로 — 상황판은 구역을 옆으로 넘기는 화면이라
+       스크롤에 따라 접었다 펴지 않고 화면 크기로 정한다. 펼친 모양으로 재 보고 넘치면 줄인다(돌리기·창 크기 바꿈·자료 갱신 때 다시) */
+    function fit(){ var hc=document.documentElement.classList; if(!hc.contains('wall-m')){ hc.remove('hd-slim'); return; }
+      hc.remove('hd-slim'); var over=document.documentElement.scrollHeight-window.innerHeight; hc.toggle('hd-slim', over>8); }
+    window.cbWallFit=fit; window.addEventListener('resize', function(){ clearTimeout(fit._t); fit._t=setTimeout(fit, 150); });
+    setTimeout(fit, 300); setTimeout(fit, 2000);
     mbr.querySelector('.mtt').appendChild(up); mbr.appendChild(th); mbr.appendChild(more); box.insertBefore(mbr, sel);
     document.body.insertBefore(box, document.body.firstChild);
     /* 넘기는 구역 표시 점 — 누르면 그 구역으로 */
@@ -3817,7 +3837,7 @@ window.cbWindyUrl = function(overlay, zoom){
     var seen={}, nAll=0; Object.keys(D.msgs||{}).forEach(function(k){ (D.msgs[k]||[]).forEach(function(m){ var key=(m[2]||'')+'|'+(m[3]||''); if(!seen[key]){ seen[key]=1; nAll++; } }); });
     var k=function(v,lab,col,cls){ return '<div class="k'+(cls?' '+cls:'')+'"><b style="color:'+(v?col:'inherit')+'">'+v+'</b><span>'+lab+'</span></div>'; };
     var h='<div class="u-box" data-go="특보·재난문자" title="누르면 특보·재난문자 목록"><div class="u-c"><div class="h">충북<br>현황</div>'+k(c.p,'예비','#94a3b8')+k(c.a,'주의보','#fb923c')+k(c.w,'경보','#f87171')+k(nAll,'재난문자','#60a5fa','m')+'</div>';
-    var hc=document.documentElement.classList; hc.toggle('m-w', ws.length>0); hc.toggle('m-m', ms.length>0); hc.toggle('m-any', ws.length+ms.length>0); if(window.cbWallDots) window.cbWallDots();
+    var hc=document.documentElement.classList; hc.toggle('m-w', ws.length>0); hc.toggle('m-m', ms.length>0); hc.toggle('m-any', ws.length+ms.length>0); if(window.cbWallDots) window.cbWallDots(); if(window.cbWallFit) window.cbWallFit();   /* 특보 줄이 늘면 다시 맞춘다 */
     /* 특보 칸 아래로 재난문자 칸을 내려 쌓는다(특보 칸 높이 + 간격) */
     var wc=document.querySelector('[data-card="warn"]'), mc=document.querySelector('[data-card="msg"]');
     if(mc){ if(hc.contains('wall-m') && wc && wc.offsetHeight) mc.style.setProperty('margin-top', (wc.offsetHeight+24)+'px', 'important'); else mc.style.removeProperty('margin-top'); }
