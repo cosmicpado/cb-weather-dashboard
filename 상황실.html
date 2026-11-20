@@ -42,8 +42,8 @@ html.wall-m [data-stage]{width:1080px!important;height:auto!important;padding:24
 html,body,body *{-webkit-text-size-adjust:100%!important;-moz-text-size-adjust:100%!important;text-size-adjust:100%!important;}
 #wall-msel{display:none;}
 /* 휴대폰 화면 전환 줄 — 종합 현황·재해별 집중 감시와 같은 자리·모양(2026-11-20) */
-#wall-msel .mpg{position:fixed;left:0;right:0;bottom:0;z-index:80;display:flex;height:calc(62px + env(safe-area-inset-bottom,0px));padding:0 0 env(safe-area-inset-bottom,0px);background:var(--panel,#151b26);border-top:1px solid var(--line,#28313f);box-sizing:border-box;box-shadow:0 -4px 14px rgba(0,0,0,.25);}
-#wall-msel .mpg a{flex:1;height:62px;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font:700 13px 'Pretendard Variable',Pretendard,system-ui,sans-serif;color:var(--dim,#8e9bb0);text-decoration:none;}
+#wall-msel .mpg{position:fixed;left:0;right:0;bottom:0;z-index:80;display:flex;height:var(--cb-navh);padding:0 0 var(--cb-navb);background:var(--panel,#151b26);border-top:1px solid var(--line,#28313f);box-sizing:border-box;box-shadow:0 -4px 14px rgba(0,0,0,.25);}
+#wall-msel .mpg a{flex:1;height:54px;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font:700 13px 'Pretendard Variable',Pretendard,system-ui,sans-serif;color:var(--dim,#8e9bb0);text-decoration:none;}
 #wall-msel .mpg a.on{color:var(--acc,#17AFAB);font-weight:800;}
 #wall-msel .mpg .ic{width:22px;height:22px;flex:none;}
 html.wall-m #wall-msel{display:flex;flex-wrap:wrap;gap:10px;padding:calc(10px + env(safe-area-inset-top,0px)) 12px 0;background:var(--bg,#0d1118);}
@@ -57,7 +57,7 @@ html.wall-m #wall-tools{display:none!important;}
 #wall-msel .mbr #wall-mupd{flex:none!important;padding:0!important;font-weight:400!important;font-size:13.5px!important;margin-top:1px;}
 #wall-msel .mbr button{width:40px!important;height:40px!important;flex:none;}
 html.wall-m body{padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))!important;}
-html.wall-m{--cb-navh:62px;}
+html.wall-m{--cb-navb:max(0px, calc(env(safe-area-inset-bottom,0px) - 12px));--cb-navh:calc(54px + var(--cb-navb));}   /* 탭바 높이 — ui.css 와 같은 값 */
 #wall-msel .nm{flex:1;min-width:0;height:44px;border-radius:10px;border:1.5px solid var(--line,#28313f);background:var(--panel,#151b26);color:var(--fg,#f2f5fa);font:800 16px 'Pretendard Variable',Pretendard,system-ui,sans-serif;padding:0 12px;display:flex;align-items:center;gap:8px;cursor:pointer;text-align:left;}
 #wall-msel .nm small{font-size:14px;font-weight:700;color:var(--dim,#8e9bb0);}#wall-msel .nm span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 #wall-msel .nm .car{width:14px;height:14px;margin-left:auto;flex:none;transition:transform .15s;}#wall-msel .nm.open .car{transform:rotate(180deg);}
@@ -144,7 +144,7 @@ html.wall-m #wall-msel{position:sticky;top:0;z-index:60;box-shadow:0 6px 14px rg
 #wall-msel .wk{width:auto!important;padding:0 12px;font:800 15px 'Pretendard Variable',Pretendard,system-ui,sans-serif!important;white-space:nowrap;}
 html.wall-m [data-card="season"]{--fz:.8!important;}
 #wall-dots{display:none;}
-html.wall-m #wall-dots{display:flex;position:fixed;left:50%;bottom:calc(76px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:60;align-items:center;gap:8px;padding:7px 12px;border-radius:999px;
+html.wall-m #wall-dots{display:flex;position:fixed;left:50%;bottom:calc(var(--cb-navh) + 14px);transform:translateX(-50%);z-index:60;align-items:center;gap:8px;padding:7px 12px;border-radius:999px;
   background:var(--panel,#151b26);border:1px solid var(--line,#28313f);box-shadow:0 6px 16px rgba(0,0,0,.3);font:800 13.5px 'Pretendard Variable',Pretendard,system-ui,sans-serif;color:var(--fg,#f2f5fa);}
 #wall-dots i{width:8px;height:8px;border-radius:50%;background:var(--dim,#8e9bb0);opacity:.5;cursor:pointer;}
 #wall-dots i.on{opacity:1;background:var(--acc,#17AFAB);width:20px;border-radius:5px;}

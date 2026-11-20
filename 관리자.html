@@ -223,6 +223,7 @@
   function hdr(extra){ var h=extra||{}; var k=getKey(); if(k) h['X-Admin-Key']=k; return h; }
   function el(tag, cls, txt){ var e=document.createElement(tag); if(cls) e.className=cls; if(txt!=null) e.textContent=txt; return e; }
 
+  var counted=false;
   function load(){
     $('list').innerHTML=''; $('list').appendChild(el('div','msg','불러오는 중…'));
     fetch('api/feedback',{cache:'no-store',headers:hdr()}).then(function(r){
@@ -231,6 +232,7 @@
     }).then(function(j){
       if(j.code===403){ var had=!!getKey(); clearKey(); gate(had ? '키가 맞지 않습니다' : ''); return; }
       opened();
+      if(!counted){ counted=true; post({action:'admin_view'}); }   // 접속 통계 — 키가 맞아 화면이 열렸을 때만 한 번 센다
       if(!j.ok){ items=[]; render(j.err||'볼 수 없는 주소입니다'); return; }
       items=j.items||[];
       render();

@@ -56,7 +56,8 @@ html{scrollbar-gutter:stable}
 
 /* ── 휴대폰 ── 이름 줄 · 볼 범위 줄, 화면 전환은 아래 고정 탭바 */
 @media (max-width:820px){
-  :root{--cb-navh:62px}   /* 탭바 높이 — 아래에 떠 있는 것들(맨 위로 단추·새 공지 카드·시연 막대)이 이만큼 위로 비킨다 */
+  /* 탭바 = 단추 줄 54px + 아래 여백. 아이폰 홈 막대 여백(34px)을 통째로 더하면 아래가 96px 로 너무 컸다 — 12px 는 단추 줄과 겹쳐 쓰고 나머지만 비운다 */
+  :root{--cb-navb:max(0px, calc(env(safe-area-inset-bottom,0px) - 12px));--cb-navh:calc(54px + var(--cb-navb))}   /* --cb-navh = 탭바 전체 높이 — 맨 위로 단추·새 공지 카드·시연 막대가 이만큼 위로 비킨다 */
   .hd-tt{font-size:15px}
   .scope{order:2;flex:1 1 100%;margin-left:0;height:48px}
   .scope .home,.scope .sel{height:40px;font-size:16px}
@@ -64,8 +65,8 @@ html{scrollbar-gutter:stable}
   .sel b{font-size:16px}.sel small{font-size:14px}.pkl{width:100%}
   .hd-tools{order:1;margin-left:0;min-width:0;padding-left:0;border-left:0}
   .hd-tools>*:not([aria-label="화면 색"]){display:none!important}   /* 휴대폰 도구 = 화면 색만 */
-  .pgs{position:fixed;left:0;right:0;bottom:0;z-index:9200;height:calc(62px + env(safe-area-inset-bottom,0px));padding:0 0 env(safe-area-inset-bottom,0px);border-radius:0;border:0;border-top:1px solid var(--ui-line);background:var(--ui-card);gap:0;box-shadow:0 -4px 14px rgba(16,24,40,.06)}
-  .pgs a{flex:1;flex-direction:column;justify-content:center;height:62px;border-radius:0;gap:3px;font-size:13px;font-weight:700;background:transparent!important;box-shadow:none!important;padding:0}
+  .pgs{position:fixed;left:0;right:0;bottom:0;z-index:9200;height:var(--cb-navh);padding:0 0 var(--cb-navb);border-radius:0;border:0;border-top:1px solid var(--ui-line);background:var(--ui-card);gap:0;box-shadow:0 -4px 14px rgba(16,24,40,.06)}
+  .pgs a{flex:1;flex-direction:column;justify-content:center;height:54px;border-radius:0;gap:3px;font-size:13px;font-weight:700;background:transparent!important;box-shadow:none!important;padding:0}
   .pgs a.on{color:var(--brand);font-weight:800}
   .pgs .ic{width:22px;height:22px}
   .pgs .lf{display:none}.pgs .ls{display:inline}

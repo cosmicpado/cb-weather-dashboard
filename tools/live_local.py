@@ -196,7 +196,8 @@ class Quiet(http.server.SimpleHTTPRequestHandler):
         # 브라우저는 주소창·링크로 연 화면에 Sec-Fetch-Dest: document 를 붙인다(이 머리글이 없는 옛 브라우저는 그대로 센다)
         page = unquote(short_to_file(base)).rsplit('/', 1)[-1]
         dest = self.headers.get('Sec-Fetch-Dest', 'document')
-        if page in access_log.PAGES and dest in ('document', 'iframe') and not self.headers.get('Sec-Purpose'):
+        # 관리자 화면은 여기서 세지 않는다 — 키가 맞아 실제로 열렸을 때만 화면이 알려 온다(feedback.py admin_view)
+        if page in access_log.PAGES and page != '관리자.html' and dest in ('document', 'iframe') and not self.headers.get('Sec-Purpose'):
             access_log.log(page, self._client_ip(), self.headers.get('User-Agent', ''))
         return super().do_GET()
 

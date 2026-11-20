@@ -489,6 +489,15 @@ def _post(ip, headers, body):
             raise ValueError
     except (ValueError, UnicodeDecodeError):
         return 400, {'ok': False, 'err': '형식 오류'}
+    if j.get('action') == 'admin_view':              # 관리자 접속 통계 — 키가 맞아 관리자 화면이 열렸을 때만 센다
+        if not _is_admin(ip, headers):
+            return 403, {'ok': False}
+        try:
+            import access_log
+            access_log.log('관리자.html', ip, headers.get('User-Agent', ''))
+        except Exception:
+            pass
+        return 200, {'ok': True}
     if j.get('action') == 'client_error':            # 화면 스크립트 오류 기록(error-report.js)
         return _client_error(ip, headers, j)
     if j.get('action') == 'status':
