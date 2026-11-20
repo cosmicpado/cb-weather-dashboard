@@ -149,8 +149,8 @@ html.no-demo .demo:not(:has(button.on)){display:none}   /* 'test' 명령으로 �
 .map.lay-b .tbl{position:absolute;right:14px;bottom:14px;width:350px;background:var(--over);border:1px solid var(--line);border-radius:12px;padding:8px;box-shadow:0 6px 20px rgba(16,24,40,.08);font-size:14.5px}
 .map.lay-b .tbl .r{grid-template-columns:82px 62px 62px 1fr;padding:5px 8px}.map.lay-b .tbl .r.hd{font-size:14.5px}
 .side{display:flex;flex-direction:column;gap:14px;min-width:0}
-.okline{display:flex;gap:10px;padding:12px 16px}
-.okline div{flex:1;background:var(--soft);color:var(--ink3);border-radius:10px;padding:9px 12px;font-weight:700;font-size:14px}   /* 특보·문자 없음 — 눈길 끌 일이 없으니 초록 대신 습도·강수량 칸과 같은 옅은 회색 */
+.okline{display:flex;gap:22px;padding:13px 18px}
+.okline div{color:var(--ink3);font-weight:700;font-size:14px}   /* 특보·문자 없음 — 눈길 끌 일이 없으니 바탕 없이 회색 글자만 */
 .al{margin:10px 16px 0;background:var(--warnbg);border-radius:10px;padding:9px 12px}   /* 왼쪽 색 막대는 쓰지 않는다 — 바탕색과 제목 색으로만 구분 */
 .al:last-child{margin-bottom:14px}
 .al b{font-size:14px}.al .tm{font-size:14.5px;color:var(--ink3);margin-left:6px}.al p{font-size:13px;color:var(--ink2);margin-top:4px;line-height:1.5}
@@ -302,7 +302,7 @@ html.no-demo .demo:not(:has(button.on)){display:none}   /* 'test' 명령으로 �
   .rain{grid-template-columns:56px repeat(3,1fr);gap:6px;padding:8px 10px}.rain b{font-size:17px}
   .c-inf .refs{grid-template-columns:1fr}
   .gal figcaption{flex-direction:column;gap:1px}.gal figcaption span{font-size:13px}
-  .okline{gap:6px}.okline div{padding:8px 10px;font-size:14px}
+  .okline{gap:18px;padding:12px 16px}
   .ch{flex-wrap:wrap}.ch span{text-align:left}
   .band .st b{font-size:24px}.bsum .s{font-size:13.5px}
   .fbar{flex-wrap:wrap}.fbm{margin-left:0}#fmapIn{height:420px}
@@ -704,7 +704,7 @@ html.no-demo .demo:not(:has(button.on)){display:none}   /* 'test' 명령으로 �
     lastQQ = qq;
     if (!qqBound) { qqBound = true;   /* 목록 창의 한 줄을 누르면 그 지진 자세히 — 창은 #alc 밖이라 문서에 한 번만 건다 */
       document.addEventListener('click', function(e){ var t = e.target.closest && e.target.closest('[data-qi]'); if (t && lastQQ[+t.getAttribute('data-qi')]) quakeModal(lastQQ[+t.getAttribute('data-qi')]); }); }
-    if (!ws.length && !ms.length && !pre.length && !q && !lg) { el.innerHTML = '<div class="okline"><div>✓ 기상특보 없음</div><div>✓ 재난문자 없음</div></div>' + qh;
+    if (!ws.length && !ms.length && !pre.length && !q && !lg) { el.innerHTML = '<div class="okline"><div>✓ 기상특보 · 재난문자 없음</div></div>' + qh;
       el.onclick = qqClick; return; }
     var h = '<div class="ch"><h3>특보 · 재난문자</h3></div>';   /* 어느 범위인지는 위 '충북 현황·관서 현황'과 관서 선택 칸으로 보인다 */
     if (q) { var ago = Math.round((Date.now()-tms(q.tm_eqk))/6e4), big = (q.int_cb||0)>=5 || q.tp==='11' || q.tp==='10';
