@@ -1684,7 +1684,7 @@ def fetch_quake():
         f = s.split(None, 7)
         if len(f) < 8 or f[0] not in QUAKE_TP:
             continue
-        abroad = f[0] in ('2', '12')   # 국외지진 — 기상청이 통보한 것만 오니 거르지 않고 화면에서 회색(참고)으로 낮춘다(2026-11-18)
+        abroad = f[0] in ('2', '12')   # 국외지진 — '국내영향없음'인 것은 merge_quake 에서 뺀다(_quake_matters). 남는 것은 화면에서 회색(참고)
         try:
             mt, lat, lon = float(f[4]), float(f[5]), float(f[6])
         except ValueError:
@@ -1719,13 +1719,20 @@ def fetch_quake():
     return out
 
 
+def _quake_matters(q):
+    """화면에 올릴 지진인가 — 국내 지진(북한·해역 포함)은 모두, 국외 지진은 기상청이 '국내영향없음'이라 적지 않은 것만.
+    인도네시아·페루처럼 우리와 상관없는 먼 지진까지 '참고 지진'으로 떠서 뺐다(2026-11-22)."""
+    abroad = q.get('abroad') or str(q.get('tp')) in ('2', '12')
+    return not (abroad and '영향없음' in str(q.get('rem', '')).replace(' ', ''))
+
+
 def merge_quake(prev_list, new_list, days=7):
     """eqk_now 는 최근 통보 몇 건만 준다 → 회차마다 이전 목록과 합쳐 7일치를 쌓는다.
     같은 지진은 통보가 여러 번(속보→통보→재통보) 오니 진앙시 기준 마지막 통보만 남긴다."""
     cut = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d %H:%M:%S')
     by = {}
     for q in (prev_list or []) + (new_list or []):
-        if not isinstance(q, dict) or q.get('tm_eqk', '') < cut:
+        if not isinstance(q, dict) or q.get('tm_eqk', '') < cut or not _quake_matters(q):   # 이전에 쌓인 먼 국외 지진도 여기서 빠진다
             continue
         k = q.get('tm_eqk', '')[:16]
         if k not in by or str(q.get('tm_fc', '')) >= str(by[k].get('tm_fc', '')):
