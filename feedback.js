@@ -28,7 +28,7 @@
     card.appendChild(head);
 
     card.appendChild(el('div', 'font-size:13px;color:#5a6578;line-height:1.5;white-space:pre-line;',   /* pre-line: 글 안의 \n 에서 줄을 바꾼다 */
-      '불편한 점, 틀린 값, 기능 제안, 새로 있었으면 하는 사이트 등을 자유롭게 적어 주세요.\n개발 담당자가 확인하고, 반영되면 사용설명서 공지사항으로 알려 드립니다.'));
+      '불편한 점, 틀린 값, 기능 제안, 새로 있었으면 하는 사이트 등을 자유롭게 적어 주세요.\n개발 담당자가 확인하고, 반영되면 공지사항으로 알려 드립니다.'));
 
     /* 구분 — 반드시 하나 고른다 */
     var KINDS = [['오류', '틀린 값·안 되는 기능'], ['기능 제안', '이 정보도 있었으면'], ['새 사이트 제안', '다른 업무용 사이트'], ['기타', '']];
@@ -99,7 +99,7 @@
           card.innerHTML = '';
           card.appendChild(el('div', 'font-size:44px;text-align:center;padding-top:6px;', '✅'));
           card.appendChild(el('div', 'font-size:17px;font-weight:800;text-align:center;', '보냈습니다. 고맙습니다!'));
-          card.appendChild(el('div', 'font-size:13px;color:#5a6578;text-align:center;', '반영되면 사용설명서 공지사항으로 알려 드립니다.'));
+          card.appendChild(el('div', 'font-size:13px;color:#5a6578;text-align:center;', '반영되면 공지사항으로 알려 드립니다.'));
           var ok = el('button', 'align-self:center;margin-top:6px;height:38px;padding:0 22px;border-radius:10px;border:1px solid #c9d1de;background:#f4f6fa;color:#1b2333;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;', '닫기');
           ok.onclick = close; card.appendChild(ok); ok.focus();
           setTimeout(close, 4000);

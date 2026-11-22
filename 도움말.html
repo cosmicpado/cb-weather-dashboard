@@ -148,7 +148,7 @@ details[open] summary{margin-bottom:8px}
 <body>
 <header class="top">
   <a class="back" href="종합.html">← 종합 현황</a>
-  <h1 id="docTitle">사용설명서</h1>
+  <h1 id="docTitle">공지사항 · 도움말</h1>
   <div class="sp">
     <button onclick="window.print()">🖨 인쇄</button>
     <button id="themeBtn">☾ 다크</button>
@@ -209,7 +209,7 @@ details[open] summary{margin-bottom:8px}
     <li><b>기상특보 칸</b>을 누르면 통보문. 특보가 없으면 눌리지 않습니다.</li>
     <li><b>레이더 칸 K / W</b>: K = 기상청 레이더(최근 30분 반복), W = 윈디 정보(누르면 크게, 위성·바람·기온 등으로 바꿈).</li>
     <li>오른쪽 위 시계는 <b>서버 시각</b>이라 PC 시계가 틀려도 맞습니다.</li>
-    <li>왼쪽 위 아이콘: ← 종합 현황 · ? 설명서 · ✎ 배치 편집 · ▶ 시연 · 💬 의견</li>
+    <li>왼쪽 위 아이콘: ← 종합 현황 · 📢 공지·도움말 · ✎ 배치 편집 · ▶ 시연 · 💬 의견</li>
   </ul>
 
 
@@ -374,7 +374,7 @@ details[open] summary{margin-bottom:8px}
 
   // 지역 이름 반영
   if (C.label) {
-    document.title = '충북소방 기상재난통합플랫폼';
+    document.title = '공지사항 · 도움말 | 충북소방 기상재난통합플랫폼';
     var w = document.getElementById('leadWho');
     if (w) w.textContent = '충북소방 기상재난통합플랫폼';
   }

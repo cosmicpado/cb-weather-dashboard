@@ -1,8 +1,8 @@
-/* 📢 공지사항 — 사용설명서(도움말.html) '공지사항' 탭과 종합 현황의 새 공지 알림에 나온다.
+/* 📢 공지사항 — 공지사항 · 도움말(도움말.html) '공지사항' 탭과 종합 현황의 새 공지 알림에 나온다.
    ▶ 공지는 서버에만 둔다(2026-11-18) — 관리자 페이지(관리자.html → 공지사항 탭)에서 쓰고·고치고·지우고,
      서버 .data/notices.json 에 저장된다. 이 파일에는 공지 내용을 두지 않는다(공지 때문에 코드를 배포하지 않게).
      예전에 이 파일에 있던 기본 공지는 서버가 처음 한 번 .data/notices.json 으로 옮겼다(tools/feedback.py).
-   안 본 공지가 있으면 각 화면의 설명서 버튼(❓·?)에 빨간 점이 붙고, 누르면 공지사항 탭으로 바로 열린다.
+   안 본 공지가 있으면 각 화면의 공지 단추(📢)에 빨간 점이 붙고, 누르면 공지사항 탭으로 바로 열린다.
    본 공지는 이 PC 브라우저에 기억한다(cbNoticeSeen). 서버가 없는 화면(파일로 연 화면)에서는 공지가 없다. */
 window.CB_NOTICES = [];
 
@@ -35,7 +35,7 @@ window.CB_NOTICES = [];
       .catch(function () {}).then(function () { clearTimeout(t); done(); });
   });
 
-  /* 설명서 버튼에 빨간 점 + 공지사항 탭으로 바로 — 화면(React)이 다시 그려 점이 지워져도 다시 붙인다 */
+  /* 공지 단추에 빨간 점 + 공지사항 탭으로 바로 — 화면(React)이 다시 그려 점이 지워져도 다시 붙인다 */
   function deco() {
     var n = window.cbNotices.unseen();
     var links = document.querySelectorAll('a[href^="도움말.html"]');

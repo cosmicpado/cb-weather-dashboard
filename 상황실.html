@@ -4,12 +4,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>충북소방 기상재난통합플랫폼</title>
 <!-- 홈 화면에 추가 — 아이콘·이름. 아이폰은 SVG 를 홈 화면 아이콘으로 못 써서 PNG(apple-touch-icon) 를 따로 둔다 -->
-<link rel="manifest" href="manifest-wall.json">
+<link rel="manifest" href="manifest.json">   <!-- 홈 화면 앱은 하나(충북기상플랫폼, 종합 현황부터) -->
 <meta name="theme-color" content="#0d1118">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="상황판">
+<meta name="apple-mobile-web-app-title" content="충북기상플랫폼">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -164,7 +164,7 @@ html.wall-m #wall-dots{display:flex;position:fixed;left:50%;bottom:calc(var(--cb
 </head>
 <body>
 <script>
-/* 왼쪽 위 도구 막대(← 종합 현황 · ? 설명서 · ✎ 배치 편집 · ▶ 시연). 배치 편집기·시연 스크립트가 여기에 버튼을 넣는다.
+/* 왼쪽 위 도구 막대(← 종합 현황 · 📢 공지·도움말 · ✎ 배치 편집 · ▶ 시연). 배치 편집기·시연 스크립트가 여기에 버튼을 넣는다.
    화면(React)이 다시 그려도 지워지지 않게 body 바로 아래 고정 레이어로 둔다. */
 (function(){
   var SV='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">';
@@ -183,7 +183,7 @@ html.wall-m #wall-dots{display:flex;position:fixed;left:50%;bottom:calc(var(--cb
     var t=document.getElementById('wall-tools');
     if(!t){ t=document.createElement('div'); t.id='wall-tools';
       var a=document.createElement('a'); a.href='종합.html'; a.title='종합 현황으로 돌아가기'; t.appendChild(wallIcon(a,'back','종합 현황',1));
-      var h=document.createElement('a'); h.href='도움말.html#notice'; h.title='공지사항 · 사용설명서'; t.appendChild(wallIcon(h,'notice','공지사항·설명서',2));
+      var h=document.createElement('a'); h.href='도움말.html#notice'; h.title='공지사항 · 도움말'; t.appendChild(wallIcon(h,'notice','공지사항 · 도움말',2));
       var f=document.createElement('a'); f.tabIndex=0; f.title='의견 보내기 — 불편한 점·바라는 점을 개발 담당자에게 보냅니다';
       f.onclick=function(){ if(window.cbFeedback) cbFeedback.open({page:'실시간 상황판'}); }; t.appendChild(wallIcon(f,'chat','의견 보내기',5));
       /* 재대본 비상단계 지정은 단추를 두지 않는다 — '/' 명령 칸에서 stage 로만(2026-11-18) */ }
@@ -2944,7 +2944,7 @@ class Component extends DCLogic {
   function toggleDemoBtn(){ var on=!shown(); try{ localStorage.setItem(KEY, on?'1':'0'); }catch(err){} open=false; draw(); return on; }
 
   /* 입력 명령(2026-11-16) — 입력 칸이 아닌 곳에서 단어를 치면: main 종합 현황 · wall 상황실 · admin 관리자 화면 · test 시연 단추 꺼내기/숨기기 ·
-     stage 비상단계 지정 창 · help 설명서. 4초 안에 이어 친 글자만 본다. 관리자 화면은 원래대로 서버 PC·관리자 키가 있어야 열린다 */
+     stage 비상단계 지정 창 · help 도움말. 4초 안에 이어 친 글자만 본다. 관리자 화면은 원래대로 서버 PC·관리자 키가 있어야 열린다 */
   var typed='', typedAt=0;
   function toast(t){ var d=document.createElement('div'); d.textContent=t;
     d.style.cssText='position:fixed;left:50%;bottom:6vh;transform:translateX(-50%);z-index:2147483000;background:rgba(15,27,45,.92);color:#fff;font:700 clamp(14px,1.1vw,24px) system-ui,sans-serif;padding:12px 22px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.4);pointer-events:none;';
@@ -2953,7 +2953,7 @@ class Component extends DCLogic {
     admin:function(){ toast('관리자 화면으로 이동합니다'); setTimeout(function(){ location.href='관리자.html'; }, 400); },
     test:function(){ toast(toggleDemoBtn() ? '시연 단추를 꺼냈습니다(왼쪽 위 ▶) — test 를 다시 치면 숨깁니다' : '시연 단추를 숨겼습니다'); },
     stage:function(){ if(window.cbStagePicker) cbStagePicker(); },
-    help:function(){ toast('설명서로 이동합니다'); setTimeout(function(){ location.href='도움말.html'; }, 400); },
+    help:function(){ toast('도움말로 이동합니다'); setTimeout(function(){ location.href='도움말.html'; }, 400); },
     main:function(){ toast('종합 현황으로 이동합니다'); setTimeout(function(){ location.href='종합.html'; }, 400); },
     wall:function(){ toast('지금 실시간 상황판 화면입니다'); }
   };
@@ -2969,7 +2969,7 @@ class Component extends DCLogic {
     var inp=document.createElement('input');
     inp.style.cssText='width:clamp(240px,22vw,460px);text-align:center;font:700 clamp(18px,1.6vw,34px) system-ui,sans-serif;padding:10px 14px;border-radius:12px;border:2px solid var(--acc,#17AFAB);background:rgba(13,17,24,.9);color:#f2f5fa;outline:none;';
     inp.placeholder='명령 입력 후 Enter'; inp.autocomplete='off'; inp.spellcheck=false;
-    var hint=document.createElement('div'); hint.textContent='main 종합 현황 · wall 상황판 · admin 관리자 화면 · test 시연 단추 · stage 비상단계 지정 · help 설명서';   /* 관리자 화면은 키가 있어야 열리니 보여도 된다 */
+    var hint=document.createElement('div'); hint.textContent='main 종합 현황 · wall 상황판 · admin 관리자 화면 · test 시연 단추 · stage 비상단계 지정 · help 도움말';   /* 관리자 화면은 키가 있어야 열리니 보여도 된다 */
     hint.style.cssText='font:600 clamp(13px,.9vw,20px) system-ui,sans-serif;color:#8e9bb0;';
     card.appendChild(inp); card.appendChild(hint); cmdBox.appendChild(card); document.body.appendChild(cmdBox);
     cmdBox.addEventListener('mousedown', function(ev){ if(ev.target===cmdBox) closeCmd(); });

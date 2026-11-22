@@ -1,7 +1,7 @@
 /* 입력 명령(종합 현황·재해별 집중 감시 공용, 2026-11-20) — 실시간 상황판과 같은 명령.
    '/' 를 누르면 가운데 명령 칸, 또는 입력 칸이 아닌 곳에서 단어를 바로 친다(4초 안).
      main 종합 현황 · watch 재해별 집중 감시 · wall 실시간 상황판 · admin 관리자 화면 ·
-     test 시연 단추 꺼내기/숨기기 · stage 비상단계 지정(상황판 지정 창으로) · help 설명서
+     test 시연 단추 꺼내기/숨기기 · stage 비상단계 지정(상황판 지정 창으로) · help 도움말
    관리자 화면·단계 지정은 원래대로 관리자 키·지정 번호가 있어야 한다.
    시연 단추는 평소 숨김(실시간 상황판과 같게) — test 로 꺼내면 이 브라우저에 기억(cbDemoShow).
    숨김은 <html class="no-demo"> 로 하고, 화면마다 CSS 가 시연 단추를 가린다(시연 중이면 끌 수 있게 그대로 보인다).
@@ -34,9 +34,9 @@
       toast(on ? '시연 단추를 꺼냈습니다 — test 를 다시 치면 숨깁니다' : '시연 단추를 숨겼습니다');
     },
     stage: function () { go('비상단계 지정 창을 엽니다(실시간 상황판)', '상황실.html?cmd=stage'); },
-    help: function () { go('설명서로 이동합니다', '도움말.html'); }
+    help: function () { go('도움말로 이동합니다', '도움말.html'); }
   };
-  var HINT = 'main 종합 현황 · watch 집중 감시 · wall 상황판 · admin 관리자 화면 · test 시연 단추 · stage 비상단계 지정 · help 설명서';
+  var HINT = 'main 종합 현황 · watch 집중 감시 · wall 상황판 · admin 관리자 화면 · test 시연 단추 · stage 비상단계 지정 · help 도움말';
   var box = null, typed = '', typedAt = 0;
   function close() { if (box) { box.remove(); box = null; } }
   function open() {

@@ -40,7 +40,7 @@
     menu.style.cssText = 'position:fixed;z-index:9950;top:' + Math.round(r.bottom + 8) + 'px;right:' + Math.max(8, Math.round(innerWidth - r.right)) + 'px;' +
       'min-width:210px;padding:6px;border-radius:14px;box-shadow:0 12px 32px -12px rgba(0,0,0,.45);' +
       (dark ? 'background:#151b26;color:#f2f5fa;border:1px solid #2a3446;' : 'background:#fff;color:#101828;border:1px solid #e4e8ef;');
-    menu.appendChild(item('📢', '공지사항 · 설명서', unseen() > 0, function () { location.href = '도움말.html#notice'; }));
+    menu.appendChild(item('📢', '공지사항 · 도움말', unseen() > 0, function () { location.href = '도움말.html#notice'; }));
     menu.appendChild(item('💬', '의견 보내기', false, function () { if (window.cbFeedback) window.cbFeedback.open({ page: c.page }); }));
     menu.appendChild(item(dark ? '☀' : '☾', dark ? '밝게 보기' : '어둡게 보기', false, function () { var t = c.themeBtn(); if (t) t.click(); }));
     c.extra().forEach(function (x) { menu.appendChild(item(x.icon, x.text, false, x.fn)); });
