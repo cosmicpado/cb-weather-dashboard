@@ -341,7 +341,7 @@
   $('tb-ac').onclick=function(){ tab('ac'); acLoad(); };
   try{ var _t=sessionStorage.getItem('cbAdminTab'); if(_t==='nt'||_t==='dt') tab(_t); if(_t==='ac'){ tab('ac'); acLoad(); } }catch(e){}
 
-  /* ── 접속 통계 ── 화면을 연 횟수(조회)와 방문자 수(같은 PC·같은 브라우저는 한 명). 서버를 켜 둔 동안만 기록된다 */
+  /* ── 접속 통계 ── 화면을 연 횟수(조회)와 방문자 수(같은 기기·같은 브라우저는 한 명, 쿠키 cbv). 서버를 켜 둔 동안만 기록된다 */
   function esc(t){ return String(t==null?'':t).replace(/[&<>"]/g,function(x){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[x]; }); }
   function acLoad(){
     $('acBody').innerHTML='<div class="msg">불러오는 중…</div>';
@@ -373,7 +373,7 @@
       +'<h3 class="ac-h">시간대별 화면 열기 (최근 7일)</h3><div class="ac-bars">'+j.hours.map(function(n,h){ return '<div title="'+h+'시 · '+n+'회"><i style="height:'+Math.round(n/hx*100)+'%"></i><span>'+h+'</span></div>'; }).join('')+'</div>'
       +'<h3 class="ac-h">기기 (최근 30일 화면 열기)</h3><div class="ac-dev"><i style="width:'+Math.round(dv.PC/dt*100)+'%"></i></div><div class="ac-devl"><span>PC '+dv.PC+'회 ('+Math.round(dv.PC/dt*100)+'%)</span><span>휴대폰 '+dv['휴대폰']+'회 ('+Math.round(dv['휴대폰']/dt*100)+'%)</span></div>'
       +'<h3 class="ac-h">화면 오류 (최근 50건)</h3><div id="acErr" class="ac-note">불러오는 중…</div>'
-      +'<p class="ac-note">· 방문자 = 같은 PC·같은 브라우저를 한 명으로 셉니다(IP 주소는 저장하지 않습니다). · 서버를 켜 둔 동안만 기록됩니다. · 기록은 13개월 보관합니다.</p>';
+      +'<p class="ac-note">· 방문자 = 같은 기기·같은 브라우저를 한 명으로 셉니다(휴대폰 주소가 바뀌어도 같은 사람). 카톡 안 브라우저와 크롬처럼 브라우저가 다르면 따로 셉니다. 링크 미리보기 같은 자동 접속은 빼고, IP 주소는 저장하지 않습니다. · 11월 22일 이전 기록은 휴대폰 한 사람이 여러 명으로 잡혀 실제보다 많습니다. · 서버를 켜 둔 동안만 기록됩니다. · 기록은 13개월 보관합니다.</p>';
   }
 
   /* ── 공지사항 ── 공지는 서버(.data/notices.json)에만 있다. 쓰기·고치기·지우기 모두 여기서 하고 서버에 id 로 저장 */

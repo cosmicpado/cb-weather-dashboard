@@ -494,7 +494,8 @@ def _post(ip, headers, body):
             return 403, {'ok': False}
         try:
             import access_log
-            access_log.log('관리자.html', ip, headers.get('User-Agent', ''))
+            ua = headers.get('User-Agent', '')
+            access_log.log('관리자.html', ip, ua, access_log.visitor(ip, ua, headers.get('Cookie', ''))[0])
         except Exception:
             pass
         return 200, {'ok': True}

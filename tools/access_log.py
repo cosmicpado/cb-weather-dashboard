@@ -4,6 +4,10 @@
   · 화면 파일(종합·상황실·재해·도움말·관리자)을 열 때만 센다. 자료(data.js)를 1분마다 다시 읽는 것은 세지 않는다.
   · IP 주소는 저장하지 않는다 — 서버에만 있는 비밀 값(salt)과 IP·브라우저 정보를 섞어 되돌릴 수 없는 방문자 번호로만 남긴다.
     그래서 '몇 명이 봤는지'는 알 수 있지만 '누가(어느 주소가)'는 기록에 없다.
+  · 방문자 번호는 처음 열 때 브라우저에 쿠키(cbv)로 맡겨 두고 다음부터 그 번호를 쓴다. 휴대폰은 통신사 주소가 수시로
+    바뀌어 IP·브라우저만으로 세면 한 사람이 하루에 여러 명으로 잡혔다. 쿠키를 막은 브라우저는 예전처럼 IP·브라우저로 센다.
+    (카톡 안 브라우저와 크롬처럼 브라우저가 다르면 쿠키도 따로라 여전히 두 명으로 잡힌다.)
+  · 사람이 아닌 접속(카톡·메신저 링크 미리보기, 검색·검사 프로그램)은 세지 않는다.
   · 13개월 지난 파일은 지운다.
 """
 import csv
@@ -46,13 +50,37 @@ def _device(ua):
     return '휴대폰' if re.search(r'Mobi|Android|iPhone|iPad', ua or '') else 'PC'
 
 
-def log(page_file, ip, ua):
-    """page_file = 실제 파일 이름(예 '종합.html'). 화면이 아니면 아무것도 안 한다. 실패해도 화면 제공에는 영향 없음."""
+COOKIE = 'cbv'
+_BOT = re.compile(r'bot|crawl|spider|scrap|slurp|preview|facebookexternalhit|kakaotalk-scrap|Yeti|Daum|HeadlessChrome|'
+                  r'python|curl|wget|Go-http|Java/|okhttp|axios|node-fetch|WhatsApp|TelegramBot', re.I)
+
+
+def is_bot(ua):
+    """사람이 아닌 접속 — 브라우저는 모두 'Mozilla/' 로 시작한다. 미리보기·검사 프로그램은 이름에 bot·scrap 등이 붙는다."""
+    return not (ua or '').startswith('Mozilla/') or bool(_BOT.search(ua))
+
+
+def visitor(ip, ua, cookie=''):
+    """(방문자 번호, 쿠키를 새로 줘야 하나). 쿠키에 번호가 있으면 그것, 없으면 IP·브라우저로 만든 번호."""
+    m = re.search(r'(?:^|;)\s*' + COOKIE + r'=([0-9a-f]{12})(?![0-9a-f])', cookie or '')
+    if m:
+        return m.group(1), False
+    return hashlib.sha256((_salt() + '|' + (ip or '') + '|' + (ua or '')).encode('utf-8')).hexdigest()[:12], True
+
+
+def cookie_header(vid):
+    """Set-Cookie 값 — 400일(브라우저가 허락하는 최장). 화면 스크립트는 못 읽게 HttpOnly."""
+    return f'{COOKIE}={vid}; Path=/; Max-Age=34560000; SameSite=Lax; HttpOnly'
+
+
+def log(page_file, ip, ua, vid=None):
+    """page_file = 실제 파일 이름(예 '종합.html'). 화면이 아니거나 사람이 아니면 아무것도 안 한다.
+    vid = visitor() 로 구한 방문자 번호(없으면 IP·브라우저로). 실패해도 화면 제공에는 영향 없음."""
     page = PAGES.get(page_file)
-    if not page:
+    if not page or is_bot(ua):
         return
     try:
-        vid = hashlib.sha256((_salt() + '|' + (ip or '') + '|' + (ua or '')).encode('utf-8')).hexdigest()[:12]
+        vid = vid or visitor(ip, ua)[0]
         now = datetime.now()
         path = DIR / f'{now:%Y-%m}.csv'
         with _lock:

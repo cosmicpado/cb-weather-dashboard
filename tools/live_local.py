@@ -194,11 +194,16 @@ class Quiet(http.server.SimpleHTTPRequestHandler):
         # 화면을 열 때만 한 줄 기록(자료 파일·그림은 세지 않는다). IP 는 저장하지 않는다(access_log.py)
         # 사람이 화면을 연 것만 — 화면 틀(support.js)이 자기 파일을 fetch 로 한 번 더 받는 것까지 세어 재해·상황판이 두 배로 잡혔다.
         # 브라우저는 주소창·링크로 연 화면에 Sec-Fetch-Dest: document 를 붙인다(이 머리글이 없는 옛 브라우저는 그대로 센다)
+        # 방문자는 쿠키(cbv)로 구분 — 처음 온 브라우저에는 번호를 쿠키로 준다(access_log.visitor)
         page = unquote(short_to_file(base)).rsplit('/', 1)[-1]
         dest = self.headers.get('Sec-Fetch-Dest', 'document')
         # 관리자 화면은 여기서 세지 않는다 — 키가 맞아 실제로 열렸을 때만 화면이 알려 온다(feedback.py admin_view)
         if page in access_log.PAGES and page != '관리자.html' and dest in ('document', 'iframe') and not self.headers.get('Sec-Purpose'):
-            access_log.log(page, self._client_ip(), self.headers.get('User-Agent', ''))
+            ip, ua = self._client_ip(), self.headers.get('User-Agent', '')
+            vid, new = access_log.visitor(ip, ua, self.headers.get('Cookie', ''))
+            access_log.log(page, ip, ua, vid)
+            if new and not access_log.is_bot(ua):
+                self._cookie = access_log.cookie_header(vid)
         return super().do_GET()
 
     def _access_stats(self):
@@ -232,6 +237,9 @@ class Quiet(http.server.SimpleHTTPRequestHandler):
         self.send_header('Cache-Control', 'no-cache')
         for k, v in SECURITY_HEADERS.items():
             self.send_header(k, v)
+        if getattr(self, '_cookie', None):     # 방문자 번호 쿠키(do_GET) — 이 응답에만
+            self.send_header('Set-Cookie', self._cookie)
+            self._cookie = None
         super().end_headers()
 
 
