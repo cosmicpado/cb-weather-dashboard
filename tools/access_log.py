@@ -128,11 +128,18 @@ def _rows(since):
 
 
 def stats(days=30):
-    """관리자 화면용 요약 — 오늘·7일·30일 조회/방문자, 일별, 화면별, 시간대별(7일), 기기별(30일)."""
+    """관리자 화면용 요약 — 오늘·7일·30일 조회/방문자, 일별, 화면별, 시간대별(7일), 기기별(30일).
+    by = 같은 요약을 기기별로({'PC': …, '휴대폰': …}) — 관리자 화면의 [전체 | PC | 휴대폰] 고르기."""
     now = datetime.now()
-    today = now.strftime('%Y-%m-%d')
     start = (now - timedelta(days=days - 1)).replace(hour=0, minute=0, second=0, microsecond=0)
     rows = _rows(start)
+    out = _summarize(rows, now, start, days)
+    out['by'] = {d: _summarize([r for r in rows if r[2] == d], now, start, days) for d in ('PC', '휴대폰')}
+    return out
+
+
+def _summarize(rows, now, start, days):
+    today = now.strftime('%Y-%m-%d')
     d7 = (now - timedelta(days=6)).strftime('%Y-%m-%d')
 
     def summary(rs):
