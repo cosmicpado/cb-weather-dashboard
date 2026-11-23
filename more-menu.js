@@ -44,6 +44,7 @@
     menu.appendChild(item('💬', '의견 보내기', false, function () { if (window.cbFeedback) window.cbFeedback.open({ page: c.page }); }));
     menu.appendChild(item(dark ? '☀' : '☾', dark ? '밝게 보기' : '어둡게 보기', false, function () { var t = c.themeBtn(); if (t) t.click(); }));
     c.extra().forEach(function (x) { menu.appendChild(item(x.icon, x.text, false, x.fn)); });
+    if (window.cbTour && window.cbTour.has()) menu.appendChild(item('🧭', '화면 안내 다시 보기', false, function () { window.cbTour.start(true); }));   // tour.js
     document.body.appendChild(menu);
     btn.setAttribute('aria-expanded', 'true');
     document.addEventListener('keydown', onKey, true);

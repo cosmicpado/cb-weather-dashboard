@@ -5,7 +5,8 @@
      대설·호우  예비특보 3개 시·군   주의보 3개 시·군 / 경보 1개   경보 3개 시·군 이상    광역적 경보
      태풍       태풍정보 발표        예비특보                      주의보 및 경보         광역적 경보
 
-   자동 계산은 표에 숫자로 정해진 준비 ~ 2단계까지만 한다(2026-11-18).
+   기준은 관리자 화면 '비상단계 · 근무' 탭에서 소방본부·119종합상황실 따로 고칠 수 있다(2026-11-23, 아래 TABLE·규칙).
+   기본값(재대본 표 그대로)은 표에 숫자로 정해진 준비 ~ 2단계까지만 자동으로 계산한다(2026-11-18).
      · 3단계(광역적 경보 발령)는 재대본이 판단해 발령하는 것이라 자동으로 올리지 않는다 — 상황실 'stage' 지정(재대본 발령)일 때만.
        대신 경보 6개 시·군 이상(도내 11개의 과반) 또는 '충청북도 전역'이면 2단계에 '3단계 발령 검토' 안내(review)를 붙인다.
      · 준비 = 표 그대로 예비특보 3개 시·군(주의보 1~2개 시·군은 단계에 넣지 않는다)
@@ -44,48 +45,118 @@
   function union(a, b) { var o = {}; Object.keys(a).forEach(function (k) { o[k] = 1; }); Object.keys(b).forEach(function (k) { o[k] = 1; }); return o; }
   function names(o) { return count(o) >= sigunList().length ? '도 전역' : Object.keys(o).join('·'); }
 
-  /* warnings: [{type, area, level}]  prelim: [{type, items:[{area, north|north_match}]}]  typhoon: [{near_kr|eff}] */
-  window.cbStage = function (warnings, prelim, typhoon) {
-    var RS = /호우|대설/, TY = /태풍/;
-    var rsW = {}, rsA = {}, rsP = {}, tyW = {}, tyA = {}, tyP = {}, rsWide = false, tyWide = false;
+  /* ── 단계 기준(규칙) ── 관리자 화면 '비상단계 · 근무' 탭에서 고친다(2026-11-23). 서버 .data/stage_rules.json, 없으면 아래 TABLE.
+     규칙 = 단계(1 준비 · 2 1단계 · 3 2단계 · 4 3단계)마다 '조건 묶음' 목록.
+       묶음끼리는 '또는'(하나라도 맞으면) · 묶음 안 조건은 '그리고'(모두 맞아야). 여러 단계가 맞으면 높은 단계.
+     조건 = { k: 종류, lv: 특보, n: 시·군 수(이상), sc: 범위 }
+       k  : rs 대설·호우 · rain 호우 · snow 대설 · ty 태풍 · tyinfo 태풍정보 발표(lv·n 없음)
+       lv : p 예비특보 · a 주의보 이상 · w 경보
+       sc : do 도내(충북 몇 개 시·군) — 관서별로 넓힐 때 '관할' 범위를 여기에 더한다
+     대상(targets) = hq 소방본부 · room 119종합상황실. 각각 mode 'table'(재대본 표 그대로) 또는 'own'(stages 로 따로).
+       관서별로 넓힐 때는 대상 이름을 'office:제천' 처럼 더하면 된다. */
+  var TABLE = {   // 「기상특보 단계별 비상근무체계」(충청북도 재대본) 그대로 — 3단계 '광역적 경보 발령'은 재대본 판단이라 자동 조건 없음
+    1: [[{ k: 'rs', lv: 'p', n: 3 }], [{ k: 'tyinfo' }]],
+    2: [[{ k: 'rs', lv: 'w', n: 1 }], [{ k: 'rs', lv: 'a', n: 3 }], [{ k: 'ty', lv: 'p', n: 1 }]],
+    3: [[{ k: 'rs', lv: 'w', n: 3 }], [{ k: 'ty', lv: 'a', n: 1 }]],
+    4: []
+  };
+  var KIND = { rs: '대설·호우', rain: '호우', snow: '대설', ty: '태풍', tyinfo: '태풍정보 발표' };
+  var LEVEL = { p: '예비특보', a: '주의보 이상', w: '경보' };
+  var TARGETS = { hq: '소방본부', room: '119종합상황실' };
+
+  /* 특보 → 사실(종류·특보별 시·군 집합). 화면 자료로도, 미리 보기의 가상 숫자로도 만든다 */
+  function facts(warnings, prelim, typhoon) {
+    var S = { rain: { p: {}, a: {}, w: {} }, snow: { p: {}, a: {}, w: {} }, ty: { p: {}, a: {}, w: {} } }, wide = { rs: false, ty: false };
+    function kindOf(t) { return /태풍/.test(t) ? 'ty' : /호우/.test(t) ? 'rain' : /대설/.test(t) ? 'snow' : ''; }
     (warnings || []).forEach(function (w) {
-      var t = String(w.type || ''), isBo = t.indexOf('경보') >= 0 || w.level === 'severe', s = sigunsIn(w.area);
-      var all = count(s) >= sigunList().length;
-      if (RS.test(t)) { rsA = union(rsA, s); if (isBo) { rsW = union(rsW, s); if (all) rsWide = true; } }
-      else if (TY.test(t)) { tyA = union(tyA, s); if (isBo) { tyW = union(tyW, s); if (all) tyWide = true; } }
+      var t = String(w.type || ''), k = kindOf(t); if (!k) return;
+      var isBo = t.indexOf('경보') >= 0 || w.level === 'severe', s = sigunsIn(w.area);
+      S[k].a = union(S[k].a, s);
+      if (isBo) { S[k].w = union(S[k].w, s); if (count(s) >= sigunList().length) wide[k === 'ty' ? 'ty' : 'rs'] = true; }
     });
     (prelim || []).forEach(function (g) {
-      var t = String(g.type || '');
+      var k = kindOf(String(g.type || '')); if (!k) return;
       (g.items || []).forEach(function (it) {
         if (!(it.north || it.north_match)) return;                       // 충북에 걸린 항목만
         var s = sigunsIn(String(it.area || '').split('(')[0]);            // '청주 (충청북도)' → 괄호 앞만
         if (!count(s)) s = sigunsIn(it.area);
-        if (RS.test(t)) rsP = union(rsP, s); else if (TY.test(t)) tyP = union(tyP, s);
+        S[k].p = union(S[k].p, s);
       });
     });
     var tyInfo = (typhoon || []).some(function (x) { return x && (x.near_kr || ['1', '2', '3'].indexOf(String(x.eff)) >= 0); });
+    return { S: S, wide: wide, tyInfo: tyInfo };
+  }
+  /* 미리 보기용 — 숫자만으로 사실 만들기. v = { rain:{p,a,w}, snow:{…}, ty:{…}, tyInfo } (a·w 는 '그 특보가 걸린 시·군 수') */
+  function factsFromCounts(v) {
+    var list = sigunList(), S = {};
+    ['rain', 'snow', 'ty'].forEach(function (k) {
+      var c = (v && v[k]) || {}, w = Math.min(+c.w || 0, list.length), a = Math.min(Math.max(+c.a || 0, w), list.length), p = Math.min(+c.p || 0, list.length);
+      function take(n) { var o = {}; list.slice(0, n).forEach(function (s) { o[s] = 1; }); return o; }
+      S[k] = { p: take(p), a: take(a), w: take(w) };
+    });
+    return { S: S, wide: { rs: false, ty: false }, tyInfo: !!(v && v.tyInfo) };
+  }
+  function setOf(F, k, lv) {
+    if (k === 'rs') return union(F.S.rain[lv], F.S.snow[lv]);
+    return (F.S[k] || {})[lv] || {};
+  }
+  function condText(c, F) {
+    if (c.k === 'tyinfo') return KIND.tyinfo + '(한반도 영향)';
+    var s = setOf(F, c.k, c.lv), n = count(s);
+    return KIND[c.k] + ' ' + LEVEL[c.lv] + ' ' + n + '개 시·군' + (n ? '(' + names(s) + ')' : '');
+  }
+  function condOk(c, F) {
+    if (c.k === 'tyinfo') return !!F.tyInfo;
+    if (!KIND[c.k] || !LEVEL[c.lv]) return false;
+    return count(setOf(F, c.k, c.lv)) >= Math.max(1, +c.n || 1);
+  }
+  /* 규칙 계산 — { rank, reason }. reason = 맞은 묶음의 조건들 */
+  function evalStages(stages, F) {
+    for (var r = 4; r >= 1; r--) {
+      var groups = (stages && stages[r]) || [];
+      for (var i = 0; i < groups.length; i++) {
+        var g = groups[i] || [];
+        if (g.length && g.every(function (c) { return condOk(c, F); }))
+          return { rank: r, reason: g.map(function (c) { return condText(c, F); }).join(' 그리고 ') };
+      }
+    }
+    return { rank: 0, reason: '' };
+  }
+  function rulesFor(id, R) {
+    R = R || window.cbStageRules;
+    var t = R && R.targets && R.targets[id];
+    return (t && t.mode === 'own' && t.stages) ? { own: true, stages: t.stages } : { own: false, stages: TABLE };
+  }
 
-    // 한 줄 기준(short) — 화면에 '주의 · 호우 주의보 3개 시·군'처럼 단계 이름 옆에 붙인다
-    var kinds = {}; (warnings || []).concat((prelim || [])).forEach(function (w) { var m = String(w.type || '').match(/호우|대설/); if (m) kinds[m[0]] = 1; });
-    var rsName = Object.keys(kinds).join('·') || '호우';
-    var best = { rank: 0, reason: '', short: '' };
-    function up(rank, reason, short) { if (rank > best.rank) best = { rank: rank, reason: reason, short: short }; }
-    // 대설·호우
-    var nW = count(rsW), nA = count(rsA), nP = count(rsP), nAo = nA - nW;
-    var rsShort = rsName + ' ' + [nW ? '경보 ' + nW + '개' : '', nAo > 0 ? '주의보 ' + nAo + '개' : ''].filter(Boolean).join(' · ');   // '시·군'은 뺀다 — 개수가 곧 시·군 수(2026-11-16)
-    var review = '';   // 광역적 경보 — 3단계는 재대본 발령 때만이라 안내만
-    if (rsWide || nW >= WIDE_N) review = '광역적 경보(경보 ' + (rsWide ? '도 전역' : nW + '개 시·군') + ') — 3단계 발령 검토';
-    if (nW >= 3) up(3, '경보 ' + nW + '개 시·군(' + names(rsW) + ')', rsShort);
-    else if (nW >= 1) up(2, '경보 ' + nW + '개 시·군(' + names(rsW) + ')', rsShort);
-    if (nA >= 3) up(2, '주의보 이상 ' + nA + '개 시·군(' + names(rsA) + ')', rsShort);
-    if (nP >= 3) up(1, '예비특보 ' + nP + '개 시·군(' + names(rsP) + ')', rsName + ' 예비특보 ' + nP + '개');
-    // 태풍
-    var tW = count(tyW), tA = count(tyA);
+  /* warnings: [{type, area, level}]  prelim: [{type, items:[{area, north|north_match}]}]  typhoon: [{near_kr|eff}]
+     돌려줌 = 소방본부(재대본) 단계 + room(119종합상황실 단계). R(선택) = 저장 전 규칙으로 계산해 볼 때(관리자 미리 보기) */
+  window.cbStage = function (warnings, prelim, typhoon, R) {
+    var F = facts(warnings, prelim, typhoon);
+    return fromFacts(F, warnings, R);
+  };
+  function fromFacts(F, warnings, R) {
+    var rsW = setOf(F, 'rs', 'w'), rsA = setOf(F, 'rs', 'a'), tyW = F.S.ty.w, tyA = F.S.ty.a, rsP = setOf(F, 'rs', 'p'), tyP = F.S.ty.p;
+
+    // 한 줄 기준(short) — 화면에 '주의 · 호우 주의보 3개'처럼 단계 이름 옆에 붙인다. 단계 계산과 별개로 지금 걸린 특보를 그대로
+    var rsName = [count(F.S.rain.a) || count(F.S.rain.p) ? '호우' : '', count(F.S.snow.a) || count(F.S.snow.p) ? '대설' : ''].filter(Boolean).join('·') || '호우';
+    var nW = count(rsW), nA = count(rsA), nP = count(rsP), nAo = nA - nW, tW = count(tyW), tA = count(tyA);
+    var rsShort = rsName + ' ' + [nW ? '경보 ' + nW + '개' : '', nAo > 0 ? '주의보 ' + nAo + '개' : ''].filter(Boolean).join(' · ');
     var tyShort = '태풍 ' + [tW ? '경보 ' + tW + '개' : '', (tA - tW) > 0 ? '주의보 ' + (tA - tW) + '개' : ''].filter(Boolean).join(' · ');
-    if (tyWide || tW >= WIDE_N) review = '태풍 광역적 경보(' + (tyWide ? '도 전역' : tW + '개 시·군') + ') — 3단계 발령 검토';
-    if (tA >= 1) up(3, '태풍 ' + (tW ? '경보' : '주의보') + ' ' + tA + '개 시·군(' + names(tyA) + ')', tyShort);
-    if (count(tyP) >= 1) up(2, '태풍 예비특보 ' + count(tyP) + '개 시·군', '태풍 예비특보');
-    if (tyInfo) up(1, '태풍정보 발표(한반도 영향)', '태풍정보 발표');
+
+    var hqR = rulesFor('hq', R), roomR = rulesFor('room', R);
+    var best = evalStages(hqR.stages, F), room = evalStages(roomR.stages, F);
+    function shortOf(b) {
+      if (!b.rank) return '';
+      if (/^태풍/.test(b.reason)) return /태풍정보/.test(b.reason) ? '태풍정보 발표' : tA ? tyShort : '태풍 예비특보';
+      if (/예비특보/.test(b.reason) && !/주의보|경보 /.test(b.reason.replace(/예비특보/g, ''))) return rsName + ' 예비특보 ' + nP + '개';
+      return rsShort;
+    }
+    // 광역적 경보 — 3단계 자동 조건이 없을 때(재대본 표 그대로)만 '3단계 발령 검토'를 알린다
+    var review = '';
+    if (!(hqR.stages[4] || []).length) {
+      if (F.wide.rs || nW >= WIDE_N) review = '광역적 경보(경보 ' + (F.wide.rs ? '도 전역' : nW + '개 시·군') + ') — 3단계 발령 검토';
+      if (F.wide.ty || tW >= WIDE_N) review = '태풍 광역적 경보(' + (F.wide.ty ? '도 전역' : tW + '개 시·군') + ') — 3단계 발령 검토';
+    }
 
     // 시·군 수(호우·대설·태풍, 재대본 기준) — 상황실 '특보' 숫자 칸(2026-11-16). 경보 시·군은 주의보에서 뺀다
     var cW = union(rsW, tyW), cA = union(rsA, tyA), cP = union(rsP, tyP), nAo2 = 0;
@@ -93,29 +164,42 @@
     var cnt = { w: count(cW), a: nAo2, p: count(cP) };
     /* 단계에 못 미칠 때 한 줄 — 주의보 1~2개 시·군이면 '특보 없음'이 아니라 그 특보를 그대로(단계 기준 미만) */
     var none0 = nA ? rsShort : tA ? tyShort : ((warnings || []).length ? '호우·대설·태풍 특보 없음' : '발효 특보 없음');
+    var BIG = ['평상', '준비', '1단계', '2단계', '3단계'];
     var s = STAGES[best.rank];
-    var hazard = /태풍/.test(best.reason) ? '태풍' : (best.rank ? '대설·호우' : '');
+    var hazard = /^태풍/.test(best.reason) ? '태풍' : (best.rank ? '대설·호우' : '');
+    function roomOut(rank, reason) {
+      return { rank: rank, big: BIG[rank], name: STAGES[rank].name, step: STAGES[rank].step, color: STAGES[rank].color,
+               reason: reason, own: roomR.own, label: TARGETS.room };
+    }
     /* 재대본이 직접 발령한 단계(상황실 화면에서 지정, 24시간 유효) — 있으면 자동 계산 대신 그 단계(2026-11-16).
-       자동 계산값은 autoRank·autoBig 로 남겨 화면이 '특보 기준 N단계'를 함께 보여 줄 수 있게 한다 */
+       소방본부·상황실 모두 그 단계. 자동 계산값은 autoRank·autoBig 로 남겨 화면이 '특보 기준 N단계'를 함께 보여 줄 수 있게 한다 */
     var ov = window.cbStageOv && window.cbStageOv.active();
     if (typeof window.CB_DEMO_STAGE === 'number') ov = { rank: window.CB_DEMO_STAGE, at: '시연' };   // 시연 3단계 = 재대본 발령 가정
     if (ov) {
-      var auto = s, autoBig = ['평상', '준비', '1단계', '2단계', '3단계'][s.rank];
+      var auto = s;
       s = STAGES[ov.rank];
       return { rank: s.rank, key: s.key, name: s.name, step: s.step, color: s.color, hazard: hazard, cnt: cnt,
-               big: ['평상', '준비', '1단계', '2단계', '3단계'][s.rank],
-               short: best.rank ? best.short : none0,
+               big: BIG[s.rank], short: best.rank ? shortOf(best) : none0,
                reason: '충북 재대본 발령(' + ov.at + ')',
-               manual: true, manualAt: ov.at, manualDuty: ov.duty || null, autoRank: auto.rank, autoBig: autoBig, review: '', blink: s.rank >= 4 };
+               manual: true, manualAt: ov.at, manualDuty: ov.duty || null, autoRank: auto.rank, autoBig: BIG[auto.rank], review: '', blink: s.rank >= 4,
+               hqOwn: hqR.own, room: roomOut(s.rank, '충북 재대본 발령(' + ov.at + ')') };
     }
     return { rank: s.rank, key: s.key, name: s.name, step: s.step, color: s.color, hazard: hazard, cnt: cnt,
-             big: ['평상', '준비', '1단계', '2단계', '3단계'][s.rank],          // 크게 쓰는 글자
+             big: BIG[s.rank],          // 크게 쓰는 글자
              // 한파·폭염 등 단계에 안 넣는 특보만 있을 때 '발효 특보 없음'이라 쓰면 사실과 다르다
-             short: (best.rank ? best.short : none0) + (review ? ' · ⚠ 3단계 발령 검토' : ''),   // 단계 이름 옆 한 줄 기준
-             reason: (best.rank ? (hazard === '태풍' ? best.reason : '대설·호우 ' + best.reason) : none0) + (review ? ' · ' + review : ''),
-             review: review, blink: false };   // 자동 계산은 3단계가 없으니 점멸도 없다(재대본 발령 3단계일 때만)
-  };
+             short: (best.rank ? shortOf(best) : none0) + (review ? ' · ⚠ 3단계 발령 검토' : ''),   // 단계 이름 옆 한 줄 기준
+             reason: (best.rank ? best.reason : none0) + (review ? ' · ' + review : ''),
+             review: review, blink: s.rank >= 4,   // 3단계(자동 조건을 넣었거나 재대본 발령)면 점멸
+             hqOwn: hqR.own, room: roomOut(room.rank, room.reason) };
+  }
   window.cbStage.STAGES = STAGES;
+  window.cbStage.TABLE = TABLE;
+  window.cbStage.KIND = KIND;
+  window.cbStage.LEVEL = LEVEL;
+  window.cbStage.TARGETS = TARGETS;
+  /* 미리 보기(관리자 화면) — 가상 숫자 v 와 규칙 R 로 계산 */
+  window.cbStage.preview = function (v, R) { return fromFacts(factsFromCounts(v), [], R); };
+  window.cbStage.sigunCount = function () { return sigunList().length; };
 
   /* ── 재대본 비상단계 직접 지정(2026-11-16) ── 서버(.data/stage.json)를 1분마다 읽는다. 24시간 지나면 서버·화면 모두 자동으로.
      set(rank) — 0 평상 ~ 4 3단계, null 이면 자동. 바뀌면 상황실(wallReapply)·다른 화면(cbstage 이벤트)이 다시 그린다 */
@@ -126,10 +210,13 @@
       try { if (window.wallReapply) window.wallReapply(); } catch (e) {}
       try { window.dispatchEvent(new Event('cbstage')); } catch (e) {}
     }
+    var rkey = '';
     function take(d) { var k = JSON.stringify(d || null); v = d || null; if (k !== key) { key = k; changed(); } }
+    /* 비상단계 기준(관리자 '비상단계 · 근무' 탭) — 바뀌면 다시 그린다. 없으면 재대본 표(TABLE) */
+    function takeRules(R) { var k = JSON.stringify(R || null); if (k !== rkey) { rkey = k; window.cbStageRules = R || null; changed(); } }
     function load() {
       return fetch('api/feedback?stage=1', { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; })
-        .then(function (j) { if (j && j.ok) take(j.stage); return j; }).catch(function () { return null; });
+        .then(function (j) { if (j && j.ok) { if ('rules' in j) takeRules(j.rules); take(j.stage); } return j; }).catch(function () { return null; });
     }
     /* 지정 번호 확인만 — 지정 창의 [확인]. 맞아야 단계 단추가 켜진다(2026-11-16) */
     function check(pin) {
@@ -154,7 +241,7 @@
         }).catch(function () { return { ok: false, err: '서버에 연결하지 못했습니다' }; });
     }
     if (typeof fetch === 'function' && !window.CB_STAGE_NOAUTO) { load(); setInterval(load, 60000); }
-    return { active: active, load: load, set: set, check: check };
+    return { active: active, load: load, set: set, check: check, takeRules: takeRules };
   })();
 
   /* ❄️ 대설·결빙 카드 판정 — 눈이 오거나 올 때 '침수·수난 출동' 자리에 대신 띄운다(지도·상황실 공통).

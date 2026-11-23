@@ -34,9 +34,10 @@
 |---|---|---|
 | `feedback.csv` · `feedback.jsonl` · `feedback_status.json` | 💬 의견과 처리 상태 | 각 화면 💬 · 관리자 페이지 |
 | `notices.json` | 공지사항(기본 공지 `notices.js` 위에 덮어씀) | 관리자 페이지 공지사항 탭 |
-| `duty.json` | 비상근무 기준표(기본값 `duty.js`) | 관리자 페이지 비상근무 탭 |
+| `duty.json` | 비상근무 기준표(기본값 `duty.js`) | 관리자 페이지 비상단계 · 근무 탭 |
 | `stage.json` · `stage_log.jsonl` | 재대본 비상단계 수동 지정(24시간 유효)과 변경 기록 | 상황실 비상단계 칸 · `/` → `stage` |
-| `stage_pin.json` | 단계 지정 번호(해시만) | 관리자 페이지 비상근무 탭 |
+| `stage_rules.json` · `stage_rules_log.jsonl` | 비상단계 기준(소방본부·119종합상황실, 없으면 재대본 표)과 변경 기록 | 관리자 페이지 비상단계 · 근무 탭 |
+| `stage_pin.json` | 단계 지정 번호(해시만) | 관리자 페이지 비상단계 · 근무 탭 |
 
 데이터 수집에는 공공 API 키가 필요하다. 저장소 루트에 `.env` 를 만들고 아래 값을 넣는다(커밋 금지, `.gitignore` 처리됨).
 

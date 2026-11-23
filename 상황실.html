@@ -198,6 +198,8 @@ html.wall-m #wall-dots{display:flex;position:fixed;left:50%;bottom:calc(var(--cb
 <script src="./feedback.js"></script>
 <script src="./notices.js"></script>
 <script src="./more-menu.js"></script>
+<script>window.CB_PAGE = 'wall';</script>
+<script src="./tour.js"></script>   <!-- 처음 화면 안내(한 번만, 1분 지나면 저절로 닫힘) · 시연을 처음 켰을 때 안내 — 다시 보기는 '/' guide · ⋯ 메뉴 -->
 <script src="./version-check.js"></script>
 <script>window.cbTimeLabel=function(tm){   /* 시각 표기(지진·재난문자 공통, 2026-11-19) — 오늘 'HH:MM' · 어제 '어제 HH:MM' · 그 전 'M/D HH:MM'('N분 전'은 쓰지 않는다) */
     var s=String(tm||'').replace(/\//g,'-'), d=new Date(s.replace(' ','T')), now=new Date();
@@ -643,7 +645,7 @@ html.wall-m #wall-dots{display:flex;position:fixed;left:50%;bottom:calc(var(--cb
         <div style="font-size:calc(132px*var(--fz,1));font-weight:660;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.02em;">{{ clock }}</div>
         <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;">
           <div style="font-size:calc(36px*var(--fz,1));font-weight:520;color:var(--dim,#8e9bb0);white-space:nowrap;">{{ dateText }}</div>
-          <div style="display:flex;gap:10px;">
+          <div data-ctl style="display:flex;gap:10px;">
             <div sc-camel-on-click="{{ togglePlay }}" style="cursor:pointer;width:64px;height:56px;border-radius:12px;border:2px solid var(--dim,#8e9bb0);display:flex;align-items:center;justify-content:center;font-size:calc(36px*var(--fz,1));font-weight:700;color:var(--fg,#f2f5fa);" style-hover="border-color:var(--acc,#ff7a2f);color:var(--fg,#f2f5fa)">{{ playIcon }}</div>
             <div sc-camel-on-click="{{ prevStation }}" style="cursor:pointer;width:64px;height:56px;border-radius:12px;border:2px solid var(--dim,#8e9bb0);display:flex;align-items:center;justify-content:center;font-size:calc(36px*var(--fz,1));font-weight:700;color:var(--fg,#f2f5fa);" style-hover="border-color:var(--acc,#ff7a2f);color:var(--fg,#f2f5fa)">‹</div>
             <div sc-camel-on-click="{{ nextStation }}" style="cursor:pointer;width:64px;height:56px;border-radius:12px;border:2px solid var(--dim,#8e9bb0);display:flex;align-items:center;justify-content:center;font-size:calc(36px*var(--fz,1));font-weight:700;color:var(--fg,#f2f5fa);" style-hover="border-color:var(--acc,#ff7a2f);color:var(--fg,#f2f5fa)">›</div>
@@ -1659,19 +1661,26 @@ class Component extends DCLogic {
                               ? { fg:'#0F5BB5', cbg:'rgba(43,150,255,.14)', bd:'#2B96FF', sub:'#1D6FD1' }
                               : { fg:C.brand, cbg:B.brand, bd:'rgba(84,170,255,.6)', sub:'rgba(84,170,255,.9)' });
     return Object.assign({ rank:g.rank, big:g.big, line:g.short, color:C[g.color]||C.safe, bg:B[g.color]||B.safe,
-      manual:!!g.manual, manualAt:g.manualAt||'', autoBig:g.autoBig||g.big, manualDuty:g.manualDuty||null }, card);   // 줄에는 기준만 — '준비·경계' 같은 이름은 큰 글자와 겹친다
+      manual:!!g.manual, manualAt:g.manualAt||'', autoBig:g.autoBig||g.big, manualDuty:g.manualDuty||null,
+      hqOwn:!!g.hqOwn, room:g.room||null }, card);   // 줄에는 기준만 — '준비·경계' 같은 이름은 큰 글자와 겹친다
   }
   /* 비상근무 꼬리표(2026-11-16) — 「기상특보 단계별 비상근무체계(충청북도 재난안전대책본부)」의 소방본부·119종합상황실 칸.
      재대본 단계 큰 글자 옆에 두 줄로. 평상이면 안 붙인다. ⚠ 기준이 바뀌면 여기 표만 고친다(구조대·각 서는 아직 안 넣음) */
   /* 비상근무(2026-11-16) — 「기상특보 단계별 비상근무체계(충청북도 재난안전대책본부)」의 소방본부·119종합상황실 칸.
-     오른쪽 열 맨 위 '비상근무' 카드. 재대본 단계를 따른다. 기준표는 duty.js(기본값) + 관리자 페이지 '비상근무' 탭(서버 저장본) */
+     오른쪽 열 맨 위 '비상근무' 카드. 재대본 단계를 따른다. 기준표는 duty.js(기본값) + 관리자 페이지 '비상단계 · 근무' 탭(서버 저장본) */
   duty(){
     const g = this.dob(), stage = g.big;
     const snowOnly = stage==='1단계' && /^대설 /.test(String(g.line||''));   // 표 각주: 단, 대설주의보 → 예령발령
-    const D = (window.cbDuty && window.cbDuty.get()) || { rows:[] }, key = 's'+g.rank;
+    const D = (window.cbDuty && window.cbDuty.get()) || { rows:[] };
     /* 재대본 발령 때 직접 쓴 근무 내용(단계 지정 창, 2026-11-16)이 있으면 그것을, 없으면 기준표 */
+    /* 119종합상황실 줄은 상황실 단계(관리자 '비상단계 기준'에서 따로 정했을 때)를 따른다. 소방본부와 다르면 부서 이름 옆에 그 단계(2026-11-23) */
+    const rm = g.room, roomOf = r => /상황실/.test(String(r.who||'')) && rm;
     const rows = (g.rank && g.manualDuty && g.manualDuty.length) ? g.manualDuty.map(r=>({ who:r.who, what:r.what }))
-      : (g.rank ? D.rows : []).map(r=>({ who:r.who, what:(snowOnly && r.snow) ? r.snow : (r[key]||'') })).filter(x=>x.what);
+      : D.rows.map(r=>{
+          const rr = roomOf(r) ? rm.rank : g.rank; if(!rr) return { what:'' };
+          const diff = roomOf(r) && rm.rank!==g.rank;
+          return { who:r.who + (diff ? ' · '+rm.big : ''), what:(snowOnly && !diff && r.snow) ? r.snow : (r['s'+rr]||'') };
+        }).filter(x=>x.what);
     return { rows, on: rows.length>0, off: !rows.length, color: g.color, head: rows.length ? '재대본 '+stage+' 기준' : '재대본 평상',
       tip: '기상특보 단계별 비상근무체계(충청북도 재난안전대책본부) 기준입니다. 재대본 비상단계(맨 위 왼쪽 카드)를 따릅니다. 내용을 고치려면 관리자에게 문의하세요.'
         + (snowOnly ? ' 지금은 대설주의보에 따른 1단계라 대설주의보 칸 기준입니다.' : '') };
@@ -1913,8 +1922,8 @@ class Component extends DCLogic {
       obsTime: s.obsTime, obsStation: s.obsStation,
       dobBig: this.dob().big, dobBorder: this.dob().bd,
       /* 재대본 직접 발령(2026-11-16) — 제목에 '· 발령', 풍선에 발령 시각과 특보 기준 단계 */
-      dobDisp: (this.dob().rank||this.dob().manual) ? 'flex' : 'none',
-      dobTitleText: this.dob().manual ? '충북 재대본 비상단계 · 발령' : '충북 재대본 비상단계',
+      dobDisp: (this.dob().rank||this.dob().manual||(this.dob().room&&this.dob().room.rank)) ? 'flex' : 'none',   /* 상황실만 단계가 올라도 칸을 보인다 */
+      dobTitleText: this.dob().manual ? '충북 재대본 비상단계 · 발령' : this.dob().hqOwn ? '소방본부 비상단계' : '충북 재대본 비상단계',
       dobTip: (this.dob().manual
         ? '충북 재대본 발령 '+this.dob().big+' ('+this.dob().manualAt+' 지정 · 24시간 뒤 자동으로)'
         : '호우·대설·태풍 특보로 자동 산정한 단계입니다') + '\n\n' + _du.tip,
@@ -2030,7 +2039,8 @@ class Component extends DCLogic {
     stage:function(){ if(window.cbStagePicker) cbStagePicker(); },
     help:function(){ toast('도움말로 이동합니다'); setTimeout(function(){ location.href='도움말.html'; }, 400); },
     main:function(){ toast('종합 현황으로 이동합니다'); setTimeout(function(){ location.href='종합.html'; }, 400); },
-    wall:function(){ toast('지금 실시간 상황판 화면입니다'); }
+    wall:function(){ toast('지금 실시간 상황판 화면입니다'); },
+    guide:function(){ if(window.cbTour) setTimeout(function(){ window.cbTour.start(true); }, 150); }   /* 화면 안내 다시 보기(tour.js) — 명령 칸의 Enter 가 [다음]까지 누르지 않게 조금 뒤 */
   };
   /* '/' 키 — 화면 가운데 반투명 명령 칸(2026-11-16). 명령을 치고 Enter · Esc·바깥을 누르면 닫힘 */
   var cmdBox=null;
@@ -2043,8 +2053,12 @@ class Component extends DCLogic {
     card.style.cssText='background:rgba(21,27,38,.82);backdrop-filter:blur(6px);border:2px solid var(--line,#28313f);border-radius:16px;padding:clamp(14px,1.3vw,28px);box-shadow:0 20px 60px rgba(0,0,0,.5);display:flex;flex-direction:column;gap:10px;align-items:center;';
     var inp=document.createElement('input');
     inp.style.cssText='width:clamp(240px,22vw,460px);text-align:center;font:700 clamp(18px,1.6vw,34px) system-ui,sans-serif;padding:10px 14px;border-radius:12px;border:2px solid var(--acc,#17AFAB);background:rgba(13,17,24,.9);color:#f2f5fa;outline:none;';
-    inp.placeholder='명령 입력 후 Enter'; inp.autocomplete='off'; inp.spellcheck=false;
-    var hint=document.createElement('div'); hint.textContent='main 종합 현황 · wall 상황판 · admin 관리자 화면 · test 시연 단추 · stage 비상단계 지정 · help 도움말';   /* 관리자 화면은 키가 있어야 열리니 보여도 된다 */
+    inp.placeholder='영어 명령 입력 후 Enter'; inp.autocomplete='off'; inp.spellcheck=false;
+    /* 아래 목록 — 칠 것(영어)은 글자 상자로, 설명(한글)은 옆에(종합 현황 cmd.js 와 같은 모양) */
+    var HINT=[['main','종합 현황'],['wall','실시간 상황판'],['admin','관리자 화면'],['test','시연 단추'],['stage','비상단계 지정'],['help','도움말'],['guide','화면 안내']];
+    var hint=document.createElement('div');
+    hint.innerHTML='<div style="text-align:center;margin-bottom:6px;color:#c9d4e6">아래 영어 명령 중 하나를 치고 Enter</div><div style="display:grid;grid-template-columns:repeat(2,auto);gap:5px 18px">'+
+      HINT.map(function(h){ return '<span><code style="display:inline-block;min-width:3.6em;text-align:center;font:800 1em Consolas,ui-monospace,monospace;color:var(--acc,#17AFAB);background:rgba(255,255,255,.06);border:1px solid var(--line,#28313f);border-radius:6px;padding:1px 6px;margin-right:6px">'+h[0]+'</code>'+h[1]+'</span>'; }).join('')+'</div>';   /* 관리자 화면은 키가 있어야 열리니 보여도 된다 */
     hint.style.cssText='font:600 clamp(13px,.9vw,20px) system-ui,sans-serif;color:#8e9bb0;';
     card.appendChild(inp); card.appendChild(hint); cmdBox.appendChild(card); document.body.appendChild(cmdBox);
     cmdBox.addEventListener('mousedown', function(ev){ if(ev.target===cmdBox) closeCmd(); });
@@ -2053,7 +2067,7 @@ class Component extends DCLogic {
       if(ev.key==='Escape'){ closeCmd(); return; }
       if(ev.key!=='Enter') return;
       var k=inp.value.trim().toLowerCase().replace(/^\//,''); closeCmd();
-      if(CMDS[k]) CMDS[k](); else if(k) toast('알 수 없는 명령 — main · wall · admin · test · stage · help');
+      if(CMDS[k]) CMDS[k](); else if(k) toast('없는 명령입니다 — '+HINT.map(function(h){ return h[0]; }).join(' · '));
     });
     setTimeout(function(){ inp.focus(); }, 0);
   }
@@ -2067,22 +2081,24 @@ class Component extends DCLogic {
     Object.keys(CMDS).some(function(k){ if(typed.slice(-k.length)===k){ typed=''; CMDS[k](); return true; } });
   });
   function draw(){
-    if(!box){ box=document.createElement('div'); box.style.cssText='display:flex;gap:6px;align-items:center;order:4;'; }
+    if(!box){ box=document.createElement('div'); box.setAttribute('data-demobar','1'); box.style.cssText='display:flex;gap:6px;align-items:center;order:4;'; }   /* data-demobar — 시연 안내(tour.js wallDemo)가 비춘다 */
     if(window.wallTools && box.parentNode!==wallTools()) wallTools().appendChild(box);
     var c=cur(), si=seasonIdx(c), lbl=si>=0 ? SEASON[si][1] : null; STAGES.forEach(function(st){ if(st[0]===c) lbl=st[1]; }); box.innerHTML='';
     box.style.display = (c || shown()) ? 'flex' : 'none';
     if(!c && !shown()) return;
     var base='border:1px solid var(--line,#28313f);background:var(--panel,#151b26);color:var(--fg,#f2f5fa);';
-    var main=btn('', '', function(){ if(c){ set(null); open=false; } else { open=true; set('ready'); } },
+    var main=btn('', '', function(){ if(c){ set(null); open=false; } else { open=true; set('ready');
+        setTimeout(function(){ if(window.cbTour) window.cbTour.start(false,'wallDemo'); }, 700); } },   /* 시연을 처음 켰을 때 한 번 안내(tour.js) */
       c?'시연 끝내기 — 실제 자료로 돌아갑니다':'가상 호우 상황(특보·재난문자·강수·하천)으로 화면이 어떻게 바뀌는지 봅니다');
     main.tabIndex=0; main.style.cssText=''; wallIcon(main,c?'stop':'play', c?('시연 중 · '+(lbl||c)):'시연');
     if(c){ main.className+=' open'; main.style.borderColor='#ff5a5a'; main.style.color='#ff5a5a'; } else if(open) main.className+=' open';
     box.appendChild(main);
-    if(open || c){ STAGES.forEach(function(st){ var on=(c===st[0]), key=st[0], name=st[1];
+    if(open || c){ var sw=document.createElement('span'); sw.setAttribute('data-demo-steps','1'); sw.style.cssText='display:flex;gap:6px;align-items:center;'; box.appendChild(sw);
+      STAGES.forEach(function(st){ var on=(c===st[0]), key=st[0], name=st[1];
       if(key==='season'){ on=si>=0; name=on ? SEASON[si][1]+' ⟳' : '계절';   /* 누를 때마다 다음 계절 */
         key=SEASON[(si+1)%SEASON.length][0]; }
-      if(st[3]){ var sp=document.createElement('span'); sp.style.cssText='width:1px;height:22px;background:var(--dim,#8e9bb0);opacity:.6;margin:0 4px;'; box.appendChild(sp); }
-      box.appendChild(btn(name, 'height:32px;display:inline-flex;align-items:center;box-sizing:border-box;font-size:13px;border:1.5px solid '+st[2]+';background:'+(on?st[2]:'var(--panel,#151b26)')+';color:'+(on?'#0b1220':'var(--fg,#f2f5fa)')+';', function(){ set(key); }, st[0]==='season' ? '계절 시연 — 누를 때마다 한파·결빙 → 폭염 → 건조·산불' : '시연 '+st[1])); }); }
+      if(st[3]){ var sp=document.createElement('span'); sp.style.cssText='width:1px;height:22px;background:var(--dim,#8e9bb0);opacity:.6;margin:0 4px;'; sw.appendChild(sp); }
+      sw.appendChild(btn(name, 'height:32px;display:inline-flex;align-items:center;box-sizing:border-box;font-size:13px;border:1.5px solid '+st[2]+';background:'+(on?st[2]:'var(--panel,#151b26)')+';color:'+(on?'#0b1220':'var(--fg,#f2f5fa)')+';', function(){ set(key); }, st[0]==='season' ? '계절 시연 — 누를 때마다 한파·결빙 → 폭염 → 건조·산불' : '시연 '+st[1])); }); }
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', draw); else draw();
 })();
@@ -2247,7 +2263,7 @@ class Component extends DCLogic {
 <script>
 /* ▶ 재대본 비상단계 직접 지정(2026-11-16) — 위 줄 비상단계 칸을 누르면. 재대본이 특보 기준과 다르게 발령했을 때 화면을 맞춘다.
    [자동]은 특보로 계산하던 대로. 지정은 서버에 저장돼 모든 화면에 1분 안에 반영되고 24시간 뒤 저절로 자동으로 돌아간다(stage.js cbStageOv).
-   지정 번호(관리자 페이지 비상근무 탭에서 정함)를 넣어야 바뀐다 — 서버 PC 는 번호 없이(2026-11-16 추가). 누가 언제 바꿨는지
+   지정 번호(관리자 페이지 비상단계 · 근무 탭에서 정함)를 넣어야 바뀐다 — 서버 PC 는 번호 없이(2026-11-16 추가). 누가 언제 바꿨는지
    서버 .data/stage_log.jsonl 에 남는다. 배치 편집 중엔 열지 않는다 */
 (function(){
   var box=null;
@@ -2270,7 +2286,10 @@ class Component extends DCLogic {
     x.setAttribute('aria-label','닫기'); x.onclick=close; hd.appendChild(x); card.appendChild(hd);
     card.appendChild(el('div','font-size:'+F(15,1.15,28)+';color:var(--dim,#8e9bb0);line-height:1.5;',
       ov ? '지금: 재대본 발령 '+NAMES[ov.rank]+' ('+ov.at+' 지정 · 24시간 뒤 자동으로)' : '지금: 자동(호우·대설·태풍 특보로 계산)'));
-    /* 지정 번호 — [확인]으로 먼저 맞는지 본 뒤에야 단계 단추가 켜진다(2026-11-16). 서버 PC 는 번호 없이 [확인]만 */
+    /* 모두에게 반영된다는 경고(2026-11-23) — 이 화면만 바뀌는 줄 알고 시험 삼아 누르는 일이 없게 */
+    card.appendChild(el('div','font-size:'+F(15,1.15,28)+';font-weight:700;line-height:1.5;color:var(--cAmber,#ffb020);background:rgba(255,176,32,.12);border:1px solid rgba(255,176,32,.45);border-radius:12px;padding:'+F(10,.8,18)+' '+F(14,1.1,24)+';',
+      '⚠ 여기서 바꾸면 이 화면만이 아니라 모든 사용자의 종합 현황·상황판에 바로 반영됩니다 (24시간 유지)'));
+    /* 지정 번호 —[확인]으로 먼저 맞는지 본 뒤에야 단계 단추가 켜진다(2026-11-16). 서버 PC 는 번호 없이 [확인]만 */
     var pinRow=el('div','display:flex;align-items:center;justify-content:center;gap:'+F(10,1,20)+';flex-wrap:wrap;');
     pinRow.appendChild(el('span','font-size:'+F(15,1.15,28)+';font-weight:700;color:var(--fg,#f2f5fa);','지정 번호'));
     var pin=el('input','width:'+F(140,10,240)+';text-align:center;font:inherit;font-size:'+F(18,1.4,34)+';letter-spacing:.3em;padding:'+F(6,.5,12)+' '+F(10,.8,18)+';border-radius:10px;border:2px solid var(--line,#28313f);background:var(--panel2,#1b2230);color:var(--fg,#f2f5fa);');
@@ -2289,7 +2308,9 @@ class Component extends DCLogic {
       window.cbStageOv.check(v).then(function(j){ if(j&&j.ok){ okPin=v; unlock(); }
         else { msg.style.color='var(--cRed,#ff5a5a)'; msg.textContent=(j&&j.err)||'확인하지 못했습니다'; pin.value=''; pin.focus(); } }); }
     ok.onclick=check; pin.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); check(); } });
-    function save(rank, duty){ msg.style.color='var(--dim,#8e9bb0)'; msg.textContent='저장 중…';
+    function save(rank, duty){
+      if(!confirm('모든 사용자 화면의 비상단계가 \''+(rank===null?'자동(특보 기준)':NAMES[rank])+'\'(으)로 바뀝니다.\n\n지정할까요?')) return;
+      msg.style.color='var(--dim,#8e9bb0)'; msg.textContent='저장 중…';
       window.cbStageOv.set(rank, okPin, duty).then(function(j){ if(j&&j.ok){ close(); } else { msg.style.color='var(--cRed,#ff5a5a)'; msg.textContent=(j&&j.err)||'저장하지 못했습니다'; } }); }
     /* 준비~3단계를 고르면 그 단계의 비상근무 내용(기준표 값)을 칸에 채워 보여 준다 — 재대본 발령에 맞게 고쳐 쓸 수 있다 */
     var dutyBox=el('div','display:none;flex-direction:column;gap:'+F(8,.7,16)+';padding:'+F(12,1.1,26)+';border-radius:14px;background:var(--panel2,#1b2230);');

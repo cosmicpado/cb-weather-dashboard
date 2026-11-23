@@ -21,6 +21,8 @@
   POST {"action":"stage_pin", "pin":"1234" | null}   지정 번호 정하기(4~8자리 숫자) · null 이면 지우기 (관리자만)
        └ .data/stage_pin.json 에 소금 친 해시로만 둔다(번호 자체는 저장하지 않는다)
        └ .data/stage.json · 바꾼 기록은 .data/stage_log.jsonl(시각·주소·단계)
+  POST {"action":"stage_rules_save", "rules":{targets:{hq|room:{mode,stages}}} | null}   비상단계 기준 저장 · null 이면 기본값(재대본 표) (관리자만)
+       └ .data/stage_rules.json · 기록 .data/stage_rules_log.jsonl. GET ?stage=1 응답의 rules 로 나간다(stage.js 가 1분마다 읽는다, 2026-11-23)
        └ .data/notices.json 에 둔다. notices.js 안의 기본 공지 위에 id 로 덮어쓴다(2026-11-12).
          코드 반영(git)으로는 지워지지 않고, 코드로 새 공지를 넣어도 여기서 고친 것과 함께 보인다.
 
@@ -67,6 +69,12 @@ STORE_STAGE = ROOT / '.data' / 'stage.json'        # 재대본 비상단계 직�
 STAGE_LOG = ROOT / '.data' / 'stage_log.jsonl'
 STAGE_HOURS = 24                                    # 직접 지정은 이 시간이 지나면 저절로 자동(특보 기준)으로
 STORE_STAGE_PIN = ROOT / '.data' / 'stage_pin.json'  # 지정 번호(해시)
+STORE_STAGE_RULES = ROOT / '.data' / 'stage_rules.json'   # 비상단계 기준(규칙) — 관리자 '비상단계 · 근무' 탭(2026-11-23)
+STAGE_RULES_LOG = ROOT / '.data' / 'stage_rules_log.jsonl'
+RULE_TARGET = re.compile(r'^(hq|room|office:[가-힣A-Za-z0-9]{1,12})$')   # 소방본부 · 119종합상황실 · (나중에) 관서
+RULE_KINDS = ('rs', 'rain', 'snow', 'ty', 'tyinfo')
+RULE_LEVELS = ('p', 'a', 'w')
+RULE_SCOPES = ('do',)                                  # 도내 — 관서별로 넓히면 관할 범위를 더한다
 _pin_fail = {}                                       # 주소 → [틀린 시각들] — 10분에 5번 틀리면 막는다
 DUTY_KEYS = ('s1', 's2', 's3', 's4', 'snow')   # 준비 · 1단계 · 2단계 · 3단계 · 1단계(대설주의보로 난 경우)
 NOTICE_KINDS = ('새 기능', '개선', '오류 수정', '안내')
@@ -293,7 +301,86 @@ def _get_stage():
             d = None
     except (OSError, ValueError, TypeError):
         d = None
-    return 200, {'ok': True, 'stage': d, 'pin': _load_pin() is not None}
+    return 200, {'ok': True, 'stage': d, 'pin': _load_pin() is not None, 'rules': _load_rules()}
+
+
+def _load_rules():
+    try:
+        d = json.loads(STORE_STAGE_RULES.read_text(encoding='utf-8'))
+        return d if isinstance(d, dict) and isinstance(d.get('targets'), dict) else None
+    except (OSError, ValueError):
+        return None
+
+
+def _clean_rules(raw):
+    """화면에서 온 기준을 검사해 깨끗한 모양으로. 틀리면 (None, 이유)."""
+    if not isinstance(raw, dict) or not isinstance(raw.get('targets'), dict):
+        return None, '기준 형식이 맞지 않습니다'
+    out = {}
+    for tid, t in list(raw['targets'].items())[:40]:
+        if not RULE_TARGET.match(str(tid)) or not isinstance(t, dict):
+            return None, '대상 이름이 맞지 않습니다'
+        mode = t.get('mode')
+        if mode == 'table':
+            out[tid] = {'mode': 'table'}
+            continue
+        if mode != 'own' or not isinstance(t.get('stages'), dict):
+            return None, '대상 설정이 맞지 않습니다'
+        stages = {}
+        for r in ('1', '2', '3', '4'):
+            groups = t['stages'].get(r) or []
+            if not isinstance(groups, list) or len(groups) > 10:
+                return None, '조건 묶음은 단계마다 10개까지입니다'
+            gs = []
+            for g in groups:
+                if not isinstance(g, list) or not 1 <= len(g) <= 6:
+                    return None, '묶음마다 조건은 1~6개입니다'
+                cs = []
+                for c in g:
+                    c = c if isinstance(c, dict) else {}
+                    k = c.get('k')
+                    if k not in RULE_KINDS:
+                        return None, '특보 종류가 맞지 않습니다'
+                    if k == 'tyinfo':
+                        cs.append({'k': k})
+                        continue
+                    try:
+                        n = int(c.get('n'))
+                    except (TypeError, ValueError):
+                        n = 0
+                    if c.get('lv') not in RULE_LEVELS or not 1 <= n <= 20 or c.get('sc', 'do') not in RULE_SCOPES:
+                        return None, '조건 값이 맞지 않습니다(시·군 수는 1~20)'
+                    cs.append({'k': k, 'lv': c['lv'], 'n': n, 'sc': c.get('sc', 'do')})
+                gs.append(cs)
+            stages[r] = gs
+        out[tid] = {'mode': 'own', 'stages': stages}
+    return {'targets': out}, ''
+
+
+def _save_rules(ip, headers, j):
+    """비상단계 기준 저장 — 관리자만. rules 가 null 이면 파일을 지워 기본값(재대본 표)으로."""
+    if not _is_admin(ip, headers):
+        return 403, {'ok': False, 'err': '비상단계 기준을 바꿀 수 없는 주소입니다'}
+    now = datetime.now().strftime('%Y-%m-%d %H:%M')
+    with _lock:
+        if j.get('rules') is None:
+            try:
+                STORE_STAGE_RULES.unlink()
+            except FileNotFoundError:
+                pass
+            d = None
+        else:
+            d, err = _clean_rules(j.get('rules'))
+            if d is None:
+                return 400, {'ok': False, 'err': err}
+            d['at'] = now
+            _write_atomic(STORE_STAGE_RULES, json.dumps(d, ensure_ascii=False, indent=1), 'utf-8')
+        try:
+            with open(STAGE_RULES_LOG, 'a', encoding='utf-8') as f:
+                f.write(json.dumps({'at': now, 'ip': ip, 'rules': d}, ensure_ascii=False) + '\n')
+        except OSError:
+            pass
+    return 200, {'ok': True, 'rules': d}
 
 
 def _load_pin():
@@ -509,6 +596,8 @@ def _post(ip, headers, body):
         return _save_duty(ip, headers, j)
     if j.get('action') == 'stage_set':
         return _set_stage(ip, headers, j)
+    if j.get('action') == 'stage_rules_save':
+        return _save_rules(ip, headers, j)
     if j.get('action') == 'stage_pin':
         return _save_pin(ip, headers, j)
     if j.get('action') == 'stage_pin_check':         # 지정 창 [확인] — 번호만 확인(틀리면 횟수에 센다)

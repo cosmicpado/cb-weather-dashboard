@@ -102,6 +102,72 @@
   .ac-note{font-size:13px;color:var(--ink3);line-height:1.6}
   details.ac-how{margin-top:12px;font-size:13px;color:var(--ink2);line-height:1.7}details.ac-how summary{cursor:pointer;font-weight:700;color:var(--ink2)}
   details.ac-how ul{margin:6px 0 0;padding-left:18px}
+  /* 비상단계 기준 — 왼쪽 대상 · 가운데 단계별 조건 묶음 · 오른쪽 미리 보기 */
+  .wrap:has(#pane-sr:not([hidden])){max-width:1320px}   /* 이 탭은 세 칸이라 넓게 — 조건 줄이 꺾이지 않게 */
+  .sr-grid{display:grid;grid-template-columns:220px minmax(560px,1fr) 300px;gap:14px;align-items:start}
+  @media (max-width:1050px){.sr-grid{grid-template-columns:1fr}}
+  .sr-box{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+  .sr-box h3{font-size:15px;margin:0 0 10px}
+  .sr-note{font-size:13px;color:var(--ink3);line-height:1.55;margin:8px 0 0}
+  .sr-tg{display:flex;align-items:center;gap:8px;width:100%;text-align:left;border:0;background:transparent;border-radius:9px;padding:9px 10px;margin-bottom:3px;cursor:pointer;font:inherit;font-size:14px;font-weight:700;color:var(--ink2)}
+  .sr-tg em{margin-left:auto;font-style:normal;font-size:13px;font-weight:600;color:var(--ink3)}
+  .sr-tg:hover{background:#f2f5fa}.sr-tg.on{background:var(--soft);color:var(--brand)}
+  .sr-tg.own em{color:#0f766e;font-weight:800}
+  .sr-box h3 small{font-size:13px;font-weight:600;color:var(--ink3);margin-left:8px}
+  .sr-seg{display:flex;gap:2px;padding:3px;border-radius:10px;background:#eceff4;border:1px solid var(--line);margin-bottom:10px}
+  .sr-seg button{flex:1;border:0;background:transparent;border-radius:7px;padding:6px;font:inherit;font-size:13.5px;font-weight:700;color:var(--ink2);cursor:pointer}
+  .sr-seg button.on{background:#fff;color:var(--brand);box-shadow:0 1px 3px rgba(16,24,40,.14)}
+  .sr-sc{font-size:13.5px;color:var(--ink2);background:#f6f8fb;border-radius:9px;padding:8px 10px;line-height:1.55;margin-bottom:10px}
+  .sr-sc .sr-note{margin-top:2px}
+  .sr-ot{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:8px}.sr-ot td{padding:6px 4px;border-bottom:1px solid var(--line)}
+  .sr-ot td:last-child{text-align:right;font-weight:800}.sr-ot i{font-style:normal;color:#0f766e;font-weight:700;font-size:13px}
+  .sr-mode{display:flex;gap:8px;margin-bottom:10px}
+  .sr-mode label{flex:1;display:flex;gap:9px;align-items:flex-start;border:1.5px solid var(--line);border-radius:11px;padding:10px 12px;background:var(--card);cursor:pointer;font-size:14px}
+  .sr-mode label.on{border-color:var(--brand);background:var(--soft)}
+  .sr-mode label b{display:block;font-size:14.5px}.sr-mode label span span{font-size:13px;color:var(--ink3)}
+  .sr-mode input{margin-top:3px}
+  .sr-stg{border:1px solid var(--line);border-radius:12px;background:var(--card);margin-bottom:10px;overflow:hidden}
+  .sr-stg>.h{display:flex;align-items:center;gap:10px;padding:9px 14px;font-weight:800;font-size:15px;background:color-mix(in srgb,var(--c) 8%,#fff)}
+  .sr-stg .pill{font-size:13px;font-weight:800;color:#fff;border-radius:7px;padding:2px 9px;background:var(--c)}
+  .sr-stg .bd{padding:10px 14px 12px}
+  .sr-grp{border:1px dashed #c3cddb;border-radius:10px;padding:8px 10px;background:#fafbfd}
+  .sr-cond{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:14px;padding:3px 0}
+  .sr-sel{height:32px;border:1px solid var(--line);border-radius:8px;background:#fff;padding:0 8px;font:inherit;font-size:14px;font-weight:700;color:var(--ink)}
+  .sr-num{width:56px;height:32px;border:1px solid var(--line);border-radius:8px;text-align:center;font:inherit;font-size:14px;font-weight:800}
+  .sr-num.s{width:48px;height:30px}
+  .sr-ro{font-size:14px;font-weight:700;color:var(--ink2)}
+  .sr-x{margin-left:auto;border:0;background:transparent;color:var(--ink3);font-size:15px;cursor:pointer;padding:2px 6px;border-radius:6px}.sr-x:hover{background:#fdecec;color:#b42318}
+  .sr-and{display:inline-block;font-size:13px;font-weight:800;color:#6d28d9;background:#f3eefe;border-radius:6px;padding:1px 8px;margin:3px 0}
+  .sr-or{display:flex;align-items:center;gap:10px;margin:7px 0;font-size:13px;font-weight:800;color:var(--ink3)}
+  .sr-or:before,.sr-or:after{content:'';flex:1;border-top:1px solid var(--line)}
+  .sr-add{border:0;background:transparent;color:var(--brand);font:inherit;font-size:13px;font-weight:700;cursor:pointer;padding:4px 2px;display:block}
+  .sr-add.g{margin-top:8px}
+  .sr-empty{font-size:13.5px;color:var(--ink3);padding:2px 0 4px}
+  .sr-duty{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+  .sr-duty .k{flex:none;width:150px;font-size:13.5px;font-weight:800;color:var(--ink2)}
+  .sr-duty input{flex:1;min-width:0;height:34px;border:1px solid var(--line);border-radius:8px;padding:0 10px;font:inherit;font-size:14.5px;font-weight:700}
+  .sr-sub{font-size:13px;font-weight:800;color:var(--ink3);margin:6px 0 6px;padding-top:8px;border-top:1px solid var(--line)}
+  .sr-res strong{display:block;margin-top:3px;color:var(--ink);font-weight:800}
+  .sr-ot td small{display:block;font-size:13px;font-weight:700;color:var(--ink2)}
+  .sr-pin{margin-top:18px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+  .sr-vt{border-collapse:collapse;font-size:13px;width:100%;margin:0 0 4px}.sr-vt th{font-weight:700;color:var(--ink3);padding:3px 2px;text-align:center}
+  .sr-vt td{padding:3px 2px;text-align:center}.sr-vt td:first-child{text-align:left;font-weight:700;color:var(--ink2);font-size:14px}
+  .sr-chk{font-size:13.5px;color:var(--ink2);display:flex;align-items:center;gap:4px;margin:2px 0 8px}
+  .sr-btn{height:36px;border-radius:10px;border:1px solid var(--line);background:#fff;padding:0 14px;font:inherit;font-weight:800;font-size:14px;color:var(--ink2);cursor:pointer}
+  .sr-btn.p{background:var(--brand);border-color:var(--brand);color:#fff}
+  .sr-res{display:flex;align-items:center;gap:12px;border-radius:11px;padding:10px 12px;background:color-mix(in srgb,var(--c) 11%,#fff);font-size:13.5px;color:var(--ink2);line-height:1.45}
+  .sr-res b{font-size:24px;font-weight:900;white-space:nowrap;color:var(--c)}
+  .sr-res.zero{background:#f3f5f9}.sr-res.zero b{color:var(--ink3)}
+  .sr-save{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:10px;box-shadow:0 6px 14px -12px rgba(16,24,40,.4)}
+  .sr-save .t{flex:1;min-width:220px}.sr-save .t b{font-size:14.5px}.sr-save .sr-msg{margin-top:2px}
+  .sr-tbl{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-bottom:10px}
+  .sr-tbl summary{cursor:pointer;font-size:14px;font-weight:800;color:var(--ink2)}
+  .sr-tbl table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13.5px}
+  .sr-tbl th,.sr-tbl td{border:1px solid var(--line);padding:7px 8px;text-align:center;vertical-align:middle;line-height:1.45}
+  .sr-tbl th{background:#f3f5f9;font-weight:800}.sr-tbl td:first-child{font-weight:800;background:#f8fafc}
+  .sr-tbl th.y{background:#fff3c4}.sr-tbl th.o{background:#ffd8b5}.sr-tbl th.r{background:#ffd0d0}
+  .sr-tbl p{font-size:13px;color:var(--ink3);margin:8px 0 0;line-height:1.55}
+  .sr-msg{font-size:13px;color:#b45309;margin-top:8px}.sr-msg.ok{color:var(--ink3)}.sr-msg.err{color:var(--s-no)}
   .pill{border-radius:6px;padding:1px 8px;font-weight:800;color:#fff;font-size:13px}
   .p-새{background:#2563eb}.p-개선{background:#0a8058}.p-오류{background:#d97706}.p-안내{background:#6b7280}
   .src{border:1px solid var(--line);border-radius:6px;padding:0 6px;font-size:13px}
@@ -111,17 +177,6 @@
   .ed textarea{min-height:130px;resize:vertical;line-height:1.5}
   .ed .go{background:var(--brand);border-color:var(--brand);color:#fff}
   .ed .err{color:var(--s-no);font-size:13px}
-  /* 비상근무(2026-11-16) — 상황실 '비상근무' 칸 기준표 */
-  .dt-wrap{overflow-x:auto;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:6px}
-  .dt{border-collapse:collapse;width:100%;min-width:860px}
-  .dt th{font-size:13px;color:var(--ink3);font-weight:800;text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);white-space:nowrap}
-  .dt th small{display:block;font-weight:600;color:var(--ink3);font-size:13px}
-  .dt td{padding:5px 4px;vertical-align:middle}
-  .dt input{width:100%;box-sizing:border-box;font-size:13.5px;padding:6px 8px}
-  .dt td.who input{font-weight:800}
-  .dt .rm{padding:4px 9px;font-size:13px;color:var(--ink3)}
-  .dt .rm:hover{color:var(--s-no);border-color:var(--s-no)}
-  .dt th.s1{color:#2b6fd6}.dt th.s2{color:#b37b00}.dt th.s3{color:#d06a00}.dt th.s4{color:#d63a3a}
   .dt-note{font-size:13px;color:var(--ink2);line-height:1.6;margin:12px 2px 0}
   .dt-note table{border-collapse:collapse;margin-top:6px;font-size:13px}
   .dt-note td,.dt-note th{border:1px solid var(--line);padding:4px 8px;text-align:left}
@@ -157,7 +212,7 @@
   <div class="tabs" role="tablist">
     <button type="button" role="tab" id="tb-fb" aria-selected="true">받은 의견<span class="c" id="c-fb"></span></button>
     <button type="button" role="tab" id="tb-nt" aria-selected="false">공지사항<span class="c" id="c-nt"></span></button>
-    <button type="button" role="tab" id="tb-dt" aria-selected="false">비상근무</button>
+    <button type="button" role="tab" id="tb-sr" aria-selected="false">비상단계 · 근무</button>
     <button type="button" role="tab" id="tb-ac" aria-selected="false">접속 통계</button>
   </div>
   <section id="pane-fb">
@@ -190,29 +245,11 @@
       <span class="n" id="acAt"></span></div>
     <div id="acBody"><div class="msg">불러오는 중…</div></div>
   </section>
-  <section id="pane-dt" hidden>
-    <div class="bar">
-      <button type="button" id="dtSave" style="background:var(--brand);border-color:var(--brand);color:#fff">저장</button>
-      <button type="button" id="dtAdd">＋ 부서 추가</button>
-      <button type="button" id="dtReset">기본값으로</button>
-      <span class="dt-msg" id="dtMsg"></span>
-      <span class="n" id="dtAt"></span>
-    </div>
-    <div class="dt-wrap"><table class="dt"><thead><tr>
-      <th style="width:150px">부서</th>
-      <th class="s1">준비</th><th class="s2">비상 1단계</th><th class="s3">비상 2단계</th><th class="s4">비상 3단계</th>
-      <th>1단계가 대설주의보일 때<small>비우면 1단계 칸 그대로</small></th><th style="width:44px"></th>
-    </tr></thead><tbody id="dtBody"></tbody></table></div>
-    <div class="dt-note">
-      · 상황실 화면은 맨 위 <b>충북 재대본 비상단계</b>에 맞는 칸을 보여 줍니다. 평상이면 "비상근무 없음". 칸을 비우면 그 단계에서 그 부서 줄은 안 나옵니다.<br>
-      · 저장하면 켜져 있는 상황실 화면에 <b>5분 안에</b> 반영됩니다(새로고침하면 바로). 한 칸 40자까지 — 벽면에서 읽히게 짧게 적어 주세요.<br>
-      · 재대본 비상단계를 정하는 기준(아래)은 화면이 특보로 자동 판단합니다. 이 기준을 바꾸려면 소방정보통신팀에 요청하세요.
-      <table><tr><th></th><th>준비</th><th>비상 1단계</th><th>비상 2단계</th><th>비상 3단계</th></tr>
-        <tr><th>호우·대설</th><td>예비특보 3개 시·군</td><td>주의보 3개 시·군 · 경보 1개 시·군</td><td>경보 3개 시·군 이상</td><td>광역적 경보 발령</td></tr>
-        <tr><th>태풍</th><td>태풍정보 발표</td><td>예비특보</td><td>주의보 및 경보</td><td>광역적 경보 발령</td></tr></table>
-    </div>
+  <!-- 비상단계 · 근무(2026-11-23) — 소방본부·119종합상황실의 단계별 근무(.data/duty.json)와 단계를 정하는 조건(.data/stage_rules.json). 계산은 stage.js -->
+  <section id="pane-sr" hidden>
+    <div id="srBody" class="sr-grid"><div class="msg">불러오는 중…</div></div>
     <!-- 재대본 비상단계 지정 번호(2026-11-16) — 상황실 비상단계 칸을 눌러 단계를 직접 지정할 때 묻는 번호 -->
-    <div class="dt-note" style="margin-top:22px">
+    <div class="dt-note sr-pin">
       <b>비상단계 지정 번호</b> — 상황실 화면에서 재대본 발령 단계를 직접 지정할 때 묻는 번호입니다.
       여기서 정하면 <b>모든 상황실 화면에서 이 번호로</b> 단계를 지정할 수 있습니다.<br>
       · 정한 번호는 다시 볼 수 없습니다. 잊으면 새 번호로 다시 정하세요.
@@ -232,6 +269,8 @@
 <script src="notices.js"></script>
 <script>window.CB_DUTY_NOAUTO = true;</script>
 <script src="duty.js"></script>
+<script src="region.js"></script>
+<script src="stage.js"></script>   <!-- 비상단계 · 근무 탭 — 미리 보기가 화면과 같은 계산을 쓴다 -->
 <script>
 (function(){
   /* 처리 상태(2026-11-12) — 서버 tools/feedback.py 의 STATUSES 와 같은 이름. '대기'는 아직 손대지 않은 의견 */
@@ -360,12 +399,224 @@
 
   /* ── 탭 ── */
   function tab(t){
-    ['fb','nt','dt','ac'].forEach(function(k){ $('pane-'+k).hidden = k!==t; $('tb-'+k).setAttribute('aria-selected', k===t?'true':'false'); });
+    ['fb','nt','sr','ac'].forEach(function(k){ $('pane-'+k).hidden = k!==t; $('tb-'+k).setAttribute('aria-selected', k===t?'true':'false'); });
     try{ sessionStorage.setItem('cbAdminTab', t); }catch(e){}
   }
-  $('tb-fb').onclick=function(){ tab('fb'); }; $('tb-nt').onclick=function(){ tab('nt'); }; $('tb-dt').onclick=function(){ tab('dt'); };
+  $('tb-fb').onclick=function(){ tab('fb'); }; $('tb-nt').onclick=function(){ tab('nt'); };
   $('tb-ac').onclick=function(){ tab('ac'); acLoad(); };
-  try{ var _t=sessionStorage.getItem('cbAdminTab'); if(_t==='nt'||_t==='dt') tab(_t); if(_t==='ac'){ tab('ac'); acLoad(); } }catch(e){}
+  $('tb-sr').onclick=function(){ tab('sr'); if(!SR.rules) srLoad(); };
+  try{ var _t=sessionStorage.getItem('cbAdminTab'); if(_t==='nt') tab(_t); if(_t==='ac'){ tab('ac'); acLoad(); } if(_t==='sr'||_t==='dt'){ tab('sr'); srLoad(); } }catch(e){}
+
+  /* ── 비상단계 · 근무(2026-11-23) ── 대상(소방본부·119종합상황실)마다 단계별 근무 내용 + 그 단계가 되는 조건.
+     근무 = 서버 .data/duty.json(없으면 duty.js 기본값) · 조건 = .data/stage_rules.json(없으면 재대본 표). 계산은 stage.js(cbStage)와 같은 코드.
+     조건: 단계마다 조건 묶음 목록 — 묶음끼리 '또는', 묶음 안 '그리고'.
+     ▶ 관서로 넓힐 때: stage.js 의 TARGETS 에 'office:제천': '제천소방서' 처럼 한 줄을 더하면 이 화면·저장·계산이 그 대상을 그대로 다룬다
+       (근무 줄은 대상 이름으로 찾고, 없으면 새로 만든다). */
+  var SR={ rules:null, duty:null, cur:'hq', dirty:false, at:'', v:{rain:{p:0,a:3,w:0},snow:{},ty:{},tyInfo:false} };   // v = 미리 보기 가상 숫자(처음엔 호우주의보 3개 시·군)
+  var SR_ST=[{r:1,pill:'준비',name:'준비 단계',col:'#2563eb'},{r:2,pill:'1단계',name:'주의',col:'#ca8a04'},{r:3,pill:'2단계',name:'경계',col:'#ea580c'},{r:4,pill:'3단계',name:'심각',col:'#dc2626'}];
+  function srClone(o){ return JSON.parse(JSON.stringify(o)); }
+  function srT(id){ var t=SR.rules.targets[id]; if(!t){ t=SR.rules.targets[id]={mode:'table'}; } return t; }
+  var SR_DK=['s1','s2','s3','s4','snow'], SR_DD=(window.cbDuty&&window.cbDuty.DEFAULT)||{rows:[]};
+  function srLoad(){
+    $('srBody').innerHTML='<div class="msg">불러오는 중…</div>';
+    var J=function(u){ return fetch(u,{cache:'no-store'}).then(function(r){ return r.json(); }); };
+    Promise.all([J('api/feedback?stage=1'), J('api/feedback?duty=1')]).then(function(a){
+      var j=a[0], d=a[1];
+      if(!j||!j.ok||!d||!d.ok){ $('srBody').innerHTML='<div class="msg">불러오지 못했습니다</div>'; return; }
+      if(!('rules' in j)){ $('srBody').innerHTML='<div class="msg">서버가 아직 예전 버전입니다 — 서버.bat 을 껐다 켠 뒤 다시 보세요</div>'; return; }
+      SR.rules=j.rules?srClone(j.rules):{targets:{}}; SR.duty=srClone((d.duty&&d.duty.rows&&d.duty.rows.length?d.duty:SR_DD).rows);
+      var at=[(j.rules&&j.rules.at)||'', (d.duty&&d.duty.at)||''].sort().pop(); SR.at=at; SR.dirty=false;
+      Object.keys(window.cbStage.TARGETS).forEach(function(id){ srT(id); srDuty(id); }); srDraw();
+    }).catch(function(){ $('srBody').innerHTML='<div class="msg">서버에 연결하지 못했습니다</div>'; });
+  }
+  /* 대상의 근무 줄 — 이름이 같은 줄, 없으면 상황실·본부 이름으로 찾고, 그래도 없으면 새로 만든다 */
+  function srDuty(id){
+    var nm=window.cbStage.TARGETS[id], rows=SR.duty;
+    var r=rows.filter(function(x){ return x.who===nm; })[0]
+      || (id==='room' && rows.filter(function(x){ return /상황실/.test(x.who); })[0])
+      || (id==='hq' && rows.filter(function(x){ return /본부/.test(x.who) && !/상황실/.test(x.who); })[0]);
+    if(!r){ r={who:nm}; SR_DK.forEach(function(k){ r[k]=''; }); rows.push(r); }
+    return r;
+  }
+  function srEl(tag,cls,txt){ var e=document.createElement(tag); if(cls) e.className=cls; if(txt!=null) e.textContent=txt; return e; }
+  function srSel(opts,val,on){ var s=srEl('select','sr-sel'); Object.keys(opts).forEach(function(k){ var o=srEl('option',null,opts[k]); o.value=k; if(k===val) o.selected=true; s.appendChild(o); }); s.onchange=function(){ on(s.value); }; return s; }
+  function srChanged(){ SR.dirty=true; $('srMsg').className='sr-msg'; $('srMsg').textContent='저장하지 않은 변경이 있습니다 — [저장]을 눌러야 상황판에 반영됩니다'; srPreview(); }
+  function srDraw(){
+    var B=$('srBody'); B.innerHTML='';
+    var K=window.cbStage.KIND, L=window.cbStage.LEVEL, TG=window.cbStage.TARGETS;
+    /* 왼쪽 — 대상 */
+    var left=srEl('div','sr-box'); left.appendChild(srEl('h3',null,'적용 대상'));
+    Object.keys(TG).forEach(function(id){
+      var t=srT(id), b=srEl('button','sr-tg'+(SR.cur===id?' on':'')+(t.mode==='own'?' own':'')); b.type='button';
+      b.appendChild(srEl('span',null,TG[id])); b.appendChild(srEl('em',null,t.mode==='own'?'따로 정함':'재대본 표'));
+      b.onclick=function(){ SR.cur=id; srDraw(); }; left.appendChild(b);
+    });
+    left.appendChild(srEl('p','sr-note','상황판의 큰 단계 글자는 소방본부, 비상근무의 119종합상황실 줄은 상황실 단계를 따릅니다.'));
+    /* 가운데 — 저장 줄(위에 붙어 있음) · 재대본 표 · 기준 */
+    var mid=srEl('div','sr-mid'), t=srT(SR.cur), own=t.mode==='own';
+    var sb=srEl('div','sr-save'), sbt=srEl('div','t');
+    sbt.appendChild(srEl('b',null,'소방본부 · 119종합상황실 비상단계 · 근무'));
+    var msg=srEl('div','sr-msg'+(SR.dirty?'':' ok'), SR.dirty?'저장하지 않은 변경이 있습니다 — [저장]을 눌러야 상황판에 반영됩니다':(SR.at?'마지막 저장 '+SR.at:'기본값(재대본 표) 사용 중')); msg.id='srMsg';
+    sbt.appendChild(msg); sb.appendChild(sbt);
+    var sv=srEl('button','sr-btn p','저장'), df=srEl('button','sr-btn','기본값(재대본 표)으로');
+    sv.type=df.type='button'; sv.onclick=srSave; df.onclick=srReset; sb.appendChild(sv); sb.appendChild(df);
+    mid.appendChild(sb);
+    var mode=srEl('div','sr-mode');
+    [['table','재대본 표 그대로','단계는 재대본 표대로 — 근무 내용만 고칩니다'],['own','따로 정하기','단계가 되는 조건도 따로 정합니다']].forEach(function(m){
+      var lb=srEl('label',(t.mode===m[0]?'on':'')), r=srEl('input'); r.type='radio'; r.name='srMode'; r.checked=t.mode===m[0];
+      r.onchange=function(){ if(m[0]==='own'){ t.mode='own'; if(!t.stages) t.stages=srClone(window.cbStage.TABLE); } else { t.mode='table'; } srChanged(); srDraw(); };
+      var sp=srEl('span'); sp.appendChild(srEl('b',null,m[1])); sp.appendChild(srEl('span',null,m[2])); lb.appendChild(r); lb.appendChild(sp); mode.appendChild(lb);
+    });
+    mid.appendChild(mode);
+    /* 재대본 표 — 공식 표 모양 그대로. '재대본 표 그대로'면 펼치고, 따로 정할 땐 접어 둔다(참고용) */
+    var tbl=srEl('details','sr-tbl'); tbl.open=!own;
+    tbl.innerHTML='<summary>재대본 표 — 기상특보 단계별 비상근무체계(충청북도 재난안전대책본부)</summary>'
+      +'<table><tr><th>구분</th><th>준비 단계</th><th class="y">1단계 주의</th><th class="o">2단계 경계</th><th class="r">3단계 심각</th></tr>'
+      +'<tr><td>대설·호우</td><td>예비특보 3개 시·군</td><td>주의보 3개 시·군<br>경보 1개 시·군</td><td>경보 3개 시·군 이상</td><td>광역적 경보 발령</td></tr>'
+      +'<tr><td>태풍</td><td>태풍정보 발표</td><td>예비특보</td><td>주의보 및 경보</td><td>광역적 경보 발령</td></tr></table>'
+      +'<p>3단계 \'광역적 경보 발령\'은 재대본이 판단해 발령하므로 자동으로 올리지 않습니다 — 상황실 \'비상단계 지정\'으로. 경보 6개 시·군 이상이면 2단계에 \'3단계 발령 검토\' 안내가 붙습니다.</p>';
+    mid.appendChild(tbl);
+    var stages=own?t.stages:{}, drow=srDuty(SR.cur);
+    SR_ST.forEach(function(st){
+      var box=srEl('div','sr-stg'); box.style.setProperty('--c',st.col);
+      var h=srEl('div','h'); var pill=srEl('span','pill',st.pill); h.appendChild(pill); h.appendChild(srEl('span',null,st.name)); box.appendChild(h);
+      var bd=srEl('div','bd');
+      /* 근무 — 이 단계일 때 상황판 비상근무 칸에 나가는 글(40자) */
+      function dutyIn(k, label, ph){
+        var ln=srEl('label','sr-duty'); ln.appendChild(srEl('span','k',label));
+        var i=srEl('input'); i.maxLength=40; i.value=drow[k]||''; i.placeholder=ph; i.oninput=function(){ drow[k]=i.value; srChanged(); };
+        ln.appendChild(i); bd.appendChild(ln);
+      }
+      dutyIn('s'+st.r, '근무', '(비우면 이 단계에서 이 줄은 안 나옴)');
+      if(st.r===2) dutyIn('snow', '대설주의보로 1단계일 때', '(비우면 위 근무 그대로)');
+      if(!own){ box.appendChild(bd); mid.appendChild(box); return; }
+      bd.appendChild(srEl('div','sr-sub','조건'));
+      var groups=stages[st.r]||(stages[st.r]=[]);
+      if(!groups.length) bd.appendChild(srEl('div','sr-empty', st.r===4 ? '자동 조건 없음 — 재대본 발령(상황실 \'비상단계 지정\')으로만 3단계' : '조건 없음 — 이 단계는 자동으로 오르지 않습니다'));
+      groups.forEach(function(g,gi){
+        if(gi) bd.appendChild(srEl('div','sr-or','또는'));
+        var gb=srEl('div','sr-grp');
+        g.forEach(function(c,ci){
+          if(ci) gb.appendChild(srEl('span','sr-and','그리고'));
+          var row=srEl('div','sr-cond');
+          if(own){
+            row.appendChild(srSel(K,c.k,function(v){ c.k=v; if(v==='tyinfo'){ delete c.lv; delete c.n; delete c.sc; } else { c.lv=c.lv||'a'; c.n=c.n||1; c.sc='do'; } srChanged(); srDraw(); }));
+            if(c.k!=='tyinfo'){
+              row.appendChild(srSel(L,c.lv,function(v){ c.lv=v; srChanged(); }));
+              var n=srEl('input','sr-num'); n.type='number'; n.min=1; n.max=20; n.value=c.n;
+              n.oninput=function(){ var v=Math.max(1,Math.min(20,parseInt(n.value,10)||1)); c.n=v; srChanged(); };
+              row.appendChild(n); row.appendChild(srEl('span',null,'개 시·군 이상'));
+            } else row.appendChild(srEl('span',null,'(한반도 영향 태풍)'));
+            var x=srEl('button','sr-x','✕'); x.type='button'; x.title='이 조건 지우기';
+            x.onclick=function(){ g.splice(ci,1); if(!g.length) groups.splice(gi,1); srChanged(); srDraw(); };
+            row.appendChild(x);
+          } else {
+            row.appendChild(srEl('span','sr-ro', c.k==='tyinfo' ? K.tyinfo+' (한반도 영향 태풍)' : K[c.k]+' · '+L[c.lv]+' · '+c.n+'개 시·군 이상'));
+          }
+          gb.appendChild(row);
+        });
+        if(own){ var a=srEl('button','sr-add','＋ 그리고'); a.type='button'; a.onclick=function(){ g.push({k:'rs',lv:'a',n:1,sc:'do'}); srChanged(); srDraw(); }; gb.appendChild(a); }
+        bd.appendChild(gb);
+      });
+      if(own){ var ag=srEl('button','sr-add g','＋ 또는 (조건 묶음 더하기)'); ag.type='button';
+        ag.onclick=function(){ groups.push([{k:'rs',lv:'a',n:1,sc:'do'}]); srChanged(); srDraw(); }; bd.appendChild(ag); }
+      box.appendChild(bd); mid.appendChild(box);
+    });
+    /* 오른쪽 — 미리 보기 · 저장 */
+    var right=srEl('div','sr-right'), pv=srEl('div','sr-box');
+    var h3=srEl('h3',null,'미리 보기'); h3.appendChild(srEl('small',null,'계산만 해 봅니다 · 저장되지 않습니다')); pv.appendChild(h3);
+    var seg=srEl('div','sr-seg');
+    [['now','지금 특보'],['v','가상 상황']].forEach(function(m){ var b=srEl('button',(SR.mode||'v')===m[0]?'on':'',m[1]); b.type='button';
+      b.onclick=function(){ if(m[0]==='now'){ srNow(); } else { SR.mode='v'; srDraw(); } }; seg.appendChild(b); });
+    pv.appendChild(seg);
+    var sc=srEl('div','sr-sc'); sc.id='srSc';
+    if((SR.mode||'v')==='v'){
+      var tb=srEl('table','sr-vt'), hd=srEl('tr'); ['','예비특보','주의보 이상','경보'].forEach(function(x){ hd.appendChild(srEl('th',null,x)); }); tb.appendChild(hd);
+      [['rain','호우'],['snow','대설'],['ty','태풍']].forEach(function(k){
+        var tr=srEl('tr'); tr.appendChild(srEl('td',null,k[1]));
+        ['p','a','w'].forEach(function(lv){ var td=srEl('td'), n=srEl('input','sr-num s'); n.type='number'; n.min=0; n.max=11; n.value=(SR.v&&SR.v[k[0]]&&SR.v[k[0]][lv])||0; n.dataset.k=k[0]; n.dataset.lv=lv;
+          n.oninput=srPreview; td.appendChild(n); tr.appendChild(td); });
+        tb.appendChild(tr);
+      });
+      sc.appendChild(tb);
+      var tyl=srEl('label','sr-chk'), ty=srEl('input'); ty.type='checkbox'; ty.id='srTyInfo'; ty.checked=!!(SR.v&&SR.v.tyInfo); ty.onchange=srPreview;
+      tyl.appendChild(ty); tyl.appendChild(document.createTextNode(' 태풍정보 발표(한반도 영향)')); sc.appendChild(tyl);
+      sc.appendChild(srEl('div','sr-note','숫자 = 그 특보가 걸린 충북 시·군 수'));
+    }
+    pv.appendChild(sc);
+    var res=srEl('div'); res.id='srRes'; pv.appendChild(res);
+    right.appendChild(pv);
+    B.appendChild(left); B.appendChild(mid); B.appendChild(right);
+    srPreview();
+  }
+  function srVals(){
+    var v={rain:{},snow:{},ty:{},tyInfo:false};
+    [].forEach.call(document.querySelectorAll('#srBody .sr-vt input'),function(n){ v[n.dataset.k][n.dataset.lv]=Math.max(0,parseInt(n.value,10)||0); });
+    var t=$('srTyInfo'); v.tyInfo=!!(t&&t.checked); SR.v=v; return v;
+  }
+  function srShow(res, title){
+    var el=$('srRes'); if(!el) return; el.innerHTML='';
+    if(title){ var sc=$('srSc'); if(sc) sc.textContent=title; }
+    var all={hq:res, room:res.room}, o=all[SR.cur], TG=window.cbStage.TARGETS;
+    var big=srEl('div','sr-res'+(o.rank?'':' zero')); if(o.rank) big.style.setProperty('--c',SR_ST[o.rank-1].col);
+    big.appendChild(srEl('b',null,o.big));
+    var bs=srEl('span',null, TG[SR.cur]+' — '+(o.rank ? (SR.cur==='hq'&&res.manual ? res.reason : (o.reason||'')) : '조건에 맞는 단계 없음'));
+    var dw=o.rank ? (srDuty(SR.cur)['s'+o.rank]||'') : '';
+    if(dw){ bs.appendChild(srEl('strong',null,'근무 · '+dw)); }
+    big.appendChild(bs); el.appendChild(big);
+    var tb=srEl('table','sr-ot');
+    Object.keys(TG).forEach(function(id){ var x=all[id], tr=srEl('tr'), t=srT(id);
+      var td=srEl('td',null,TG[id]); if(t.mode==='own') td.appendChild(srEl('i',null,' · 따로')); tr.appendChild(td);
+      var v=srEl('td',null,x.big); v.style.color=x.rank?SR_ST[x.rank-1].col:'var(--ink3)'; if(!x.rank) v.style.fontWeight='600';
+      var w=x.rank ? (srDuty(id)['s'+x.rank]||'') : ''; if(w) v.appendChild(srEl('small',null,w));
+      tr.appendChild(v); tb.appendChild(tr); });
+    el.appendChild(tb);
+    if(res.manual) el.appendChild(srEl('div','sr-note','※ 지금은 재대본 발령('+res.manualAt+') 중이라 화면에는 그 단계가 나옵니다.'));
+  }
+  function srPreview(){
+    if(!SR.rules || !$('srRes')) return;
+    if(SR.mode==='now' && SR.nowData){ var d=SR.nowData; srShow(window.cbStage(d.w,d.p,d.t,SR.rules), d.desc); return; }
+    var r=window.cbStage.preview(srVals(), SR.rules), cut=function(t){ return String(t||'').replace(/\([^)]*\)/g,''); };   /* 가상 숫자엔 실제 시·군 이름이 없다 */
+    r.manual=false; r.reason=cut(r.reason); r.room.reason=cut(r.room.reason); srShow(r);
+  }
+  function srNow(){
+    fetch('data.js',{cache:'no-cache'}).then(function(r){ return r.text(); }).then(function(t){
+      var i=t.indexOf('{'), j=t.lastIndexOf('}'); var D=JSON.parse(t.slice(i,j+1));
+      SR.nowData={ w:(D.warnings||[]).map(function(w){ return { type:w.type||w.title||w.name||'', area:w.area||w.region||w.regions||'', level:w.level||'' }; }),
+                   p:D.prelim_warnings||[], t:D.typhoon||[], at:String(D.updated||'').slice(5,16) };
+      var kinds=SR.nowData.w.map(function(w){ return w.type; }).filter(function(t){ return /호우|대설|태풍/.test(t); });
+      SR.nowData.desc='지금 특보('+SR.nowData.at+' 자료) — '+(kinds.length ? kinds.filter(function(t,i){ return kinds.indexOf(t)===i; }).join(' · ') : '호우·대설·태풍 특보 없음');
+      SR.mode='now'; srDraw();
+    }).catch(function(){ var el=$('srRes'); if(el) el.textContent='지금 자료를 읽지 못했습니다'; });
+  }
+  function srSave(){
+    var has3=Object.keys(SR.rules.targets).some(function(id){ var t=SR.rules.targets[id]; return t.mode==='own' && t.stages && (t.stages[4]||[]).length; });
+    if(has3 && !confirm('3단계 자동 조건이 있습니다.\n\n조건이 맞으면 상황판이 3단계(빨간 점멸)로 바뀝니다. 저장할까요?')) return;
+    var m=$('srMsg'); m.className='sr-msg'; m.textContent='저장 중…';
+    /* 근무 — 기본값과 같으면 저장본을 지운다(기본값이 바뀌면 따라가게) · 조건 — 모두 '재대본 표 그대로'면 지운다 */
+    var rows=SR.duty.map(function(r){ var o={who:r.who}; SR_DK.forEach(function(k){ o[k]=String(r[k]||'').trim(); }); return o; });
+    var sameDuty=JSON.stringify(rows)===JSON.stringify(SR_DD.rows.map(function(r){ var o={who:r.who}; SR_DK.forEach(function(k){ o[k]=r[k]||''; }); return o; }));
+    var allTable=Object.keys(SR.rules.targets).every(function(id){ return SR.rules.targets[id].mode!=='own'; });
+    post({action:'duty_save', rows: sameDuty ? null : rows}).then(function(j){
+      if(!j||!j.ok) return j;
+      if(window.cbDuty) window.cbDuty.set(j.duty);
+      return post({action:'stage_rules_save', rules: allTable ? null : SR.rules});
+    }).then(function(j){
+      if(j&&j.ok){ SR.dirty=false; SR.at=(j.rules&&j.rules.at)||new Date().toTimeString().slice(0,5); if(window.cbStageOv) window.cbStageOv.takeRules(j.rules);
+        srDraw(); var m2=$('srMsg'); m2.className='sr-msg ok'; m2.textContent='저장했습니다 — 상황판은 1~5분 안에 바뀝니다(새로고침하면 바로)'; }
+      else { m.className='sr-msg err'; m.textContent=(j&&j.err)||'저장하지 못했습니다'; }
+    });
+  }
+  function srReset(){
+    if(!confirm('소방본부·119종합상황실의 근무 내용과 단계 기준을 모두 기본값(재대본 표)으로 되돌릴까요?\n지금 저장된 내용은 지워집니다.')) return;
+    post({action:'duty_save', rows:null}).then(function(j){ return (j&&j.ok) ? post({action:'stage_rules_save', rules:null}) : j; }).then(function(j){
+      if(j&&j.ok){ SR.rules={targets:{}}; SR.duty=srClone(SR_DD.rows); Object.keys(window.cbStage.TARGETS).forEach(function(id){ srT(id); srDuty(id); });
+        SR.at=''; SR.dirty=false; if(window.cbStageOv) window.cbStageOv.takeRules(null); if(window.cbDuty) window.cbDuty.set(null);
+        srDraw(); $('srMsg').textContent='기본값(재대본 표)으로 되돌렸습니다'; }
+      else { var m=$('srMsg'); m.className='sr-msg err'; m.textContent=(j&&j.err)||'되돌리지 못했습니다'; }
+    });
+  }
+  window.addEventListener('beforeunload',function(e){ if(SR.dirty){ e.preventDefault(); e.returnValue=''; } });
 
   /* ── 접속 통계 ── 화면을 연 횟수(조회)와 방문자 수(같은 기기·같은 브라우저는 한 명, 쿠키 cbv). 서버를 켜 둔 동안만 기록된다 */
   function esc(t){ return String(t==null?'':t).replace(/[&<>"]/g,function(x){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[x]; }); }
@@ -530,42 +781,6 @@
   }
   $('ntNew').onclick=function(){ ntEdit(null); }; $('ntReload').onclick=ntLoad;
   ntLoad();
-
-  /* ── 비상근무 기준표 ── 서버 저장본이 없으면 duty.js 기본값. 저장하면 상황실 화면이 5분 안에 다시 읽는다 */
-  var DK=['s1','s2','s3','s4','snow'], DD=(window.cbDuty&&window.cbDuty.DEFAULT)||{rows:[]};
-  function dtMsg(t, cls){ var m=$('dtMsg'); m.className='dt-msg'+(cls?' '+cls:''); m.textContent=t||''; }
-  function dtRow(r){
-    var tr=el('tr'), td=el('td','who'), w=el('input'); w.maxLength=20; w.placeholder='부서 이름'; w.value=r.who||''; td.appendChild(w); tr.appendChild(td);
-    DK.forEach(function(k){ var c=el('td'), i=el('input'); i.maxLength=40; i.dataset.k=k; i.value=r[k]||''; i.placeholder=(k==='snow')?'(1단계 그대로)':'(안 나옴)'; c.appendChild(i); tr.appendChild(c); });
-    var x=el('td'), b=el('button','rm','✕'); b.type='button'; b.title='이 부서 줄 빼기';
-    b.onclick=function(){ if($('dtBody').children.length<=1){ dtMsg('부서는 1개 이상이어야 합니다','err'); return; } tr.remove(); dtMsg('저장하지 않은 변경이 있습니다'); };
-    x.appendChild(b); tr.appendChild(x);
-    tr.oninput=function(){ dtMsg('저장하지 않은 변경이 있습니다'); };
-    return tr;
-  }
-  function dtFill(d, at){ var B=$('dtBody'); B.innerHTML=''; (d.rows||[]).forEach(function(r){ B.appendChild(dtRow(r)); });
-    $('dtAt').textContent = at ? '마지막 저장 '+at : '기본값(기상특보 단계별 비상근무체계)'; }
-  function dtRows(){ return Array.prototype.map.call($('dtBody').children, function(tr){ var ins=tr.querySelectorAll('input'), r={who:ins[0].value.trim()};
-    Array.prototype.slice.call(ins,1).forEach(function(i){ r[i.dataset.k]=i.value.trim(); }); return r; }); }
-  function dtLoad(){ dtMsg('불러오는 중…');
-    fetch('api/feedback?duty=1',{cache:'no-store'}).then(function(r){ return r.ok?r.json():null; })
-    .then(function(j){ if(!j||!j.ok){ dtFill(DD); dtMsg('서버에서 읽지 못해 기본값을 보여 줍니다','err'); return; }
-      dtFill(j.duty||DD, j.duty&&j.duty.at); dtMsg(''); })
-    .catch(function(){ dtFill(DD); dtMsg('서버에 연결하지 못했습니다','err'); });
-  }
-  $('dtAdd').onclick=function(){ if($('dtBody').children.length>=8){ dtMsg('부서는 8개까지입니다','err'); return; } var tr=dtRow({}); $('dtBody').appendChild(tr); tr.querySelector('input').focus(); dtMsg('저장하지 않은 변경이 있습니다'); };
-  $('dtSave').onclick=function(){
-    var rows=dtRows(); if(rows.some(function(r){ return !r.who; })){ dtMsg('부서 이름이 빈 줄이 있습니다','err'); return; }
-    $('dtSave').disabled=true; dtMsg('저장 중…');
-    post({action:'duty_save', rows:rows}).then(function(j){ $('dtSave').disabled=false;
-      if(!j.ok){ dtMsg(/내용을 적어/.test(j.err||'') ? '서버가 아직 예전 버전입니다 — 서버.bat 을 껐다 켠 뒤 다시 저장하세요' : (j.err||'저장하지 못했습니다'),'err'); return; }   /* 비상근무 저장을 모르는 옛 서버는 의견 보내기로 받는다 */
-      dtFill(j.duty||DD, j.duty&&j.duty.at); dtMsg('저장했습니다 — 상황실 화면에 5분 안에 반영','ok'); });
-  };
-  $('dtReset').onclick=function(){
-    if(!confirm('비상근무 기준을 기본값(기상특보 단계별 비상근무체계 — 소방본부·119종합상황실)으로 되돌릴까요?\n지금 저장된 내용은 지워집니다.')) return;
-    post({action:'duty_save', rows:null}).then(function(j){ if(!j.ok){ dtMsg(/내용을 적어/.test(j.err||'') ? '서버가 아직 예전 버전입니다 — 서버.bat 을 껐다 켠 뒤 다시 하세요' : (j.err||'되돌리지 못했습니다'),'err'); return; } dtFill(DD); dtMsg('기본값으로 되돌렸습니다','ok'); });
-  };
-  dtLoad();
 
   /* ── 비상단계 지정 번호 ── */
   function pinMsg(t, cls){ var m=$('pinMsg'); m.className='dt-msg'+(cls?' '+cls:''); m.textContent=t||''; }
