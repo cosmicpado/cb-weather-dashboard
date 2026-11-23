@@ -1,7 +1,9 @@
 """접속 기록(2026-11-18) — 화면을 열 때마다 한 줄씩 남기고, 관리자 화면 '접속 통계'에 모아 보여 준다.
 
-저장: <저장소>/.data/access/YYYY-MM.csv  (시각, 화면, 기기, 방문자)
-  · 화면 파일(종합·상황실·재해·도움말·관리자)을 열 때만 센다. 자료(data.js)를 1분마다 다시 읽는 것은 세지 않는다.
+저장: <저장소>/.data/access/YYYY-MM.csv  (시각, 화면, 기기, 방문자, 브라우저)
+  · 화면이 실제로 3초 넘게 보였을 때 화면(access-hit.js)이 서버에 알려 오면 1회로 센다(2026-11-23).
+    메일 보안 검사처럼 주소만 열어 보고 닫는 접속은 빠진다. 자료(data.js)를 1분마다 다시 읽는 것은 세지 않는다.
+    켜 둔 채 날이 바뀐 화면은 다음 날 한 번 더 알려 와, 늘 켜 둔 상황판 PC 도 날마다 1명으로 잡힌다.
   · IP 주소는 저장하지 않는다 — 서버에만 있는 비밀 값(salt)과 IP·브라우저 정보를 섞어 되돌릴 수 없는 방문자 번호로만 남긴다.
     그래서 '몇 명이 봤는지'는 알 수 있지만 '누가(어느 주소가)'는 기록에 없다.
   · 방문자 번호는 처음 열 때 브라우저에 쿠키(cbv)로 맡겨 두고 다음부터 그 번호를 쓴다. 휴대폰은 통신사 주소가 수시로
@@ -50,6 +52,20 @@ def _device(ua):
     return '휴대폰' if re.search(r'Mobi|Android|iPhone|iPad', ua or '') else 'PC'
 
 
+_BROWSERS = [(r'KAKAOTALK', '카카오톡 안'), (r'NAVER\(inapp|; NAVER', '네이버 앱 안'), (r'Whale/', '웨일'),
+             (r'SamsungBrowser', '삼성 인터넷'), (r'Edg[A-Z]?/', '엣지'), (r'Firefox|FxiOS', '파이어폭스'),
+             (r'CriOS|Chrome/', '크롬'), (r'Version/[\d.]+.*Safari', '사파리'), (r'iPhone|iPad', '홈 화면 앱'),
+             (r'Trident|MSIE', '익스플로러')]
+
+
+def _browser(ua):
+    """브라우저 종류(통계용) — 이름·주소는 아니다. 카톡·네이버 앱 안에서 연 것도 따로 보이게."""
+    for pat, name in _BROWSERS:
+        if re.search(pat, ua or ''):
+            return name
+    return '기타'
+
+
 COOKIE = 'cbv'
 _BOT = re.compile(r'bot|crawl|spider|scrap|slurp|preview|facebookexternalhit|kakaotalk-scrap|Yeti|Daum|HeadlessChrome|'
                   r'python|curl|wget|Go-http|Java/|okhttp|axios|node-fetch|WhatsApp|TelegramBot', re.I)
@@ -88,8 +104,8 @@ def log(page_file, ip, ua, vid=None):
             with open(path, 'a', encoding='utf-8', newline='') as f:
                 w = csv.writer(f)
                 if new:
-                    w.writerow(['시각', '화면', '기기', '방문자'])
-                w.writerow([now.strftime('%Y-%m-%d %H:%M:%S'), page, _device(ua), vid])
+                    w.writerow(['시각', '화면', '기기', '방문자', '브라우저'])
+                w.writerow([now.strftime('%Y-%m-%d %H:%M:%S'), page, _device(ua), vid, _browser(ua)])
             if new:
                 _prune(now)
     except Exception:
@@ -107,7 +123,7 @@ def _prune(now):
 
 
 def _rows(since):
-    """since(datetime) 이후 줄 [(시각, 화면, 기기, 방문자)]."""
+    """since(datetime) 이후 줄 [(시각, 화면, 기기, 방문자, 브라우저)]. 11-23 이전 줄은 브라우저가 ''."""
     out, key, last = [], since.strftime('%Y-%m-%d %H:%M:%S'), None
     for p in sorted(DIR.glob('*.csv')):
         if p.stem < since.strftime('%Y-%m'):
@@ -116,7 +132,7 @@ def _rows(since):
             with open(p, encoding='utf-8', newline='') as f:
                 for r in csv.reader(f):
                     if len(r) >= 4 and r[0] >= key and r[0][:1].isdigit():
-                        r = [r[0], OLD_NAMES.get(r[1], r[1]), r[2], r[3]]
+                        r = [r[0], OLD_NAMES.get(r[1], r[1]), r[2], r[3], r[4] if len(r) > 4 else '']
                         # 같은 방문자·같은 화면·같은 초에 두 줄 = 한 번 연 것(2026-11-20 이전 기록은 화면 틀의 자기 파일 받기까지 셌다)
                         if r == last:
                             continue
@@ -129,21 +145,33 @@ def _rows(since):
 
 def stats(days=30):
     """관리자 화면용 요약 — 오늘·7일·30일 조회/방문자, 일별, 화면별, 시간대별(7일), 기기별(30일).
-    by = 같은 요약을 기기별로({'PC': …, '휴대폰': …}) — 관리자 화면의 [전체 | PC | 휴대폰] 고르기."""
+    by = 같은 요약을 기기별로({'PC': …, '휴대폰': …}) — 관리자 화면의 [전체 | PC | 휴대폰] 고르기.
+    new = 그 기간에 처음 나타난 방문자(앞선 30일 기록에 없던 번호), 나머지는 다시 온 방문자."""
     now = datetime.now()
     start = (now - timedelta(days=days - 1)).replace(hour=0, minute=0, second=0, microsecond=0)
-    rows = _rows(start)
-    out = _summarize(rows, now, start, days)
-    out['by'] = {d: _summarize([r for r in rows if r[2] == d], now, start, days) for d in ('PC', '휴대폰')}
+    rows = _rows(start - timedelta(days=30))       # 처음 온 사람인지 가리려고 30일 더 앞까지 읽는다
+    first = {}
+    for r in rows:
+        first.setdefault(r[3], r[0][:10])
+    rows = [r for r in rows if r[0] >= start.strftime('%Y-%m-%d')]
+    out = _summarize(rows, now, start, days, first)
+    out['by'] = {d: _summarize([r for r in rows if r[2] == d], now, start, days, first) for d in ('PC', '휴대폰')}
     return out
 
 
-def _summarize(rows, now, start, days):
+def _summarize(rows, now, start, days, first):
     today = now.strftime('%Y-%m-%d')
     d7 = (now - timedelta(days=6)).strftime('%Y-%m-%d')
 
-    def summary(rs):
-        return {'views': len(rs), 'visitors': len({r[3] for r in rs})}
+    def summary(rs, since=None):
+        v = {r[3] for r in rs}
+        o = {'views': len(rs), 'visitors': len(v)}
+        if since:
+            o['new'] = sum(1 for x in v if first.get(x, '') >= since)
+        return o
+
+    def browsers(rs):
+        return dict(Counter(b for _, b in {(r[3], r[4] or '기록 전') for r in rs}))
 
     by_day = defaultdict(list)
     for r in rows:
@@ -151,7 +179,7 @@ def _summarize(rows, now, start, days):
     daily = []
     for i in range(days):
         d = (start + timedelta(days=i)).strftime('%Y-%m-%d')
-        daily.append({'date': d, **summary(by_day.get(d, []))})
+        daily.append({'date': d, **summary(by_day.get(d, []), d)})
     pages = []
     for name in PAGES.values():
         rs = [r for r in rows if r[1] == name]
@@ -162,7 +190,9 @@ def _summarize(rows, now, start, days):
     hours = Counter(int(r[0][11:13]) for r in rows if r[0][:10] >= d7)
     dev = Counter(r[2] for r in rows)
     return {'ok': True, 'at': now.strftime('%Y-%m-%d %H:%M'), 'days': days,
-            'today': summary([r for r in rows if r[0][:10] == today]),
-            'd7': summary([r for r in rows if r[0][:10] >= d7]), 'd30': summary(rows),
+            'today': summary([r for r in rows if r[0][:10] == today], today),
+            'd7': summary([r for r in rows if r[0][:10] >= d7], d7), 'd30': summary(rows),
+            'browsers': {'today': browsers([r for r in rows if r[0][:10] == today]),
+                         'd7': browsers([r for r in rows if r[0][:10] >= d7]), 'd30': browsers(rows)},
             'daily': daily, 'pages': pages, 'hours': [hours.get(h, 0) for h in range(24)],
             'device': {'PC': dev.get('PC', 0), '휴대폰': dev.get('휴대폰', 0)}}

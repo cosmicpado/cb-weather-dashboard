@@ -4,7 +4,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>관리자 페이지</title>
 <style>
-  :root{--bg:#f3f5f9;--card:#fff;--ink:#1b2333;--ink2:#4a5568;--ink3:#7a8597;--line:#dde3ec;--brand:#2563eb;--soft:#eef3ff;
+  :root{--bg:#f3f5f9;--card:#fff;--ink:#1b2333;--ink2:#4a5568;--ink3:#5f6d85;--line:#dde3ec;--brand:#2563eb;--soft:#eef3ff;
     --s-wait:#6b7280;--s-done:#0a8058;--s-hold:#b7791f;--s-no:#c0392b;--s-wait-bg:#f1f3f6;--s-done-bg:#e6f5ee;--s-hold-bg:#fdf3e1;--s-no-bg:#fbeaea}
   /* 관리자 페이지는 늘 밝은 화면(2026-11-12 사용자 결정) — 컴퓨터가 어두운 모드여도 */
   :root{color-scheme:light}
@@ -67,22 +67,41 @@
   .nt .acts{margin-left:auto;display:flex;gap:6px}
   .nt .acts button{padding:3px 10px;font-size:13px}
   .nt .acts .del{color:var(--s-no)}
-  .ac-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:6px}
-  .ac-c{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--card,#fff);display:flex;flex-direction:column;gap:2px}
-  .ac-c span{font-size:13px;color:var(--ink3);font-weight:700}.ac-c b{font-size:26px}.ac-c b small{font-size:14px;margin-left:2px}.ac-c em{font-style:normal;font-size:13px;color:var(--ink3)}
-  .ac-h{font-size:15px;margin:18px 0 8px}
-  .ac-t{width:100%;border-collapse:collapse;font-size:14px}.ac-t th,.ac-t td{border-bottom:1px solid var(--line);padding:7px 8px;text-align:left}.ac-t small{color:var(--ink3);font-size:13px}
-  .ac-bars{display:flex;align-items:flex-end;gap:3px;height:120px;border-bottom:1px solid var(--line)}
-  .ac-bars>div{flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;min-width:0}
-  .ac-bars i{display:block;width:100%;background:var(--brand);border-radius:3px 3px 0 0;min-height:1px}.ac-bars span{font-size:13px;color:var(--ink3);margin-top:2px}
+  /* 접속 통계 — 카드 · 날짜별 막대(숫자 표시, 예전 방식 날은 흐리게) · 화면별 | 브라우저별 · 시간대별 */
+  .ac-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .ac-c{border:1px solid var(--line);border-radius:12px;padding:12px 16px;background:var(--card);display:flex;flex-direction:column;gap:3px}
+  .ac-c>span{font-size:13px;color:var(--ink3);font-weight:700}.ac-c b{font-size:30px;line-height:1.15}.ac-c b small{font-size:15px;margin-left:2px}
+  .ac-c em{font-style:normal;font-size:13px;color:var(--ink2)}.ac-c em.d{color:var(--ink3)}
+  .ac-box{border:1px solid var(--line);border-radius:12px;background:var(--card);padding:14px 16px;margin-top:12px;min-width:0}
+  .ac-box h3{font-size:15px;margin:0 0 10px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .ac-box h3 small{font-size:13px;font-weight:600;color:var(--ink3)}
+  .ac-two{display:grid;grid-template-columns:3fr 2fr;gap:12px}.ac-two>.ac-box{margin-top:12px}
+  @media (max-width:900px){.ac-two{grid-template-columns:1fr}.ac-cards{grid-template-columns:1fr}}
+  .ac-t{width:100%;border-collapse:collapse;font-size:14px}.ac-t th,.ac-t td{border-bottom:1px solid var(--line);padding:7px 8px;text-align:left}
+  .ac-t th{font-size:13px;color:var(--ink3);font-weight:700}.ac-t td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}.ac-t th.n{text-align:right}
+  .ac-t small{color:var(--ink3);font-size:13px;display:block}
+  .ac-bars{display:flex;gap:3px;border-bottom:1px solid var(--line)}
+  .ac-bars>div{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center}
+  .ac-bars .col{height:118px;width:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:stretch}
+  .ac-bars em{font-style:normal;font-size:13px;color:var(--ink2);text-align:center;font-variant-numeric:tabular-nums;line-height:16px}
+  .ac-bars i{display:block;background:var(--brand);border-radius:3px 3px 0 0}
+  .ac-bars i.m{background:#f59e0b;margin-bottom:2px}   /* 휴대폰(위)·PC(아래) 사이 2px 틈 */
+  #acBody.mob .ac-bars i{background:#f59e0b}            /* 휴대폰만 볼 땐 막대도 휴대폰 색 */
+  .ac-bars .old i{opacity:.4}                          /* 11-23 이전(예전 방식 — 실제보다 많음) */
+  .ac-bars>div>span{font-size:13px;color:var(--ink3);margin-top:3px;line-height:16px}
+  .ac-bars .today>span{color:var(--ink);font-weight:800}
+  .ac-tw{overflow-x:auto}.ac-t td:first-child{white-space:nowrap}
+  @media (max-width:700px){.ac-bars em{display:none}.ac-bars>div>span:not(.k){visibility:hidden}}   /* 좁으면 눈금 글자를 띄엄띄엄 */
+  .ac-lg{display:inline-flex;gap:12px;font-size:13px;font-weight:600;color:var(--ink2)}.ac-lg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+  .ac-br{display:grid;grid-template-columns:auto 1fr auto;gap:7px 10px;align-items:center;font-size:14px}
+  .ac-br .tr{height:10px;border-radius:5px;background:var(--soft);overflow:hidden}.ac-br .tr i{display:block;height:100%;background:var(--brand);border-radius:5px}
+  .ac-br .v{font-size:13px;color:var(--ink2);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
   .ac-seg{display:inline-flex;gap:2px;padding:3px;border-radius:10px;background:#eceff4;border:1px solid var(--line)}
   .ac-seg button{border:0;background:transparent;border-radius:7px;padding:5px 12px;font:inherit;font-size:14px;font-weight:700;color:var(--ink2);cursor:pointer}
   .ac-seg button[aria-pressed=true]{background:var(--card);color:var(--brand);box-shadow:0 1px 3px rgba(16,24,40,.14)}
-  .ac-bars i.m,#acBody.mob .ac-bars i{background:#f59e0b}.ac-bars i.m{margin-bottom:2px}   /* 날짜별 막대 — 휴대폰(위)·PC(아래) 사이 2px 틈 */
-  .ac-lg{display:flex;gap:14px;font-size:13px;color:var(--ink2);margin:-2px 0 6px}.ac-lg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
-  .ac-dev{height:12px;border-radius:6px;background:#f59e0b;overflow:hidden}.ac-dev i{display:block;height:100%;background:var(--brand)}
-  .ac-devl{display:flex;justify-content:space-between;font-size:13px;color:var(--ink2);margin-top:4px}
-  .ac-note{font-size:13px;color:var(--ink3);margin-top:14px;line-height:1.6}
+  .ac-note{font-size:13px;color:var(--ink3);line-height:1.6}
+  details.ac-how{margin-top:12px;font-size:13px;color:var(--ink2);line-height:1.7}details.ac-how summary{cursor:pointer;font-weight:700;color:var(--ink2)}
+  details.ac-how ul{margin:6px 0 0;padding-left:18px}
   .pill{border-radius:6px;padding:1px 8px;font-weight:800;color:#fff;font-size:13px}
   .p-새{background:#2563eb}.p-개선{background:#0a8058}.p-오류{background:#d97706}.p-안내{background:#6b7280}
   .src{border:1px solid var(--line);border-radius:6px;padding:0 6px;font-size:13px}
@@ -164,7 +183,7 @@
     <div id="ntList"><div class="msg">불러오는 중…</div></div>
   </section>
   <!-- 비상근무(2026-11-16) — 상황실 오른쪽 위 '비상근무' 칸에 나가는 기준표. 저장은 서버 .data/duty.json, 기본값은 duty.js -->
-  <!-- 접속 통계(2026-11-18) — 서버 .data/access/ 기록(tools/access_log.py). IP 는 저장하지 않고 방문자 수만 센다 -->
+  <!-- 접속 통계(2026-11-18) — 서버 .data/access/ 기록(tools/access_log.py). 화면이 3초 넘게 보이면 1회(access-hit.js). IP 는 저장하지 않는다 -->
   <section id="pane-ac" hidden>
     <div class="bar"><button type="button" id="acReload">새로고침</button>
       <span class="ac-seg" id="acDev" role="group" aria-label="기기"><button type="button" data-d="all" aria-pressed="true">전체</button><button type="button" data-d="PC" aria-pressed="false">PC</button><button type="button" data-d="휴대폰" aria-pressed="false">휴대폰</button></span>
@@ -374,40 +393,68 @@
       el.innerHTML='<table class="ac-t"><tr><th>시각</th><th>화면</th><th>오류</th><th>위치</th></tr>'+j.items.map(function(x){ return '<tr><td>'+esc(x.ts)+'</td><td>'+esc(x.page)+'</td><td title="'+esc(x.stack||'')+'">'+esc(x.msg)+'</td><td>'+esc((x.src||'').split('/').pop()+(x.line?':'+x.line:''))+'</td></tr>'; }).join('')+'</table>';
     }).catch(function(){ var el=$('acErr'); if(el) el.textContent='서버에 연결하지 못했습니다'; });
   }
+  var AC_NEW='2026-11-23';   /* 이날부터 '화면이 3초 넘게 보였을 때만' 센다 — 그 앞 날은 흐리게(실제보다 많음) */
   function acDraw(all){
     acLast=all;
     var by=all.by||null, split=acDev==='all'&&by, j=(acDev!=='all'&&by&&by[acDev])||all;
-    var P=by&&by.PC, M=by&&by['휴대폰'];
+    var P=by&&by.PC, M=by&&by['휴대폰'], today=all.at.slice(0,10);
     $('acAt').textContent=all.at+' 기준'+(acDev!=='all'&&!by?' · 서버가 예전 버전이라 기기별로 못 나눕니다(서버.bat 다시 켜기)':'');
-    function pg(set,name){ var r=(set.pages||[]).filter(function(p){ return p.page===name; })[0]; return r; }
-    function split2(a,b){ return split? ' <small>PC '+a+' · 휴대폰 '+b+'</small>' : ''; }
-    function card(t,k){ var o=j[k]; return '<div class="ac-c"><span>'+t+'</span><b>'+o.visitors+'<small>명</small></b><em>'+(split?'PC '+P[k].visitors+'명 · 휴대폰 '+M[k].visitors+'명 · ':'')+'화면 열기 '+o.views+'회</em></div>'; }
-    function cell(p,k){ var a=split&&pg(P,p.page), b=split&&pg(M,p.page);
-      return '<td title="화면 열기 '+p[k].views+'회">'+p[k].visitors+'명'+split2(a?a[k].visitors:0, b?b[k].visitors:0)+'</td>'; }
-    var mx=Math.max.apply(null, j.daily.map(function(d){ return d.visitors; }).concat([1]));
-    var hx=Math.max.apply(null, j.hours.concat([1]));
-    var dv=all.device, dt=(dv.PC+dv['휴대폰'])||1;
-    function bar(d,i){
-      var tip=d.date+' · 방문자 '+d.visitors+'명'+(split?' (PC '+P.daily[i].visitors+' · 휴대폰 '+M.daily[i].visitors+')':'')+' · 화면 열기 '+d.views+'회', h='';
-      if(split){ var pc=P.daily[i].visitors, mb=M.daily[i].visitors;
-        if(mb) h+='<i class="m" style="height:'+(mb/mx*100).toFixed(1)+'%"></i>';
-        if(pc) h+='<i style="height:'+(pc/mx*100).toFixed(1)+'%"></i>';
-      } else if(d.visitors) h='<i style="height:'+(d.visitors/mx*100).toFixed(1)+'%"></i>';
-      return '<div title="'+tip+'">'+h+'<span>'+(+d.date.slice(8))+'</span></div>';
+    function pg(set,name){ return (set.pages||[]).filter(function(p){ return p.page===name; })[0]; }
+    function card(t,k){
+      var o=j[k], h='<div class="ac-c"><span>'+t+'</span><b>'+o.visitors+'<small>명</small></b>';
+      if(o['new']!=null) h+='<em>처음 온 '+o['new']+'명 · 다시 온 '+(o.visitors-o['new'])+'명</em>';
+      if(split) h+='<em>PC '+P[k].visitors+'명 · 휴대폰 '+M[k].visitors+'명</em>';
+      return h+'<em class="d">화면 열기 '+o.views+'회</em></div>';
     }
-    var who=acDev==='all'?'':' — '+acDev;
-    $('acBody').classList.toggle('mob', acDev==='휴대폰');   /* 휴대폰만 볼 땐 막대도 휴대폰 색 */
+    function cell(p,k){
+      var a=split&&pg(P,p.page), b=split&&pg(M,p.page);
+      return '<td class="n" title="화면 열기 '+p[k].views+'회">'+p[k].visitors+'명'+(split?'<small>PC '+(a?a[k].visitors:0)+' · 휴대폰 '+(b?b[k].visitors:0)+'</small>':'')+'</td>';
+    }
+    /* 막대 — segs 는 아래에서 위로 [PC, 휴대폰] 또는 [값] */
+    function bars(items, mx){
+      return '<div class="ac-bars">'+items.map(function(it){
+        var tot=it.segs.reduce(function(s,x){ return s+x.v; },0), h='';
+        it.segs.slice().reverse().forEach(function(x){ if(x.v) h+='<i'+(x.c?' class="'+x.c+'"':'')+' style="height:'+Math.max(2,Math.round(x.v/mx*96))+'px"></i>'; });
+        return '<div class="'+(it.cls||'')+'" title="'+esc(it.tip)+'"><div class="col">'+(tot?'<em>'+tot+'</em>':'')+h+'</div><span'+(it.k?' class="k"':'')+'>'+it.lb+'</span></div>';
+      }).join('')+'</div>';
+    }
+    var dmx=Math.max.apply(null, j.daily.map(function(d){ return d.visitors; }).concat([1]));
+    var daily=bars(j.daily.map(function(d,i){
+      var pc=split?P.daily[i].visitors:0, mb=split?M.daily[i].visitors:0;
+      return { lb:(+d.date.slice(8)), k:(+d.date.slice(8))%5===0||d.date===today, cls:(d.date<AC_NEW?'old ':'')+(d.date===today?'today':''),
+        segs: split? [{v:pc},{v:mb,c:'m'}] : [{v:d.visitors}],
+        tip: d.date+' · 방문자 '+d.visitors+'명'+(split?' (PC '+pc+' · 휴대폰 '+mb+')':'')+(d['new']!=null?' · 처음 온 '+d['new']+'명':'')+' · 화면 열기 '+d.views+'회'+(d.date<AC_NEW?' · 예전 방식':'') };
+    }), dmx);
+    var hmx=Math.max.apply(null, j.hours.concat([1]));
+    var hourly=bars(j.hours.map(function(n,h){ return {lb:h, k:h%3===0, segs:[{v:n}], tip:h+'시 · 화면 열기 '+n+'회'}; }), hmx);
+    /* 브라우저 — 11-23 부터 기록. 7일 많은 순 */
+    var bt=(j.browsers&&j.browsers.today)||{}, b7=(j.browsers&&j.browsers.d7)||{};
+    var names=Object.keys(b7).filter(function(n){ return n!=='기록 전'; }).sort(function(x,y){ return b7[y]-b7[x]; });
+    var bmx=Math.max.apply(null, names.map(function(n){ return b7[n]; }).concat([1]));
+    var brw=names.length? '<div class="ac-br">'+names.map(function(n){
+      return '<span>'+esc(n)+'</span><span class="tr"><i style="width:'+Math.round(b7[n]/bmx*100)+'%"></i></span><span class="v">오늘 '+(bt[n]||0)+' · 7일 '+b7[n]+'명</span>';
+    }).join('')+'</div>' : '<div class="ac-note">11월 23일부터 기록합니다. 서버를 다시 켠 뒤 접속이 생기면 나옵니다.</div>';
+    var who=acDev==='all'?'':' <small>'+acDev+'</small>';
+    var lg=split?'<span class="ac-lg"><span><i style="background:var(--brand)"></i>PC</span><span><i style="background:#f59e0b"></i>휴대폰</span></span>':'';
+    $('acBody').classList.toggle('mob', acDev==='휴대폰');
     $('acBody').innerHTML=
       '<div class="ac-cards">'+card('오늘','today')+card('최근 7일','d7')+card('최근 30일','d30')+'</div>'
-      +'<h3 class="ac-h">화면별 방문자'+who+'</h3><table class="ac-t"><tr><th>화면</th><th>오늘</th><th>7일</th><th>30일</th></tr>'
-      +(j.pages.length? j.pages.map(function(p){ return '<tr><td>'+esc(p.page)+'</td>'+cell(p,'today')+cell(p,'d7')+cell(p,'d30')+'</tr>'; }).join('') : '<tr><td colspan="4">아직 기록이 없습니다</td></tr>')+'</table>'
-      +'<h3 class="ac-h">날짜별 방문자 (최근 '+j.days+'일)'+who+'</h3>'
-      +(split?'<div class="ac-lg"><span><i style="background:var(--brand)"></i>PC</span><span><i style="background:#f59e0b"></i>휴대폰</span></div>':'')
-      +'<div class="ac-bars">'+j.daily.map(bar).join('')+'</div>'
-      +'<h3 class="ac-h">시간대별 화면 열기 (최근 7일)'+who+'</h3><div class="ac-bars">'+j.hours.map(function(n,h){ return '<div title="'+h+'시 · '+n+'회"><i style="height:'+Math.round(n/hx*100)+'%"></i><span>'+h+'</span></div>'; }).join('')+'</div>'
-      +'<h3 class="ac-h">기기 (최근 30일 화면 열기)</h3><div class="ac-dev"><i style="width:'+Math.round(dv.PC/dt*100)+'%"></i></div><div class="ac-devl"><span>PC '+dv.PC+'회 ('+Math.round(dv.PC/dt*100)+'%)</span><span>휴대폰 '+dv['휴대폰']+'회 ('+Math.round(dv['휴대폰']/dt*100)+'%)</span></div>'
-      +'<h3 class="ac-h">화면 오류 (최근 50건)</h3><div id="acErr" class="ac-note">불러오는 중…</div>'
-      +'<p class="ac-note">· 방문자 = 같은 기기·같은 브라우저를 한 명으로 셉니다(휴대폰 주소가 바뀌어도 같은 사람). 카톡 안 브라우저와 크롬처럼 브라우저가 다르면 따로 셉니다. 링크 미리보기 같은 자동 접속은 빼고, IP 주소는 저장하지 않습니다. · 11월 22일 이전 기록은 휴대폰 한 사람이 여러 명으로 잡혀 실제보다 많습니다. · 서버를 켜 둔 동안만 기록됩니다. · 기록은 13개월 보관합니다.</p>';
+      +'<div class="ac-box"><h3>날짜별 방문자'+who+lg+'<small>흐린 막대 = 11월 23일 이전(예전 방식이라 실제보다 많음)</small></h3>'+daily+'</div>'
+      +'<div class="ac-two">'
+        +'<div class="ac-box"><h3>화면별 방문자'+who+'</h3><div class="ac-tw"><table class="ac-t"><tr><th>화면</th><th class="n">오늘</th><th class="n">7일</th><th class="n">30일</th></tr>'
+        +(j.pages.length? j.pages.map(function(p){ return '<tr><td>'+esc(p.page)+'</td>'+cell(p,'today')+cell(p,'d7')+cell(p,'d30')+'</tr>'; }).join('') : '<tr><td colspan="4">아직 기록이 없습니다</td></tr>')+'</table></div></div>'
+        +'<div class="ac-box"><h3>브라우저별 방문자'+who+'<small>최근 7일</small></h3>'+brw+'</div>'
+      +'</div>'
+      +'<div class="ac-box"><h3>시간대별 화면 열기'+who+'<small>최근 7일 · 몇 시에 많이 보나</small></h3>'+hourly+'</div>'
+      +'<div class="ac-box"><h3>화면 오류<small>최근 50건</small></h3><div id="acErr" class="ac-note">불러오는 중…</div></div>'
+      +'<details class="ac-how"><summary>어떻게 세나요?</summary><ul>'
+        +'<li><b>방문자</b> = 같은 기기·같은 브라우저를 한 명으로 셉니다. 휴대폰 주소가 바뀌어도 같은 사람입니다. 카톡 안 브라우저와 크롬처럼 브라우저가 다르면 따로 셉니다.</li>'
+        +'<li><b>화면 열기</b> = 화면이 실제로 3초 넘게 보였을 때 1회입니다. 메일 보안 검사·링크 미리보기처럼 열어 보고 바로 닫는 접속은 빠집니다. 자료 갱신(1분마다)은 세지 않습니다.</li>'
+        +'<li><b>처음 온 / 다시 온</b> = 그 기간 앞 30일 기록에 없던 방문자가 \'처음 온\' 사람입니다.</li>'
+        +'<li>켜 둔 채 날이 바뀐 화면(상황판 PC 등)은 다음 날 1명으로 다시 셉니다.</li>'
+        +'<li>11월 22일 이전 기록은 휴대폰 한 사람이 여러 명으로, 11월 23일 이전은 메일 검사 같은 자동 접속이 섞여 실제보다 많습니다.</li>'
+        +'<li>IP 주소는 저장하지 않습니다. 서버를 켜 둔 동안만 기록되고, 13개월 보관합니다.</li>'
+      +'</ul></details>';
   }
 
   /* ── 공지사항 ── 공지는 서버(.data/notices.json)에만 있다. 쓰기·고치기·지우기 모두 여기서 하고 서버에 id 로 저장 */

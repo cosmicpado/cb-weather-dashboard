@@ -191,20 +191,34 @@ class Quiet(http.server.SimpleHTTPRequestHandler):
             return self._feedback('GET')
         if base == '/api/access':
             return self._access_stats()
-        # 화면을 열 때만 한 줄 기록(자료 파일·그림은 세지 않는다). IP 는 저장하지 않는다(access_log.py)
-        # 사람이 화면을 연 것만 — 화면 틀(support.js)이 자기 파일을 fetch 로 한 번 더 받는 것까지 세어 재해·상황판이 두 배로 잡혔다.
-        # 브라우저는 주소창·링크로 연 화면에 Sec-Fetch-Dest: document 를 붙인다(이 머리글이 없는 옛 브라우저는 그대로 센다)
-        # 방문자는 쿠키(cbv)로 구분 — 처음 온 브라우저에는 번호를 쿠키로 준다(access_log.visitor)
+        # 화면을 내줄 때는 세지 않고 방문자 번호 쿠키(cbv)만 준다. 세는 것은 화면이 3초 넘게 보인 뒤 보내는 /api/hit(access-hit.js)
         page = unquote(short_to_file(base)).rsplit('/', 1)[-1]
-        dest = self.headers.get('Sec-Fetch-Dest', 'document')
-        # 관리자 화면은 여기서 세지 않는다 — 키가 맞아 실제로 열렸을 때만 화면이 알려 온다(feedback.py admin_view)
-        if page in access_log.PAGES and page != '관리자.html' and dest in ('document', 'iframe') and not self.headers.get('Sec-Purpose'):
-            ip, ua = self._client_ip(), self.headers.get('User-Agent', '')
-            vid, new = access_log.visitor(ip, ua, self.headers.get('Cookie', ''))
-            access_log.log(page, ip, ua, vid)
-            if new and not access_log.is_bot(ua):
-                self._cookie = access_log.cookie_header(vid)
+        if page in access_log.PAGES and self.headers.get('Sec-Fetch-Dest', 'document') in ('document', 'iframe'):
+            self._give_cookie()
         return super().do_GET()
+
+    def _give_cookie(self):
+        """처음 온 브라우저에 방문자 번호 쿠키를 준다(응답 머리글은 end_headers). 돌려줌 = (방문자 번호, IP, 브라우저 정보)."""
+        ip, ua = self._client_ip(), self.headers.get('User-Agent', '')
+        vid, new = access_log.visitor(ip, ua, self.headers.get('Cookie', ''))
+        if new and not access_log.is_bot(ua):
+            self._cookie = access_log.cookie_header(vid)
+        return vid, ip, ua
+
+    def _hit(self):
+        """화면이 실제로 보였다는 알림(access-hit.js) — 접속 기록 한 줄. 관리자 화면은 따로(feedback.py admin_view)."""
+        try:
+            n = int(self.headers.get('Content-Length') or 0)
+            j = json.loads(self.rfile.read(n).decode('utf-8')) if 0 < n <= 512 else {}
+        except (ValueError, UnicodeDecodeError):
+            j = {}
+        page = j.get('page') if isinstance(j, dict) else None
+        site = self.headers.get('Sec-Fetch-Site', 'same-origin')       # 다른 사이트에서 보낸 가짜 알림은 무시
+        if page in access_log.PAGES and page != '관리자.html' and site == 'same-origin':
+            vid, ip, ua = self._give_cookie()
+            access_log.log(page, ip, ua, vid)
+        self.send_response(204)
+        self.end_headers()
 
     def _access_stats(self):
         """관리자 화면 '접속 통계' — 관리자(서버 PC 또는 관리자 키)만."""
@@ -224,6 +238,8 @@ class Quiet(http.server.SimpleHTTPRequestHandler):
             return
         if self.path.split('?', 1)[0] == '/api/feedback':
             return self._feedback('POST')
+        if self.path.split('?', 1)[0] == '/api/hit':
+            return self._hit()
         self.send_error(405)
 
     def send_head(self):                       # GET·HEAD 가 모두 여기를 지난다
