@@ -1,9 +1,12 @@
 /* 로딩 화면 — 실시간 자료를 받기 전에 화면 전체를 덮는다(종합·재해·상황실 공용).
    모양은 같고 색만 다르다 — PC 는 남색 바탕 + 금색 선·막대, 휴대폰은 밝은 바탕 + 빨간 선·막대.
    쓰는 법: cbLoadingScreen.show() / .sub('늦어질 때 안내') / .hide()
-   부르는 곳: data-guard.js(종합·재해), 상황실.html(자체 자료 재시도) */
+   부르는 곳: data-guard.js(종합·재해), 상황실.html(열자마자 + 자체 자료 재시도)
+   깜빡임 막기 — 0.4초 안에 닫히면 아예 안 보인다(서서히 나타나기 전에 지움). 한번 보였으면 최소 0.8초는
+   보여 주고 0.3초 동안 흐려지며 사라진다. 순식간에 번쩍 지나가 '무슨 화면이었지?' 하지 않게. */
 (function () {
-  var el = null, subEl = null;
+  var el = null, subEl = null, t0 = 0;
+  var DELAY = 400, MIN = 800, FADE = 300;   // 나타나기까지 · 최소로 보여 줄 시간 · 사라지는 시간(ms)
 
   function phone() {
     try {
@@ -16,6 +19,9 @@
     if (document.getElementById('cb-loading-css')) return;
     var st = document.createElement('style'); st.id = 'cb-loading-css';
     st.textContent =
+      '#cb-loading{animation:cbLoadIn .25s ease-out ' + DELAY + 'ms both;}' +
+      '#cb-loading.out{animation:cbLoadOut ' + FADE + 'ms ease-in both;}' +
+      '@keyframes cbLoadIn{from{opacity:0}to{opacity:1}}@keyframes cbLoadOut{from{opacity:1}to{opacity:0}}' +
       '#cb-loading{position:fixed;inset:0;z-index:2147483000;display:flex;flex-direction:column;align-items:center;justify-content:center;' +
         'gap:14px;text-align:center;padding:16px;font-family:"Pretendard Variable",Pretendard,"Malgun Gothic",system-ui,sans-serif;}' +
       '#cb-loading img{width:clamp(200px,14vw,560px);height:auto;}#cb-loading.m img{width:62vw;max-width:300px;}' +
@@ -59,9 +65,19 @@
       var bar = node('div', 'bar'); bar.appendChild(node('i')); el.appendChild(bar);
       subEl = node('div', 'sub', ''); el.appendChild(subEl);
       document.body.appendChild(el);
+      t0 = Date.now();
     },
     sub: function (text) { if (subEl) subEl.textContent = text || ''; },
-    hide: function () { if (el) { el.remove(); el = null; subEl = null; } },
+    hide: function () {
+      if (!el) return;
+      var e = el, shownFor = Date.now() - t0 - DELAY;
+      el = null; subEl = null;
+      if (shownFor < 0) { e.remove(); return; }                 // 아직 나타나기 전 — 그냥 지운다(안 보임)
+      setTimeout(function () {                                     // 최소 시간을 채운 뒤 흐려지며 사라짐
+        e.classList.add('out');
+        setTimeout(function () { e.remove(); }, FADE + 50);
+      }, Math.max(0, MIN - shownFor));
+    },
     shown: function () { return !!el; }
   };
 })();
