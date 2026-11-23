@@ -109,10 +109,11 @@ def allowed_path(raw):
     """화면에 필요한 파일만 내준다 — 운영 nginx(tools/server/setup-*.sh)와 같은 규칙.
     ⚠ 작업 폴더에는 .env(API 키)·.git·tools 가 함께 있다. --lan 이면 내부망 어디서나 받아 갈 수 있으므로
       빼면 안 된다(2026-11-06 점검에서 /.env 가 그대로 내려받아지는 것을 발견).
-    Windows 는 '.env.'·'tools '·'.env::$DATA' 처럼 끝 글자가 달라도 같은 파일로 열어서 그런 모양도 막는다."""
+    Windows 는 '.env.'·'tools '·'.env::$DATA' 처럼 끝 글자가 달라도 같은 파일로 열어서 그런 모양도 막는다.
+    '~' 도 막는다 — 드라이브에 짧은 이름(8.3)이 켜져 있으면 .data 가 DATA~1 로도 열려 점(.) 검사를 비켜 간다."""
     path = unquote(raw.split('?', 1)[0].split('#', 1)[0])      # 표준 처리기(translate_path)와 같은 방식으로 자른다
-    if path.endswith('/') or any(c in path for c in '\\:\0'):
-        return False                                           # 폴더 목록 · 역슬래시 경로 · 대체 스트림
+    if path.endswith('/') or any(c in path for c in '\\:\0~'):
+        return False                                           # 폴더 목록 · 역슬래시 경로 · 대체 스트림 · 짧은 이름
     parts = [p for p in path.split('/') if p]
     if not parts or parts[-1] != parts[-1].rstrip(' .'):
         return False
@@ -142,6 +143,12 @@ class Quiet(http.server.SimpleHTTPRequestHandler):
             fwd = (self.headers.get('X-Forwarded-For') or self.headers.get('X-Real-IP') or '').split(',')[-1].strip()
             if fwd:
                 return fwd
+            # 프록시를 거치지 않은 이 PC 안의 접속은 주소창이 localhost·127.0.0.1 일 때만 '서버 PC 자신'(관리자)으로 본다.
+            # 서버 PC 브라우저가 연 나쁜 사이트가 자기 도메인을 127.0.0.1 로 바꿔(DNS rebinding) 관리자 기능을 부르는 것을 막는다
+            host = (self.headers.get('Host') or '').strip().lower()
+            host = host.split(']', 1)[0] + ']' if host.startswith('[') else host.split(':', 1)[0]
+            if host not in ('localhost', '127.0.0.1', '[::1]'):
+                return '0.0.0.0'
         return ip
 
     def _feedback(self, method):
@@ -214,11 +221,26 @@ class Quiet(http.server.SimpleHTTPRequestHandler):
             j = {}
         page = j.get('page') if isinstance(j, dict) else None
         site = self.headers.get('Sec-Fetch-Site', 'same-origin')       # 다른 사이트에서 보낸 가짜 알림은 무시
-        if page in access_log.PAGES and page != '관리자.html' and site == 'same-origin':
+        if page in access_log.PAGES and page != '관리자.html' and site == 'same-origin' and self._hit_ok():
             vid, ip, ua = self._give_cookie()
             access_log.log(page, ip, ua, vid)
         self.send_response(204)
         self.end_headers()
+
+    _hits = {}                                 # 주소 → [날짜, 오늘 건수]
+    _hits_lock = threading.Lock()
+
+    def _hit_ok(self):
+        """한 주소에서 하루 300건까지만 적는다 — 프로그램으로 알림을 계속 보내 기록 파일을 키우거나 통계를 부풀리지 못하게.
+        (사람은 화면을 열 때마다 1건이라 300건이면 넉넉하다. 같은 주소를 쓰는 사무실 여러 PC 도 고려)"""
+        ip, today = self._client_ip(), datetime.now().strftime('%Y-%m-%d')
+        with self._hits_lock:
+            if len(self._hits) > 20000:
+                self._hits.clear()
+            day, n = self._hits.get(ip, (today, 0))
+            n = n + 1 if day == today else 1
+            self._hits[ip] = (today, n)
+            return n <= 300
 
     def _access_stats(self):
         """관리자 화면 '접속 통계' — 관리자(서버 PC 또는 관리자 키)만."""

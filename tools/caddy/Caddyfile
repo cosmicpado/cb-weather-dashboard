@@ -23,6 +23,7 @@
 # 보안 머리글 — HSTS(한 번 https 로 온 브라우저는 다음부터 http 를 쓰지 않는다. ⚠ IP 주소 접속에는 브라우저가 적용하지 않고
 #   도메인을 쓰면 효력이 생긴다) · Server 머리글 지우기(서버 종류를 알리지 않는다)
 # 접근 로그 — logs\access.log (20MB 넘으면 새 파일, 10개·30일까지). '/.env'·'/wp-admin' 같은 수상한 요청을 나중에 찾아볼 수 있게
+#   요청 머리글도 함께 적히므로 관리자 키(X-Admin-Key)는 지우고 적는다(쿠키는 Caddy 가 원래 가린다)
 (to_server) {
 	header {
 		Strict-Transport-Security "max-age=31536000"
@@ -34,9 +35,14 @@
 			roll_keep 10
 			roll_keep_for 720h
 		}
-		format console {
-			time_local
-			time_format "2006-01-02 15:04:05"
+		format filter {
+			wrap console {
+				time_local
+				time_format "2006-01-02 15:04:05"
+			}
+			fields {
+				request>headers>X-Admin-Key delete
+			}
 		}
 	}
 	encode zstd gzip

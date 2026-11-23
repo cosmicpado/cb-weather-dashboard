@@ -254,7 +254,7 @@
       여기서 정하면 <b>모든 상황실 화면에서 이 번호로</b> 단계를 지정할 수 있습니다.<br>
       · 정한 번호는 다시 볼 수 없습니다. 잊으면 새 번호로 다시 정하세요.
       <div class="bar" style="margin-top:8px">
-        <input id="pinIn" type="password" inputmode="numeric" maxlength="8" placeholder="숫자 4~8자리" autocomplete="new-password" style="width:160px">
+        <input id="pinIn" type="password" inputmode="numeric" maxlength="7" placeholder="숫자 7자리" autocomplete="new-password" style="width:160px">
         <button type="button" id="pinSave">번호 저장</button>
         <button type="button" id="pinDel">번호 지우기</button>
         <span class="dt-msg" id="pinMsg"></span>
@@ -293,9 +293,11 @@
     $('list').innerHTML=''; $('list').appendChild(el('div','msg','불러오는 중…'));
     fetch('api/feedback',{cache:'no-store',headers:hdr()}).then(function(r){
       if(r.status===403) return {ok:false, code:403};
+      if(r.status===429) return r.json().catch(function(){ return {}; }).then(function(j){ return {ok:false, code:429, err:j.err}; });   // 키를 여러 번 틀려 잠시 막힘
       return r.json().catch(function(){ return {ok:false, err: r.status===404||r.status===405||r.status===501 ? '이 서버에서는 의견 받기가 켜져 있지 않습니다' : '서버 응답 오류 ('+r.status+')'}; });
     }).then(function(j){
       if(j.code===403){ var had=!!getKey(); clearKey(); gate(had ? '키가 맞지 않습니다' : ''); return; }
+      if(j.code===429){ clearKey(); gate(j.err || '키를 여러 번 틀려 잠시 막혔습니다'); return; }
       opened();
       if(!counted){ counted=true; post({action:'admin_view'}); }   // 접속 통계 — 키가 맞아 화면이 열렸을 때만 한 번 센다
       if(!j.ok){ items=[]; render(j.err||'볼 수 없는 주소입니다'); return; }
@@ -788,7 +790,7 @@
     .then(function(j){ pinMsg(!j||!j.ok ? '서버에서 읽지 못했습니다' : (j.pin ? '번호가 정해져 있습니다' : '아직 번호가 없습니다 — 번호를 정해야 상황실 화면에서 지정할 수 있습니다'), (!j||!j.ok)?'err':''); })
     .catch(function(){ pinMsg('서버에 연결하지 못했습니다','err'); }); }
   function pinErr(j, fallback){ var e=(j&&j.err)||fallback; return /내용을 적어/.test(e) ? '서버가 아직 예전 버전입니다 — 서버.bat 을 껐다 켠 뒤 다시 하세요' : e; }
-  $('pinSave').onclick=function(){ var v=$('pinIn').value.trim(); if(!/^\d{4,8}$/.test(v)){ pinMsg('숫자 4~8자리로 넣어 주세요','err'); return; }
+  $('pinSave').onclick=function(){ var v=$('pinIn').value.trim(); if(!/^\d{7}$/.test(v)){ pinMsg('숫자 7자리로 넣어 주세요','err'); return; }
     post({action:'stage_pin', pin:v}).then(function(j){ if(!j.ok){ pinMsg(pinErr(j,'저장하지 못했습니다'),'err'); return; } $('pinIn').value=''; pinMsg('번호를 저장했습니다','ok'); }); };
   $('pinDel').onclick=function(){ if(!confirm('비상단계 지정 번호를 지울까요?\n지우면 상황실 화면에서 단계를 지정할 수 없습니다.')) return;
     post({action:'stage_pin', pin:null}).then(function(j){ if(!j.ok){ pinMsg(pinErr(j,'지우지 못했습니다'),'err'); return; } pinMsg('번호를 지웠습니다 — 상황실 화면에서 지정할 수 없습니다','ok'); }); };

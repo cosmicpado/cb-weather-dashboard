@@ -18,7 +18,7 @@
          번호를 아직 안 정했으면 관리자만 바꿀 수 있다. 24시간 지나면 저절로 자동으로.
        "duty":[{who,what}] (선택) — 재대본 발령에 맞춰 직접 쓴 비상근무 내용. 없으면 기준표(duty.json·duty.js)대로(2026-11-16)
   POST {"action":"stage_pin_check", "pin":"1234"}   지정 번호 확인만(지정 창 [확인] — 맞아야 단계 단추가 켜진다). 틀리면 횟수에 센다
-  POST {"action":"stage_pin", "pin":"1234" | null}   지정 번호 정하기(4~8자리 숫자) · null 이면 지우기 (관리자만)
+  POST {"action":"stage_pin", "pin":"1234" | null}   지정 번호 정하기(숫자 7자리) · null 이면 지우기 (관리자만)
        └ .data/stage_pin.json 에 소금 친 해시로만 둔다(번호 자체는 저장하지 않는다)
        └ .data/stage.json · 바꾼 기록은 .data/stage_log.jsonl(시각·주소·단계)
   POST {"action":"stage_rules_save", "rules":{targets:{hq|room:{mode,stages}}} | null}   비상단계 기준 저장 · null 이면 기본값(재대본 표) (관리자만)
@@ -76,6 +76,8 @@ RULE_KINDS = ('rs', 'rain', 'snow', 'ty', 'tyinfo')
 RULE_LEVELS = ('p', 'a', 'w')
 RULE_SCOPES = ('do',)                                  # 도내 — 관서별로 넓히면 관할 범위를 더한다
 _pin_fail = {}                                       # 주소 → [틀린 시각들] — 10분에 5번 틀리면 막는다
+_key_fail = {}                                       # 주소 → [관리자 키를 틀린 시각들] — 10분에 5번 틀리면 그 주소는 키를 못 쓴다
+_key_lock = threading.Lock()
 DUTY_KEYS = ('s1', 's2', 's3', 's4', 'snow')   # 준비 · 1단계 · 2단계 · 3단계 · 1단계(대설주의보로 난 경우)
 NOTICE_KINDS = ('새 기능', '개선', '오류 수정', '안내')
 NOTICE_ID = re.compile(r'^\d{4}-\d{2}-\d{2}-[0-9A-Za-z]{1,8}$')
@@ -125,6 +127,30 @@ def _is_admin(ip, headers):
     key = _env_key()
     given = (headers.get('X-Admin-Key') or '').strip()
     return bool(key and given and hmac.compare_digest(key.encode(), given.encode()))
+
+
+def _key_gate(ip, headers):
+    """관리자 키를 계속 넣어 보는 것 막기 — 요청마다 한 번, 키를 보낸 다른 PC 만 센다. 막혔으면 (429, 응답), 아니면 None.
+    막힌 동안은 맞는 키도 받지 않는다(10분 뒤 풀림). 관리자 화면은 틀린 키를 받으면 지우므로 같은 키로 계속 틀리지 않는다."""
+    given = (headers.get('X-Admin-Key') or '').strip()
+    if not given or _is_local(ip):
+        return None
+    now = time.time()
+    with _key_lock:
+        if len(_key_fail) > 5000:                          # 주소가 많이 쌓이면 지난 것부터 비운다
+            for k in [k for k, v in _key_fail.items() if not v or now - v[-1] >= 600]:
+                _key_fail.pop(k, None)
+        fails = [t for t in _key_fail.get(ip, []) if now - t < 600]
+        if len(fails) >= 5:
+            _key_fail[ip] = fails
+            return 429, {'ok': False, 'err': '관리자 키를 여러 번 틀려 10분 동안 막혔습니다 — 잠시 뒤 다시 넣어 주세요'}
+        key = _env_key()
+        if key and hmac.compare_digest(key.encode(), given.encode()):
+            _key_fail.pop(ip, None)
+        else:
+            fails.append(now)
+            _key_fail[ip] = fails
+    return None
 
 
 def _rec_id(rec):
@@ -391,8 +417,14 @@ def _load_pin():
         return None
 
 
-def _pin_hash(salt, pin):
-    return hashlib.sha256((salt + '|' + pin).encode('utf-8')).hexdigest()
+PIN_ITER = 300000   # 지정 번호 해시를 일부러 느리게 — 파일이 새도 7자리 번호를 금방 거꾸로 찾지 못하게
+
+
+def _pin_hash(salt, pin, it=0):
+    """it 가 0 이면 예전 방식(sha256 한 번) — 예전에 정한 번호도 그대로 맞춰 본다. 새로 정하는 번호는 PBKDF2."""
+    if not it:
+        return hashlib.sha256((salt + '|' + pin).encode('utf-8')).hexdigest()
+    return hashlib.pbkdf2_hmac('sha256', pin.encode('utf-8'), salt.encode('utf-8'), it).hex()
 
 
 def _save_pin(ip, headers, j):
@@ -408,10 +440,10 @@ def _save_pin(ip, headers, j):
                 pass
             return 200, {'ok': True, 'pin': False}
         pin = str(pin).strip()
-        if not re.fullmatch(r'\d{4,8}', pin):
-            return 400, {'ok': False, 'err': '번호는 숫자 4~8자리로 정해 주세요'}
-        salt = os.urandom(8).hex()
-        _write_atomic(STORE_STAGE_PIN, json.dumps({'salt': salt, 'hash': _pin_hash(salt, pin),
+        if not re.fullmatch(r'\d{7}', pin):
+            return 400, {'ok': False, 'err': '번호는 숫자 7자리로 정해 주세요'}
+        salt = os.urandom(16).hex()
+        _write_atomic(STORE_STAGE_PIN, json.dumps({'salt': salt, 'it': PIN_ITER, 'hash': _pin_hash(salt, pin, PIN_ITER),
                                                    'at': datetime.now().strftime('%Y-%m-%d %H:%M')}), 'utf-8')
     return 200, {'ok': True, 'pin': True}
 
@@ -424,15 +456,24 @@ def _pin_ok(ip, headers, j):
     if p is None:
         return False, (403, {'ok': False, 'err': '지정 번호가 아직 없습니다 — 관리자에게 문의하세요'})
     now = time.time()
-    fails = [t for t in _pin_fail.get(ip, []) if now - t < 600]
-    if len(fails) >= 5:
-        return False, (429, {'ok': False, 'err': '번호를 여러 번 틀려 10분 동안 바꿀 수 없습니다'})
+    with _key_lock:                                    # 동시에 여러 번 보내 횟수 제한을 비켜 가지 못하게 먼저 센다
+        if len(_pin_fail) > 5000:
+            for k in [k for k, v in _pin_fail.items() if not v or now - v[-1] >= 600]:
+                _pin_fail.pop(k, None)
+        fails = [t for t in _pin_fail.get(ip, []) if now - t < 600]
+        if len(fails) >= 5:
+            return False, (429, {'ok': False, 'err': '번호를 여러 번 틀려 10분 동안 바꿀 수 없습니다'})
+        fails.append(now)
+        _pin_fail[ip] = fails
     pin = str(j.get('pin') or '').strip()
-    if pin and hmac.compare_digest(_pin_hash(p['salt'], pin), p['hash']):
-        _pin_fail.pop(ip, None)
+    try:
+        it = int(p.get('it') or 0)
+    except (TypeError, ValueError):
+        it = 0
+    if pin and hmac.compare_digest(_pin_hash(p['salt'], pin, it), p['hash']):
+        with _key_lock:
+            _pin_fail.pop(ip, None)
         return True, None
-    fails.append(now)
-    _pin_fail[ip] = fails
     return False, (403, {'ok': False, 'err': '번호가 맞지 않습니다' + (f' ({5 - len(fails)}번 남음)' if len(fails) < 5 else '')})
 
 
@@ -511,6 +552,9 @@ def _notice(ip, headers, j):
 def handle(method, ip, headers, body=b'', path=''):
     """(상태코드, 응답 dict) 를 돌려준다. headers 는 대소문자 무시 조회가 되는 객체(http.server 의 self.headers).
     path 는 요청 주소(물음표 뒤 포함) — ?notices=1 이면 공지사항."""
+    blocked = _key_gate(ip, headers)
+    if blocked:
+        return blocked
     if method == 'POST':
         return _post(ip, headers, body)
     if method == 'GET':
