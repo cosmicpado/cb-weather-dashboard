@@ -199,7 +199,8 @@ GUN_NAMES = set(P.get('gun_names') or ['연천', '가평', '양평']) & SIGUN_SE
 # 경기 값이다 — 운영(북부·남부) 동작은 한 글자도 안 바뀐다. 생성 프로파일(tools/profiles/*.json)은
 # 자기 시도 값을 들고 온다.
 SIDO_WORDS = list(P.get('sido_words') or ['경기'])          # 주소·발신처가 이 말로 시작하면 우리 시도
-WIDE_LABEL = P.get('wide_label', '경기도')                   # 시도 전역 발표의 표시명
+WIDE_LABEL = P.get('wide_label', '충청북도')                 # 시도 전역 발표의 표시명
+WIDE_SHORT = P.get('wide_short', '충북')                      # 줄인 이름 — 여러 시도 재난문자의 '충북 등 9개 시도'
 WRN_STN = int(P.get('wrn_stn', 109))                        # 기상청 특보 API stnId (109 수도권·105 강원…)
 _wp = P.get('wrn_prefix', 'L101')
 WRN_PREFIX = tuple(_wp) if isinstance(_wp, (list, tuple)) else _wp   # 시도 육상 특보구역 코드 접두(통합시는 둘)
@@ -3818,8 +3819,9 @@ def fetch_messages():
                 sender = m.group(1) + m.group(2)
                 region = _unit_from_match(m)
             else:
-                # "경기도", "경기북부" 등 도 전역. 다른 시도와 함께 받은 도 전역 문자는 '전국'(10곳 이상)·'여러 시도'로
-                sender = ('전국' if len(_all) >= 10 else '여러 시도') if multi else WIDE_LABEL
+                # 도 전역 문자. 다른 시도와 함께 받은 문자는 '전국'(10곳 이상) · '충북 등 9개 시도'처럼
+                # (충북이 들어 있다는 것과 범위가 함께 보이게 — 국토교통부 도로살얼음 안내처럼 부처가 여러 시도에 한꺼번에 보낸 문자)
+                sender = ('전국' if len(_all) >= 10 else f'{WIDE_SHORT} 등 {len(_all)}개 시도') if multi else WIDE_LABEL
                 region = WIDE_LABEL
 
         result.append({
