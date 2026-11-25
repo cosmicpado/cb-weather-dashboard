@@ -2,7 +2,7 @@
 <html><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>충북소방 기상재난통합플랫폼</title>
+<title>충북소방 기상정보통합플랫폼</title>
 <!-- 홈 화면에 추가 — 아이콘·이름. 아이폰은 SVG 를 홈 화면 아이콘으로 못 써서 PNG(apple-touch-icon) 를 따로 둔다 -->
 <link rel="manifest" href="manifest.json">   <!-- 홈 화면 앱은 하나(충북기상플랫폼, 종합 현황부터) -->
 <meta name="theme-color" content="#0d1118">
@@ -2900,7 +2900,7 @@ window.cbWindyUrl = function(overlay, zoom){
     var urg=document.createElement('div'); urg.id='wall-urg'; box.appendChild(urg);
     /* 첫 줄 — 로고·이름·LIVE·자료 시각 + 화면 색 단추(종합 현황·재해별 집중 감시와 같은 틀, 2026-11-20) */
     var mbr=document.createElement('div'); mbr.className='mbr';
-    mbr.innerHTML='<div class="mlogo" aria-hidden="true">⛅</div><div class="mtt"><b>충북소방 기상재난통합플랫폼<span class="mlive">● LIVE</span></b></div>';
+    mbr.innerHTML='<div class="mlogo" aria-hidden="true">⛅</div><div class="mtt"><b>충북소방 기상정보통합플랫폼<span class="mlive">● LIVE</span></b></div>';
     /* 오른쪽 위 ⋯ — 공지사항·의견 보내기·화면 색(more-menu.js). 화면 색 단추는 숨겨 두고 메뉴가 대신 누른다 */
     var more=document.createElement('button'); more.type='button'; more.className='hd-more'; more.setAttribute('aria-label','더보기'); more.setAttribute('aria-haspopup','menu'); more.title='공지사항 · 의견 보내기 · 화면 색'; more.textContent='⋯';
     th.style.display='none'; window.cbMoreCfg={ page:'실시간 상황판', themeBtn:function(){ return th; }, isDark:function(){ return W.dark ? W.dark() : true; },
