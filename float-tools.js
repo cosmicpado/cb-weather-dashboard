@@ -46,12 +46,16 @@
   function onScroll() { if (!topBtn) return; var on = (window.scrollY || document.documentElement.scrollTop || 0) > 240;
     topBtn.style.visibility = on ? 'visible' : 'hidden'; topBtn.style.opacity = on ? '1' : '0'; }
 
-  /* ── 윈디 크게 보기 창 — 상황실(cbWindyOpen)과 같은 주소·층. 처음 층은 바람(비가 없으면 레이더는 멈춘 화면 같아서) ── */
+  /* ── 윈디 크게 보기 창 — W 단추(SHOW_WINDY)로 연다. 처음 층은 바람(비가 없으면 레이더는 멈춘 화면 같아서) ── */
   var LAYERS = [['wind', '🌬️ 바람'], ['radar', '📡 날씨 레이더'], ['satellite', '🛰️ 위성'], ['gust', '💨 돌풍'], ['rain', '🌧️ 비·눈 예보'], ['temp', '🌡️ 기온'], ['clouds', '☁️ 구름']];
   function url(overlay) {
     return 'https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=%C2%B0C&metricWind=m%2Fs'
       + '&zoom=9&overlay=' + (overlay || 'wind') + '&product=ecmwf&level=surface&lat=36.75&lon=127.75&message=true';
   }
+  /* windy.com 사이트를 새 창으로 — 넣기 화면(embed)과 달리 크게 확대하면 등고선 지형도(Mapy.com)로 바뀐다 */
+  window.cbWindySite = function (overlay) {
+    window.open('https://www.windy.com/?' + (overlay || 'wind') + ',36.750,127.750,9', '_blank', 'noopener');
+  };
   var ov = null;
   function close() { if (ov) { ov.remove(); ov = null; document.removeEventListener('keydown', onKey, true); } }
   function onKey(e) { if (e.key === 'Escape') { e.stopPropagation(); close(); } }
@@ -66,14 +70,17 @@
     var hd = el('div', 'display:flex;align-items:center;gap:8px;flex-wrap:wrap;');
     hd.appendChild(el('div', 'font-size:18px;font-weight:800;margin-right:6px;', '윈디 정보'));
     var frame = el('iframe', 'flex:1;min-height:0;width:100%;border:0;border-radius:12px;background:#0d1118;'); frame.title = 'Windy';
-    var btns = [];
-    function pick(k) { frame.src = url(k);
+    var btns = [], cur = layer;
+    function pick(k) { cur = k; frame.src = url(k);
       btns.forEach(function (b) { var on = b.dataset.k === k;
         b.style.background = on ? 'var(--brand,#2563eb)' : 'transparent'; b.style.color = on ? '#fff' : 'var(--ink2,#4b5a74)';
         b.style.borderColor = on ? 'var(--brand,#2563eb)' : 'var(--border2,var(--line,#d3dbe9))'; }); }
     LAYERS.forEach(function (x) { var b = el('button', 'padding:6px 11px;border-radius:10px;border:1px solid;font:800 13.5px Pretendard,system-ui,sans-serif;cursor:pointer;', x[1]);
       b.type = 'button'; b.dataset.k = x[0]; b.onclick = function () { pick(x[0]); }; btns.push(b); hd.appendChild(b); });
-    var x = el('button', 'margin-left:auto;width:36px;height:36px;border-radius:10px;border:1px solid var(--border2,var(--line,#d3dbe9));background:transparent;color:var(--ink,#0f1b2d);font-size:18px;cursor:pointer;', '✕');
+    var site = el('button', 'margin-left:auto;padding:6px 11px;border-radius:10px;border:1px solid var(--border2,var(--line,#d3dbe9));background:transparent;color:var(--ink,#0f1b2d);font:800 13.5px Pretendard,system-ui,sans-serif;cursor:pointer;', 'windy.com 열기 ↗');
+    site.type = 'button'; site.title = '지금 층 그대로 windy.com 을 새 창으로 엽니다(크게 확대하면 등고선 지형도로 바뀝니다)';
+    site.onclick = function () { window.cbWindySite(cur); }; hd.appendChild(site);
+    var x = el('button', 'width:36px;height:36px;border-radius:10px;border:1px solid var(--border2,var(--line,#d3dbe9));background:transparent;color:var(--ink,#0f1b2d);font-size:18px;cursor:pointer;', '✕');
     x.type = 'button'; x.setAttribute('aria-label', '닫기'); x.onclick = close; hd.appendChild(x);
     card.appendChild(hd); card.appendChild(frame);
     card.appendChild(el('div', 'font-size:13px;color:var(--ink3,#8593aa);', '날씨 레이더·위성은 관측, 나머지는 ECMWF 모델 예보 · 아래 ▶ 로 흐름 재생 · 닫기: ✕ · 바깥 누르기 · Esc'));

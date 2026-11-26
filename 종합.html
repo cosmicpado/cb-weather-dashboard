@@ -769,13 +769,20 @@ html.no-demo .demo:not(:has(button.on)){display:none}   /* 'test' 명령으로 �
     if (se.querySelectorAll('.si').length > 1 && se.offsetHeight > parseFloat(getComputedStyle(se).fontSize)*2) se.classList.add('split');
   }
   window.addEventListener('resize', splitSub);
+  /* 습도 칸 제목 줄 오른쪽의 실효습도 — 건조주의보 기준(35% 이하) 주황, 건조경보 기준(25% 이하) 빨강 */
+  function effTag(e){
+    if (e==null || isNaN(+e)) return '';
+    e = Math.round(+e);
+    var c = e<=25 ? ';color:var(--sev);font-weight:800' : e<=35 ? ';color:var(--warn);font-weight:800' : '';
+    return ' <i style="cursor:help'+c+'" title="실효습도: 같은 시각 습도 5일치로 계산한 건조 지표(기상청 식). 건조주의보 기준 35% · 경보 기준 25%">실효 '+e+'%</i>';
+  }
   function renderNow(){
     var n = me===WIDE ? (RC.home||ORDER[0]) : me, s = station(n), f = (s.forecast||[]).slice(0,12), o = s.obs || {}, aw = s.aws || {}, gw = aw.wind || {};
     var day = aw.rnday!=null ? aw.rnday : s.cum12h, deg = s.vec!=null ? s.vec : (o.vec!=null ? o.vec : null);
     var pmx = f.reduce(function(m,x){ return Math.max(m, +x.pop||0); }, 0);
     var h = '<div class="ch"><h3>'+esc(n)+' 현재 실황'+(me===WIDE?' <span style="font-weight:600;color:var(--ink3);font-size:14.5px">(대표 관서)</span>':'')+'</h3><span>'+esc(o.base_time||'')+' 관측</span></div>'
       + '<div class="cur"><div class="big"><div class="t">'+num(s.temp)+'<small>°C</small></div><div class="wx">'+esc(s.icon||'')+' '+esc(s.weather||'')+' · 체감 '+num(s.feels,0)+'°</div></div>'
-      + '<div class="cg"><div class="mc"><span>습도</span><b>'+(s.humid!=null?Math.round(s.humid):'-')+'<small>%</small></b></div>'
+      + '<div class="cg"><div class="mc"><span>습도'+effTag(s.effHumid)+'</span><b>'+(s.humid!=null?Math.round(s.humid):'-')+'<small>%</small></b></div>'
       + '<div class="mc"><span>풍속'+(gw.wss!=null?' <i>순간 '+num(gw.wss)+'</i>':'')+'</span><b>'+num(s.wind)+'<small>m/s</small></b></div>'
       + '<div class="mc"><span>풍향</span><b>'+esc(s.windDir||dirName(deg)||'-')+' '+arrow(deg)+'</b></div></div></div>'
       + '<div class="rain"><span class="rl">강수량</span><div><small>1시간</small><b>'+num(s.rain)+'<i>mm</i></b></div><div><small>12시간</small><b>'+num(s.cum12h)+'<i>mm</i></b></div><div><small>오늘 누적</small><b>'+num(day)+'<i>mm</i></b></div></div>'
@@ -814,8 +821,9 @@ html.no-demo .demo:not(:has(button.on)){display:none}   /* 'test' 명령으로 �
     var el = $('img');
     if (!el.querySelector('iframe')) {      // 윈디는 처음 한 번만 만든다(1분마다 다시 그리면 지도가 처음으로 돌아간다)
       el.innerHTML = '<div class="ch"><h3>기상 영상</h3><span>누르면 크게</span></div><div class="gal"><span id="galImgs" style="display:contents"></span>'
-        + '<figure class="wd" data-windy="1"><iframe src="'+WINDY+'" title="윈디" loading="lazy"></iframe><i></i><figcaption>윈디 · 바람</figcaption></figure></div>';
-      el.querySelector('[data-windy]').onclick = function(){ if (window.cbFab && window.cbFab.open) window.cbFab.open(); else window.open('https://www.windy.com/?36.75,127.75,8', '_blank'); };
+        + '<figure class="wd" data-windy="1" title="누르면 windy.com 이 새 창으로 열립니다(크게 확대하면 등고선 지형도로 바뀝니다)"><iframe src="'+WINDY+'" title="윈디" loading="lazy"></iframe><i></i><figcaption>윈디 · 바람<span>windy.com 열기 ↗</span></figcaption></figure></div>';
+      /* 넣기 화면(embed)은 확대해도 지형도로 바뀌지 않고, 몇 배 확대했는지 우리 쪽에서 알 수도 없다 → windy.com 을 바로 연다 */
+      el.querySelector('[data-windy]').onclick = function(){ window.cbWindySite('wind'); };
     }
     /* 충북에 발효 특보가 없으면 특보 현황 그림 위에 옅은 회색 막 + '특보 없음' — 다른 시도 특보 색만 보여 헷갈리지 않게 */
     var noWarn = !(d.warnings||[]).length;

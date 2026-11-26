@@ -673,7 +673,11 @@ html.wall-m #wall-dots{display:flex;position:fixed;left:50%;bottom:calc(var(--cb
           </div>
           <div style="flex:1.6;min-height:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;">
             <div style="background:var(--panel2,#1b2230);border-radius:16px;padding:8px 24px;display:flex;flex-direction:column;justify-content:center;gap:4px;min-width:0;min-height:0;overflow:hidden;">
-              <div style="font-size:calc(38px*var(--fz,1));font-weight:520;color:var(--dim,#8e9bb0);white-space:nowrap;">습도</div>
+              <!-- 실효습도는 풍속 칸의 순간풍속처럼 제목 줄 오른쪽 -->
+              <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;white-space:nowrap;min-width:0;">
+                <div style="font-size:calc(38px*var(--fz,1));font-weight:520;color:var(--dim,#8e9bb0);">습도</div>
+                <div style="font-size:calc(36px*var(--fz,1));font-weight:{{ effWeight }};color:{{ effColor }};overflow:hidden;text-overflow:ellipsis;" title="실효습도: 같은 시각 습도 5일치로 계산한 건조 지표(기상청 식). 건조주의보 기준 35% · 경보 기준 25%">실효 {{ effHumid }}</div>
+              </div>
               <div style="display:flex;align-items:baseline;gap:8px;white-space:nowrap;"><div style="font-size:calc(78px*var(--fz,1));font-weight:680;line-height:1;font-variant-numeric:tabular-nums;">{{ humid }}</div><div style="font-size:calc(40px*var(--fz,1));font-weight:520;color:var(--dim,#8e9bb0);">%</div></div>
             </div>
             <div style="background:var(--panel2,#1b2230);border-radius:16px;padding:8px 24px;display:flex;flex-direction:column;justify-content:center;gap:4px;min-width:0;min-height:0;overflow:hidden;">
@@ -1490,8 +1494,8 @@ class Component extends DCLogic {
   }
   windyEl(){
     const R = window.React.createElement;
-    return R('div',{onClick:()=>{ if(window.cbWindyOpen) window.cbWindyOpen(); }, title:'누르면 크게 보기',
-        style:{flex:1,minHeight:0,position:'relative',borderRadius:'16px',overflow:'hidden',background:'#0d1118',cursor:'zoom-in'}},
+    return R('div',{onClick:()=>{ window.cbWindySite('wind'); }, title:'누르면 windy.com 이 새 창으로 열립니다(크게 확대하면 등고선 지형도로 바뀝니다)',
+        style:{flex:1,minHeight:0,position:'relative',borderRadius:'16px',overflow:'hidden',background:'#0d1118',cursor:'pointer'}},
       R('iframe',{src:window.cbWindyUrl('wind', 9), title:'윈디 정보', style:{position:'absolute',inset:0,width:'100%',height:'100%',border:0,pointerEvents:'none'}}));
   }
   radarEl(){
@@ -1935,6 +1939,9 @@ class Component extends DCLogic {
       lvTip: s.name+' 관서 상황단계: '+lv.name+(lv.reason?' — '+lv.reason:''),
       levelName: lv.name, levelFg: lv.fg, levelBg: lv.bg, levelBorder: lv.border, levelSub: lv.sub, levelReason: lv.reason,
       rain1h: s.rain1h.toFixed(1), humid: s.humid,
+      effHumid: (s.eff==null ? '—' : Math.round(s.eff)+'%'),   /* 건조주의보 기준 35%·경보 25% 이하면 색 */
+      effColor: s.eff==null ? 'var(--dim,#8e9bb0)' : (s.eff<=25 ? 'var(--cRed,#ff5a5a)' : (s.eff<=35 ? 'var(--cAmber,#ffb020)' : 'var(--dim,#8e9bb0)')),
+      effWeight: (s.eff!=null && s.eff<=35) ? 700 : 540,
       wind: s.wind.toFixed(1), gust: s.gust.toFixed(1),
       windColor: s.wind>=12 ? 'var(--cRed,#ff5a5a)' : (s.wind>=8 ? 'var(--cAmber,#ffb020)' : 'var(--fg,#f2f5fa)'),
       windDir: (s.windDeg==null ? '—' : ['북','북동','동','남동','남','남서','서','북서'][Math.floor(((s.windDeg+22.5)%360)/45)]), windDeg: (s.windDeg==null ? 0 : s.windDeg),
@@ -1972,7 +1979,7 @@ class Component extends DCLogic {
       radarTs: (((EXT().kmaImages||{}).radar||{}).ts||'').slice(11,16),
       radarTitle: this.radarMode()==='W' ? '윈디 정보' : '기상 레이더',
       radarTitleTip: this.radarMode()==='W'
-        ? 'Windy(windy.com) 지도 — 처음엔 바람 흐름(모델 예보)을 보여 줍니다. 날씨 레이더·위성은 관측이고, 바람·돌풍·비·기온·구름은 유럽중기예보센터(ECMWF) 모델 예보입니다. 누르면 크게 보고 층을 바꿀 수 있습니다.'
+        ? 'Windy(windy.com) 지도 — 처음엔 바람 흐름(모델 예보)을 보여 줍니다. 날씨 레이더·위성은 관측이고, 바람·돌풍·비·기온·구름은 유럽중기예보센터(ECMWF) 모델 예보입니다. 누르면 windy.com 이 새 창으로 열립니다 — 층을 바꿀 수 있고, 크게 확대하면 등고선 지형도로 바뀝니다.'
         : '기상청 레이더 합성(강수량) 영상에서 한반도 가운데만 잘라 보여 줍니다. 최근 30분을 5분 간격으로 돌려 보여 주고 최신 장에서 3초 멈춥니다. 파랑·초록은 약한 비, 노랑·빨강은 강한 비. 기상청 공개가 약 5분 늦고, 서버가 1분마다 받아 실제보다 5~7분 늦습니다.',
       radarToggle: this.radarToggle(), droneEl: this.droneEl(s),
       radarSub: this.radarMode()==='W' ? '바람 흐름 · 누르면 크게' : this.radarInfo().t,
@@ -2808,44 +2815,15 @@ class Component extends DCLogic {
 </script>
 
 <script>
-/* 윈디(Windy) 무료 임베드 — 충북 가운데. 레이더 칸 W 모드와 크게 보기 창에서 쓴다. 처음 층은 바람(날씨 레이더는 비가 없으면 멈춘 화면 같아서) */
+/* 윈디(Windy) 무료 임베드 — 충북 가운데. 레이더 칸 W 모드에서 쓴다. 처음 층은 바람(날씨 레이더는 비가 없으면 멈춘 화면 같아서) */
 window.cbWindyUrl = function(overlay, zoom){
   return 'https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=%C2%B0C&metricWind=m%2Fs'
     + '&zoom='+(zoom||8)+'&overlay='+(overlay||'wind')+'&product=ecmwf&level=surface&lat=36.75&lon=127.75&message=true';
 };
-(function(){
-  var box=null, timer=0;
-  function el(t,css,txt){ var e=document.createElement(t); if(css) e.style.cssText=css; if(txt!=null) e.textContent=txt; return e; }
-  function close(){ if(box){ box.remove(); box=null; } clearTimeout(timer); document.removeEventListener('keydown', onKey, true); }
-  function onKey(e){ if(e.key==='Escape'){ e.stopPropagation(); close(); } }
-  var F=function(a,b,c){ return 'clamp('+a+'px,'+b+'vw,'+c+'px)'; };
-  var LAYERS=[['wind','바람'],['radar','날씨 레이더'],['satellite','위성'],['gust','돌풍'],['rain','비·눈 예보'],['temp','기온'],['clouds','구름']];
-  window.cbWindyOpen = function(layer){
-    close(); layer=layer||'wind';
-    box=el('div','position:fixed;inset:0;z-index:2147482000;background:rgba(5,8,14,.62);display:flex;align-items:center;justify-content:center;padding:3vh 3vw;font-family:inherit;');
-    box.setAttribute('role','dialog'); box.setAttribute('aria-modal','true'); box.setAttribute('aria-label','윈디 정보 크게 보기');
-    box.addEventListener('mousedown', function(e){ if(e.target===box) close(); });
-    var card=el('div','width:94vw;height:92vh;background:var(--panel,#151b26);color:var(--fg,#f2f5fa);border:2px solid var(--line,#28313f);border-radius:20px;box-shadow:0 30px 80px rgba(0,0,0,.55);padding:'+F(14,1.2,30)+';display:flex;flex-direction:column;gap:'+F(10,.8,18)+';');
-    box.appendChild(card);
-    var hd=el('div','display:flex;align-items:center;gap:'+F(10,.8,18)+';flex-wrap:wrap;');
-    hd.appendChild(el('div','font-size:'+F(22,1.9,46)+';font-weight:800;letter-spacing:-.02em;','윈디 정보'));
-    var frame=el('iframe','flex:1;min-height:0;width:100%;border:0;border-radius:14px;background:#0d1118;');
-    frame.title='Windy';
-    var btns=[];
-    function pick(k){ frame.src=window.cbWindyUrl(k, 9);
-      btns.forEach(function(b){ var on=b.dataset.k===k; b.style.background=on?'var(--acc,#ff7a2f)':'transparent'; b.style.color=on?'var(--accFg,#0b1220)':'var(--fg,#f2f5fa)'; b.style.borderColor=on?'var(--acc,#ff7a2f)':'var(--dim,#8e9bb0)'; }); }
-    LAYERS.forEach(function(x){ var b=el('button','padding:'+F(6,.5,12)+' '+F(12,1,24)+';border-radius:12px;border:2px solid var(--dim,#8e9bb0);background:transparent;color:var(--fg,#f2f5fa);font-size:'+F(15,1.1,28)+';font-weight:800;cursor:pointer;font-family:inherit;', x[1]);
-      b.dataset.k=x[0]; b.onclick=function(){ pick(x[0]); }; btns.push(b); hd.appendChild(b); });
-    var x=el('button','margin-left:auto;width:'+F(36,2.4,58)+';height:'+F(36,2.4,58)+';border-radius:12px;border:2px solid var(--dim,#8e9bb0);background:transparent;color:var(--fg,#f2f5fa);font-size:'+F(18,1.3,30)+';cursor:pointer;','✕');
-    x.setAttribute('aria-label','닫기'); x.onclick=close; hd.appendChild(x);
-    card.appendChild(hd); card.appendChild(frame);
-    card.appendChild(el('div','font-size:'+F(12,.85,20)+';color:var(--dim,#8e9bb0);display:flex;gap:16px;flex-wrap:wrap;',
-      '날씨 레이더·위성은 관측, 나머지는 ECMWF 모델 예보 · 아래 ▶ 로 흐름 재생 · 닫기: ✕ · 바깥 누르기 · Esc'));
-    pick(layer);
-    document.body.appendChild(box);
-    document.addEventListener('keydown', onKey, true);   /* 윈디 창은 저절로 닫지 않는다(요청) — ✕·바깥·Esc 로만 */
-  };
-})();
+/* windy.com 사이트를 새 창으로 — 넣기 화면과 달리 크게 확대하면 등고선 지형도(Mapy.com)로 바뀌고 층도 바꿀 수 있다 */
+window.cbWindySite = function(overlay){
+  window.open('https://www.windy.com/?'+(overlay||'wind')+',36.750,127.750,9', '_blank', 'noopener');
+};
 </script>
 <script>
 /* 휴대폰 보기 맨 위 관서 고르기(2026-11-16) — 시계 칸 대신. html.wall-m 일 때만 보인다(CSS).
