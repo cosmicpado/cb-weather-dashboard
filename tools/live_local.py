@@ -298,6 +298,18 @@ def caddy_host():
     return ''
 
 
+def write_version():
+    """version.json 에 지금 코드의 커밋 번호를 쓴다 — 켜 둔 화면(version-check.js)이 5분마다 보고,
+    번호가 바뀌면 스스로 새로고침한다. 업데이트.bat 이 새 코드를 받은 뒤 이 서버를 다시 켜므로 여기서 쓰면 된다."""
+    try:
+        v = subprocess.run(['git', '-c', 'safe.directory=*', 'rev-parse', '--short', 'HEAD'], cwd=ROOT,
+                           capture_output=True, text=True, timeout=10).stdout.strip()
+    except (OSError, subprocess.SubprocessError):
+        return
+    if v:
+        (ROOT / 'version.json').write_text(json.dumps({'v': v}) + '\n', encoding='utf-8')
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--port', type=int, default=8765)
@@ -319,6 +331,7 @@ def main():
             loop(every, job)
         except KeyboardInterrupt:
             sys.exit(0)
+    write_version()
     threading.Thread(target=loop, args=(every, job), daemon=True).start()
     if a.collect:
         # 레이더만 1분마다 따로 — 5분 전체 수집을 기다리면 화면이 10분 넘게 늦는다(상황실 레이더 칸이 frames.json 을 1분마다 읽는다)

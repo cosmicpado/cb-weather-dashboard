@@ -1,7 +1,7 @@
 /* 새 판 자동 반영 — 서버에 새 코드가 올라오면 켜 둔 화면이 스스로 새로고침한다(2026-11-19).
-   서버의 tools/server/update-code.sh 가 코드를 받을 때 version.json 에 커밋 번호를 쓴다(약 50바이트).
+   서버(tools/live_local.py)가 켜질 때 version.json 에 커밋 번호를 쓴다(약 20바이트). 업데이트.bat 이 새 코드를 받고 서버를 다시 켜므로 번호가 바뀐다.
    화면은 5분마다 그 작은 파일만 확인한다 — 화면 파일 자체(상황실.html 4MB)를 받아 비교하면 행정망에 부담이라 안 된다.
-   · version.json 이 없으면(이 PC 서버.bat · Cloudflare) 아무것도 하지 않는다
+   · version.json 이 없으면(Cloudflare · 서버 없이 파일만 열 때) 아무것도 하지 않는다
    · 시연 중(주소 ?demo= · 화면 안 시연 CB_DEMO_ON)·배치 편집 중(WALL_EDITING)이면 끝날 때까지 미룬다(30초마다 다시 봄) */
 (function () {
   var first = null, pending = false;
