@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html><head>
+<html lang="ko"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>충북소방 기상정보통합플랫폼</title>
@@ -201,6 +201,7 @@ html.wall-m #wall-dots{display:flex;position:fixed;left:50%;bottom:calc(var(--cb
 <script>window.CB_PAGE = 'wall';</script>
 <script src="./tour.js"></script>   <!-- 처음 화면 안내(한 번만, 1분 지나면 저절로 닫힘) · 시연을 처음 켰을 때 안내 — 다시 보기는 '/' guide · ⋯ 메뉴 -->
 <script src="./version-check.js"></script>
+<script src="./kbd-click.js"></script>   <!-- 마우스로만 눌리던 칸을 키보드(Tab·Enter)로도 -->
 <script>window.cbTimeLabel=function(tm){   /* 시각 표기(지진·재난문자 공통, 2026-11-19) — 오늘 'HH:MM' · 어제 '어제 HH:MM' · 그 전 'M/D HH:MM'('N분 전'은 쓰지 않는다) */
     var s=String(tm||'').replace(/\//g,'-'), d=new Date(s.replace(' ','T')), now=new Date();
     if(isNaN(d)) return String(tm||'').slice(11,16);
@@ -1048,7 +1049,7 @@ class Component extends DCLogic {
     r.setProperty('--accFg', dark ? '#0b1220' : '#ffffff');   // 강조색 바탕 위 글자 — 밝은 화면 보라 바탕엔 흰 글자
     // cSafe = 정상·낮음·좋음·안전·평상(문제없음) — 색을 빼서 위험한 곳만 색이 남게. cGreen 은 강조색(관서 이름 줄·진행 막대)용으로 남긴다
     const A = dark ? {cGreen:'#17AFAB',cSafe:'#AEB8C8',cAmber:'#FFB020',cOrange:'#FF9A3C',cRed:'#FF5A5A',cBlue:'#54AAFF',cIndigo:'#B7C4FF',cYellow:'#F2D53C'}
-                   : {cGreen:'#5E3790',cSafe:'#6B7891',cAmber:'#A86A00',cOrange:'#C75400',cRed:'#C9302C',cBlue:'#1D6FD1',cIndigo:'#4F63D6',cYellow:'#7A6400'};   // 밝은 화면: 흰 바탕 위 글자로 읽히게 진하게(2026-11-16)
+                   : {cGreen:'#5E3790',cSafe:'#5f6d85',cAmber:'#926000',cOrange:'#b54708',cRed:'#C9302C',cBlue:'#1D6FD1',cIndigo:'#4F63D6',cYellow:'#7A6400'};   // 밝은 화면: 흰 바탕 위 글자로 읽히게 진하게 — 대비 4.5:1 이상(WCAG AA)
     Object.keys(A).forEach(k=>r.setProperty('--'+k, A[k]));
     const L = dark
       ? [['rgba(142,155,176,.08)','#D5DBE6','rgba(174,184,200,.9)','rgba(142,155,176,.45)'],   // 평상 = 회색
