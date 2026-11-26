@@ -903,11 +903,15 @@ html.no-demo .demo:not(:has(button.on)){display:none}   /* 'test' 명령으로 �
         + '<div class="ref" data-go="river"><h4>🌊 '+(me===WIDE?'충북':'관할')+' 하천</h4><b style="color:'+(bad.length?LVC[bad[0].lv]:'var(--ok)')+'">'+(bad.length? LVT[bad[0].lv]+' '+bad.length+'곳' : '모두 정상')+'</b><p>'+(top? '수위가 가장 높은 곳<br>'+esc(shortRiver(top.r.name))+' · 경계수위의 '+Math.round(top.pct*100)+'%' : '관측소 없음')+'</p></div>'
         + (dams.length ? '<div class="ref" data-go="dam"><h4>💧 충북 영향 댐</h4><b style="color:'+(damHot.length?'var(--warn)':'var(--ok)')+'">'+(damHot.length? damHot.length+'곳 '+esc(damHot[0].label) : '모두 정상')+'</b><p>'+(damHot.length ? esc(damHot.map(function(x){ return x.name+' 방류 '+(x.out!=null?Math.round(x.out):'-')+'㎥/s'; }).join(' · ')) : dams.length+'곳 감시 · 수문 방류 없음')+'</p></div>' : '')
         + (function(){ var FCOL=['var(--ok)','#b54708','var(--warn)','var(--sev)'], mf = fire.filter(function(x){ return x.region===sig(me); })[0];
-            var head = (me!==WIDE && mf) ? '<b style="color:'+FCOL[Math.max(0,(mf.level||1)-1)]+'">'+esc(mf.region)+' '+esc(mf.levelText)+'</b>' : '<b style="color:'+(hiF.length?'#b54708':'var(--ok)')+'">'+(hiF.length? esc(hiF[0].levelText)+' 이상 '+hiF.length+'곳':'전역 낮음')+'</b>';
-            /* 아랫줄 — 충북 전체 상황. 다소높음 이상인 곳이 있으면 그 시군을, 없으면 '모두 낮음' */
+            var head = (me!==WIDE && mf) ? '<b style="color:'+FCOL[Math.max(0,(mf.level||1)-1)]+'">'+esc(mf.region)+' '+esc(mf.levelText)+'</b>' : '<b style="color:'+(hiF.length?'#b54708':'var(--ok)')+'">'+(hiF.length? '다소높음 이상 '+hiF.length+'곳':'전역 낮음')+'</b>';
+            /* 아랫줄 — 충북 전체를 단계별로 묶는다. 시군이 3곳 이하인 단계만 이름을 적고, 많은 단계는 '9곳'처럼 수만
+               (예: '충북 높음(제천) · 다소높음(9곳) · 낮음(단양)'). 모두 같은 단계면 '충북 11개 시군 모두 다소높음' */
+            var byLv = {}; fire.forEach(function(x){ (byLv[x.level] = byLv[x.level] || []).push(x); });
+            var lvs = Object.keys(byLv).map(Number).sort(function(a,b){ return b-a; });
             var sub = !fire.length ? '산불위험 자료 없음'
-              : hiF.length ? '충북 다소높음 이상: '+esc(hiF.map(function(x){ return x.region+' '+x.levelText; }).join(' · '))
-              : '충북 '+fire.length+'개 시군 모두 낮음';
+              : lvs.length===1 ? '충북 '+fire.length+'개 시군 모두 '+esc(byLv[lvs[0]][0].levelText)
+              : '충북 '+lvs.map(function(l){ var a = byLv[l];
+                  return esc(a[0].levelText)+'('+(a.length<=3 ? esc(a.map(function(x){ return x.region; }).join('·')) : a.length+'곳')+')'; }).join(' · ');
             return '<div class="ref" data-go="fire"><h4>🔥 산불 위험</h4>'+head+'<p>'+sub+'</p></div>'; })()
         + (function(){ var mp2 = pm.filter(function(x){ return x.region===me; })[0], GT={good:'좋음',normal:'보통',bad:'나쁨',very_bad:'매우나쁨'};
             var head = (me!==WIDE && mp2) ? (mp2.pm10==null ? '<b style="color:var(--ink3)">'+esc(me)+' 측정 자료 없음</b>' : '<b style="color:'+(/bad/.test(mp2.grade||'')?'var(--warn)':'var(--ok)')+'">'+esc(me)+' '+mp2.pm10+'㎍/㎥ · '+esc(GT[mp2.grade]||mp2.gradeText||'')+'</b>') : '<b style="color:'+(pmBad.length?'var(--warn)':'var(--ok)')+'">'+(pmBad.length? '나쁨 '+pmBad.length+'곳':'충북 전역 좋음·보통')+'</b>';
