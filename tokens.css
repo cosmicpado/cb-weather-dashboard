@@ -1,0 +1,64 @@
+/* 공용 색 — 종합 현황 · 재해별 집중 감시 · 119종합상황실이 함께 쓰는 색 이름표.
+   디자인 시스템(github.com/cosmicpado/design)의 tokens.css 와 같은 값이다. 색을 바꿀 땐 여기 한 곳만 고친다.
+   · 상태색 다섯 단계(평상 ok · 준비 blue · 주의 amb · 경계 warn · 심각 sev) — 2026-11-26 사용자와 고른 'C-2' 안
+     그림용(…Fill)은 신호등처럼 또렷하게, 글자용은 주의(금빛) → 경계(불꽃 주황) → 심각(짙은 빨강)으로 색상과 밝기를 함께 벌렸다
+   · 글자용(ok…sev): 흰 바탕 대비 4.6~7.8:1(WCAG AA). 작은 단계 글자는 검정 + 점으로 쓰고, 큰 제목·알림 제목에 쓴다
+   · 그림용(okFill…sevFill): 막대·점·동그라미·테두리. 위 글자는 onFill(검정), 심각만 sevOn(흰색)
+   · 이름표(특보·단계 꼬리표)는 바탕을 글자용 색으로 칠하고 흰 글자(tagOn)를 쓴다 — 다섯 단계 모두 4.6:1 이상
+   · 화면마다 따로 필요한 색(지도·예보 그래프 등)은 각 화면에 둔다 */
+:root {
+  --bg: #f3f5f9;
+  --card: #fff;
+  --soft: #f3f5f9;
+  --track: #eceff4;
+  --line: #e4e8ef;
+  --border2: #d3dbe9;
+  --ink: #101828;
+  --ink2: #4b5a74;
+  --ink3: #5f6d85;
+  --brand: #1d4ed8;
+  --ok: #1e7a3c;
+  --okbg: #ecf8f2;
+  --blue: #2f62c0;
+  --amb: #9c6c01;
+  --ambFill: #f4b00c;
+  --warn: #ce4701;
+  --warnFill: #f57404;
+  --warnbg: #fff4e6;
+  --sev: #a3161a;
+  --sevbg: #fef0ef;
+  --okFill: #37bb62;
+  --blueFill: #4699fe;
+  --sevFill: #e1110d;
+  --onFill: #101828;   /* 그림용 색 위 글자 */
+  --sevOn: #ffffff;    /* 심각(진한 빨강) 위 글자만 흰색 — 검정은 4.0:1 로 모자란다 */
+  --tagOn: #ffffff;    /* 이름표(글자용 색 바탕) 위 글자 */
+}
+:root[data-theme="dark"] {
+  --bg: #080d18;
+  --card: #111a2c;
+  --soft: #0f1729;
+  --track: #172036;
+  --line: #26314c;
+  --border2: #354364;
+  --ink: #e9eef9;
+  --ink2: #9fb0cf;
+  --ink3: #8a9ab8;
+  --brand: #4b8bf5;
+  --ok: #34d399;
+  --okbg: rgba(52,211,153,.12);
+  --blue: #60a5fa;
+  --amb: #fbbf24;
+  --ambFill: #fbbf24;
+  --warn: #fb923c;
+  --warnFill: #fb923c;
+  --warnbg: rgba(251,146,60,.13);
+  --sev: #f87171;
+  --sevbg: rgba(248,113,113,.14);
+  --okFill: #34d399;
+  --blueFill: #60a5fa;
+  --sevFill: #f87171;
+  --onFill: #0b1220;
+  --sevOn: #0b1220;
+  --tagOn: #0b1220;
+}

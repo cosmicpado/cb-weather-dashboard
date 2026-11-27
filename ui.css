@@ -7,41 +7,44 @@
 /* 스크롤바 자리는 늘 비워 둔다 — 내용이 짧아도 화면 폭이 같아 로고·메뉴가 움직이지 않게 */
 html{scrollbar-gutter:stable}
 
+/* 한국어는 낱말(띄어쓰기) 단위로 줄을 바꾼다 — "모레"가 "모 / 레"로 끊기지 않게. 칸보다 긴 낱말만 어쩔 수 없이 끊는다 */
+body{word-break:keep-all;overflow-wrap:break-word}
+
 /* ── 윗줄 이름 ── 로고 · 플랫폼 이름 · LIVE · 자료 시각 */
-.hd-logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(140deg,#3b82f6,#1d4ed8);display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;flex:none}
-.hd-tt{font-weight:800;font-size:17px;white-space:nowrap;color:var(--ink)}
-.hd-live{display:inline-flex;align-items:center;font-size:13px;font-weight:800;color:var(--ui-sev);background:color-mix(in srgb,var(--ui-sev) 9%,var(--ui-card));border-radius:999px;padding:2px 9px;margin-left:8px;vertical-align:2px;animation:hdLive 2s ease-in-out infinite}
+.hd-logo{width:36px;height:36px;border-radius:10px;overflow:hidden;flex:none}.hd-logo img{display:block;width:100%;height:100%}   /* 로고 = 탭 아이콘(icon.svg)과 같은 그림 */
+.hd-tt{font-weight:700;font-size:17px;white-space:nowrap;color:var(--ink)}
+.hd-live{display:inline-flex;align-items:center;font-size:13.5px;font-weight:700;color:var(--ui-sev);background:color-mix(in srgb,var(--ui-sev) 9%,var(--ui-card));border-radius:999px;padding:2px 8px;margin-left:8px;vertical-align:2px;animation:hdLive 2s ease-in-out infinite}
 @keyframes hdLive{0%,100%{opacity:1}50%{opacity:.55}}
 .hd-ts{font-size:14.5px;font-weight:400;color:var(--ink3);margin-top:0;font-feature-settings:normal}
-.hd-ts.late{color:var(--ui-sev);font-weight:800}
+.hd-ts.late{color:var(--ui-sev);font-weight:700}
 
 /* ── 고르는 단추 묶음(세그먼트) ── 회색 바탕 + 고른 칸만 흰 바탕·파란 글자. 볼 범위·화면 전환 모두 같은 모양 */
-.seg,.pgs{display:inline-flex;gap:2px;padding:3px;border-radius:11px;background:var(--track);border:1px solid var(--ui-line);height:40px;box-sizing:border-box}
-.pgs a,.scope .home,.scope .sel{height:32px;box-sizing:border-box;display:inline-flex;align-items:center;gap:6px;padding:0 12px;border-radius:8px;font-family:inherit;font-size:14px;font-weight:700;color:var(--ink2);text-decoration:none;white-space:nowrap;border:0;background:transparent;cursor:pointer}
+.seg,.pgs{display:inline-flex;gap:2px;padding:3px;border-radius:12px;background:var(--track);border:1px solid var(--ui-line);height:40px;box-sizing:border-box}
+.pgs a,.scope .home,.scope .sel{height:32px;box-sizing:border-box;display:inline-flex;align-items:center;gap:6px;padding:0 12px;border-radius:8px;font-family:inherit;font-size:14.5px;font-weight:700;color:var(--ink2);text-decoration:none;white-space:nowrap;border:0;background:transparent;cursor:pointer}
 .pgs a:hover,.scope .home:hover,.scope .sel:hover{background:var(--ui-card)}
-.pgs a.on,.scope .on{background:var(--ui-card);color:var(--brand);box-shadow:0 1px 3px rgba(16,24,40,.14);font-weight:800}
+.pgs a.on,.scope .on{background:var(--ui-card);color:var(--brand);box-shadow:0 1px 3px rgba(16,24,40,.14);font-weight:700}
 .pgs a.on{cursor:default}
 .pgs .ic,.scope .home .ic{width:17px;height:17px;flex:none}
 .pgs .ls{display:none}
 .scope{margin-left:24px}.selw{position:relative;display:inline-flex}.scope .sel{width:150px}   /* 관서 이름은 최대 네 글자 */
-.sel small{font-size:13.5px;font-weight:700;color:var(--ink3)}
-.sel b{font-size:14px;font-weight:inherit;color:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sel small{font-size:13.5px;font-weight:500;color:var(--ink3)}
+.sel b{font-size:14.5px;font-weight:inherit;color:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sel .car{width:13px;height:13px;margin-left:auto;flex:none}
 
 /* ── 관서 목록(관서 칸을 누르면 펼쳐짐) ── 종합 현황(.pkl). 재해별 집중 감시는 화면 틀이 같은 모양을 직접 그린다 */
 .pkl{position:absolute;top:calc(100% + 7px);left:0;z-index:61;min-width:180px;max-height:70vh;overflow:auto;background:var(--ui-card);border:1px solid var(--ui-line2);border-radius:12px;box-shadow:0 8px 26px -12px rgba(16,27,45,.25),0 2px 6px -3px rgba(16,27,45,.1);padding:6px;box-sizing:border-box}
-.pkl button{display:block;width:100%;text-align:left;border:0;background:transparent;padding:8px 11px;border-radius:8px;font-family:inherit;font-size:14px;font-weight:600;color:var(--ink);cursor:pointer}
-.pkl button:hover{background:var(--ui-hover)}.pkl button.on{background:color-mix(in srgb,var(--brand) 10%,var(--ui-card));color:var(--brand);font-weight:800}
+.pkl button{display:block;width:100%;text-align:left;border:0;background:transparent;padding:8px 12px;border-radius:8px;font-family:inherit;font-size:14.5px;font-weight:500;color:var(--ink);cursor:pointer}
+.pkl button:hover{background:var(--ui-hover)}.pkl button.on{background:color-mix(in srgb,var(--brand) 10%,var(--ui-card));color:var(--brand);font-weight:700}
 
 /* ── 하위 탭(재해 종류) ── 테두리 없는 글자 탭 + 밑줄 */
 .pgsub{display:flex;gap:4px}
-.pgsub a{height:32px;display:inline-flex;align-items:center;gap:6px;padding:0 12px;font-size:14px;font-weight:700;color:var(--ink3);border-bottom:2.5px solid transparent;cursor:pointer;white-space:nowrap;text-decoration:none}
-.pgsub a:hover{color:var(--ink)}.pgsub a.on{color:var(--brand);border-bottom-color:var(--brand);font-weight:800}
+.pgsub a{height:32px;display:inline-flex;align-items:center;gap:6px;padding:0 12px;font-size:14.5px;font-weight:500;color:var(--ink3);border-bottom:2.5px solid transparent;cursor:pointer;white-space:nowrap;text-decoration:none}
+.pgsub a:hover{color:var(--ink)}.pgsub a.on{color:var(--brand);border-bottom-color:var(--brand);font-weight:700}
 .pgsub .ic{width:17px;height:17px;flex:none;display:none}
 .pgsub a[data-k=rain] .mi-rain,.pgsub a[data-k=snow] .mi-snow,.pgsub a[data-k=fire] .mi-fire{display:block}
 
 /* ── 도구 단추(공지·의견·알림·화면 색) ── 폭을 고정해 두 화면 메뉴 자리를 같게 */
-.hd-tools{display:inline-flex;align-items:center;gap:5px;height:40px;margin-left:6px;padding-left:10px;border-left:1px solid var(--ui-line);min-width:183px;justify-content:flex-end;box-sizing:border-box}
+.hd-tools{display:inline-flex;align-items:center;gap:5px;height:40px;margin-left:6px;padding-left:12px;border-left:1px solid var(--ui-line);min-width:183px;justify-content:flex-end;box-sizing:border-box}
 .ib{position:relative;width:38px;height:38px;box-sizing:border-box;padding:0;border-radius:10px;border:1px solid var(--ui-line);background:var(--ui-card);display:inline-flex;align-items:center;justify-content:center;color:var(--ink2);font-family:inherit;font-size:17px;line-height:1;cursor:pointer;text-decoration:none}
 .ib:hover{border-color:var(--ui-line2)}
 .ib .ic{width:19px;height:19px}
@@ -62,23 +65,23 @@ html{scrollbar-gutter:stable}
   :root{--cb-navb:max(0px, calc(env(safe-area-inset-bottom,0px) - 12px));--cb-navh:calc(54px + var(--cb-navb))}   /* --cb-navh = 탭바 전체 높이 — 맨 위로 단추·새 공지 카드·시연 막대가 이만큼 위로 비킨다 */
   .hd-tt{font-size:15px}
   .scope{order:2;flex:1 1 100%;margin-left:0;height:48px}
-  .scope .home,.scope .sel{height:40px;font-size:16px}
+  .scope .home,.scope .sel{height:40px;font-size:15px}
   .selw{flex:1;min-width:0}.scope .sel{width:100%}
-  .sel b{font-size:16px}.sel small{font-size:14px}.pkl{width:100%}
+  .sel b{font-size:15px}.sel small{font-size:14.5px}.pkl{width:100%}
   .hd-tools{order:1;margin-left:0;min-width:0;padding-left:0;border-left:0}
   .hd-tools>*:not(.hd-more){display:none!important}.hd-tools>.hd-more{display:inline-flex}   /* 휴대폰 도구 = ⋯ 하나(공지·의견·화면 색, more-menu.js) */
   .pgs{position:fixed;left:0;right:0;bottom:0;z-index:9200;height:var(--cb-navh);padding:0 0 var(--cb-navb);border-radius:0;border:0;border-top:1px solid var(--ui-line);background:var(--ui-card);gap:0;box-shadow:0 -4px 14px rgba(16,24,40,.06)}
-  .pgs a{flex:1;flex-direction:column;justify-content:center;height:54px;border-radius:0;gap:3px;font-size:13px;font-weight:700;background:transparent!important;box-shadow:none!important;padding:0}
-  .pgs a.on{color:var(--brand);font-weight:800}
+  .pgs a{flex:1;flex-direction:column;justify-content:center;height:54px;border-radius:0;gap:3px;font-size:13.5px;font-weight:700;background:transparent!important;box-shadow:none!important;padding:0}
+  .pgs a.on{color:var(--brand);font-weight:700}
   .pgs .ic{width:22px;height:22px}
   .pgs .lf{display:none}.pgs .ls{display:inline}
   /* 아래로 내리면 한 줄로 접힘(header.js) — 이름 줄·화면 색 단추를 숨기고 [로고 · 전체 | 관서 · 13:28 기준] 만 남긴다 */
   html.hd-slim .hd-name,html.hd-slim .hd-tools{display:none!important}
   html.hd-slim .scope{order:1;flex:1 1 0;min-width:0;height:40px;margin:0}
-  html.hd-slim .scope .home,html.hd-slim .scope .sel{height:32px;font-size:15px;padding:0 10px}
-  html.hd-slim .sel b{font-size:15px}html.hd-slim .sel small{font-size:13px}
+  html.hd-slim .scope .home,html.hd-slim .scope .sel{height:32px;font-size:15px;padding:0 12px}
+  html.hd-slim .sel b{font-size:15px}html.hd-slim .sel small{font-size:13.5px}
   html.hd-slim .hm-l{display:none}   /* '충북 전체' → '전체' */
-  html.hd-slim .hd-slimts{display:block;order:2;font-size:13px;color:var(--ink3);white-space:nowrap;font-feature-settings:normal}
+  html.hd-slim .hd-slimts{display:block;order:2;font-size:13.5px;color:var(--ink3);white-space:nowrap;font-feature-settings:normal}
   html.hd-slim .hd-bar{box-shadow:0 6px 14px -10px rgba(16,24,40,.35)}
   html.hd-anim .hd-bar :is(.scope,.hd-slimts,.hd-name,.hd-tools){animation:hdFade .24s ease-out}   /* 접히고 펴질 때 글자만 살짝 페이드(로고는 그대로) */
 }

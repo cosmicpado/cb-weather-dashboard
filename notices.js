@@ -42,6 +42,13 @@ window.CB_NOTICES = [];
     for (var i = 0; i < links.length; i++) {
       var a = links[i], dot = a.querySelector('.cb-ndot');
       if (a.closest('#cb-ntoast')) continue;          // 알림 카드의 [보기] 에는 점을 달지 않는다
+      if (a.classList.contains('ib')) {               // 윗줄 공용 단추 — 공용 모양(ui.css .ib i)의 점 하나만 켜고 끈다
+        var ui = a.querySelector(':scope > i');
+        if (!ui && n) { ui = document.createElement('i'); ui.setAttribute('aria-hidden', 'true'); a.appendChild(ui); }
+        if (ui) ui.hidden = !n;
+        if (n && (a.title || '').indexOf('새 공지') < 0) a.title = (a.title || '') + ' · 새 공지가 있습니다';
+        continue;
+      }
       if (n && !dot) {
         if (getComputedStyle(a).position === 'static') a.style.position = 'relative';
         dot = document.createElement('span'); dot.className = 'cb-ndot'; dot.setAttribute('aria-hidden', 'true');
@@ -65,7 +72,7 @@ window.CB_NOTICES = [];
         'background:var(--surface,#fff);color:var(--ink,#0f1b2d);border:1.5px solid var(--brand,#1d4ed8);' +
         'border-radius:12px;box-shadow:0 12px 32px rgba(15,27,45,.22);padding:13px 14px 12px;font-family:inherit;';
       var h = document.createElement('div'); h.style.cssText = 'font-size:13px;font-weight:800;color:var(--brand,#1d4ed8);margin-bottom:3px;';
-      h.textContent = '📢 새 공지' + (n > 1 ? ' ' + n + '건' : '');
+      h.innerHTML = (window.cbIcon ? cbIcon('megaphone') : '') + '새 공지' + (n > 1 ? ' ' + n + '건' : '');
       var t = document.createElement('div'); t.style.cssText = 'font-size:14px;font-weight:800;line-height:1.4;margin-bottom:10px;';
       t.textContent = top.title || '';
       var row = document.createElement('div'); row.style.cssText = 'display:flex;gap:6px;justify-content:flex-end;';

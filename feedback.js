@@ -22,7 +22,7 @@
     box.appendChild(card);
 
     var head = el('div', 'display:flex;align-items:center;gap:10px;');
-    head.appendChild(el('div', 'font-size:18px;font-weight:800;letter-spacing:-.3px;', '💬 의견 보내기'));
+    var ttl = el('div', 'font-size:18px;font-weight:700;letter-spacing:-.3px;'); ttl.innerHTML = (window.cbIcon ? cbIcon('chat') : '') + '의견 보내기'; head.appendChild(ttl);
     var x = el('button', 'margin-left:auto;width:32px;height:32px;border-radius:9px;border:1px solid #d5dbe6;background:#f4f6fa;color:#4a5568;font-size:16px;cursor:pointer;', '✕');
     x.setAttribute('aria-label', '닫기'); x.onclick = close; head.appendChild(x);
     card.appendChild(head);
@@ -97,7 +97,7 @@
       }).then(function (j) {
         if (j && j.ok) {
           card.innerHTML = '';
-          card.appendChild(el('div', 'font-size:44px;text-align:center;padding-top:6px;', '✅'));
+          var okI = el('div', 'font-size:44px;line-height:1;text-align:center;padding-top:6px;color:#1e7a3c;'); okI.innerHTML = window.cbIcon ? cbIcon('check', null, true) : '✓'; card.appendChild(okI);
           card.appendChild(el('div', 'font-size:17px;font-weight:800;text-align:center;', '보냈습니다. 고맙습니다!'));
           card.appendChild(el('div', 'font-size:13px;color:#5a6578;text-align:center;', '반영되면 공지사항으로 알려 드립니다.'));
           var ok = el('button', 'align-self:center;margin-top:6px;height:38px;padding:0 22px;border-radius:10px;border:1px solid #c9d1de;background:#f4f6fa;color:#1b2333;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;', '닫기');

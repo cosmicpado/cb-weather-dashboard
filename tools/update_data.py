@@ -16,7 +16,7 @@ import sys
 import time
 import traceback
 import xml.etree.ElementTree as ET
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import requests
@@ -2654,33 +2654,38 @@ def download_kma_images():
     except Exception as e:
         result['radar'] = {'ok': False, 'err': _redact(e)}
 
-    # 4) 천리안 GK2A 위성 IR105 + 한반도 (10분 주기, 자료 publish 약 6시간 지연)
-    # 06시 발표 자료가 12시쯤 공개되는 식. 안전하게 6시간 전부터 10분 배수로 시도.
-    #
-    # ⚠ 이 파일만 900KB로 다른 이미지(8~26KB)보다 40배 무겁다. 5분마다 새로 받아
-    #   커밋하면 하루 260MB가 깃에 쌓이고(전체 증가량의 절반), 그만큼 히스토리 압축이
-    #   자주 돌아 다른 클론의 히스토리를 깨뜨린다.
-    #   어차피 6시간 지연 공개 자료라 5분 단위 신선도가 의미 없으므로 30분마다만 갱신한다.
-    #   (건너뛰면 result에 'satellite' 키를 안 넣는다 → main()이 이전 메타를 그대로 보존)
+    # 4) 천리안 GK2A 위성 IR105 + 한반도 (10분 주기)
+    # ⚠ 주소의 date 는 세계표준시(UTC)다. 한국시각으로 넣으면 9시간 앞(아직 없는 시각)을 묻게 되어
+    #   한동안 '6시간 늦게 공개된다'고 잘못 알고 6시간 전부터 찾았다 — 그 바람에 앞쪽 시도가 모두
+    #   시간 초과로 끝나 갱신이 자주 실패했다. 실제로는 관측 약 20분 뒤에 받을 수 있다.
+    # 이 파일만 750KB 안팎으로 무거워 10분마다만 받는다(5분 주기 수집 중 한 번 걸러).
+    # 건너뛰면 result에 'satellite' 키를 안 넣는다 → main()이 이전 메타를 그대로 보존.
     try:
         sat_path = os.path.join(img_dir, 'kma_satellite.png')
         _sat_fresh = False
         try:
             if os.path.exists(sat_path):
                 _age_min = (time.time() - os.path.getmtime(sat_path)) / 60
-                _sat_fresh = _age_min < 30
+                _sat_fresh = _age_min < 10
         except OSError:
             _sat_fresh = False
         if _sat_fresh:
             raise _SkipSatellite()
         ok = False
-        # 6시간 전부터 24시간 전까지 1시간 간격으로 폴백
-        for back_min in (360, 420, 480, 540, 600, 720, 1080, 1440):
-            sat_dt = now - timedelta(minutes=back_min)
+        utc_now = datetime.now(timezone.utc)
+        t0 = time.time()
+        # 20분 전 관측부터 10분씩 거슬러 2시간 전까지. 서버가 느릴 때가 있어 한 번에 10초, 모두 합쳐 70초까지만 기다린다
+        for back_min in (20, 30, 40, 50, 60, 80, 100, 120):
+            if time.time() - t0 > 70:
+                break
+            sat_dt = utc_now - timedelta(minutes=back_min)
             sat_dt = sat_dt.replace(minute=(sat_dt.minute // 10) * 10, second=0, microsecond=0)
             sat_date = sat_dt.strftime('%Y%m%d%H%M')
             url = f'https://apihub.kma.go.kr/api/typ05/api/GK2A/LE1B/IR105/KO/image?date={sat_date}&authKey={KMA_APIHUB_KEY}'
-            r = requests.get(url, timeout=20)
+            try:
+                r = requests.get(url, timeout=10)
+            except requests.RequestException:
+                continue          # 이 시각만 시간 초과 — 다음(더 이른) 시각으로
             if r.status_code == 403:
                 result['satellite'] = {'ok': False, 'err': '활용신청 대기'}
                 ok = True
@@ -2688,11 +2693,13 @@ def download_kma_images():
             if r.status_code == 200 and _is_real_image_png(r.content):
                 with open(sat_path, 'wb') as f:
                     f.write(r.content)
-                result['satellite'] = {'ok': True, 'ts': ts, 'date': sat_date, 'bytes': len(r.content)}
+                # ts = 영상이 찍힌 한국시각. 화면의 'N분 전'은 받은 시각이 아니라 관측 시각 기준이어야 한다
+                obs_kst = (sat_dt + timedelta(hours=9)).strftime('%Y-%m-%d %H:%M')
+                result['satellite'] = {'ok': True, 'ts': obs_kst, 'date': sat_date, 'got': ts, 'bytes': len(r.content)}
                 ok = True
                 break
         if not ok:
-            result['satellite'] = {'ok': False, 'err': '최근 24h 정상 이미지 없음'}
+            result['satellite'] = {'ok': False, 'err': '최근 2시간 정상 이미지 없음'}
     except _SkipSatellite:
         pass          # 30분 안 지남 — 이전 이미지·메타 그대로 사용(깃 커밋량 절감)
     except Exception as e:

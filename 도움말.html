@@ -7,18 +7,21 @@
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <!-- 지역 설정 — 관할 이름·관서 수를 여기서 읽는다. -->
 <script src="clock-sync.js"></script>
+<script src="icons.js"></script>   <!-- 선 아이콘 한 벌(색 이모지 대신) -->
 <script src="error-report.js"></script>   <!-- 화면 오류를 서버에 남긴다(관리자 화면 접속 통계 탭) -->
 <script src="access-hit.js" data-page="도움말.html"></script>   <!-- 접속 통계: 화면이 3초 넘게 보이면 1회 -->
 <script src="short-url.js"></script>
 <script src="region.js"></script>
 <script src="notices.js"></script>
 <style>
+/* 한국어는 낱말(띄어쓰기) 단위로 줄을 바꾼다 — 칸보다 긴 낱말만 끊는다 */
+body{word-break:keep-all;overflow-wrap:break-word}
 :root{
   --bg:#eef1f7; --surface:#ffffff; --surface2:#f3f7fc;
-  --border:#e4e9f2; --border2:#d3dbe9; --ink:#0f1b2d; --ink2:#4b5a74; --ink3:#8593aa;
+  --border:#e4e9f2; --border2:#d3dbe9; --ink:#0f1b2d; --ink2:#4b5a74; --ink3:#5f6d85;
   --brand:#1d4ed8; --brandSoft:#e8eeff;
-  --safe:#0ea371; --safeSoft:#e5f7f0; --caution:#e0930a; --cautionSoft:#fdf2df;
-  --warn:#ef6c1a; --warnSoft:#ffece0; --severe:#d42a2f; --severeSoft:#fbe3e3;
+  --safe:#1e7a3c; --safeSoft:#e5f7f0; --caution:#9c6c01; --cautionSoft:#fdf2df;   /* 상태색 = 공용 tokens.css 글자용 */
+  --warn:#ce4701; --warnSoft:#ffece0; --severe:#a3161a; --severeSoft:#fbe3e3;
   --sh:0 1px 3px rgba(16,27,45,.06), 0 6px 18px -8px rgba(16,27,45,.14);
 }
 html[data-theme="dark"]{
@@ -254,8 +257,8 @@ details[open] summary{margin-bottom:8px}
      기상청 지진재난문자가 2024년 10월부터 규모가 아니라 진도로, <b>진도 Ⅱ 이상인 시군구</b>에 보내는 것과 같은 기준입니다.</p>
   <ul>
     <li>줄 맨 앞의 <b>Ⅰ·Ⅱ·Ⅲ…</b> 네모 기호가 <b>충북 진도</b>입니다(마우스를 올리면 "충북 진도 Ⅲ"처럼 풀어 보입니다). 충북 진도가 없으면 🌏 만 붙습니다.</li>
-    <li><b style="color:#d92d20">빨강</b> — 충북 진도 Ⅴ 이상, 또는 지진조기경보(긴급재난문자급)</li>
-    <li><b style="color:#e8590c">주황</b> — 충북 진도 Ⅱ~Ⅳ (충북 시군이 재난문자 대상)</li>
+    <li><b style="color:#a3161a">빨강</b> — 충북 진도 Ⅴ 이상, 또는 지진조기경보(긴급재난문자급)</li>
+    <li><b style="color:#ce4701">주황</b> — 충북 진도 Ⅱ~Ⅳ (충북 시군이 재난문자 대상)</li>
     <li><b style="color:#7A6400">노랑 점선</b> — 충북 진도 Ⅰ (충북에서 느꼈지만 재난문자 대상은 아님, 참고)</li>
     <li><b style="color:#64748b">회색 점선</b> — 충북 진도 없음 · 국내영향없음 (먼 국내·북한·국외 지진, 참고)</li>
   </ul>

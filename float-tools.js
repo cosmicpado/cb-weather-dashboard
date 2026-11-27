@@ -47,7 +47,7 @@
     topBtn.style.visibility = on ? 'visible' : 'hidden'; topBtn.style.opacity = on ? '1' : '0'; }
 
   /* ── 윈디 크게 보기 창 — W 단추(SHOW_WINDY)로 연다. 처음 층은 바람(비가 없으면 레이더는 멈춘 화면 같아서) ── */
-  var LAYERS = [['wind', '🌬️ 바람'], ['radar', '📡 날씨 레이더'], ['satellite', '🛰️ 위성'], ['gust', '💨 돌풍'], ['rain', '🌧️ 비·눈 예보'], ['temp', '🌡️ 기온'], ['clouds', '☁️ 구름']];
+  var LAYERS = [['wind', '바람', 'wind'], ['radar', '날씨 레이더', 'radar'], ['satellite', '위성', 'satellite'], ['gust', '돌풍', 'gust'], ['rain', '비·눈 예보', 'rain'], ['temp', '기온', 'thermo'], ['clouds', '구름', 'cloud']];   // [윈디 층, 이름, 아이콘(icons.js)]
   function url(overlay) {
     return 'https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=%C2%B0C&metricWind=m%2Fs'
       + '&zoom=9&overlay=' + (overlay || 'wind') + '&product=ecmwf&level=surface&lat=36.75&lon=127.75&message=true';
@@ -75,8 +75,8 @@
       btns.forEach(function (b) { var on = b.dataset.k === k;
         b.style.background = on ? 'var(--brand,#2563eb)' : 'transparent'; b.style.color = on ? '#fff' : 'var(--ink2,#4b5a74)';
         b.style.borderColor = on ? 'var(--brand,#2563eb)' : 'var(--border2,var(--line,#d3dbe9))'; }); }
-    LAYERS.forEach(function (x) { var b = el('button', 'padding:6px 11px;border-radius:10px;border:1px solid;font:800 13.5px Pretendard,system-ui,sans-serif;cursor:pointer;', x[1]);
-      b.type = 'button'; b.dataset.k = x[0]; b.onclick = function () { pick(x[0]); }; btns.push(b); hd.appendChild(b); });
+    LAYERS.forEach(function (x) { var b = el('button', 'padding:6px 11px;border-radius:10px;border:1px solid;font:800 13.5px Pretendard,system-ui,sans-serif;cursor:pointer;');
+      b.innerHTML = (window.cbIcon ? cbIcon(x[2]) : '') + x[1]; b.type = 'button'; b.dataset.k = x[0]; b.onclick = function () { pick(x[0]); }; btns.push(b); hd.appendChild(b); });
     var site = el('button', 'margin-left:auto;padding:6px 11px;border-radius:10px;border:1px solid var(--border2,var(--line,#d3dbe9));background:transparent;color:var(--ink,#0f1b2d);font:800 13.5px Pretendard,system-ui,sans-serif;cursor:pointer;', 'windy.com 열기 ↗');
     site.type = 'button'; site.title = '지금 층 그대로 windy.com 을 새 창으로 엽니다(크게 확대하면 등고선 지형도로 바뀝니다)';
     site.onclick = function () { window.cbWindySite(cur); }; hd.appendChild(site);

@@ -3,7 +3,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>관리자 페이지</title>
+<link rel="icon" type="image/svg+xml" href="icon.svg">
 <style>
+/* 한국어는 낱말(띄어쓰기) 단위로 줄을 바꾼다 — 칸보다 긴 낱말만 끊는다 */
+body{word-break:keep-all;overflow-wrap:break-word}
   :root{--bg:#f3f5f9;--card:#fff;--ink:#1b2333;--ink2:#4a5568;--ink3:#5f6d85;--line:#dde3ec;--brand:#2563eb;--soft:#eef3ff;
     --s-wait:#6b7280;--s-done:#0a8058;--s-hold:#b7791f;--s-no:#c0392b;--s-wait-bg:#f1f3f6;--s-done-bg:#e6f5ee;--s-hold-bg:#fdf3e1;--s-no-bg:#fbeaea}
   /* 관리자 페이지는 늘 밝은 화면(2026-11-12 사용자 결정) — 컴퓨터가 어두운 모드여도 */
@@ -264,6 +267,7 @@
   </div>
 </div>
 <script src="clock-sync.js"></script>
+<script src="icons.js"></script>   <!-- 선 아이콘 한 벌(색 이모지 대신) -->
 <script src="error-report.js"></script>   <!-- 화면 오류를 서버에 남긴다(관리자 화면 접속 통계 탭) -->
 <script src="short-url.js"></script>
 <script src="notices.js"></script>
@@ -415,7 +419,7 @@
      ▶ 관서로 넓힐 때: stage.js 의 TARGETS 에 'office:제천': '제천소방서' 처럼 한 줄을 더하면 이 화면·저장·계산이 그 대상을 그대로 다룬다
        (근무 줄은 대상 이름으로 찾고, 없으면 새로 만든다). */
   var SR={ rules:null, duty:null, cur:'hq', dirty:false, at:'', v:{rain:{p:0,a:3,w:0},snow:{},ty:{},tyInfo:false} };   // v = 미리 보기 가상 숫자(처음엔 호우주의보 3개 시·군)
-  var SR_ST=[{r:1,pill:'준비',name:'준비 단계',col:'#2563eb'},{r:2,pill:'1단계',name:'주의',col:'#ca8a04'},{r:3,pill:'2단계',name:'경계',col:'#ea580c'},{r:4,pill:'3단계',name:'심각',col:'#dc2626'}];
+  var SR_ST=[{r:1,pill:'준비',name:'준비 단계',col:'#2f62c0'},{r:2,pill:'1단계',name:'주의',col:'#9c6c01'},{r:3,pill:'2단계',name:'경계',col:'#ce4701'},{r:4,pill:'3단계',name:'심각',col:'#a3161a'}];
   function srClone(o){ return JSON.parse(JSON.stringify(o)); }
   function srT(id){ var t=SR.rules.targets[id]; if(!t){ t=SR.rules.targets[id]={mode:'table'}; } return t; }
   var SR_DK=['s1','s2','s3','s4','snow'], SR_DD=(window.cbDuty&&window.cbDuty.DEFAULT)||{rows:[]};

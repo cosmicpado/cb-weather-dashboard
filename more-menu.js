@@ -28,7 +28,7 @@
     var b = document.createElement('button'); b.type = 'button';
     b.style.cssText = 'display:flex;align-items:center;gap:10px;width:100%;border:0;background:transparent;padding:12px 14px;border-radius:10px;' +
       'font:700 16px "Pretendard Variable",Pretendard,system-ui,sans-serif;color:inherit;text-align:left;cursor:pointer;';
-    b.innerHTML = '<span style="width:22px;text-align:center;font-size:18px">' + icon + '</span><span style="flex:1">' + text + '</span>' +
+    b.innerHTML = '<span style="width:22px;text-align:center;font-size:18px">' + ((window.cbIcon && cbIcon(icon, null, true)) || icon) + '</span><span style="flex:1">' + text + '</span>' +
       (dot ? '<span style="width:9px;height:9px;border-radius:50%;background:#ef4444"></span>' : '');
     b.onclick = function () { close(); fn(); };
     return b;
@@ -40,11 +40,11 @@
     menu.style.cssText = 'position:fixed;z-index:9950;top:' + Math.round(r.bottom + 8) + 'px;right:' + Math.max(8, Math.round(innerWidth - r.right)) + 'px;' +
       'min-width:210px;padding:6px;border-radius:14px;box-shadow:0 12px 32px -12px rgba(0,0,0,.45);' +
       (dark ? 'background:#151b26;color:#f2f5fa;border:1px solid #2a3446;' : 'background:#fff;color:#101828;border:1px solid #e4e8ef;');
-    menu.appendChild(item('📢', '공지사항 · 도움말', unseen() > 0, function () { location.href = '도움말.html#notice'; }));
-    menu.appendChild(item('💬', '의견 보내기', false, function () { if (window.cbFeedback) window.cbFeedback.open({ page: c.page }); }));
-    menu.appendChild(item(dark ? '☀' : '☾', dark ? '밝게 보기' : '어둡게 보기', false, function () { var t = c.themeBtn(); if (t) t.click(); }));
+    menu.appendChild(item('megaphone', '공지사항 · 도움말', unseen() > 0, function () { location.href = '도움말.html#notice'; }));
+    menu.appendChild(item('chat', '의견 보내기', false, function () { if (window.cbFeedback) window.cbFeedback.open({ page: c.page }); }));
+    menu.appendChild(item(dark ? 'sun' : 'moon', dark ? '밝게 보기' : '어둡게 보기', false, function () { var t = c.themeBtn(); if (t) t.click(); }));
     c.extra().forEach(function (x) { menu.appendChild(item(x.icon, x.text, false, x.fn)); });
-    if (window.cbTour && window.cbTour.has()) menu.appendChild(item('🧭', '화면 안내 다시 보기', false, function () { window.cbTour.start(true); }));   // tour.js
+    if (window.cbTour && window.cbTour.has()) menu.appendChild(item('compass', '화면 안내 다시 보기', false, function () { window.cbTour.start(true); }));   // tour.js
     document.body.appendChild(menu);
     btn.setAttribute('aria-expanded', 'true');
     document.addEventListener('keydown', onKey, true);
